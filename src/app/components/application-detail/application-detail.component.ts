@@ -19,6 +19,9 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+
 import {
   MatCard,
   MatCardContent,
@@ -27,6 +30,7 @@ import {
   MatCardSubtitle,
   MatCardActions
 } from '@angular/material/card';
+import {MatDatepicker, MatDatepickerInput, MatDatepickerToggle} from '@angular/material/datepicker';
 
 interface TableData {
   [key: string]: any;
@@ -160,11 +164,51 @@ interface TableData {
                                         [class.field-has-error]="dynamicForm.get(field.name)?.invalid && dynamicForm.get(field.name)?.touched">
                           <mat-label>{{ formatColumnName(field.name) }}</mat-label>
 
-                          <!-- Text input -->
-                          <input *ngIf="field.type === 'CharField' && !field.choices"
+                          <!-- Text, Email, URL -->
+                          <input *ngIf="['CharField', 'TextField', 'EmailField', 'URLField'].includes(field.type) && !field.choices"
                                  matInput
+                                 [type]="getInputType(field.type)"
                                  [formControlName]="field.name"
-                                 [required]="field.required">
+                                 [required]="field.required"
+                                 [placeholder]="field.name">
+
+                          <!-- IntegerField -->
+                          <input *ngIf="field.type === 'IntegerField'"
+                                 matInput
+                                 type="number"
+                                 [formControlName]="field.name"
+                                 [required]="field.required"
+                                 [placeholder]="field.name">
+
+                          <!-- DecimalField -->
+                          <input *ngIf="field.type === 'DecimalField'"
+                                 matInput
+                                 type="number"
+                                 step="0.01"
+                                 [formControlName]="field.name"
+                                 [required]="field.required"
+                                 [placeholder]="field.name">
+
+                          <!-- DateField -->
+                          <ng-container *ngIf="field.type === 'DateField'">
+                            <input matInput
+                                   [matDatepicker]="picker"
+                                   [formControlName]="field.name"
+                                   [required]="field.required"
+                                   [placeholder]="field.name">
+                            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                            <mat-datepicker #picker></mat-datepicker>
+                          </ng-container>
+
+                          <!-- DateTimeField -->
+                          <input *ngIf="field.type === 'DateTimeField'"
+                                 matInput
+                                 type="datetime-local"
+                                 [formControlName]="field.name"
+                                 [required]="field.required"
+                                 [placeholder]="field.name">
+
+
 
                           <!-- Select for choices -->
                           <mat-select *ngIf="field.choices" [formControlName]="field.name">
@@ -286,7 +330,12 @@ interface TableData {
     MatCardTitle,
     MatCardSubtitle,
     MatCardContent,
-    MatCardActions
+    MatCardActions,
+    MatDatepickerToggle,
+    MatDatepicker,
+    MatDatepickerInput,
+    MatDatepickerModule,
+    MatNativeDateModule
   ],
   styles: [`
     .app-detail-container {
@@ -483,6 +532,7 @@ interface TableData {
     }
   `]
 })
+
 export class ApplicationDetailComponent implements OnInit {
   appName: string = '';
   endpoints: ApiEndpoint[] = [];
@@ -512,7 +562,16 @@ export class ApplicationDetailComponent implements OnInit {
   ) {
     this.dynamicForm = this.fb.group({});
   }
-
+  getInputType(type: string): string {
+    switch (type) {
+      case 'EmailField':
+        return 'email';
+      case 'URLField':
+        return 'url';
+      default:
+        return 'text';
+    }
+  }
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       this.appName = params['appName'];
@@ -715,15 +774,27 @@ export class ApplicationDetailComponent implements OnInit {
       }
 
       let defaultValue = field.default;
+
       if (record && record[field.name] !== undefined) {
         defaultValue = record[field.name];
+
+        if ((field.type === 'DateField' || field.type === 'DateTimeField') && defaultValue) {
+          defaultValue = new Date(defaultValue);
+        }
+
+        if (field.type === 'BooleanField') {
+          defaultValue = !!defaultValue;
+        }
+
+        if (field.type === 'DecimalField') {
+          defaultValue = parseFloat(defaultValue);
+        }
       } else if (field.type === 'BooleanField') {
         defaultValue = defaultValue || false;
       }
 
       formControls[field.name] = [defaultValue, validators];
 
-      // Load relation options if needed
       if (this.isRelationField(field)) {
         this.loadRelationOptions(field);
       }
@@ -731,7 +802,6 @@ export class ApplicationDetailComponent implements OnInit {
 
     this.dynamicForm = this.fb.group(formControls);
   }
-
   loadRelationOptions(field: any): void {
     // Check if this is a lookup field
     if (field.related_model === 'lookup.lookup' && field.limit_choices_to) {
