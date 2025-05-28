@@ -1,0 +1,837 @@
+// application-detail.component.ts
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { ApiService } from '../../services/api.service';
+import { ApiResponse, ApiEndpoint } from '../../models/api.models';
+import { JsonPipe, NgForOf, NgIf, TitleCasePipe, CommonModule, DatePipe } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatSortModule } from '@angular/material/sort';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatSelectModule } from '@angular/material/select';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import {
+  MatCard,
+  MatCardContent,
+  MatCardHeader,
+  MatCardTitle,
+  MatCardSubtitle,
+  MatCardActions
+} from '@angular/material/card';
+
+interface TableData {
+  [key: string]: any;
+}
+
+@Component({
+  selector: 'app-application-detail',
+  standalone: true,
+  template: `
+    <div class="app-detail-container">
+      <div class="header">
+        <button mat-icon-button (click)="goBack()">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <h1>{{ appName | titlecase }} Application</h1>
+      </div>
+
+      <div *ngIf="loading" class="loading-container">
+        <mat-spinner></mat-spinner>
+        <p>Loading application...</p>
+      </div>
+
+      <div *ngIf="!loading && resources.length > 0">
+        <mat-tab-group>
+          <mat-tab *ngFor="let resource of resources" [label]="resource.name | titlecase">
+            <div class="resource-content">
+              <!-- List View for GET method on collection endpoints -->
+              <div *ngIf="resource.hasListView" class="list-view">
+                <mat-card>
+                  <mat-card-header>
+                    <mat-card-title>{{ resource.name | titlecase }} List</mat-card-title>
+                    <mat-card-subtitle>Manage {{ resource.name }} records</mat-card-subtitle>
+                  </mat-card-header>
+                  <mat-card-content>
+                    <div class="actions-bar">
+                      <button mat-raised-button color="primary"
+                              *ngIf="resource.canCreate"
+                              (click)="openCreateDialog(resource)">
+                        <mat-icon>add</mat-icon>
+                        Add New {{ resource.name | titlecase }}
+                      </button>
+                      <button mat-button (click)="refreshList(resource)">
+                        <mat-icon>refresh</mat-icon>
+                        Refresh
+                      </button>
+                    </div>
+
+                    <div *ngIf="loadingData[resource.name]" class="loading-data">
+                      <mat-spinner diameter="30"></mat-spinner>
+                      <span>Loading data...</span>
+                    </div>
+
+                    <div *ngIf="!loadingData[resource.name] && resourceData[resource.name] && resourceData[resource.name].length > 0">
+                      <table mat-table [dataSource]="resourceData[resource.name]" class="full-width-table">
+                        <!-- Dynamic columns based on keys -->
+                        <ng-container *ngFor="let col of getColumns(resource)" [matColumnDef]="col">
+                          <th mat-header-cell *matHeaderCellDef>{{ formatColumnName(col) }}</th>
+                          <td mat-cell *matCellDef="let element">
+                            <span *ngIf="!isRelation(resource, col)">{{ element[col] }}</span>
+                            <span *ngIf="isRelation(resource, col)" class="relation-field">
+                              {{ element[col] || 'N/A' }}
+                            </span>
+                          </td>
+                        </ng-container>
+
+                        <!-- Actions column -->
+                        <ng-container matColumnDef="actions">
+                          <th mat-header-cell *matHeaderCellDef>Actions</th>
+                          <td mat-cell *matCellDef="let element">
+                            <button mat-icon-button
+                                    *ngIf="resource.canRead"
+                                    (click)="viewDetails(resource, element)"
+                                    matTooltip="View Details">
+                              <mat-icon>visibility</mat-icon>
+                            </button>
+                            <button mat-icon-button
+                                    *ngIf="resource.canUpdate"
+                                    (click)="editRecord(resource, element)"
+                                    matTooltip="Edit">
+                              <mat-icon>edit</mat-icon>
+                            </button>
+                            <button mat-icon-button
+                                    *ngIf="resource.canDelete"
+                                    (click)="deleteRecord(resource, element)"
+                                    matTooltip="Delete"
+                                    color="warn">
+                              <mat-icon>delete</mat-icon>
+                            </button>
+                          </td>
+                        </ng-container>
+
+                        <tr mat-header-row *matHeaderRowDef="getDisplayColumns(resource)"></tr>
+                        <tr mat-row *matRowDef="let row; columns: getDisplayColumns(resource);"></tr>
+                      </table>
+
+                      <mat-paginator [pageSizeOptions]="[5, 10, 20]"
+                                     showFirstLastButtons>
+                      </mat-paginator>
+                    </div>
+
+                    <div *ngIf="!loadingData[resource.name] && (!resourceData[resource.name] || resourceData[resource.name].length === 0)"
+                         class="no-data">
+                      <mat-icon>inbox</mat-icon>
+                      <p>No {{ resource.name }} records found</p>
+                      <button mat-raised-button color="primary"
+                              *ngIf="resource.canCreate"
+                              (click)="openCreateDialog(resource)">
+                        Create First {{ resource.name | titlecase }}
+                      </button>
+                    </div>
+                  </mat-card-content>
+                </mat-card>
+              </div>
+
+              <!-- Form View (shown in dialogs) -->
+              <div *ngIf="selectedResource === resource && showForm" class="form-overlay">
+                <mat-card class="form-card">
+                  <mat-card-header>
+                    <mat-card-title>
+                      {{ editingRecord ? 'Edit' : 'Create' }} {{ resource.name | titlecase }}
+                    </mat-card-title>
+                    <button mat-icon-button (click)="closeForm()" class="close-button">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </mat-card-header>
+                  <mat-card-content>
+                    <form [formGroup]="dynamicForm" (ngSubmit)="submitForm(resource)">
+                      <div class="form-fields">
+                        <mat-form-field *ngFor="let field of getFormFields(resource)" appearance="fill">
+                          <mat-label>{{ formatColumnName(field.name) }}</mat-label>
+
+                          <!-- Text input -->
+                          <input *ngIf="field.type === 'CharField' && !field.choices"
+                                 matInput
+                                 [formControlName]="field.name"
+                                 [required]="field.required">
+
+                          <!-- Select for choices -->
+                          <mat-select *ngIf="field.choices" [formControlName]="field.name">
+                            <mat-option *ngFor="let choice of field.choices" [value]="choice.value">
+                              {{ choice.label }}
+                            </mat-option>
+                          </mat-select>
+
+                          <!-- Number input -->
+                          <input *ngIf="field.type === 'IntegerField'"
+                                 matInput
+                                 type="number"
+                                 [formControlName]="field.name"
+                                 [required]="field.required">
+
+                          <!-- Boolean checkbox -->
+                          <mat-checkbox *ngIf="field.type === 'BooleanField'"
+                                        [formControlName]="field.name">
+                            {{ field.help_text || 'Enable' }}
+                          </mat-checkbox>
+
+                          <!-- Relation fields -->
+                          <mat-select *ngIf="isRelationField(field)"
+                                      [formControlName]="field.name"
+                                      [required]="field.required">
+                            <mat-option [value]="null">None</mat-option>
+                            <mat-option *ngFor="let option of relationOptions[field.name]" [value]="option.id">
+                              {{ option.display }}
+                            </mat-option>
+                          </mat-select>
+
+                          <mat-error *ngIf="dynamicForm.get(field.name)?.hasError('required')">
+                            {{ formatColumnName(field.name) }} is required
+                          </mat-error>
+                        </mat-form-field>
+                      </div>
+
+                      <mat-card-actions align="end">
+                        <button mat-button type="button" (click)="closeForm()">Cancel</button>
+                        <button mat-raised-button color="primary" type="submit"
+                                [disabled]="!dynamicForm.valid || submitting">
+                          <mat-spinner diameter="20" *ngIf="submitting"></mat-spinner>
+                          {{ submitting ? 'Saving...' : 'Save' }}
+                        </button>
+                      </mat-card-actions>
+                    </form>
+                  </mat-card-content>
+                </mat-card>
+              </div>
+
+              <!-- Detail View (shown in dialogs) -->
+              <div *ngIf="selectedResource === resource && showDetail" class="detail-overlay">
+                <mat-card class="detail-card">
+                  <mat-card-header>
+                    <mat-card-title>{{ resource.name | titlecase }} Details</mat-card-title>
+                    <button mat-icon-button (click)="closeDetail()" class="close-button">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </mat-card-header>
+                  <mat-card-content>
+                    <div class="detail-fields" *ngIf="detailRecord">
+                      <div *ngFor="let field of getDetailFields(resource)" class="detail-field">
+                        <label>{{ formatColumnName(field.name) }}:</label>
+                        <span>{{ detailRecord[field.name] || 'N/A' }}</span>
+                      </div>
+                    </div>
+                  </mat-card-content>
+                  <mat-card-actions align="end">
+                    <button mat-button (click)="closeDetail()">Close</button>
+                    <button mat-raised-button color="primary"
+                            *ngIf="resource.canUpdate"
+                            (click)="editFromDetail(resource, detailRecord)">
+                      <mat-icon>edit</mat-icon>
+                      Edit
+                    </button>
+                  </mat-card-actions>
+                </mat-card>
+              </div>
+            </div>
+          </mat-tab>
+        </mat-tab-group>
+      </div>
+
+      <div *ngIf="!loading && resources.length === 0" class="no-data">
+        <p>No resources found for this application.</p>
+        <button mat-raised-button color="primary" (click)="goBack()">
+          Go Back
+        </button>
+      </div>
+    </div>
+  `,
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    // JsonPipe,
+    TitleCasePipe,
+    // DatePipe,
+    NgForOf,
+    NgIf,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatTabsModule,
+    MatTableModule,
+    MatPaginatorModule,
+    MatSortModule,
+    MatDialogModule,
+    MatSelectModule,
+    MatCheckboxModule,
+    MatTooltipModule,
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardSubtitle,
+    MatCardContent,
+    MatCardActions
+  ],
+  styles: [`
+    .app-detail-container {
+      padding: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      margin-left: 16px;
+    }
+
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
+    }
+
+    .resource-content {
+      padding: 20px 0;
+      position: relative;
+    }
+
+    .actions-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .loading-data {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 20px;
+      justify-content: center;
+    }
+
+    .full-width-table {
+      width: 100%;
+    }
+
+    .relation-field {
+      color: #666;
+      font-style: italic;
+    }
+
+    .no-data {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+
+    .no-data mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      color: #ccc;
+      margin-bottom: 16px;
+    }
+
+    .form-overlay, .detail-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .form-card, .detail-card {
+      width: 90%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .close-button {
+      position: absolute;
+      right: 8px;
+      top: 8px;
+    }
+
+    .form-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 20px 0;
+    }
+
+    mat-form-field {
+      width: 100%;
+    }
+
+    .checkbox-field {
+      margin: 16px 0;
+    }
+
+    .detail-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 20px 0;
+    }
+
+    .detail-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .detail-field label {
+      font-weight: 500;
+      color: #666;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .detail-field span {
+      font-size: 16px;
+      color: #333;
+    }
+
+    mat-card-actions {
+      padding: 16px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .mat-column-actions {
+      width: 120px;
+      text-align: center;
+    }
+
+    .mat-row:hover {
+      background-color: #f5f5f5;
+    }
+
+    .method-info {
+      margin-top: 8px;
+      padding: 8px;
+      background: #f5f5f5;
+      border-radius: 4px;
+      font-size: 14px;
+      color: #666;
+    }
+  `]
+})
+export class ApplicationDetailComponent implements OnInit {
+  appName: string = '';
+  endpoints: ApiEndpoint[] = [];
+  resources: any[] = [];
+  loading = true;
+  loadingData: { [key: string]: boolean } = {};
+  resourceData: { [key: string]: any[] } = {};
+
+  // Form related
+  showForm = false;
+  showDetail = false;
+  selectedResource: any = null;
+  editingRecord: any = null;
+  detailRecord: any = null;
+  dynamicForm!: FormGroup;
+  submitting = false;
+  relationOptions: { [key: string]: any[] } = {};
+
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private apiService: ApiService,
+    private snackBar: MatSnackBar,
+    private fb: FormBuilder,
+    private dialog: MatDialog
+  ) {
+    this.dynamicForm = this.fb.group({});
+  }
+
+  ngOnInit(): void {
+    this.route.params.subscribe(params => {
+      this.appName = params['appName'];
+      this.loadEndpoints();
+    });
+  }
+
+  goBack(): void {
+    this.router.navigate(['/dashboard']);
+  }
+
+  loadEndpoints(): void {
+    this.loading = true;
+    this.apiService.getApplications().subscribe({
+      next: (data) => {
+        this.endpoints = data.applications?.applications?.[this.appName] || [];
+        this.processEndpoints();
+        this.loading = false;
+
+        // Load initial data for each resource
+        this.resources.forEach(resource => {
+          if (resource.hasListView) {
+            this.loadResourceData(resource);
+          }
+        });
+      },
+      error: (error) => {
+        console.error('Error loading endpoints:', error);
+        this.loading = false;
+        this.snackBar.open('Failed to load application', 'Close', { duration: 3000 });
+      }
+    });
+  }
+
+  processEndpoints(): void {
+    // Group endpoints by resource name
+    const resourceMap = new Map<string, any>();
+
+    this.endpoints.forEach(endpoint => {
+      // Extract resource name from endpoint name (e.g., "employee-list" -> "employee")
+      const resourceName = endpoint.name.split('-')[0];
+
+      if (!resourceMap.has(resourceName)) {
+        resourceMap.set(resourceName, {
+          name: resourceName,
+          endpoints: [],
+          hasListView: false,
+          hasDetailView: false,
+          canCreate: false,
+          canRead: false,
+          canUpdate: false,
+          canDelete: false,
+          fields: [],
+          listEndpoint: null,
+          detailEndpoint: null
+        });
+      }
+
+      const resource = resourceMap.get(resourceName);
+      resource.endpoints.push(endpoint);
+
+      // Determine capabilities based on methods and endpoint type
+      if (endpoint.name.includes('-list')) {
+        resource.hasListView = endpoint.methods.includes('GET');
+        resource.canCreate = endpoint.methods.includes('POST');
+        resource.listEndpoint = endpoint;
+        if (endpoint.keys && endpoint.keys.length > 0) {
+          resource.fields = endpoint.keys;
+        }
+      }
+
+      if (endpoint.name.includes('-detail')) {
+        resource.hasDetailView = true;
+        resource.canRead = endpoint.methods.includes('GET');
+        resource.canUpdate = endpoint.methods.includes('PUT') || endpoint.methods.includes('PATCH');
+        resource.canDelete = endpoint.methods.includes('DELETE');
+        resource.detailEndpoint = endpoint;
+        if (endpoint.keys && endpoint.keys.length > 0 && resource.fields.length === 0) {
+          resource.fields = endpoint.keys;
+        }
+      }
+    });
+
+    this.resources = Array.from(resourceMap.values());
+  }
+
+  loadResourceData(resource: any): void {
+    if (!resource.listEndpoint) return;
+
+    this.loadingData[resource.name] = true;
+    const path = this.cleanPath(resource.listEndpoint.path);
+
+    this.apiService.executeApiCall(path, 'GET').subscribe({
+      next: (response) => {
+        // Handle paginated response
+        if (response.results) {
+          this.resourceData[resource.name] = response.results;
+        } else if (Array.isArray(response)) {
+          this.resourceData[resource.name] = response;
+        } else {
+          this.resourceData[resource.name] = [];
+        }
+        this.loadingData[resource.name] = false;
+      },
+      error: (error) => {
+        console.error(`Error loading ${resource.name} data:`, error);
+        this.resourceData[resource.name] = [];
+        this.loadingData[resource.name] = false;
+        this.snackBar.open(`Failed to load ${resource.name} data`, 'Close', { duration: 3000 });
+      }
+    });
+  }
+
+  refreshList(resource: any): void {
+    this.loadResourceData(resource);
+  }
+
+  getColumns(resource: any): string[] {
+    if (!resource.fields || resource.fields.length === 0) {
+      // If no fields defined, try to get from first data item
+      const data = this.resourceData[resource.name];
+      if (data && data.length > 0) {
+        return Object.keys(data[0]).filter(key => !key.startsWith('_') && key !== 'id');
+      }
+      return [];
+    }
+    return resource.fields.map((f: any) => f.name).filter((name: string) => name !== undefined);
+  }
+
+  getDisplayColumns(resource: any): string[] {
+    return [...this.getColumns(resource), 'actions'];
+  }
+
+  formatColumnName(name: string): string {
+    return name
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, l => l.toUpperCase());
+  }
+
+  isRelation(resource: any, columnName: string): boolean {
+    const field = resource.fields?.find((f: any) => f.name === columnName);
+    return field && ['ForeignKey', 'OneToOneField', 'ManyToManyField'].includes(field.type);
+  }
+
+  isRelationField(field: any): boolean {
+    return ['ForeignKey', 'OneToOneField', 'ManyToManyField'].includes(field.type);
+  }
+
+  openCreateDialog(resource: any): void {
+    this.selectedResource = resource;
+    this.editingRecord = null;
+    this.showForm = true;
+    this.buildForm(resource);
+  }
+
+  editRecord(resource: any, record: any): void {
+    this.selectedResource = resource;
+    this.editingRecord = record;
+    this.showForm = true;
+    this.buildForm(resource, record);
+  }
+
+  viewDetails(resource: any, record: any): void {
+    this.selectedResource = resource;
+    this.detailRecord = record;
+    this.showDetail = true;
+  }
+
+  editFromDetail(resource: any, record: any): void {
+    this.showDetail = false;
+    this.editRecord(resource, record);
+  }
+
+  deleteRecord(resource: any, record: any): void {
+    if (!confirm(`Are you sure you want to delete this ${resource.name}?`)) {
+      return;
+    }
+
+    const path = this.cleanPath(resource.detailEndpoint.path, record.id || record.pk);
+
+    this.apiService.executeApiCall(path, 'DELETE').subscribe({
+      next: () => {
+        this.snackBar.open(`${resource.name} deleted successfully`, 'Close', { duration: 3000 });
+        this.loadResourceData(resource);
+      },
+      error: (error) => {
+        console.error('Error deleting record:', error);
+        this.snackBar.open('Failed to delete record', 'Close', { duration: 3000 });
+      }
+    });
+  }
+
+  buildForm(resource: any, record?: any): void {
+    const formControls: any = {};
+
+    this.getFormFields(resource).forEach(field => {
+      const validators = [];
+      if (field.required) {
+        validators.push(Validators.required);
+      }
+
+      let defaultValue = field.default;
+      if (record && record[field.name] !== undefined) {
+        defaultValue = record[field.name];
+      } else if (field.type === 'BooleanField') {
+        defaultValue = defaultValue || false;
+      }
+
+      formControls[field.name] = [defaultValue, validators];
+
+      // Load relation options if needed
+      if (this.isRelationField(field)) {
+        this.loadRelationOptions(field);
+      }
+    });
+
+    this.dynamicForm = this.fb.group(formControls);
+  }
+
+  loadRelationOptions(field: any): void {
+    // Check if this is a lookup field
+    if (field.related_model === 'lookup.lookup' && field.limit_choices_to) {
+      // Extract the parent lookup name from limit_choices_to
+      const limitChoicesMatch = field.limit_choices_to.match(/['"]parent_lookup__name['"]\s*:\s*['"]([^'"]+)['"]/);
+
+      if (limitChoicesMatch && limitChoicesMatch[1]) {
+        const parentLookupName = limitChoicesMatch[1];
+
+        // Call the lookup API
+        this.apiService.executeApiCall(`/lookups/?name=${encodeURIComponent(parentLookupName)}`, 'GET').subscribe({
+          next: (response) => {
+            // Handle the response - assuming it returns an array of lookup items
+            if (response && Array.isArray(response)) {
+              this.relationOptions[field.name] = response.map((item: any) => ({
+                id: item.id || item.pk,
+                display: item.name || item.label || item.display_name || 'Unknown'
+              }));
+            } else if (response && response.results) {
+              // Handle paginated response
+              this.relationOptions[field.name] = response.results.map((item: any) => ({
+                id: item.id || item.pk,
+                display: item.name || item.label || item.display_name || 'Unknown'
+              }));
+            } else {
+              this.relationOptions[field.name] = [];
+            }
+          },
+          error: (error) => {
+            console.error(`Error loading lookup options for ${field.name}:`, error);
+            this.relationOptions[field.name] = [];
+            this.snackBar.open(`Failed to load options for ${this.formatColumnName(field.name)}`, 'Close', { duration: 3000 });
+          }
+        });
+      }
+    } else if (field.related_model) {
+      // For other related models, try to load from their respective endpoints
+      const modelParts = field.related_model.split('.');
+      const modelName = modelParts[modelParts.length - 1];
+
+      // Try to load from a standard endpoint pattern
+      this.apiService.executeApiCall(`/${modelName}/`, 'GET').subscribe({
+        next: (response) => {
+          if (response && Array.isArray(response)) {
+            this.relationOptions[field.name] = response.map((item: any) => ({
+              id: item.id || item.pk,
+              display: item.name || item.username || item.title || `${modelName} ${item.id || item.pk}`
+            }));
+          } else if (response && response.results) {
+            this.relationOptions[field.name] = response.results.map((item: any) => ({
+              id: item.id || item.pk,
+              display: item.name || item.username || item.title || `${modelName} ${item.id || item.pk}`
+            }));
+          } else {
+            this.relationOptions[field.name] = [];
+          }
+        },
+        error: (error) => {
+          console.error(`Error loading options for ${field.name}:`, error);
+          this.relationOptions[field.name] = [];
+        }
+      });
+    }
+  }
+
+  getFormFields(resource: any): any[] {
+    return resource.fields.filter((f: any) => !f.read_only);
+  }
+
+  getDetailFields(resource: any): any[] {
+    return resource.fields;
+  }
+
+  submitForm(resource: any): void {
+    if (!this.dynamicForm.valid) {
+      Object.keys(this.dynamicForm.controls).forEach(key => {
+        this.dynamicForm.get(key)?.markAsTouched();
+      });
+      return;
+    }
+
+    this.submitting = true;
+    const formData = this.dynamicForm.value;
+
+    let path: string;
+    let method: string;
+
+    if (this.editingRecord) {
+      // Update existing record
+      path = this.cleanPath(resource.detailEndpoint.path, this.editingRecord.id || this.editingRecord.pk);
+      method = 'PUT';
+    } else {
+      // Create new record
+      path = this.cleanPath(resource.listEndpoint.path);
+      method = 'POST';
+    }
+
+    this.apiService.executeApiCall(path, method, formData).subscribe({
+      next: (response) => {
+        this.submitting = false;
+        this.showForm = false;
+        this.snackBar.open(
+          `${resource.name} ${this.editingRecord ? 'updated' : 'created'} successfully`,
+          'Close',
+          { duration: 3000 }
+        );
+        this.loadResourceData(resource);
+      },
+      error: (error) => {
+        this.submitting = false;
+        console.error('Error submitting form:', error);
+        this.snackBar.open(
+          `Failed to ${this.editingRecord ? 'update' : 'create'} ${resource.name}`,
+          'Close',
+          { duration: 3000 }
+        );
+      }
+    });
+  }
+
+  closeForm(): void {
+    this.showForm = false;
+    this.selectedResource = null;
+    this.editingRecord = null;
+  }
+
+  closeDetail(): void {
+    this.showDetail = false;
+    this.selectedResource = null;
+    this.detailRecord = null;
+  }
+
+  cleanPath(path: string, id?: any): string {
+    let cleanedPath = path.replace(/\/$/, ''); // Remove trailing slash
+
+    if (id) {
+      cleanedPath = cleanedPath.replace(/<pk>/, id);
+    }
+
+    cleanedPath = cleanedPath.replace(/<[^>]+>/g, ''); // Replace other path parameters with '1'
+    cleanedPath = cleanedPath.replace(/\.<format>/, ''); // Remove format parameter
+    cleanedPath = cleanedPath.replace('.', ''); // Remove format parameter
+    cleanedPath = cleanedPath.replace(/\?\?$/, ''); // Remove trailing ??
+
+    return cleanedPath;
+  }
+}
