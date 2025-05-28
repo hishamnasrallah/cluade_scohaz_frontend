@@ -1,484 +1,148 @@
-// application-detail.component.ts - FIXED VERSION
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+// application-detail.component.ts - FIXED
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { ApiService } from '../../services/api.service';
-import { ApiResponse, ApiEndpoint } from '../../models/api.models';
-import { NgForOf, NgIf, TitleCasePipe, CommonModule } from '@angular/common';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatTableModule } from '@angular/material/table';
-import { MatPaginatorModule } from '@angular/material/paginator';
-import { MatSortModule } from '@angular/material/sort';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
-import { MatSelectModule } from '@angular/material/select';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
+import { TitleCasePipe } from '@angular/common';
 
-import {
-  MatCard,
-  MatCardContent,
-  MatCardHeader,
-  MatCardTitle,
-  MatCardSubtitle,
-  MatCardActions
-} from '@angular/material/card';
-import {MatDatepicker, MatDatepickerInput, MatDatepickerToggle} from '@angular/material/datepicker';
+import { ApiService } from '../../services/api.service';
+import { DataFormatterService } from './services/data-formatter.service';
+import { FormBuilderService } from './services/form-builder.service';
 
-interface TableData {
-  [key: string]: any;
-}
+import { ResourceTableComponent } from './components/resource-table/resource-table.component';
+import { ResourceFormComponent } from './components/resource-form/resource-form.component';
+
+import { Resource, ResourceField, RelationOption, TableData, convertApiKeysToResourceFields } from './models/resource.model';
+import { ApiResponse, ApiEndpoint } from '../../models/api.models';
 
 @Component({
   selector: 'app-application-detail',
   standalone: true,
+  imports: [
+    CommonModule,
+    TitleCasePipe,
+    MatTabsModule,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    ResourceTableComponent,
+    ResourceFormComponent
+  ],
   template: `
     <div class="app-detail-container">
-      <div class="header">
-        <button mat-icon-button (click)="goBack()">
+      <!-- Header -->
+      <header class="app-header">
+        <button mat-icon-button (click)="goBack()" class="back-btn">
           <mat-icon>arrow_back</mat-icon>
         </button>
-        <h1>{{ appName | titlecase }} Application</h1>
-      </div>
+        <div class="header-content">
+          <h1 class="app-title">{{ appName | titlecase }}</h1>
+          <p class="app-subtitle">Application Management</p>
+        </div>
+      </header>
 
+      <!-- Loading State -->
       <div *ngIf="loading" class="loading-container">
-        <mat-spinner></mat-spinner>
-        <p>Loading application...</p>
+        <mat-spinner diameter="50"></mat-spinner>
+        <p class="loading-text">Loading application data...</p>
       </div>
 
-      <div *ngIf="!loading && resources.length > 0">
-        <mat-tab-group>
+      <!-- Main Content -->
+      <div *ngIf="!loading && resources.length > 0" class="main-content">
+        <mat-tab-group class="resource-tabs" animationDuration="300ms">
           <mat-tab *ngFor="let resource of resources" [label]="resource.name | titlecase">
-            <div class="resource-content">
-              <!-- List View for GET method on collection endpoints -->
-              <div *ngIf="resource.hasListView" class="list-view">
-                <mat-card>
-                  <mat-card-header>
-                    <mat-card-title>{{ resource.name | titlecase }} List</mat-card-title>
-                    <mat-card-subtitle>Manage {{ resource.name }} records</mat-card-subtitle>
-                  </mat-card-header>
-                  <mat-card-content>
-                    <div class="actions-bar">
-                      <button mat-raised-button color="primary"
-                              *ngIf="resource.canCreate"
-                              (click)="openCreateDialog(resource)">
-                        <mat-icon>add</mat-icon>
-                        Add New {{ resource.name | titlecase }}
-                      </button>
-                      <button mat-button (click)="refreshList(resource)">
-                        <mat-icon>refresh</mat-icon>
-                        Refresh
-                      </button>
-                    </div>
-
-                    <div *ngIf="loadingData[resource.name]" class="loading-data">
-                      <mat-spinner diameter="30"></mat-spinner>
-                      <span>Loading data...</span>
-                    </div>
-
-                    <div *ngIf="!loadingData[resource.name] && resourceData[resource.name] && resourceData[resource.name].length > 0">
-                      <table mat-table [dataSource]="resourceData[resource.name]" class="full-width-table">
-                        <!-- Dynamic columns based on keys -->
-                        <ng-container *ngFor="let col of getColumns(resource)" [matColumnDef]="col">
-                          <th mat-header-cell *matHeaderCellDef>{{ formatColumnName(col) }}</th>
-                          <td mat-cell *matCellDef="let element">
-                            <!-- File field - show as clickable link -->
-                            <span *ngIf="getFieldType(resource, col) === 'FileField' && element[col]" class="file-link">
-                              <a [href]="element[col]" target="_blank" rel="noopener noreferrer" class="file-url">
-                                <mat-icon class="file-icon">attachment</mat-icon>
-                                View File
-                              </a>
-                            </span>
-                            <span *ngIf="getFieldType(resource, col) === 'FileField' && !element[col]" class="no-file">
-                              No file
-                            </span>
-
-                            <!-- Regular fields -->
-                            <span *ngIf="getFieldType(resource, col) !== 'FileField' && !isRelation(resource, col)">
-                              {{ formatCellValue(element[col]) }}
-                            </span>
-
-                            <!-- Relation fields -->
-                            <span *ngIf="isRelation(resource, col)" class="relation-field">
-                              {{ element[col] || 'N/A' }}
-                            </span>
-                          </td>
-                        </ng-container>
-
-                        <!-- Actions column -->
-                        <ng-container matColumnDef="actions">
-                          <th mat-header-cell *matHeaderCellDef>Actions</th>
-                          <td mat-cell *matCellDef="let element">
-                            <button mat-icon-button
-                                    *ngIf="resource.canRead"
-                                    (click)="viewDetails(resource, element)"
-                                    matTooltip="View Details">
-                              <mat-icon>visibility</mat-icon>
-                            </button>
-                            <button mat-icon-button
-                                    *ngIf="resource.canUpdate"
-                                    (click)="editRecord(resource, element)"
-                                    matTooltip="Edit">
-                              <mat-icon>edit</mat-icon>
-                            </button>
-                            <button mat-icon-button
-                                    *ngIf="resource.canDelete"
-                                    (click)="deleteRecord(resource, element)"
-                                    matTooltip="Delete"
-                                    color="warn">
-                              <mat-icon>delete</mat-icon>
-                            </button>
-                          </td>
-                        </ng-container>
-
-                        <tr mat-header-row *matHeaderRowDef="getDisplayColumns(resource)"></tr>
-                        <tr mat-row *matRowDef="let row; columns: getDisplayColumns(resource);"></tr>
-                      </table>
-
-                      <mat-paginator [pageSizeOptions]="[5, 10, 20]"
-                                     showFirstLastButtons>
-                      </mat-paginator>
-                    </div>
-
-                    <div *ngIf="!loadingData[resource.name] && (!resourceData[resource.name] || resourceData[resource.name].length === 0)"
-                         class="no-data">
-                      <mat-icon>inbox</mat-icon>
-                      <p>No {{ resource.name }} records found</p>
-                      <button mat-raised-button color="primary"
-                              *ngIf="resource.canCreate"
-                              (click)="openCreateDialog(resource)">
-                        Create First {{ resource.name | titlecase }}
-                      </button>
-                    </div>
-                  </mat-card-content>
-                </mat-card>
-              </div>
-
-              <!-- Form View (shown in dialogs) -->
-              <div *ngIf="selectedResource === resource && showForm" class="form-overlay">
-                <mat-card class="form-card">
-                  <mat-card-header>
-                    <mat-card-title>
-                      {{ editingRecord ? 'Edit' : 'Create' }} {{ resource.name | titlecase }}
-                    </mat-card-title>
-                    <button mat-icon-button (click)="closeForm()" class="close-button">
-                      <mat-icon>close</mat-icon>
-                    </button>
-                  </mat-card-header>
-                  <mat-card-content>
-                    <form [formGroup]="dynamicForm" (ngSubmit)="submitForm(resource)">
-                      <div class="form-fields">
-                        <div *ngFor="let field of getFormFields(resource)" class="form-field-container">
-
-                          <!-- Debug info - remove this after testing -->
-                          <div class="debug-info" style="font-size: 10px; color: #666; margin-bottom: 4px;">
-                            Field: {{ field?.name || 'NO NAME' }} | Type: {{ field?.type || 'NO TYPE' }} | Required: {{ field?.required || false }}
-                          </div>
-
-                          <!-- Skip fields without name or type -->
-                          <div *ngIf="!field || !field.name || !field.type" class="error-field">
-                            <span style="color: red; font-size: 12px;">Invalid field data</span>
-                          </div>
-
-                          <!-- Boolean checkbox - handle separately -->
-                          <div *ngIf="field && field.name && field.type === 'BooleanField'" class="checkbox-field">
-                            <mat-checkbox [formControlName]="field.name">
-                              {{ formatColumnName(field.name) }} {{ field.help_text ? '(' + field.help_text + ')' : '' }}
-                            </mat-checkbox>
-                            <mat-error *ngIf="dynamicForm.get(field.name)?.hasError('required')">
-                              {{ formatColumnName(field.name) }} is required
-                            </mat-error>
-                          </div>
-
-                          <!-- File field - handle as URL with preview icon -->
-                          <mat-form-field *ngIf="field && field.name && field.type === 'FileField'"
-                                          appearance="fill"
-                                          [class.field-has-error]="dynamicForm.get(field.name)?.invalid && dynamicForm.get(field.name)?.touched">
-                            <mat-label>{{ formatColumnName(field.name) }} URL</mat-label>
-                            <input matInput
-                                   type="url"
-                                   [formControlName]="field.name"
-                                   [required]="field.required"
-                                   [placeholder]="'Enter ' + formatColumnName(field.name) + ' URL'">
-
-                            <!-- Preview button -->
-                            <button *ngIf="dynamicForm.get(field.name)?.value"
-                                    matSuffix
-                                    mat-icon-button
-                                    type="button"
-                                    (click)="previewFile(dynamicForm.get(field.name)?.value)"
-                                    matTooltip="Preview file in new tab">
-                              <mat-icon>visibility</mat-icon>
-                            </button>
-
-                            <mat-error *ngIf="dynamicForm.get(field.name)?.hasError('required')">
-                              {{ formatColumnName(field.name) }} is required
-                            </mat-error>
-                            <mat-error *ngFor="let error of getFieldErrors(field.name)">
-                              {{ error }}
-                            </mat-error>
-                          </mat-form-field>
-
-                          <!-- File field - handle as URL with preview icon -->
-                          <mat-form-field *ngIf="field && field.name && field.type === 'FileField'"
-                                          appearance="fill"
-                                          [class.field-has-error]="dynamicForm.get(field.name)?.invalid && dynamicForm.get(field.name)?.touched">
-                            <mat-label>{{ formatColumnName(field.name) }} URL</mat-label>
-                            <input matInput
-                                   type="url"
-                                   [formControlName]="field.name"
-                                   [required]="field.required"
-                                   [placeholder]="'Enter ' + formatColumnName(field.name) + ' URL'">
-
-                            <!-- Preview button -->
-                            <button *ngIf="dynamicForm.get(field.name)?.value"
-                                    matSuffix
-                                    mat-icon-button
-                                    type="button"
-                                    (click)="previewFile(dynamicForm.get(field.name)?.value)"
-                                    matTooltip="Preview file in new tab">
-                              <mat-icon>visibility</mat-icon>
-                            </button>
-
-                            <mat-error *ngIf="dynamicForm.get(field.name)?.hasError('required')">
-                              {{ formatColumnName(field.name) }} is required
-                            </mat-error>
-                            <mat-error *ngFor="let error of getFieldErrors(field.name)">
-                              {{ error }}
-                            </mat-error>
-                          </mat-form-field>
-
-                          <!-- All other fields use mat-form-field -->
-                          <mat-form-field *ngIf="field && field.name && field.type && field.type !== 'BooleanField' && field.type !== 'FileField'"
-                                          appearance="fill"
-                                          [class.field-has-error]="dynamicForm.get(field.name)?.invalid && dynamicForm.get(field.name)?.touched">
-                            <mat-label>{{ formatColumnName(field.name) }}</mat-label>
-
-                            <!-- Text fields (CharField, TextField, EmailField, URLField) -->
-                            <input *ngIf="isTextInput(field)"
-                                   matInput
-                                   [type]="getInputType(field.type)"
-                                   [formControlName]="field.name"
-                                   [required]="field.required"
-                                   [placeholder]="'Enter ' + formatColumnName(field.name)">
-
-                            <!-- Number fields (IntegerField, BigIntegerField, DecimalField, FloatField) -->
-                            <input *ngIf="isNumberInput(field)"
-                                   matInput
-                                   type="number"
-                                   [step]="getNumberStep(field.type)"
-                                   [formControlName]="field.name"
-                                   [required]="field.required"
-                                   [placeholder]="'Enter ' + formatColumnName(field.name)">
-
-                            <!-- DateField -->
-                            <ng-container *ngIf="field.type === 'DateField'">
-                              <input matInput
-                                     [matDatepicker]="picker"
-                                     [formControlName]="field.name"
-                                     [required]="field.required"
-                                     [placeholder]="'Select ' + formatColumnName(field.name)">
-                              <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-                              <mat-datepicker #picker></mat-datepicker>
-                            </ng-container>
-
-                            <!-- DateTimeField -->
-                            <input *ngIf="field.type === 'DateTimeField'"
-                                   matInput
-                                   type="datetime-local"
-                                   [formControlName]="field.name"
-                                   [required]="field.required"
-                                   [placeholder]="'Select ' + formatColumnName(field.name)">
-
-                            <!-- TimeField -->
-                            <input *ngIf="field.type === 'TimeField'"
-                                   matInput
-                                   type="time"
-                                   [formControlName]="field.name"
-                                   [required]="field.required"
-                                   [placeholder]="'Select ' + formatColumnName(field.name)">
-
-                            <!-- Select for choices -->
-                            <mat-select *ngIf="hasChoices(field)"
-                                        [formControlName]="field.name"
-                                        [required]="field.required">
-                              <mat-option [value]="null">-- Select {{ formatColumnName(field.name) }} --</mat-option>
-                              <mat-option *ngFor="let choice of field.choices" [value]="choice.value">
-                                {{ choice.label }}
-                              </mat-option>
-                            </mat-select>
-
-                            <!-- Relation fields -->
-                            <mat-select *ngIf="isRelationField(field)"
-                                        [formControlName]="field.name"
-                                        [required]="field.required">
-                              <mat-option [value]="null">-- Select {{ formatColumnName(field.name) }} --</mat-option>
-                              <mat-option *ngFor="let option of relationOptions[field.name]" [value]="option.id">
-                                {{ option.display }}
-                              </mat-option>
-                            </mat-select>
-
-                            <!-- Select for choices -->
-                            <mat-select *ngIf="hasChoices(field)"
-                                        [formControlName]="field.name"
-                                        [required]="field.required">
-                              <mat-option [value]="null">-- Select {{ formatColumnName(field.name) }} --</mat-option>
-                              <mat-option *ngFor="let choice of field.choices" [value]="choice.value">
-                                {{ choice.label }}
-                              </mat-option>
-                            </mat-select>
-
-                            <!-- Relation fields -->
-                            <mat-select *ngIf="isRelationField(field)"
-                                        [formControlName]="field.name"
-                                        [required]="field.required">
-                              <mat-option [value]="null">-- Select {{ formatColumnName(field.name) }} --</mat-option>
-                              <mat-option *ngFor="let option of relationOptions[field.name]" [value]="option.id">
-                                {{ option.display }}
-                              </mat-option>
-                            </mat-select>
-
-                            <!-- Fallback for any unhandled field types -->
-                            <input *ngIf="isUnhandledField(field)"
-                                   matInput
-                                   type="text"
-                                   [formControlName]="field.name"
-                                   [required]="field.required"
-                                   [placeholder]="'Enter ' + formatColumnName(field.name) + ' (' + field.type + ')'">
-
-                            <mat-error *ngIf="dynamicForm.get(field.name)?.hasError('required')">
-                              {{ formatColumnName(field.name) }} is required
-                            </mat-error>
-                            <mat-error *ngFor="let error of getFieldErrors(field.name)">
-                              {{ error }}
-                            </mat-error>
-                          </mat-form-field>
-                        </div>
-                      </div>
-
-                      <mat-card-actions align="end">
-                        <button mat-button type="button" (click)="closeForm()">Cancel</button>
-                        <button mat-raised-button color="primary" type="submit"
-                                [disabled]="!dynamicForm.valid || submitting">
-                          <mat-spinner diameter="20" *ngIf="submitting"></mat-spinner>
-                          {{ submitting ? 'Saving...' : 'Save' }}
-                        </button>
-                      </mat-card-actions>
-                    </form>
-                  </mat-card-content>
-                </mat-card>
-              </div>
-
-              <!-- Detail View (shown in dialogs) -->
-              <div *ngIf="selectedResource === resource && showDetail" class="detail-overlay">
-                <mat-card class="detail-card">
-                  <mat-card-header>
-                    <mat-card-title>{{ resource.name | titlecase }} Details</mat-card-title>
-                    <button mat-icon-button (click)="closeDetail()" class="close-button">
-                      <mat-icon>close</mat-icon>
-                    </button>
-                  </mat-card-header>
-                  <mat-card-content>
-                    <div class="detail-fields" *ngIf="detailRecord">
-                      <div *ngFor="let field of getDetailFields(resource)" class="detail-field">
-                        <label>{{ formatColumnName(field.name) }}:</label>
-
-                        <!-- File field - show as clickable link -->
-                        <span *ngIf="field.type === 'FileField' && detailRecord[field.name]" class="file-link">
-                          <a [href]="detailRecord[field.name]" target="_blank" rel="noopener noreferrer" class="file-url">
-                            <mat-icon class="file-icon">attachment</mat-icon>
-                            View File
-                          </a>
-                        </span>
-                        <span *ngIf="field.type === 'FileField' && !detailRecord[field.name]" class="no-file">
-                          No file uploaded
-                        </span>
-
-                        <!-- Regular fields -->
-                        <span *ngIf="field.type !== 'FileField'">
-                          {{ formatCellValue(detailRecord[field.name]) || 'N/A' }}
-                        </span>
-                      </div>
-                    </div>
-                  </mat-card-content>
-                  <mat-card-actions align="end">
-                    <button mat-button (click)="closeDetail()">Close</button>
-                    <button mat-raised-button color="primary"
-                            *ngIf="resource.canUpdate"
-                            (click)="editFromDetail(resource, detailRecord)">
-                      <mat-icon>edit</mat-icon>
-                      Edit
-                    </button>
-                  </mat-card-actions>
-                </mat-card>
-              </div>
+            <div class="tab-content">
+              <app-resource-table
+                *ngIf="resource.hasListView"
+                [resource]="resource"
+                [data]="resourceData[resource.name] || []"
+                [loading]="loadingData[resource.name] || false"
+                (onCreate)="openCreateDialog(resource)"
+                (onRefresh)="refreshResourceData(resource)"
+                (onView)="viewResourceDetails(resource, $event)"
+                (onEdit)="editResource(resource, $event)"
+                (onDelete)="deleteResource(resource, $event)">
+              </app-resource-table>
             </div>
           </mat-tab>
         </mat-tab-group>
       </div>
 
-      <div *ngIf="!loading && resources.length === 0" class="no-data">
-        <p>No resources found for this application.</p>
-        <button mat-raised-button color="primary" (click)="goBack()">
-          Go Back
+      <!-- Empty State -->
+      <div *ngIf="!loading && resources.length === 0" class="empty-state">
+        <mat-icon class="empty-icon">folder_open</mat-icon>
+        <h2 class="empty-title">No Resources Found</h2>
+        <p class="empty-subtitle">This application doesn't have any accessible resources.</p>
+        <button mat-raised-button color="primary" (click)="goBack()" class="back-to-dashboard">
+          <mat-icon>dashboard</mat-icon>
+          Back to Dashboard
         </button>
       </div>
+
+      <!-- Form Modal -->
+      <app-resource-form
+        *ngIf="showForm"
+        [resource]="selectedResource!"
+        [editingRecord]="editingRecord"
+        [submitting]="submitting"
+        [relationOptions]="relationOptions"
+        [validationErrors]="formValidationErrors"
+        [showDebug]="false"
+        (onSubmit)="handleFormSubmit($event)"
+        (onCancel)="closeForm()">
+      </app-resource-form>
     </div>
   `,
-  imports: [
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    TitleCasePipe,
-    NgForOf,
-    NgIf,
-    MatIconModule,
-    MatProgressSpinnerModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatTabsModule,
-    MatTableModule,
-    MatPaginatorModule,
-    MatSortModule,
-    MatDialogModule,
-    MatSelectModule,
-    MatCheckboxModule,
-    MatTooltipModule,
-    MatCard,
-    MatCardHeader,
-    MatCardTitle,
-    MatCardSubtitle,
-    MatCardContent,
-    MatCardActions,
-    MatDatepickerToggle,
-    MatDatepicker,
-    MatDatepickerInput,
-    MatDatepickerModule,
-    MatNativeDateModule
-  ],
   styles: [`
     .app-detail-container {
-      padding: 20px;
-      max-width: 1400px;
-      margin: 0 auto;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     }
 
-    .header {
+    .app-header {
+      background: white;
+      padding: 24px 32px;
       display: flex;
       align-items: center;
-      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      border-bottom: 1px solid #e0e0e0;
     }
 
-    .header h1 {
-      margin-left: 16px;
+    .back-btn {
+      margin-right: 16px;
+      background: rgba(103, 126, 234, 0.1);
+      color: #677eea;
+      border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .back-btn:hover {
+      background: rgba(103, 126, 234, 0.2);
+      transform: translateX(-2px);
+    }
+
+    .header-content {
+      flex: 1;
+    }
+
+    .app-title {
+      font-size: 32px;
+      font-weight: 700;
+      margin: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .app-subtitle {
+      color: #6c757d;
+      margin: 4px 0 0 0;
+      font-size: 16px;
     }
 
     .loading-container {
@@ -486,200 +150,98 @@ interface TableData {
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 300px;
+      min-height: 400px;
+      gap: 24px;
     }
 
-    .resource-content {
-      padding: 20px 0;
-      position: relative;
+    .loading-text {
+      color: #6c757d;
+      font-size: 18px;
+      margin: 0;
     }
 
-    .actions-bar {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 20px;
+    .main-content {
+      padding: 32px;
     }
 
-    .loading-data {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 20px;
-      justify-content: center;
+    .resource-tabs {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     }
 
-    .full-width-table {
-      width: 100%;
+    .tab-content {
+      padding: 0;
     }
 
-    .relation-field {
-      color: #666;
-      font-style: italic;
-    }
-
-    /* File link styling in table */
-    .file-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .file-url {
-      color: #1976d2;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 8px;
-      border-radius: 4px;
-      transition: background-color 0.2s;
-    }
-
-    .file-url:hover {
-      background-color: rgba(25, 118, 210, 0.1);
-      text-decoration: underline;
-    }
-
-    .file-icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
-    }
-
-    .no-file {
-      color: #999;
-      font-style: italic;
-    }
-
-    .no-data {
-      text-align: center;
-      padding: 40px;
-      color: #666;
-    }
-
-    .no-data mat-icon {
-      font-size: 48px;
-      width: 48px;
-      height: 48px;
-      color: #ccc;
-      margin-bottom: 16px;
-    }
-
-    .form-overlay, .detail-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-
-    .form-card, .detail-card {
-      width: 90%;
-      max-width: 600px;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-
-    .close-button {
-      position: absolute;
-      right: 8px;
-      top: 8px;
-    }
-
-    .form-fields {
+    .empty-state {
       display: flex;
       flex-direction: column;
-      gap: 16px;
-      padding: 20px 0;
+      align-items: center;
+      justify-content: center;
+      min-height: 500px;
+      padding: 40px;
+      text-align: center;
     }
 
-    .form-field-container {
-      width: 100%;
+    .empty-icon {
+      font-size: 96px;
+      width: 96px;
+      height: 96px;
+      color: #ced4da;
+      margin-bottom: 24px;
     }
 
-    .debug-info {
-      font-size: 10px;
-      color: #666;
-      margin-bottom: 4px;
-      padding: 2px 4px;
-      background-color: #f0f0f0;
-      border-radius: 2px;
+    .empty-title {
+      font-size: 28px;
+      font-weight: 600;
+      color: #495057;
+      margin: 0 0 12px 0;
     }
 
-    .error-field {
-      padding: 8px;
-      border: 1px solid #f44336;
-      border-radius: 4px;
-      background-color: #ffebee;
+    .empty-subtitle {
+      font-size: 16px;
+      color: #6c757d;
+      margin: 0 0 32px 0;
+      max-width: 400px;
     }
 
-    mat-form-field {
-      width: 100%;
+    .back-to-dashboard {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 16px 32px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 16px;
+      box-shadow: 0 4px 15px rgba(103, 126, 234, 0.4);
+      transition: all 0.3s ease;
     }
 
-    .checkbox-field {
-      margin: 16px 0;
-      width: 100%;
+    .back-to-dashboard:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(103, 126, 234, 0.6);
     }
 
-    .checkbox-field mat-checkbox {
-      width: 100%;
+    ::ng-deep .mat-mdc-tab-group {
+      --mat-tab-header-active-focus-label-text-color: #667eea;
+      --mat-tab-header-active-label-text-color: #667eea;
     }
 
-    .file-field {
-      margin: 16px 0;
-      width: 100%;
+    ::ng-deep .mat-mdc-tab-header {
+      background: #f8f9fa;
+      border-bottom: 1px solid #dee2e6;
     }
 
-    .file-label {
-      display: block;
-      font-size: 14px;
+    ::ng-deep .mat-mdc-tab {
+      min-width: 120px;
+      padding: 0 24px;
       font-weight: 500;
-      color: rgba(0, 0, 0, 0.6);
-      margin-bottom: 8px;
     }
 
-    .file-input {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 14px;
-    }
-
-    .file-input:focus {
-      outline: none;
-      border-color: #1976d2;
-      box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
-    }
-
-    /* File preview button styling */
-    .mat-mdc-form-field-icon-suffix .mat-mdc-icon-button {
-      width: 40px;
-      height: 40px;
-    }
-
-    .mat-mdc-form-field-icon-suffix .mat-mdc-icon-button mat-icon {
-      color: #1976d2;
-    }
-
-    .mat-mdc-form-field-icon-suffix .mat-mdc-icon-button:hover mat-icon {
-      color: #1565c0;
-    }
-
-    .checkbox-errors {
-      margin-top: 8px;
-    }
-
-    .error-message {
-      color: #f44336;
-      font-size: 12px;
-      margin-top: 4px;
+    ::ng-deep .mat-mdc-tab-body-wrapper {
+      background: white;
     }
 
     ::ng-deep .error-snackbar {
@@ -687,112 +249,43 @@ interface TableData {
       color: white !important;
     }
 
-    ::ng-deep .error-snackbar .mat-simple-snackbar-action {
+    ::ng-deep .error-snackbar .mat-mdc-snack-bar-action {
       color: white !important;
     }
 
-    .detail-fields {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      padding: 20px 0;
-    }
-
-    .detail-field {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .detail-field label {
-      font-weight: 500;
-      color: #666;
-      font-size: 12px;
-      text-transform: uppercase;
-    }
-
-    .detail-field span {
-      font-size: 16px;
-      color: #333;
-    }
-
-    mat-card-actions {
-      padding: 16px;
-      border-top: 1px solid #e0e0e0;
-    }
-
-    .mat-column-actions {
-      width: 120px;
-      text-align: center;
-    }
-
-    .mat-row:hover {
-      background-color: #f5f5f5;
-    }
-
-    .mat-mdc-form-field-error {
-      font-size: 12px;
-      margin-top: 4px;
-    }
-
-    .mat-form-field.mat-form-field-invalid .mat-form-field-label {
-      color: #f44336;
-    }
-
-    .field-has-error {
-      animation: shake 0.3s;
-    }
-
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-5px); }
-      75% { transform: translateX(5px); }
-    }
-
-    .method-info {
-      margin-top: 8px;
-      padding: 8px;
-      background: #f5f5f5;
-      border-radius: 4px;
-      font-size: 14px;
-      color: #666;
+    ::ng-deep .error-snackbar .mat-mdc-snack-bar-label {
+      color: white !important;
     }
   `]
 })
 export class ApplicationDetailComponent implements OnInit {
   appName: string = '';
-  endpoints: ApiEndpoint[] = [];
-  resources: any[] = [];
+  resources: Resource[] = [];
   loading = true;
   loadingData: { [key: string]: boolean } = {};
-  resourceData: { [key: string]: any[] } = {};
+  resourceData: { [key: string]: TableData[] } = {};
 
-  // Form related
+  // Form state
   showForm = false;
-  showDetail = false;
-  selectedResource: any = null;
+  selectedResource: Resource | null = null;
   editingRecord: any = null;
-  detailRecord: any = null;
-  dynamicForm!: FormGroup;
   submitting = false;
-  relationOptions: { [key: string]: any[] } = {};
+  relationOptions: { [key: string]: RelationOption[] } = {};
+  formValidationErrors: any = {};
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private apiService: ApiService,
     private snackBar: MatSnackBar,
-    private fb: FormBuilder,
-    private dialog: MatDialog,
-    private cdr: ChangeDetectorRef
-  ) {
-    this.dynamicForm = this.fb.group({});
-  }
+    private dataFormatter: DataFormatterService,
+    private formBuilder: FormBuilderService
+  ) {}
 
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       this.appName = params['appName'];
-      this.loadEndpoints();
+      this.loadApplicationData();
     });
   }
 
@@ -800,17 +293,16 @@ export class ApplicationDetailComponent implements OnInit {
     this.router.navigate(['/dashboard']);
   }
 
-  loadEndpoints(): void {
+  private loadApplicationData(): void {
     this.loading = true;
+
     this.apiService.getApplications().subscribe({
       next: (data) => {
-        console.log('Full API Response:', data); // Debug log
-        this.endpoints = data.applications?.applications?.[this.appName] || [];
-        console.log('Endpoints for', this.appName, ':', this.endpoints); // Debug log
-        this.processEndpoints();
+        const endpoints = data.applications?.applications?.[this.appName] || [];
+        this.resources = this.processEndpoints(endpoints);
         this.loading = false;
 
-        // Load initial data for each resource
+        // Load data for each resource
         this.resources.forEach(resource => {
           if (resource.hasListView) {
             this.loadResourceData(resource);
@@ -818,18 +310,17 @@ export class ApplicationDetailComponent implements OnInit {
         });
       },
       error: (error) => {
-        console.error('Error loading endpoints:', error);
+        console.error('Error loading application:', error);
         this.loading = false;
-        this.snackBar.open('Failed to load application', 'Close', { duration: 3000 });
+        this.snackBar.open('Failed to load application data', 'Close', { duration: 3000 });
       }
     });
   }
 
-  processEndpoints(): void {
-    const resourceMap = new Map<string, any>();
+  private processEndpoints(endpoints: ApiEndpoint[]): Resource[] {
+    const resourceMap = new Map<string, Resource>();
 
-    this.endpoints.forEach(endpoint => {
-      console.log('Processing endpoint:', endpoint); // Debug log
+    endpoints.forEach(endpoint => {
       const resourceName = endpoint.name.split('-')[0];
 
       if (!resourceMap.has(resourceName)) {
@@ -848,7 +339,7 @@ export class ApplicationDetailComponent implements OnInit {
         });
       }
 
-      const resource = resourceMap.get(resourceName);
+      const resource = resourceMap.get(resourceName)!;
       resource.endpoints.push(endpoint);
 
       if (endpoint.name.includes('-list')) {
@@ -856,8 +347,8 @@ export class ApplicationDetailComponent implements OnInit {
         resource.canCreate = endpoint.methods.includes('POST');
         resource.listEndpoint = endpoint;
         if (endpoint.keys && endpoint.keys.length > 0) {
-          resource.fields = endpoint.keys;
-          console.log(`Fields for ${resourceName}:`, resource.fields); // Debug log
+          // FIXED: Convert API keys to ResourceField[]
+          resource.fields = convertApiKeysToResourceFields(endpoint.keys);
         }
       }
 
@@ -868,17 +359,16 @@ export class ApplicationDetailComponent implements OnInit {
         resource.canDelete = endpoint.methods.includes('DELETE');
         resource.detailEndpoint = endpoint;
         if (endpoint.keys && endpoint.keys.length > 0 && resource.fields.length === 0) {
-          resource.fields = endpoint.keys;
-          console.log(`Fields for ${resourceName} (from detail):`, resource.fields); // Debug log
+          // FIXED: Convert API keys to ResourceField[]
+          resource.fields = convertApiKeysToResourceFields(endpoint.keys);
         }
       }
     });
 
-    this.resources = Array.from(resourceMap.values());
-    console.log('Processed resources:', this.resources); // Debug log
+    return Array.from(resourceMap.values());
   }
 
-  loadResourceData(resource: any): void {
+  private loadResourceData(resource: Resource): void {
     if (!resource.listEndpoint) return;
 
     this.loadingData[resource.name] = true;
@@ -886,13 +376,7 @@ export class ApplicationDetailComponent implements OnInit {
 
     this.apiService.executeApiCall(path, 'GET').subscribe({
       next: (response) => {
-        if (response.results) {
-          this.resourceData[resource.name] = response.results;
-        } else if (Array.isArray(response)) {
-          this.resourceData[resource.name] = response;
-        } else {
-          this.resourceData[resource.name] = [];
-        }
+        this.resourceData[resource.name] = response.results || response || [];
         this.loadingData[resource.name] = false;
       },
       error: (error) => {
@@ -904,238 +388,39 @@ export class ApplicationDetailComponent implements OnInit {
     });
   }
 
-  refreshList(resource: any): void {
+  refreshResourceData(resource: Resource): void {
     this.loadResourceData(resource);
   }
 
-  // FIXED: Get columns method with proper validation
-  getColumns(resource: any): string[] {
-    if (!resource.fields || resource.fields.length === 0) {
-      const data = this.resourceData[resource.name];
-      if (data && data.length > 0) {
-        return Object.keys(data[0]).filter(key => !key.startsWith('_') && key !== 'id');
-      }
-      return [];
-    }
-
-    // Return all field names that exist and are not null/undefined
-    return resource.fields
-      .filter((field: any) => field && field.name)
-      .map((field: any) => field.name);
-  }
-
-  getDisplayColumns(resource: any): string[] {
-    return [...this.getColumns(resource), 'actions'];
-  }
-
-  formatColumnName(name: string): string {
-    return name
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, l => l.toUpperCase());
-  }
-
-  // File preview functionality
-  previewFile(url: string): void {
-    if (url) {
-      window.open(url, '_blank');
-    }
-  }
-
-  // Date formatting utilities
-  formatDateForInput(date: any): string {
-    if (!date) return '';
-
-    try {
-      const d = new Date(date);
-      if (isNaN(d.getTime())) return '';
-
-      // Format as YYYY-MM-DD
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-
-      return `${year}-${month}-${day}`;
-    } catch (error) {
-      console.error('Error formatting date:', error);
-      return '';
-    }
-  }
-
-  formatDateTimeForInput(datetime: any): string {
-    if (!datetime) return '';
-
-    try {
-      const d = new Date(datetime);
-      if (isNaN(d.getTime())) return '';
-
-      // Format as YYYY-MM-DDTHH:mm (for datetime-local input)
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      const hours = String(d.getHours()).padStart(2, '0');
-      const minutes = String(d.getMinutes()).padStart(2, '0');
-
-      return `${year}-${month}-${day}T${hours}:${minutes}`;
-    } catch (error) {
-      console.error('Error formatting datetime:', error);
-      return '';
-    }
-  }
-
-  formatTimeForInput(time: any): string {
-    if (!time) return '';
-
-    try {
-      if (typeof time === 'string' && time.includes(':')) {
-        // If it's already in HH:mm format, return as is
-        return time.substring(0, 5); // Take only HH:mm part
-      }
-
-      const d = new Date(time);
-      if (isNaN(d.getTime())) return '';
-
-      // Format as HH:mm
-      const hours = String(d.getHours()).padStart(2, '0');
-      const minutes = String(d.getMinutes()).padStart(2, '0');
-
-      return `${hours}:${minutes}`;
-    } catch (error) {
-      console.error('Error formatting time:', error);
-      return '';
-    }
-  }
-
-  // FIXED: Format cell values properly
-  formatCellValue(value: any): string {
-    if (value === null || value === undefined) {
-      return 'N/A';
-    }
-    if (typeof value === 'boolean') {
-      return value ? 'Yes' : 'No';
-    }
-    if (typeof value === 'object') {
-      return JSON.stringify(value);
-    }
-
-    // Format dates for display
-    if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}/)) {
-      try {
-        const date = new Date(value);
-        if (!isNaN(date.getTime())) {
-          if (value.includes('T') || value.includes(' ')) {
-            // DateTime
-            return date.toLocaleString();
-          } else {
-            // Date only
-            return date.toLocaleDateString();
-          }
-        }
-      } catch (error) {
-        // If date parsing fails, return original value
-      }
-    }
-
-    return String(value);
-  }
-
-  getFieldType(resource: any, columnName: string): string | null {
-    const field = resource.fields?.find((f: any) => f.name === columnName);
-    return field ? field.type : null;
-  }
-
-  isRelation(resource: any, columnName: string): boolean {
-    const field = resource.fields?.find((f: any) => f.name === columnName);
-    return field && ['ForeignKey', 'OneToOneField', 'ManyToManyField'].includes(field.type);
-  }
-
-  isRelationField(field: any): boolean {
-    return ['ForeignKey', 'OneToOneField', 'ManyToManyField'].includes(field.type);
-  }
-
-  // FIXED: Input type checking methods
-  isTextInput(field: any): boolean {
-    return ['CharField', 'TextField', 'EmailField', 'URLField'].includes(field.type) &&
-      !this.hasChoices(field) &&
-      !this.isRelationField(field);
-  }
-
-  isNumberInput(field: any): boolean {
-    return ['IntegerField', 'BigIntegerField', 'DecimalField', 'FloatField'].includes(field.type);
-  }
-
-  hasChoices(field: any): boolean {
-    return field.choices && Array.isArray(field.choices) && field.choices.length > 0;
-  }
-
-  isUnhandledField(field: any): boolean {
-    // Check if this field type is not handled by any of the other conditions
-    const handledTypes = [
-      'CharField', 'TextField', 'EmailField', 'URLField',
-      'IntegerField', 'BigIntegerField', 'DecimalField', 'FloatField',
-      'DateField', 'DateTimeField', 'TimeField',
-      'BooleanField', 'FileField'
-    ];
-
-    return field &&
-      field.name &&
-      field.type &&
-      !handledTypes.includes(field.type) &&
-      !this.hasChoices(field) &&
-      !this.isRelationField(field);
-  }
-
-  getNumberStep(fieldType: string): string {
-    switch (fieldType) {
-      case 'DecimalField':
-      case 'FloatField':
-        return '0.01';
-      default:
-        return '1';
-    }
-  }
-
-  getInputType(type: string): string {
-    switch (type) {
-      case 'EmailField':
-        return 'email';
-      case 'URLField':
-        return 'url';
-      default:
-        return 'text';
-    }
-  }
-
-  openCreateDialog(resource: any): void {
+  openCreateDialog(resource: Resource): void {
     this.selectedResource = resource;
     this.editingRecord = null;
+    this.formValidationErrors = {}; // Clear any previous errors
     this.showForm = true;
-    this.buildForm(resource);
+    this.loadRelationOptionsForResource(resource);
   }
 
-  editRecord(resource: any, record: any): void {
+  editResource(resource: Resource, record: TableData): void {
     this.selectedResource = resource;
     this.editingRecord = record;
+    this.formValidationErrors = {}; // Clear any previous errors
     this.showForm = true;
-    this.buildForm(resource, record);
+    this.loadRelationOptionsForResource(resource);
   }
 
-  viewDetails(resource: any, record: any): void {
-    this.selectedResource = resource;
-    this.detailRecord = record;
-    this.showDetail = true;
+  viewResourceDetails(resource: Resource, record: TableData): void {
+    // TODO: Implement detail view component
+    this.snackBar.open('Detail view coming soon!', 'Close', { duration: 2000 });
   }
 
-  editFromDetail(resource: any, record: any): void {
-    this.showDetail = false;
-    this.editRecord(resource, record);
-  }
-
-  deleteRecord(resource: any, record: any): void {
+  deleteResource(resource: Resource, record: TableData): void {
     if (!confirm(`Are you sure you want to delete this ${resource.name}?`)) {
       return;
     }
 
-    const path = this.cleanPath(resource.detailEndpoint.path, record.id || record.pk);
+    // FIXED: Use bracket notation for dynamic properties
+    const recordId = record['id'] || record['pk'];
+    const path = this.cleanPath(resource.detailEndpoint.path, recordId);
 
     this.apiService.executeApiCall(path, 'DELETE').subscribe({
       next: () => {
@@ -1149,404 +434,119 @@ export class ApplicationDetailComponent implements OnInit {
     });
   }
 
-  // FIXED: Build form method with proper field validation and comprehensive type handling
-  buildForm(resource: any, record?: any): void {
-    const formControls: any = {};
-    const formFields = this.getFormFields(resource);
-
-    console.log('Building form for resource:', resource.name);
-    console.log('Form fields:', formFields);
-
-    formFields.forEach(field => {
-      // Skip invalid fields
-      if (!field || !field.name || !field.type) {
-        console.log('Skipping invalid field:', field);
-        return;
-      }
-
-      console.log(`Processing field: ${field.name} (${field.type})`);
-
-      const validators = [];
-      if (field.required) {
-        validators.push(Validators.required);
-      }
-
-      let defaultValue = this.getDefaultValue(field, record);
-
-      console.log(`Default value for ${field.name}:`, defaultValue);
-
-      formControls[field.name] = [defaultValue, validators];
-
-      // Load relation options if needed
-      if (this.isRelationField(field)) {
-        this.loadRelationOptions(field);
-      }
-    });
-
-    console.log('Form controls:', formControls);
-    this.dynamicForm = this.fb.group(formControls);
-    console.log('Dynamic form created:', this.dynamicForm);
-  }
-
-  private getDefaultValue(field: any, record?: any): any {
-    // If editing and record has value
-    if (record && record[field.name] !== undefined && record[field.name] !== null) {
-      let value = record[field.name];
-
-      // Handle different field types for editing
-      switch (field.type) {
-        case 'DateField':
-          return this.formatDateForInput(value);
-        case 'DateTimeField':
-          return this.formatDateTimeForInput(value);
-        case 'TimeField':
-          return this.formatTimeForInput(value);
-        case 'BooleanField':
-          return !!value;
-        case 'DecimalField':
-        case 'FloatField':
-          return value ? parseFloat(value) : null;
-        case 'IntegerField':
-        case 'BigIntegerField':
-          return value ? parseInt(value) : null;
-        default:
-          return value;
-      }
-    }
-
-    // Default values for new records
-    switch (field.type) {
-      case 'BooleanField':
-        return field.default !== null ? field.default : false;
-      case 'IntegerField':
-      case 'BigIntegerField':
-        return field.default !== null ? field.default : null;
-      case 'DecimalField':
-      case 'FloatField':
-        return field.default !== null ? field.default : null;
-      case 'DateField':
-      case 'DateTimeField':
-      case 'TimeField':
-        return field.default !== null ? field.default : null;
-      default:
-        return field.default !== null ? field.default : null;
-    }
-  }
-
-  loadRelationOptions(field: any): void {
-    // Check if this is a lookup field
-    if (field.related_model === 'lookup.lookup' && field.limit_choices_to) {
-      // Extract the parent lookup name from limit_choices_to
-      const limitChoicesMatch = field.limit_choices_to.match(/['"]parent_lookup__name['"]\s*:\s*['"]([^'"]+)['"]/);
-
-      if (limitChoicesMatch && limitChoicesMatch[1]) {
-        const parentLookupName = limitChoicesMatch[1];
-
-        // Call the lookup API
-        this.apiService.executeApiCall(`/lookups/?name=${encodeURIComponent(parentLookupName)}`, 'GET').subscribe({
-          next: (response) => {
-            // Handle the response - assuming it returns an array of lookup items
-            if (response && Array.isArray(response)) {
-              this.relationOptions[field.name] = response.map((item: any) => ({
-                id: item.id || item.pk,
-                display: item.name || item.label || item.display_name || 'Unknown'
-              }));
-            } else if (response && response.results) {
-              // Handle paginated response
-              this.relationOptions[field.name] = response.results.map((item: any) => ({
-                id: item.id || item.pk,
-                display: item.name || item.label || item.display_name || 'Unknown'
-              }));
-            } else {
-              this.relationOptions[field.name] = [];
-            }
-          },
-          error: (error) => {
-            console.error(`Error loading lookup options for ${field.name}:`, error);
-            this.relationOptions[field.name] = [];
-            this.snackBar.open(`Failed to load options for ${this.formatColumnName(field.name)}`, 'Close', { duration: 3000 });
-          }
-        });
-      }
-    } else if (field.related_model) {
-      // For other related models, try to load from their respective endpoints
-      const modelParts = field.related_model.split('.');
-      const modelName = modelParts[modelParts.length - 1];
-
-      // Try to load from a standard endpoint pattern
-      this.apiService.executeApiCall(`/${modelName}/`, 'GET').subscribe({
-        next: (response) => {
-          if (response && Array.isArray(response)) {
-            this.relationOptions[field.name] = response.map((item: any) => ({
-              id: item.id || item.pk,
-              display: item.name || item.username || item.title || `${modelName} ${item.id || item.pk}`
-            }));
-          } else if (response && response.results) {
-            this.relationOptions[field.name] = response.results.map((item: any) => ({
-              id: item.id || item.pk,
-              display: item.name || item.username || item.title || `${modelName} ${item.id || item.pk}`
-            }));
-          } else {
-            this.relationOptions[field.name] = [];
-          }
-        },
-        error: (error) => {
-          console.error(`Error loading options for ${field.name}:`, error);
-          this.relationOptions[field.name] = [];
-        }
-      });
-    }
-  }
-
-  // FIXED: Get form fields method - return all fields that should be in forms
-  getFormFields(resource: any): any[] {
-    if (!resource.fields) {
-      console.log('No fields found for resource:', resource.name);
-      return [];
-    }
-
-    console.log('All fields for resource', resource.name, ':', resource.fields);
-
-    // Filter out read-only fields and ensure field exists and has a name
-    const formFields = resource.fields.filter((field: any) => {
-      if (!field) {
-        console.log('Skipping null/undefined field');
-        return false;
-      }
-      if (!field.name) {
-        console.log('Skipping field without name:', field);
-        return false;
-      }
-      if (!field.type) {
-        console.log('Skipping field without type:', field.name);
-        return false;
-      }
-      if (field.read_only) {
-        console.log('Skipping read-only field:', field.name);
-        return false;
-      }
-      console.log('Including field in form:', field.name, '(', field.type, ')');
-      return true;
-    });
-
-    console.log('Final form fields for', resource.name, ':', formFields);
-    return formFields;
-  }
-
-  // FIXED: Get detail fields method - return all fields for detail view
-  getDetailFields(resource: any): any[] {
-    if (!resource.fields) {
-      return [];
-    }
-
-    // Return all fields that exist and have a name
-    return resource.fields.filter((field: any) =>
-      field &&
-      field.name
-    );
-  }
-
-  submitForm(resource: any): void {
-    // First, check if the form is valid
-    if (!this.dynamicForm.valid) {
-      // Mark all controls as touched to show validation messages
-      Object.keys(this.dynamicForm.controls).forEach(key => {
-        this.dynamicForm.get(key)?.markAsTouched();
-      });
-      return;
-    }
-
+  handleFormSubmit(formData: any): void {
     this.submitting = true;
-    const formData = this.prepareFormData(resource);
+    const resource = this.selectedResource!;
+    const preparedData = this.dataFormatter.prepareFormData(formData, resource.fields);
 
     let path: string;
     let method: string;
 
-    // Determine if it's a create or update operation
     if (this.editingRecord) {
-      // Editing existing record
-      path = this.cleanPath(resource.detailEndpoint.path, this.editingRecord.id || this.editingRecord.pk);
+      // FIXED: Use bracket notation for dynamic properties
+      const recordId = this.editingRecord['id'] || this.editingRecord['pk'];
+      path = this.cleanPath(resource.detailEndpoint.path, recordId);
       method = 'PUT';
     } else {
-      // Creating new record
       path = this.cleanPath(resource.listEndpoint.path);
       method = 'POST';
     }
 
-    // Execute the API call using ApiService
-    this.apiService.executeApiCall(path, method, formData).subscribe({
-      next: (response) => {
+    this.apiService.executeApiCall(path, method, preparedData).subscribe({
+      next: () => {
         this.submitting = false;
         this.showForm = false;
-
         this.snackBar.open(
           `${resource.name} ${this.editingRecord ? 'updated' : 'created'} successfully`,
           'Close',
           { duration: 3000 }
         );
-
-        this.loadResourceData(resource); // Refresh the list data
+        this.loadResourceData(resource);
       },
       error: (error) => {
         this.submitting = false;
+        console.error('Error submitting form:', error);
 
+        // Handle validation errors from backend
         if (error.status === 400 && error.error) {
-          const serverErrors = error.error;
-
-          // Assign backend validation errors to specific fields
-          for (const field in serverErrors) {
-            if (this.dynamicForm.get(field)) {
-              this.dynamicForm.get(field)?.setErrors({
-                serverError: serverErrors[field]
-              });
-            } else {
-              console.warn(`Form field '${field}' was not found in the form group.`);
-            }
-          }
-
-          this.snackBar.open(
-            'There were validation errors in the form. Please fix them and try again.',
-            'Close',
-            { duration: 4000, panelClass: 'error-snackbar' }
-          );
+          this.handleValidationErrors(error.error);
         } else {
-          // Handle unexpected errors
-          console.error('Unexpected error submitting form:', error);
-
+          // Handle other errors
           this.snackBar.open(
             `Failed to ${this.editingRecord ? 'update' : 'create'} ${resource.name}`,
             'Close',
-            { duration: 3000, panelClass: 'error-snackbar' }
+            { duration: 3000 }
           );
         }
       }
     });
   }
 
-  private prepareFormData(resource: any): any {
-    const formValue = this.dynamicForm.value;
-    const preparedData: any = {};
+  private handleValidationErrors(errors: any): void {
+    const errorMessage = this.parseValidationErrors(errors);
 
-    // Process each field to ensure proper formatting
-    resource.fields.forEach((field: any) => {
-      if (!field || !field.name || field.read_only) return;
-
-      const value = formValue[field.name];
-
-      if (value === null || value === undefined || value === '') {
-        preparedData[field.name] = null;
-        return;
+    // Show detailed error in snackbar
+    this.snackBar.open(
+      `Validation failed: ${errorMessage}`,
+      'Close',
+      {
+        duration: 5000,
+        panelClass: ['error-snackbar']
       }
+    );
 
-      switch (field.type) {
-        case 'DateField':
-          // Ensure date is in YYYY-MM-DD format
-          if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}$/)) {
-            preparedData[field.name] = value;
-          } else if (value instanceof Date) {
-            preparedData[field.name] = this.formatDateForInput(value);
-          } else {
-            preparedData[field.name] = null;
-          }
-          break;
+    // Send errors to form component for field-specific display
+    this.formValidationErrors = errors;
+  }
 
-        case 'DateTimeField':
-          // Convert datetime-local format to proper datetime string
-          if (typeof value === 'string' && value.includes('T')) {
-            // Convert YYYY-MM-DDTHH:mm to YYYY-MM-DD HH:mm:ss format for API
-            const date = new Date(value);
-            if (!isNaN(date.getTime())) {
-              preparedData[field.name] = date.toISOString().slice(0, 19).replace('T', ' ');
-            } else {
-              preparedData[field.name] = null;
-            }
-          } else {
-            preparedData[field.name] = null;
-          }
-          break;
+  private parseValidationErrors(errors: any): string {
+    const errorMessages: string[] = [];
 
-        case 'TimeField':
-          // Ensure time is in HH:mm:ss format
-          if (typeof value === 'string' && value.match(/^\d{2}:\d{2}$/)) {
-            preparedData[field.name] = value + ':00'; // Add seconds
-          } else {
-            preparedData[field.name] = value;
-          }
-          break;
-
-        case 'IntegerField':
-        case 'BigIntegerField':
-          preparedData[field.name] = value ? parseInt(value) : null;
-          break;
-
-        case 'DecimalField':
-        case 'FloatField':
-          preparedData[field.name] = value ? parseFloat(value) : null;
-          break;
-
-        case 'BooleanField':
-          preparedData[field.name] = !!value;
-          break;
-
-        default:
-          preparedData[field.name] = value;
-          break;
+    for (const field in errors) {
+      if (errors[field]) {
+        const fieldLabel = this.formatFieldName(field);
+        if (Array.isArray(errors[field])) {
+          errorMessages.push(`${fieldLabel}: ${errors[field].join(', ')}`);
+        } else {
+          errorMessages.push(`${fieldLabel}: ${errors[field]}`);
+        }
       }
-    });
+    }
 
-    console.log('Prepared form data:', preparedData);
-    return preparedData;
+    return errorMessages.join('; ') || 'Please check your input and try again.';
+  }
+
+  private formatFieldName(fieldName: string): string {
+    return fieldName
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, l => l.toUpperCase());
   }
 
   closeForm(): void {
     this.showForm = false;
     this.selectedResource = null;
     this.editingRecord = null;
+    this.formValidationErrors = {}; // Clear validation errors
   }
 
-  closeDetail(): void {
-    this.showDetail = false;
-    this.selectedResource = null;
-    this.detailRecord = null;
-  }
-
-  getFieldErrors(fieldName: string): string[] {
-    const control = this.dynamicForm.get(fieldName);
-    if (!control || !control.errors) {
-      return [];
-    }
-
-    const errors: string[] = [];
-
-    // Check for server errors
-    if (control.errors['serverError']) {
-      if (Array.isArray(control.errors['serverError'])) {
-        errors.push(...control.errors['serverError']);
-      } else {
-        errors.push(control.errors['serverError']);
+  private loadRelationOptionsForResource(resource: Resource): void {
+    resource.fields.forEach(field => {
+      if (field.relation_type) {
+        // TODO: Load relation options
+        this.relationOptions[field.name] = [];
       }
-    }
-
-    // Log for debugging
-    if (errors.length > 0) {
-      console.log(`Field ${fieldName} has errors:`, errors);
-    }
-
-    return errors;
+    });
   }
 
-  cleanPath(path: string, id?: any): string {
-    let cleanedPath = path.replace(/\/$/, ''); // Remove trailing slash
-
+  private cleanPath(path: string, id?: any): string {
+    let cleanedPath = path.replace(/\/$/, '');
     if (id) {
       cleanedPath = cleanedPath.replace(/<pk>/, id);
     }
-
-    cleanedPath = cleanedPath.replace(/<[^>]+>/g, ''); // Replace other path parameters
-    cleanedPath = cleanedPath.replace(/\.<format>/, ''); // Remove format parameter
-    cleanedPath = cleanedPath.replace(/\./, ''); // Remove remaining dots
-    cleanedPath = cleanedPath.replace(/\?\?$/, ''); // Remove trailing ??
-
+    cleanedPath = cleanedPath.replace(/<[^>]+>/g, '');
+    cleanedPath = cleanedPath.replace(/\.<format>/, '');
+    cleanedPath = cleanedPath.replace(/\./, '');
+    cleanedPath = cleanedPath.replace(/\?\?$/, '');
     return cleanedPath;
   }
 }

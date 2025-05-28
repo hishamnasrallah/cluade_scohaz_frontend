@@ -1,0 +1,349 @@
+// application-detail.component.scss
+// Modern, beautiful styling for the application detail component
+
+:host {
+  display: block;
+  width: 100%;
+  min-height: 100vh;
+}
+
+// Color palette
+$primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+$success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+$background-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+
+$primary-color: #667eea;
+$secondary-color: #764ba2;
+$success-color: #28a745;
+$danger-color: #dc3545;
+$warning-color: #ffc107;
+$info-color: #17a2b8;
+
+$text-primary: #343a40;
+$text-secondary: #6c757d;
+$text-muted: #868e96;
+
+$border-radius: 12px;
+$border-radius-lg: 16px;
+$border-radius-sm: 8px;
+
+$shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+$shadow-md: 0 4px 20px rgba(0, 0, 0, 0.1);
+$shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.15);
+
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+$spacing-xxl: 48px;
+
+// Animations
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+// Main container
+.app-detail-container {
+  background: $background-gradient;
+  min-height: 100vh;
+  animation: fadeIn 0.6s ease-out;
+}
+
+// Header section
+.app-header {
+  background: white;
+  padding: $spacing-lg $spacing-xl;
+  display: flex;
+  align-items: center;
+  box-shadow: $shadow-sm;
+  border-bottom: 1px solid #e9ecef;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  .back-btn {
+    margin-right: $spacing-md;
+    background: rgba($primary-color, 0.1);
+    color: $primary-color;
+    border-radius: $border-radius;
+    transition: all 0.3s ease;
+    width: 48px;
+    height: 48px;
+
+    &:hover {
+      background: rgba($primary-color, 0.2);
+      transform: translateX(-2px);
+      box-shadow: 0 4px 12px rgba($primary-color, 0.3);
+    }
+
+    mat-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  .header-content {
+    flex: 1;
+  }
+
+  .app-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+    background: $primary-gradient;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+  }
+
+  .app-subtitle {
+    color: $text-secondary;
+    margin: 4px 0 0 0;
+    font-size: 1rem;
+    font-weight: 400;
+  }
+}
+
+// Loading states
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: $spacing-lg;
+  animation: fadeIn 0.5s ease-out;
+
+  .loading-text {
+    color: $text-secondary;
+    font-size: 1.125rem;
+    margin: 0;
+    animation: pulse 2s infinite;
+  }
+
+  mat-spinner {
+    ::ng-deep .mat-mdc-progress-spinner circle {
+      stroke: $primary-color;
+    }
+  }
+}
+
+// Main content
+.main-content {
+  padding: $spacing-xl;
+  animation: slideIn 0.5s ease-out 0.2s both;
+}
+
+// Resource tabs
+.resource-tabs {
+  background: white;
+  border-radius: $border-radius-lg;
+  overflow: hidden;
+  box-shadow: $shadow-md;
+
+  .tab-content {
+    padding: 0;
+  }
+}
+
+// Empty state
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 500px;
+  padding: $spacing-xxl;
+  text-align: center;
+  animation: fadeIn 0.6s ease-out;
+
+  .empty-icon {
+    font-size: 6rem;
+    width: 6rem;
+    height: 6rem;
+    color: #ced4da;
+    margin-bottom: $spacing-lg;
+    opacity: 0.7;
+  }
+
+  .empty-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: $text-primary;
+    margin: 0 0 $spacing-sm 0;
+  }
+
+  .empty-subtitle {
+    font-size: 1rem;
+    color: $text-secondary;
+    margin: 0 0 $spacing-xl 0;
+    max-width: 400px;
+    line-height: 1.5;
+  }
+
+  .back-to-dashboard {
+    background: $primary-gradient;
+    color: white;
+    border: none;
+    padding: $spacing-md $spacing-xl;
+    border-radius: $border-radius;
+    font-weight: 600;
+    font-size: 1rem;
+    box-shadow: 0 4px 15px rgba($primary-color, 0.4);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba($primary-color, 0.6);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+}
+
+// Tab customization
+::ng-deep .mat-mdc-tab-group {
+  --mat-tab-header-active-focus-label-text-color: #{$primary-color};
+  --mat-tab-header-active-label-text-color: #{$primary-color};
+  --mat-tab-header-active-focus-indicator-color: #{$primary-color};
+  --mat-tab-header-active-ripple-color: #{rgba($primary-color, 0.12)};
+
+  .mat-mdc-tab-header {
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+  }
+
+  .mat-mdc-tab {
+    min-width: 120px;
+    padding: 0 $spacing-lg;
+    font-weight: 500;
+    font-size: 0.9rem;
+    text-transform: capitalize;
+
+    &:hover {
+      background: rgba($primary-color, 0.05);
+    }
+  }
+
+  .mat-mdc-tab-body-wrapper {
+    background: white;
+  }
+
+  .mdc-tab-indicator__content--underline {
+    border-color: $primary-color;
+    border-width: 3px;
+    border-radius: 2px;
+  }
+}
+
+// Responsive design
+@media (max-width: 1200px) {
+  .main-content {
+    padding: $spacing-lg;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-header {
+    padding: $spacing-md $spacing-lg;
+
+    .app-title {
+      font-size: 1.5rem;
+    }
+
+    .back-btn {
+      width: 40px;
+      height: 40px;
+      margin-right: $spacing-sm;
+    }
+  }
+
+  .main-content {
+    padding: $spacing-md;
+  }
+
+  .empty-state {
+    padding: $spacing-lg;
+
+    .empty-icon {
+      font-size: 4rem;
+      width: 4rem;
+      height: 4rem;
+    }
+
+    .empty-title {
+      font-size: 1.5rem;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header {
+    padding: $spacing-sm $spacing-md;
+
+    .app-title {
+      font-size: 1.25rem;
+    }
+  }
+
+  .main-content {
+    padding: $spacing-sm;
+  }
+
+  .resource-tabs {
+    border-radius: $spacing-sm;
+  }
+}
+
+// Print styles
+@media print {
+  .app-header .back-btn,
+  .back-to-dashboard {
+    display: none;
+  }
+
+  .app-detail-container {
+    background: white;
+  }
+
+  .resource-tabs,
+  .main-content {
+    box-shadow: none;
+  }
+}
