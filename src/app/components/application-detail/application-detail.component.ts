@@ -1,10 +1,10 @@
 // application-detail.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../services/api.service';
 import { ApiResponse, ApiEndpoint } from '../../models/api.models';
-import { JsonPipe, NgForOf, NgIf, TitleCasePipe, CommonModule, DatePipe } from '@angular/common';
+import { NgForOf, NgIf, TitleCasePipe, CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatInputModule } from '@angular/material/input';
@@ -155,7 +155,9 @@ interface TableData {
                   <mat-card-content>
                     <form [formGroup]="dynamicForm" (ngSubmit)="submitForm(resource)">
                       <div class="form-fields">
-                        <mat-form-field *ngFor="let field of getFormFields(resource)" appearance="fill">
+                        <mat-form-field *ngFor="let field of getFormFields(resource)"
+                                        appearance="fill"
+                                        [class.field-has-error]="dynamicForm.get(field.name)?.invalid && dynamicForm.get(field.name)?.touched">
                           <mat-label>{{ formatColumnName(field.name) }}</mat-label>
 
                           <!-- Text input -->
@@ -196,6 +198,9 @@ interface TableData {
 
                           <mat-error *ngIf="dynamicForm.get(field.name)?.hasError('required')">
                             {{ formatColumnName(field.name) }} is required
+                          </mat-error>
+                          <mat-error *ngFor="let error of getFieldErrors(field.name)">
+                            {{ error }}
                           </mat-error>
                         </mat-form-field>
                       </div>
@@ -391,6 +396,25 @@ interface TableData {
       margin: 16px 0;
     }
 
+    .checkbox-errors {
+      margin-top: 8px;
+    }
+
+    .error-message {
+      color: #f44336;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    ::ng-deep .error-snackbar {
+      background-color: #f44336 !important;
+      color: white !important;
+    }
+
+    ::ng-deep .error-snackbar .mat-simple-snackbar-action {
+      color: white !important;
+    }
+
     .detail-fields {
       display: flex;
       flex-direction: column;
@@ -430,6 +454,25 @@ interface TableData {
       background-color: #f5f5f5;
     }
 
+    .mat-mdc-form-field-error {
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .mat-form-field.mat-form-field-invalid .mat-form-field-label {
+      color: #f44336;
+    }
+
+    .field-has-error {
+      animation: shake 0.3s;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+
     .method-info {
       margin-top: 8px;
       padding: 8px;
@@ -464,7 +507,8 @@ export class ApplicationDetailComponent implements OnInit {
     private apiService: ApiService,
     private snackBar: MatSnackBar,
     private fb: FormBuilder,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private cdr: ChangeDetectorRef
   ) {
     this.dynamicForm = this.fb.group({});
   }
@@ -762,7 +806,9 @@ export class ApplicationDetailComponent implements OnInit {
   }
 
   submitForm(resource: any): void {
+    // First, check if the form is valid
     if (!this.dynamicForm.valid) {
+      // Mark all controls as touched to show validation messages
       Object.keys(this.dynamicForm.controls).forEach(key => {
         this.dynamicForm.get(key)?.markAsTouched();
       });
@@ -775,35 +821,63 @@ export class ApplicationDetailComponent implements OnInit {
     let path: string;
     let method: string;
 
+    // Determine if it's a create or update operation
     if (this.editingRecord) {
-      // Update existing record
+      // Editing existing record
       path = this.cleanPath(resource.detailEndpoint.path, this.editingRecord.id || this.editingRecord.pk);
       method = 'PUT';
     } else {
-      // Create new record
+      // Creating new record
       path = this.cleanPath(resource.listEndpoint.path);
       method = 'POST';
     }
 
+    // Execute the API call using ApiService
     this.apiService.executeApiCall(path, method, formData).subscribe({
       next: (response) => {
         this.submitting = false;
         this.showForm = false;
+
         this.snackBar.open(
           `${resource.name} ${this.editingRecord ? 'updated' : 'created'} successfully`,
           'Close',
           { duration: 3000 }
         );
-        this.loadResourceData(resource);
+
+        this.loadResourceData(resource); // Refresh the list data
       },
       error: (error) => {
         this.submitting = false;
-        console.error('Error submitting form:', error);
-        this.snackBar.open(
-          `Failed to ${this.editingRecord ? 'update' : 'create'} ${resource.name}`,
-          'Close',
-          { duration: 3000 }
-        );
+
+        if (error.status === 400 && error.error) {
+          const serverErrors = error.error;
+
+          // Assign backend validation errors to specific fields
+          for (const field in serverErrors) {
+            if (this.dynamicForm.get(field)) {
+              this.dynamicForm.get(field)?.setErrors({
+                serverError: serverErrors[field]
+              });
+            } else {
+              console.warn(`Form field '${field}' was not found in the form group.`);
+            }
+          }
+
+          this.snackBar.open(
+            'There were validation errors in the form. Please fix them and try again.',
+            'Close',
+            { duration: 4000, panelClass: 'error-snackbar' }
+          );
+        } else {
+          // Handle unexpected errors
+          console.error('Unexpected error submitting form:', error);
+
+          this.snackBar.open(
+            `Failed to ${this.editingRecord ? 'update' : 'create'} ${resource.name}`,
+            'Close',
+            { duration: 3000, panelClass: 'error-snackbar' }
+          );
+        }
       }
     });
   }
@@ -820,6 +894,31 @@ export class ApplicationDetailComponent implements OnInit {
     this.detailRecord = null;
   }
 
+  getFieldErrors(fieldName: string): string[] {
+    const control = this.dynamicForm.get(fieldName);
+    if (!control || !control.errors) {
+      return [];
+    }
+
+    const errors: string[] = [];
+
+    // Check for server errors
+    if (control.errors['serverError']) {
+      if (Array.isArray(control.errors['serverError'])) {
+        errors.push(...control.errors['serverError']);
+      } else {
+        errors.push(control.errors['serverError']);
+      }
+    }
+
+    // Log for debugging
+    if (errors.length > 0) {
+      console.log(`Field ${fieldName} has errors:`, errors);
+    }
+
+    return errors;
+  }
+
   cleanPath(path: string, id?: any): string {
     let cleanedPath = path.replace(/\/$/, ''); // Remove trailing slash
 
@@ -829,7 +928,7 @@ export class ApplicationDetailComponent implements OnInit {
 
     cleanedPath = cleanedPath.replace(/<[^>]+>/g, ''); // Replace other path parameters with '1'
     cleanedPath = cleanedPath.replace(/\.<format>/, ''); // Remove format parameter
-    cleanedPath = cleanedPath.replace('.', ''); // Remove format parameter
+    cleanedPath = cleanedPath.replace(".", ''); // Remove format parameter
     cleanedPath = cleanedPath.replace(/\?\?$/, ''); // Remove trailing ??
 
     return cleanedPath;
