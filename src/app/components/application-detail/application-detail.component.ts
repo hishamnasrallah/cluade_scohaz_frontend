@@ -89,7 +89,23 @@ interface TableData {
                         <ng-container *ngFor="let col of getColumns(resource)" [matColumnDef]="col">
                           <th mat-header-cell *matHeaderCellDef>{{ formatColumnName(col) }}</th>
                           <td mat-cell *matCellDef="let element">
-                            <span *ngIf="!isRelation(resource, col)">{{ formatCellValue(element[col]) }}</span>
+                            <!-- File field - show as clickable link -->
+                            <span *ngIf="getFieldType(resource, col) === 'FileField' && element[col]" class="file-link">
+                              <a [href]="element[col]" target="_blank" rel="noopener noreferrer" class="file-url">
+                                <mat-icon class="file-icon">attachment</mat-icon>
+                                View File
+                              </a>
+                            </span>
+                            <span *ngIf="getFieldType(resource, col) === 'FileField' && !element[col]" class="no-file">
+                              No file
+                            </span>
+
+                            <!-- Regular fields -->
+                            <span *ngIf="getFieldType(resource, col) !== 'FileField' && !isRelation(resource, col)">
+                              {{ formatCellValue(element[col]) }}
+                            </span>
+
+                            <!-- Relation fields -->
                             <span *ngIf="isRelation(resource, col)" class="relation-field">
                               {{ element[col] || 'N/A' }}
                             </span>
@@ -181,17 +197,63 @@ interface TableData {
                             </mat-error>
                           </div>
 
-                          <!-- File field - handle separately (outside mat-form-field) -->
-                          <div *ngIf="field && field.name && field.type === 'FileField'" class="file-field">
-                            <label class="file-label">{{ formatColumnName(field.name) }}</label>
-                            <input type="file"
+                          <!-- File field - handle as URL with preview icon -->
+                          <mat-form-field *ngIf="field && field.name && field.type === 'FileField'"
+                                          appearance="fill"
+                                          [class.field-has-error]="dynamicForm.get(field.name)?.invalid && dynamicForm.get(field.name)?.touched">
+                            <mat-label>{{ formatColumnName(field.name) }} URL</mat-label>
+                            <input matInput
+                                   type="url"
                                    [formControlName]="field.name"
                                    [required]="field.required"
-                                   class="file-input">
+                                   [placeholder]="'Enter ' + formatColumnName(field.name) + ' URL'">
+
+                            <!-- Preview button -->
+                            <button *ngIf="dynamicForm.get(field.name)?.value"
+                                    matSuffix
+                                    mat-icon-button
+                                    type="button"
+                                    (click)="previewFile(dynamicForm.get(field.name)?.value)"
+                                    matTooltip="Preview file in new tab">
+                              <mat-icon>visibility</mat-icon>
+                            </button>
+
                             <mat-error *ngIf="dynamicForm.get(field.name)?.hasError('required')">
                               {{ formatColumnName(field.name) }} is required
                             </mat-error>
-                          </div>
+                            <mat-error *ngFor="let error of getFieldErrors(field.name)">
+                              {{ error }}
+                            </mat-error>
+                          </mat-form-field>
+
+                          <!-- File field - handle as URL with preview icon -->
+                          <mat-form-field *ngIf="field && field.name && field.type === 'FileField'"
+                                          appearance="fill"
+                                          [class.field-has-error]="dynamicForm.get(field.name)?.invalid && dynamicForm.get(field.name)?.touched">
+                            <mat-label>{{ formatColumnName(field.name) }} URL</mat-label>
+                            <input matInput
+                                   type="url"
+                                   [formControlName]="field.name"
+                                   [required]="field.required"
+                                   [placeholder]="'Enter ' + formatColumnName(field.name) + ' URL'">
+
+                            <!-- Preview button -->
+                            <button *ngIf="dynamicForm.get(field.name)?.value"
+                                    matSuffix
+                                    mat-icon-button
+                                    type="button"
+                                    (click)="previewFile(dynamicForm.get(field.name)?.value)"
+                                    matTooltip="Preview file in new tab">
+                              <mat-icon>visibility</mat-icon>
+                            </button>
+
+                            <mat-error *ngIf="dynamicForm.get(field.name)?.hasError('required')">
+                              {{ formatColumnName(field.name) }} is required
+                            </mat-error>
+                            <mat-error *ngFor="let error of getFieldErrors(field.name)">
+                              {{ error }}
+                            </mat-error>
+                          </mat-form-field>
 
                           <!-- All other fields use mat-form-field -->
                           <mat-form-field *ngIf="field && field.name && field.type && field.type !== 'BooleanField' && field.type !== 'FileField'"
@@ -263,6 +325,26 @@ interface TableData {
                               </mat-option>
                             </mat-select>
 
+                            <!-- Select for choices -->
+                            <mat-select *ngIf="hasChoices(field)"
+                                        [formControlName]="field.name"
+                                        [required]="field.required">
+                              <mat-option [value]="null">-- Select {{ formatColumnName(field.name) }} --</mat-option>
+                              <mat-option *ngFor="let choice of field.choices" [value]="choice.value">
+                                {{ choice.label }}
+                              </mat-option>
+                            </mat-select>
+
+                            <!-- Relation fields -->
+                            <mat-select *ngIf="isRelationField(field)"
+                                        [formControlName]="field.name"
+                                        [required]="field.required">
+                              <mat-option [value]="null">-- Select {{ formatColumnName(field.name) }} --</mat-option>
+                              <mat-option *ngFor="let option of relationOptions[field.name]" [value]="option.id">
+                                {{ option.display }}
+                              </mat-option>
+                            </mat-select>
+
                             <!-- Fallback for any unhandled field types -->
                             <input *ngIf="isUnhandledField(field)"
                                    matInput
@@ -307,7 +389,22 @@ interface TableData {
                     <div class="detail-fields" *ngIf="detailRecord">
                       <div *ngFor="let field of getDetailFields(resource)" class="detail-field">
                         <label>{{ formatColumnName(field.name) }}:</label>
-                        <span>{{ formatCellValue(detailRecord[field.name]) || 'N/A' }}</span>
+
+                        <!-- File field - show as clickable link -->
+                        <span *ngIf="field.type === 'FileField' && detailRecord[field.name]" class="file-link">
+                          <a [href]="detailRecord[field.name]" target="_blank" rel="noopener noreferrer" class="file-url">
+                            <mat-icon class="file-icon">attachment</mat-icon>
+                            View File
+                          </a>
+                        </span>
+                        <span *ngIf="field.type === 'FileField' && !detailRecord[field.name]" class="no-file">
+                          No file uploaded
+                        </span>
+
+                        <!-- Regular fields -->
+                        <span *ngIf="field.type !== 'FileField'">
+                          {{ formatCellValue(detailRecord[field.name]) || 'N/A' }}
+                        </span>
                       </div>
                     </div>
                   </mat-card-content>
@@ -420,6 +517,40 @@ interface TableData {
       font-style: italic;
     }
 
+    /* File link styling in table */
+    .file-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .file-url {
+      color: #1976d2;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+
+    .file-url:hover {
+      background-color: rgba(25, 118, 210, 0.1);
+      text-decoration: underline;
+    }
+
+    .file-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+
+    .no-file {
+      color: #999;
+      font-style: italic;
+    }
+
     .no-data {
       text-align: center;
       padding: 40px;
@@ -525,6 +656,20 @@ interface TableData {
       outline: none;
       border-color: #1976d2;
       box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+    }
+
+    /* File preview button styling */
+    .mat-mdc-form-field-icon-suffix .mat-mdc-icon-button {
+      width: 40px;
+      height: 40px;
+    }
+
+    .mat-mdc-form-field-icon-suffix .mat-mdc-icon-button mat-icon {
+      color: #1976d2;
+    }
+
+    .mat-mdc-form-field-icon-suffix .mat-mdc-icon-button:hover mat-icon {
+      color: #1565c0;
     }
 
     .checkbox-errors {
@@ -789,6 +934,77 @@ export class ApplicationDetailComponent implements OnInit {
       .replace(/\b\w/g, l => l.toUpperCase());
   }
 
+  // File preview functionality
+  previewFile(url: string): void {
+    if (url) {
+      window.open(url, '_blank');
+    }
+  }
+
+  // Date formatting utilities
+  formatDateForInput(date: any): string {
+    if (!date) return '';
+
+    try {
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return '';
+
+      // Format as YYYY-MM-DD
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+
+      return `${year}-${month}-${day}`;
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return '';
+    }
+  }
+
+  formatDateTimeForInput(datetime: any): string {
+    if (!datetime) return '';
+
+    try {
+      const d = new Date(datetime);
+      if (isNaN(d.getTime())) return '';
+
+      // Format as YYYY-MM-DDTHH:mm (for datetime-local input)
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    } catch (error) {
+      console.error('Error formatting datetime:', error);
+      return '';
+    }
+  }
+
+  formatTimeForInput(time: any): string {
+    if (!time) return '';
+
+    try {
+      if (typeof time === 'string' && time.includes(':')) {
+        // If it's already in HH:mm format, return as is
+        return time.substring(0, 5); // Take only HH:mm part
+      }
+
+      const d = new Date(time);
+      if (isNaN(d.getTime())) return '';
+
+      // Format as HH:mm
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+
+      return `${hours}:${minutes}`;
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return '';
+    }
+  }
+
   // FIXED: Format cell values properly
   formatCellValue(value: any): string {
     if (value === null || value === undefined) {
@@ -800,7 +1016,31 @@ export class ApplicationDetailComponent implements OnInit {
     if (typeof value === 'object') {
       return JSON.stringify(value);
     }
+
+    // Format dates for display
+    if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}/)) {
+      try {
+        const date = new Date(value);
+        if (!isNaN(date.getTime())) {
+          if (value.includes('T') || value.includes(' ')) {
+            // DateTime
+            return date.toLocaleString();
+          } else {
+            // Date only
+            return date.toLocaleDateString();
+          }
+        }
+      } catch (error) {
+        // If date parsing fails, return original value
+      }
+    }
+
     return String(value);
+  }
+
+  getFieldType(resource: any, columnName: string): string | null {
+    const field = resource.fields?.find((f: any) => f.name === columnName);
+    return field ? field.type : null;
   }
 
   isRelation(resource: any, columnName: string): boolean {
@@ -956,16 +1196,19 @@ export class ApplicationDetailComponent implements OnInit {
       // Handle different field types for editing
       switch (field.type) {
         case 'DateField':
+          return this.formatDateForInput(value);
         case 'DateTimeField':
-          return value ? new Date(value) : null;
+          return this.formatDateTimeForInput(value);
+        case 'TimeField':
+          return this.formatTimeForInput(value);
         case 'BooleanField':
           return !!value;
         case 'DecimalField':
         case 'FloatField':
-          return value ? parseFloat(value) : 0;
+          return value ? parseFloat(value) : null;
         case 'IntegerField':
         case 'BigIntegerField':
-          return value ? parseInt(value) : 0;
+          return value ? parseInt(value) : null;
         default:
           return value;
       }
@@ -1114,7 +1357,7 @@ export class ApplicationDetailComponent implements OnInit {
     }
 
     this.submitting = true;
-    const formData = this.dynamicForm.value;
+    const formData = this.prepareFormData(resource);
 
     let path: string;
     let method: string;
@@ -1178,6 +1421,81 @@ export class ApplicationDetailComponent implements OnInit {
         }
       }
     });
+  }
+
+  private prepareFormData(resource: any): any {
+    const formValue = this.dynamicForm.value;
+    const preparedData: any = {};
+
+    // Process each field to ensure proper formatting
+    resource.fields.forEach((field: any) => {
+      if (!field || !field.name || field.read_only) return;
+
+      const value = formValue[field.name];
+
+      if (value === null || value === undefined || value === '') {
+        preparedData[field.name] = null;
+        return;
+      }
+
+      switch (field.type) {
+        case 'DateField':
+          // Ensure date is in YYYY-MM-DD format
+          if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            preparedData[field.name] = value;
+          } else if (value instanceof Date) {
+            preparedData[field.name] = this.formatDateForInput(value);
+          } else {
+            preparedData[field.name] = null;
+          }
+          break;
+
+        case 'DateTimeField':
+          // Convert datetime-local format to proper datetime string
+          if (typeof value === 'string' && value.includes('T')) {
+            // Convert YYYY-MM-DDTHH:mm to YYYY-MM-DD HH:mm:ss format for API
+            const date = new Date(value);
+            if (!isNaN(date.getTime())) {
+              preparedData[field.name] = date.toISOString().slice(0, 19).replace('T', ' ');
+            } else {
+              preparedData[field.name] = null;
+            }
+          } else {
+            preparedData[field.name] = null;
+          }
+          break;
+
+        case 'TimeField':
+          // Ensure time is in HH:mm:ss format
+          if (typeof value === 'string' && value.match(/^\d{2}:\d{2}$/)) {
+            preparedData[field.name] = value + ':00'; // Add seconds
+          } else {
+            preparedData[field.name] = value;
+          }
+          break;
+
+        case 'IntegerField':
+        case 'BigIntegerField':
+          preparedData[field.name] = value ? parseInt(value) : null;
+          break;
+
+        case 'DecimalField':
+        case 'FloatField':
+          preparedData[field.name] = value ? parseFloat(value) : null;
+          break;
+
+        case 'BooleanField':
+          preparedData[field.name] = !!value;
+          break;
+
+        default:
+          preparedData[field.name] = value;
+          break;
+      }
+    });
+
+    console.log('Prepared form data:', preparedData);
+    return preparedData;
   }
 
   closeForm(): void {
