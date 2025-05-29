@@ -1,7 +1,11 @@
-// components/resource-form/resource-form.component.ts - FIXED
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges } from '@angular/core';
+// components/enhanced-resource-form/enhanced-resource-form.component.ts
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormGroup, ReactiveFormsModule } from '@angular/forms';
+import {FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
+import {MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogModule} from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
+
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -12,6 +16,10 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatBadgeModule } from '@angular/material/badge';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import {
   MatCard,
   MatCardContent,
@@ -23,9 +31,22 @@ import {
 import { Resource, ResourceField, RelationOption } from '../../models/resource.model';
 import { FormBuilderService } from '../../services/form-builder.service';
 import { FieldTypeUtils } from '../../utils/field-type.utils';
+import { EditModeService, EditModeState } from '../../services/edit-mode.service';
+import {
+  ManyToManySelectorComponent,
+  ManyToManyData
+} from '../many-to-many-selector/many-to-many-selector.component';
+
+export interface FileFieldInfo {
+  hasExistingFile: boolean;
+  existingFileUrl?: string;
+  existingFileName?: string;
+  newFile?: File;
+  replaceFile: boolean;
+}
 
 @Component({
-  selector: 'app-resource-form',
+  selector: 'app-enhanced-resource-form',
   standalone: true,
   imports: [
     CommonModule,
@@ -44,85 +65,306 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
     MatDatepickerModule,
     MatNativeDateModule,
     MatTooltipModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatChipsModule,
+    MatBadgeModule,
+    MatExpansionModule,
+    MatSlideToggleModule,
+    FormsModule
   ],
   template: `
     <div class="form-overlay" (click)="onOverlayClick($event)">
-      <mat-card class="form-card" (click)="$event.stopPropagation()">
-        <mat-card-header class="form-header">
-          <mat-card-title class="form-title">
-            {{ isEdit ? 'Edit' : 'Create' }} {{ formatColumnName(resource.name) }}
-          </mat-card-title>
-          <button mat-icon-button (click)="onCancel.emit()" class="close-button">
-            <mat-icon>close</mat-icon>
-          </button>
-        </mat-card-header>
+      <mat-card class="enhanced-form-card" (click)="$event.stopPropagation()">
 
-        <mat-card-content class="form-content">
-          <!-- Validation Error Summary -->
-          <div *ngIf="hasValidationErrors()" class="error-summary">
-            <mat-icon class="error-icon">error</mat-icon>
-            <div class="error-content">
-              <h4>Please fix the following errors:</h4>
+        <!-- Enhanced Header -->
+        <mat-card-header class="enhanced-form-header" [class.edit-mode]="editState.isEditing">
+          <div class="header-content">
+            <div class="title-section">
+              <mat-card-title class="form-title">
+                <mat-icon class="mode-icon">{{ editState.isEditing ? 'edit' : 'add' }}</mat-icon>
+                {{ editState.isEditing ? 'Edit' : 'Create' }} {{ formatColumnName(resource.name) }}
+              </mat-card-title>
+
+              <!-- Edit Mode Indicators -->
+              <div class="edit-indicators" *ngIf="editState.isEditing">
+                <mat-chip class="edit-chip" *ngIf="!editState.hasChanges">
+                  <mat-icon>lock</mat-icon>
+                  No Changes
+                </mat-chip>
+                <mat-chip class="changes-chip" *ngIf="editState.hasChanges" [matBadge]="getChangedFieldsCount()" matBadgeColor="accent">
+                  <mat-icon>edit</mat-icon>
+                  {{ getChangedFieldsCount() }} Change{{ getChangedFieldsCount() !== 1 ? 's' : '' }}
+                </mat-chip>
+              </div>
+            </div>
+
+            <!-- Action Buttons in Header -->
+            <div class="header-actions">
+              <button mat-icon-button
+                      *ngIf="editState.hasChanges"
+                      (click)="resetAllChanges()"
+                      matTooltip="Reset all changes"
+                      class="reset-btn">
+                <mat-icon>undo</mat-icon>
+              </button>
+
+              <button mat-icon-button
+                      (click)="handleCancel()"
+                      matTooltip="Close"
+                      class="close-button">
+                <mat-icon>close</mat-icon>
+              </button>
             </div>
           </div>
+        </mat-card-header>
 
-          <form [formGroup]="form" (ngSubmit)="submitForm()" class="dynamic-form">
+        <!-- Loading State for Edit Mode -->
+        <div *ngIf="editState.loadingRecord" class="loading-edit-data">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Loading record data...</p>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="editState.error" class="edit-error">
+          <mat-icon class="error-icon">error</mat-icon>
+          <div class="error-content">
+            <h4>Error Loading Record</h4>
+            <p>{{ editState.error }}</p>
+            <button mat-button color="primary" (click)="retryLoadRecord()">
+              <mat-icon>refresh</mat-icon>
+              Retry
+            </button>
+          </div>
+        </div>
+
+        <mat-card-content class="enhanced-form-content" *ngIf="!editState.loadingRecord && !editState.error">
+
+          <!-- Changes Summary (Collapsible) -->
+          <mat-expansion-panel class="changes-summary" *ngIf="editState.hasChanges && editState.isEditing">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <mat-icon>compare_arrows</mat-icon>
+                Changes Summary ({{ getChangedFieldsCount() }})
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+
+            <div class="changes-list">
+              <div *ngFor="let change of getChangesSummary()" class="change-item">
+                <div class="change-field">{{ formatColumnName(change.field) }}</div>
+                <div class="change-values">
+                  <span class="old-value">{{ formatValue(change.oldValue) }}</span>
+                  <mat-icon class="arrow">arrow_forward</mat-icon>
+                  <span class="new-value">{{ formatValue(change.newValue) }}</span>
+                  <button mat-icon-button
+                          (click)="resetSingleField(change.field)"
+                          matTooltip="Reset this field"
+                          class="reset-field-btn">
+                    <mat-icon>undo</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </mat-expansion-panel>
+
+          <!-- Auto-save Toggle -->
+          <div class="form-options" *ngIf="editState.isEditing">
+            <mat-slide-toggle
+              [(ngModel)]="autoSaveEnabled"
+              (change)="onAutoSaveToggle($event)"
+              color="primary">
+              <span>Auto-save changes</span>
+              <mat-icon matTooltip="Automatically save changes as you type" class="info-icon">info</mat-icon>
+            </mat-slide-toggle>
+          </div>
+
+          <!-- Main Form -->
+          <form [formGroup]="form" (ngSubmit)="submitForm()" class="enhanced-dynamic-form">
             <div class="form-grid">
               <div *ngFor="let field of formFields; let i = index" class="form-field-container">
 
-                <!-- Debug info (remove in production) -->
-                <div class="debug-info" *ngIf="showDebug">
-                  Field: {{ field?.name || 'NO NAME' }} | Type: {{ field?.type || 'NO TYPE' }} | Required: {{ field?.required || false }} | HasError: {{ hasFieldError(field.name) }}
-                </div>
-
-                <!-- Visual error indicator for debugging -->
-                <div *ngIf="hasFieldError(field.name)" class="field-error-indicator">
-                  🔴 ERROR: {{ field.name }} - {{ getFieldErrors(field.name).join(', ') }}
+                <!-- Field Change Indicator -->
+                <div class="field-header" *ngIf="editState.isEditing">
+                  <span class="field-name">{{ formatColumnName(field.name) }}</span>
+                  <div class="field-status">
+                    <mat-icon *ngIf="hasFieldChanged(field.name)"
+                              class="changed-icon"
+                              matTooltip="This field has been modified">
+                      edit
+                    </mat-icon>
+                    <button *ngIf="hasFieldChanged(field.name)"
+                            mat-icon-button
+                            (click)="resetSingleField(field.name)"
+                            matTooltip="Reset this field"
+                            class="field-reset-btn">
+                      <mat-icon>undo</mat-icon>
+                    </button>
+                  </div>
                 </div>
 
                 <!-- Boolean checkbox -->
                 <div *ngIf="isBooleanField(field)"
                      class="checkbox-container"
-                     [class.field-error]="hasFieldError(field.name)">
-                  <mat-checkbox [formControlName]="field.name" class="custom-checkbox">
+                     [class.field-error]="hasFieldError(field.name)"
+                     [class.field-changed]="hasFieldChanged(field.name)">
+                  <mat-checkbox [formControlName]="field.name"
+                                (change)="onFieldChange(field.name, $event.checked)"
+                                class="custom-checkbox">
                     {{ formatColumnName(field.name) }}
                     <span *ngIf="field.help_text" class="help-text">({{ field.help_text }})</span>
                   </mat-checkbox>
-                  <mat-error *ngIf="form.get(field.name)?.hasError('required') && form.get(field.name)?.touched">
-                    {{ formatColumnName(field.name) }} is required
-                  </mat-error>
-                  <div *ngFor="let error of getFieldErrors(field.name)" class="field-error-message">
-                    <mat-icon class="error-icon-small">error</mat-icon>
-                    {{ error }}
+
+                  <div class="field-errors">
+                    <mat-error *ngIf="form.get(field.name)?.hasError('required') && form.get(field.name)?.touched">
+                      {{ formatColumnName(field.name) }} is required
+                    </mat-error>
+                    <div *ngFor="let error of getFieldErrors(field.name)" class="field-error-message">
+                      <mat-icon class="error-icon-small">error</mat-icon>
+                      {{ error }}
+                    </div>
                   </div>
                 </div>
 
-                <!-- File field -->
-                <div *ngIf="isFileField(field)" class="file-field-container">
+                <!-- Enhanced File field -->
+                <div *ngIf="isFileField(field)" class="enhanced-file-container">
                   <label class="file-label">{{ formatColumnName(field.name) }}</label>
-                  <input type="file"
-                         [required]="field.required"
-                         [accept]="getFileAcceptTypes(field)"
-                         (change)="onFileChange($event, field.name)"
-                         class="file-input"
-                         #fileInput>
 
-                  <mat-error *ngIf="form.get(field.name)?.hasError('required') && form.get(field.name)?.touched">
-                    {{ formatColumnName(field.name) }} is required
-                  </mat-error>
-                  <div *ngFor="let error of getFieldErrors(field.name)" class="field-error-message">
-                    <mat-icon class="error-icon-small">error</mat-icon>
-                    {{ error }}
+                  <!-- Existing File Display (Edit Mode) -->
+                  <div class="existing-file" *ngIf="editState.isEditing && getFileInfo(field.name).hasExistingFile">
+                    <div class="file-info">
+                      <mat-icon class="file-icon">attachment</mat-icon>
+                      <div class="file-details">
+                        <span class="file-name">{{ getFileInfo(field.name).existingFileName || 'Current File' }}</span>
+                        <div class="file-actions">
+                          <a [href]="getFileInfo(field.name).existingFileUrl"
+                             target="_blank"
+                             mat-button
+                             color="primary"
+                             class="view-file-btn">
+                            <mat-icon>visibility</mat-icon>
+                            View Current
+                          </a>
+                          <button mat-button
+                                  color="accent"
+                                  (click)="toggleFileReplace(field.name)"
+                                  class="replace-file-btn">
+                            <mat-icon>{{ getFileInfo(field.name).replaceFile ? 'cancel' : 'swap_horiz' }}</mat-icon>
+                            {{ getFileInfo(field.name).replaceFile ? 'Keep Current' : 'Replace File' }}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- File Input (Always shown in create mode, conditionally in edit mode) -->
+                  <div class="file-input-section"
+                       *ngIf="!editState.isEditing || !getFileInfo(field.name).hasExistingFile || getFileInfo(field.name).replaceFile">
+                    <input type="file"
+                           [required]="field.required && (!editState.isEditing || !getFileInfo(field.name).hasExistingFile)"
+                           [accept]="getFileAcceptTypes(field)"
+                           (change)="onFileChange($event, field.name)"
+                           class="file-input"
+                           #fileInput>
+
+                    <!-- Selected File Preview -->
+                    <div class="selected-file-preview" *ngIf="getFileInfo(field.name).newFile">
+                      <mat-icon class="preview-icon">insert_drive_file</mat-icon>
+                      <span class="preview-name">{{ getFileInfo(field.name).newFile?.name }}</span>
+                      <button mat-icon-button
+                              (click)="clearFile(field.name, fileInput)"
+                              class="clear-file-btn">
+                        <mat-icon>close</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="field-errors">
+                    <mat-error *ngIf="form.get(field.name)?.hasError('required') && form.get(field.name)?.touched">
+                      {{ formatColumnName(field.name) }} is required
+                    </mat-error>
+                    <div *ngFor="let error of getFieldErrors(field.name)" class="field-error-message">
+                      <mat-icon class="error-icon-small">error</mat-icon>
+                      {{ error }}
+                    </div>
                   </div>
                 </div>
 
-                <!-- Regular form fields -->
+                <!-- Enhanced Many-to-Many field -->
+                <div *ngIf="isManyToManyField(field)"
+                     class="enhanced-many-to-many-container"
+                     [class.field-changed]="hasFieldChanged(field.name)">
+                  <label class="field-label">{{ formatColumnName(field.name) }}</label>
+
+                  <!-- Selection Summary -->
+                  <div class="selection-summary">
+                    <div class="selection-count">
+                      <mat-icon>group</mat-icon>
+                      {{ getManyToManySelectedItems(field.name).length }} item{{ getManyToManySelectedItems(field.name).length !== 1 ? 's' : '' }} selected
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="quick-actions">
+                      <button mat-icon-button
+                              *ngIf="getManyToManySelectedItems(field.name).length > 0"
+                              (click)="clearAllManyToMany(field.name)"
+                              matTooltip="Clear all selections"
+                              class="clear-all-btn">
+                        <mat-icon>clear_all</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Selected items display -->
+                  <div class="selected-items" *ngIf="getManyToManySelectedItems(field.name).length > 0">
+                    <mat-chip-set class="selected-chips">
+                      <mat-chip *ngFor="let item of getManyToManySelectedItems(field.name)"
+                                (removed)="removeManyToManyItem(field.name, item.id)"
+                                removable="true">
+                        {{ item.display }}
+                        <mat-icon matChipRemove>cancel</mat-icon>
+                      </mat-chip>
+                    </mat-chip-set>
+                  </div>
+
+                  <!-- No selection message -->
+                  <div class="no-selection" *ngIf="getManyToManySelectedItems(field.name).length === 0">
+                    <mat-icon class="no-selection-icon">info</mat-icon>
+                    <span>No items selected</span>
+                  </div>
+
+                  <!-- Selection button -->
+                  <button type="button"
+                          mat-stroked-button
+                          (click)="openManyToManySelector(field)"
+                          class="selection-button">
+                    <mat-icon>{{ getManyToManySelectedItems(field.name).length > 0 ? 'edit' : 'add' }}</mat-icon>
+                    {{ getManyToManySelectedItems(field.name).length > 0 ? 'Edit Selection' : 'Select Items' }}
+                    <span class="selection-count-badge" *ngIf="getManyToManySelectedItems(field.name).length > 0">
+                      ({{ getManyToManySelectedItems(field.name).length }})
+                    </span>
+                  </button>
+
+                  <div class="field-errors">
+                    <mat-error *ngIf="form.get(field.name)?.hasError('required') && form.get(field.name)?.touched">
+                      {{ formatColumnName(field.name) }} is required
+                    </mat-error>
+                    <div *ngFor="let error of getFieldErrors(field.name)" class="field-error-message">
+                      <mat-icon class="error-icon-small">error</mat-icon>
+                      {{ error }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Enhanced Regular form fields -->
                 <mat-form-field *ngIf="shouldShowFormField(field)"
                                 appearance="outline"
-                                class="form-field"
-                                [class.field-error]="hasFieldError(field.name)">
-                  <mat-label>{{ formatColumnName(field.name) }}</mat-label>
+                                class="enhanced-form-field"
+                                [class.field-error]="hasFieldError(field.name)"
+                                [class.field-changed]="hasFieldChanged(field.name)">
+
+                  <mat-label>
+                    {{ formatColumnName(field.name) }}
+                    <mat-icon *ngIf="hasFieldChanged(field.name)" class="changed-indicator">edit</mat-icon>
+                  </mat-label>
 
                   <!-- Text inputs -->
                   <input *ngIf="isTextInput(field)"
@@ -131,6 +373,7 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
                          [formControlName]="field.name"
                          [required]="field.required"
                          [placeholder]="'Enter ' + formatColumnName(field.name)"
+                         (input)="onFieldChange(field.name, $event.target.value)"
                          [class.input-error]="hasFieldError(field.name)">
 
                   <!-- Number inputs -->
@@ -141,6 +384,7 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
                          [formControlName]="field.name"
                          [required]="field.required"
                          [placeholder]="'Enter ' + formatColumnName(field.name)"
+                         (input)="onFieldChange(field.name, $event.target.value)"
                          [class.input-error]="hasFieldError(field.name)">
 
                   <!-- Date input -->
@@ -150,6 +394,7 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
                            [formControlName]="field.name"
                            [required]="field.required"
                            [placeholder]="'Select ' + formatColumnName(field.name)"
+                           (dateChange)="onFieldChange(field.name, $event.value)"
                            [class.input-error]="hasFieldError(field.name)">
                     <mat-datepicker-toggle matSuffix [for]="datePicker"></mat-datepicker-toggle>
                     <mat-datepicker #datePicker></mat-datepicker>
@@ -162,6 +407,7 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
                          [formControlName]="field.name"
                          [required]="field.required"
                          [placeholder]="'Select ' + formatColumnName(field.name)"
+                         (input)="onFieldChange(field.name, $event.target.value)"
                          [class.input-error]="hasFieldError(field.name)">
 
                   <!-- Time input -->
@@ -171,12 +417,14 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
                          [formControlName]="field.name"
                          [required]="field.required"
                          [placeholder]="'Select ' + formatColumnName(field.name)"
+                         (input)="onFieldChange(field.name, $event.target.value)"
                          [class.input-error]="hasFieldError(field.name)">
 
                   <!-- Select for choices -->
                   <mat-select *ngIf="hasChoices(field)"
                               [formControlName]="field.name"
                               [required]="field.required"
+                              (selectionChange)="onFieldChange(field.name, $event.value)"
                               [class.input-error]="hasFieldError(field.name)">
                     <mat-option [value]="null">-- Select {{ formatColumnName(field.name) }} --</mat-option>
                     <mat-option *ngFor="let choice of field.choices" [value]="choice.value">
@@ -184,10 +432,11 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
                     </mat-option>
                   </mat-select>
 
-                  <!-- Relation fields - FIXED highlighting -->
-                  <mat-select *ngIf="isRelationField(field)"
+                  <!-- Foreign Key / One-to-One relation fields -->
+                  <mat-select *ngIf="isSingleRelationField(field)"
                               [formControlName]="field.name"
                               [required]="field.required"
+                              (selectionChange)="onFieldChange(field.name, $event.value)"
                               [class.input-error]="hasFieldError(field.name)">
                     <mat-option [value]="null">-- Select {{ formatColumnName(field.name) }} --</mat-option>
                     <mat-option *ngFor="let option of relationOptions[field.name]" [value]="option.id">
@@ -195,20 +444,21 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
                     </mat-option>
                   </mat-select>
 
-                  <!-- Fallback for unhandled types -->
-                  <input *ngIf="isUnhandledField(field)"
-                         matInput
-                         type="text"
-                         [formControlName]="field.name"
-                         [required]="field.required"
-                         [placeholder]="'Enter ' + formatColumnName(field.name) + ' (' + field.type + ')'"
-                         [class.input-error]="hasFieldError(field.name)">
+                  <!-- Reset button for changed fields -->
+                  <button *ngIf="hasFieldChanged(field.name)"
+                          matSuffix
+                          mat-icon-button
+                          (click)="resetSingleField(field.name)"
+                          matTooltip="Reset to original value"
+                          class="field-reset-suffix">
+                    <mat-icon>undo</mat-icon>
+                  </button>
 
                   <mat-error *ngIf="form.get(field.name)?.hasError('required') && form.get(field.name)?.touched">
                     <mat-icon>error</mat-icon>
                     {{ formatColumnName(field.name) }} is required
                   </mat-error>
-                  <!-- Server validation errors -->
+
                   <div *ngFor="let error of getFieldErrors(field.name)" class="field-error-message">
                     <mat-icon class="error-icon-small">error</mat-icon>
                     {{ error }}
@@ -219,20 +469,43 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
           </form>
         </mat-card-content>
 
-        <mat-card-actions class="form-actions">
-          <button mat-button type="button" (click)="onCancel.emit()" class="cancel-btn">
-            Cancel
-          </button>
-          <button mat-raised-button
-                  color="primary"
-                  type="button"
-                  (click)="submitForm()"
-                  [disabled]="!form.valid || submitting"
-                  class="submit-btn">
-            <mat-spinner diameter="20" *ngIf="submitting"></mat-spinner>
-            <span *ngIf="!submitting">{{ isEdit ? 'Update' : 'Create' }}</span>
-            <span *ngIf="submitting">{{ isEdit ? 'Updating...' : 'Creating...' }}</span>
-          </button>
+        <!-- Enhanced Actions -->
+        <mat-card-actions class="enhanced-form-actions" *ngIf="!editState.loadingRecord && !editState.error">
+          <div class="actions-left">
+            <button mat-button
+                    *ngIf="editState.hasChanges"
+                    (click)="resetAllChanges()"
+                    class="reset-all-btn">
+              <mat-icon>undo</mat-icon>
+              Reset All Changes
+            </button>
+          </div>
+
+          <div class="actions-right">
+            <button mat-button
+                    type="button"
+                    (click)="handleCancel()"
+                    class="cancel-btn">
+              Cancel
+            </button>
+
+            <button mat-raised-button
+                    color="primary"
+                    type="button"
+                    (click)="submitForm()"
+                    [disabled]="(!form.valid || submitting) && !editState.hasChanges"
+                    class="submit-btn">
+              <mat-spinner diameter="20" *ngIf="submitting"></mat-spinner>
+              <mat-icon *ngIf="!submitting">{{ editState.isEditing ? 'save' : 'add' }}</mat-icon>
+              <span *ngIf="!submitting">
+                {{ editState.isEditing ? 'Save Changes' : 'Create' }}
+                <span *ngIf="editState.hasChanges && editState.isEditing" class="changes-indicator">
+                  ({{ getChangedFieldsCount() }})
+                </span>
+              </span>
+              <span *ngIf="submitting">{{ editState.isEditing ? 'Saving...' : 'Creating...' }}</span>
+            </button>
+          </div>
         </mat-card-actions>
       </mat-card>
     </div>
@@ -252,9 +525,9 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
       backdrop-filter: blur(4px);
     }
 
-    .form-card {
+    .enhanced-form-card {
       width: 90vw;
-      max-width: 800px;
+      max-width: 900px;
       max-height: 90vh;
       overflow-y: auto;
       border-radius: 16px;
@@ -265,7 +538,7 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
     @keyframes slideIn {
       from {
         opacity: 0;
-        transform: scale(0.9) translateY(-20px);
+        transform: scale(0.95) translateY(-20px);
       }
       to {
         opacity: 1;
@@ -273,76 +546,219 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
       }
     }
 
-    .form-header {
+    /* Enhanced Header */
+    .enhanced-form-header {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
-      position: relative;
       padding: 24px;
+    }
+
+    .enhanced-form-header.edit-mode {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      width: 100%;
+    }
+
+    .title-section {
+      flex: 1;
     }
 
     .form-title {
       font-size: 24px;
       font-weight: 600;
-      margin: 0;
-    }
-
-    .close-button {
-      position: absolute;
-      right: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: white;
-    }
-
-    .form-content {
-      padding: 32px;
-      background: #fafafa;
-    }
-
-    .error-summary {
-      background: #ffebee;
-      border: 1px solid #f44336;
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 24px;
+      margin: 0 0 12px 0;
       display: flex;
+      align-items: center;
       gap: 12px;
-      align-items: flex-start;
+    }
+
+    .mode-icon {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 20px;
+      width: 36px;
+      height: 36px;
+    }
+
+    .edit-indicators {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .edit-chip, .changes-chip {
+      background: rgba(255, 255, 255, 0.2) !important;
+      color: white !important;
+      font-size: 12px;
+      height: 28px;
+    }
+
+    .changes-chip {
+      background: rgba(255, 193, 7, 0.9) !important;
+      color: #333 !important;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .reset-btn, .close-button {
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+    }
+
+    .reset-btn:hover, .close-button:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Loading and Error States */
+    .loading-edit-data, .edit-error {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      text-align: center;
+    }
+
+    .edit-error {
+      color: #d32f2f;
     }
 
     .error-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
       color: #f44336;
-      font-size: 24px;
-      width: 24px;
-      height: 24px;
-      margin-top: 2px;
+      margin-bottom: 16px;
     }
 
     .error-content h4 {
       margin: 0 0 8px 0;
-      color: #d32f2f;
+      font-size: 18px;
+    }
+
+    .error-content p {
+      margin: 0 0 16px 0;
+      opacity: 0.8;
+    }
+
+    /* Enhanced Content */
+    .enhanced-form-content {
+      padding: 32px;
+      background: #fafafa;
+    }
+
+    .form-options {
+      background: white;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid #e0e0e0;
+    }
+
+    .info-icon {
       font-size: 16px;
+      width: 16px;
+      height: 16px;
+      color: #666;
+      margin-left: 8px;
+    }
+
+    /* Changes Summary */
+    .changes-summary {
+      margin-bottom: 24px;
+      background: #e3f2fd;
+      border: 1px solid #bbdefb;
+    }
+
+    .changes-summary .mat-expansion-panel-header {
+      background: #bbdefb;
+      color: #1565c0;
       font-weight: 600;
     }
 
-    .error-content ul {
-      margin: 0;
-      padding-left: 20px;
-      color: #d32f2f;
+    .changes-list {
+      padding: 16px 0;
     }
 
-    .error-content li {
-      margin-bottom: 4px;
-      font-size: 14px;
+    .change-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #e3f2fd;
     }
 
-    .dynamic-form {
+    .change-item:last-child {
+      border-bottom: none;
+    }
+
+    .change-field {
+      font-weight: 600;
+      color: #1565c0;
+      min-width: 120px;
+    }
+
+    .change-values {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .old-value {
+      background: #ffcdd2;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .new-value {
+      background: #c8e6c9;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .arrow {
+      color: #666;
+      font-size: 16px;
+    }
+
+    .reset-field-btn {
+      width: 32px;
+      height: 32px;
+      color: #666;
+    }
+
+    /* Enhanced Form Grid */
+    .enhanced-dynamic-form {
       width: 100%;
     }
 
     .form-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
       gap: 24px;
     }
 
@@ -350,48 +766,70 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
       width: 100%;
     }
 
-    .debug-info {
-      font-size: 10px;
+    /* Field Headers */
+    .field-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      padding: 0 4px;
+    }
+
+    .field-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .field-status {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .changed-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      color: #ff9800;
+    }
+
+    .field-reset-btn {
+      width: 24px;
+      height: 24px;
       color: #666;
-      margin-bottom: 8px;
-      padding: 4px 8px;
-      background-color: #e3f2fd;
-      border-radius: 4px;
-      border-left: 3px solid #2196f3;
     }
 
-    .field-error-indicator {
-      background: #ff5722;
-      color: white;
-      padding: 4px 8px;
-      margin-bottom: 8px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: bold;
-      animation: pulse 1s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
-    }
-
-    .form-field {
+    /* Enhanced Fields */
+    .enhanced-form-field {
       width: 100%;
       background: white;
       border-radius: 8px;
       transition: all 0.3s ease;
     }
 
-    /* Error Field Highlighting - ENHANCED */
-    .form-field.field-error {
-      background: rgba(244, 67, 54, 0.04) !important;
-      border: 2px solid rgba(244, 67, 54, 0.5) !important;
-      animation: errorPulse 0.6s ease-in-out !important;
-      box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1) !important;
+    .enhanced-form-field.field-changed {
+      background: rgba(255, 152, 0, 0.05);
+      border: 2px solid rgba(255, 152, 0, 0.3);
+      box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
     }
 
-    .checkbox-container {
+    .changed-indicator {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+      color: #ff9800;
+      margin-left: 4px;
+    }
+
+    .field-reset-suffix {
+      color: #666;
+      width: 36px;
+      height: 36px;
+    }
+
+    /* Enhanced File Fields */
+    .enhanced-file-container {
       background: white;
       padding: 20px;
       border-radius: 8px;
@@ -399,158 +837,215 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
       transition: all 0.3s ease;
     }
 
-    .checkbox-container.field-error {
-      border: 2px solid #f44336 !important;
-      background: rgba(244, 67, 54, 0.04) !important;
-      animation: errorPulse 0.6s ease-in-out !important;
-      box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1) !important;
-    }
-
-    /* File field styling */
-    .file-field-container {
-      width: 100%;
-      margin-bottom: 20px;
+    .enhanced-file-container.field-changed {
+      border: 2px solid rgba(255, 152, 0, 0.5);
+      background: rgba(255, 152, 0, 0.05);
     }
 
     .file-label {
       display: block;
-      margin-bottom: 8px;
+      margin-bottom: 16px;
+      font-weight: 600;
+      color: #333;
+      font-size: 14px;
+    }
+
+    .existing-file {
+      margin-bottom: 16px;
+      padding: 12px;
+      background: #f5f5f5;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+    }
+
+    .file-info {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .file-icon {
+      color: #666;
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+      margin-top: 4px;
+    }
+
+    .file-details {
+      flex: 1;
+    }
+
+    .file-name {
+      display: block;
       font-weight: 500;
       color: #333;
+      margin-bottom: 8px;
+    }
+
+    .file-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .view-file-btn, .replace-file-btn {
+      height: 32px;
+      font-size: 12px;
+      padding: 0 12px;
+    }
+
+    .file-input-section {
+      border: 2px dashed #ddd;
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+      transition: border-color 0.3s ease;
+    }
+
+    .file-input-section:hover {
+      border-color: #2196f3;
     }
 
     .file-input {
       width: 100%;
-      padding: 12px;
-      border: 2px dashed #ddd;
-      border-radius: 8px;
-      background: white;
       font-size: 14px;
-      transition: border-color 0.3s ease;
     }
 
-    .file-input:hover {
-      border-color: #677eea;
-    }
-
-    .file-input:focus {
-      border-color: #677eea;
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(103, 126, 234, 0.1);
-    }
-
-    .input-error {
-      color: #f44336 !important;
-      font-weight: 500;
-    }
-
-    .field-error-message {
+    .selected-file-preview {
       display: flex;
       align-items: center;
-      gap: 6px;
-      color: #f44336;
-      font-size: 12px;
-      margin-top: 4px;
-      font-weight: 500;
-      animation: slideDown 0.3s ease-out;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 8px 12px;
+      background: #e3f2fd;
+      border-radius: 6px;
     }
 
-    .error-icon-small {
+    .preview-icon {
+      color: #1976d2;
+    }
+
+    .preview-name {
+      flex: 1;
       font-size: 14px;
-      width: 14px;
-      height: 14px;
+      color: #1976d2;
     }
 
-    @keyframes errorPulse {
-      0% {
-        transform: scale(1);
-        box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.1);
-      }
-      50% {
-        transform: scale(1.02);
-        box-shadow: 0 0 0 6px rgba(244, 67, 54, 0.15);
-      }
-      100% {
-        transform: scale(1);
-        box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
-      }
-    }
-
-    @keyframes slideDown {
-      from {
-        opacity: 0;
-        transform: translateY(-10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .field-error-message {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      color: #f44336;
-      font-size: 12px;
-      margin-top: 4px;
-      font-weight: 500;
-      animation: slideDown 0.3s ease-out;
-      min-height: 18px;
-    }
-
-    .error-icon-small {
-      font-size: 14px;
-      width: 14px;
-      height: 14px;
-    }
-
-    .custom-checkbox {
-      font-size: 16px;
-    }
-
-    @keyframes slideDown {
-      from {
-        opacity: 0;
-        transform: translateY(-10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .help-text {
+    .clear-file-btn {
+      width: 24px;
+      height: 24px;
       color: #666;
-      font-size: 14px;
-      font-style: italic;
     }
 
-    .form-actions {
+    /* Enhanced Many-to-Many */
+    .enhanced-many-to-many-container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      transition: all 0.3s ease;
+    }
+
+    .enhanced-many-to-many-container.field-changed {
+      border: 2px solid rgba(255, 152, 0, 0.5);
+      background: rgba(255, 152, 0, 0.05);
+    }
+
+    .selection-summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding: 12px;
+      background: #f8f9fa;
+      border-radius: 6px;
+    }
+
+    .selection-count {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+      color: #333;
+    }
+
+    .quick-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .clear-all-btn {
+      width: 32px;
+      height: 32px;
+      color: #f44336;
+    }
+
+    .selection-count-badge {
+      font-weight: 600;
+      color: #2196f3;
+    }
+
+    /* Field Errors */
+    .field-errors {
+      margin-top: 8px;
+    }
+
+    .field-error-message {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #f44336;
+      font-size: 12px;
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    .error-icon-small {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Enhanced Actions */
+    .enhanced-form-actions {
       padding: 24px 32px;
       background: white;
       border-top: 1px solid #e0e0e0;
       display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .actions-left, .actions-right {
+      display: flex;
       gap: 16px;
-      justify-content: flex-end;
+      align-items: center;
+    }
+
+    .reset-all-btn {
+      color: #ff9800;
+      border: 1px solid #ff9800;
+      height: 40px;
     }
 
     .cancel-btn {
       color: #666;
       border: 1px solid #ddd;
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-weight: 500;
+      height: 40px;
+      padding: 0 24px;
     }
 
     .submit-btn {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
       color: white;
       border: none;
-      padding: 12px 32px;
-      border-radius: 8px;
+      height: 40px;
+      padding: 0 32px;
       font-weight: 600;
-      min-width: 120px;
+      min-width: 140px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .submit-btn:disabled {
@@ -558,136 +1053,48 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
       color: #666;
     }
 
-    mat-error {
+    .changes-indicator {
       font-size: 12px;
-      margin-top: 4px;
-      color: #f44336;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      animation: slideDown 0.3s ease-out;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 2px 6px;
+      border-radius: 10px;
+      margin-left: 4px;
     }
 
-    mat-error mat-icon {
-      font-size: 14px;
-      width: 14px;
-      height: 14px;
-    }
-
-    /* ENHANCED Material Form Field Error States */
-    ::ng-deep .form-field.field-error .mat-mdc-form-field-outline {
-      color: #f44336 !important;
-      border-color: #f44336 !important;
-    }
-
-    ::ng-deep .form-field.field-error .mat-mdc-form-field-outline-thick {
-      color: #f44336 !important;
-      border-color: #f44336 !important;
-      border-width: 3px !important;
-    }
-
-    ::ng-deep .form-field.field-error .mat-mdc-text-field-wrapper {
-      background-color: rgba(244, 67, 54, 0.04) !important;
-    }
-
-    ::ng-deep .form-field.field-error .mat-mdc-form-field-label {
-      color: #f44336 !important;
-    }
-
-    ::ng-deep .form-field.field-error .mat-mdc-form-field-required-marker {
-      color: #f44336 !important;
-    }
-
-    /* ENHANCED Input Error Styling */
-    ::ng-deep .input-error.mat-mdc-input-element {
-      color: #f44336 !important;
-      font-weight: 500 !important;
-      border-color: #f44336 !important;
-    }
-
-    /* ENHANCED Select/Dropdown Error Styling */
-    ::ng-deep .form-field.field-error .mat-mdc-select {
-      color: #f44336 !important;
-      font-weight: 500 !important;
-    }
-
-    ::ng-deep .form-field.field-error .mat-mdc-select .mat-mdc-select-value {
-      color: #f44336 !important;
-    }
-
-    ::ng-deep .form-field.field-error .mat-mdc-select .mat-mdc-select-placeholder {
-      color: rgba(244, 67, 54, 0.7) !important;
-    }
-
-    ::ng-deep .form-field.field-error .mat-mdc-select .mat-mdc-select-arrow {
-      color: #f44336 !important;
-    }
-
-    ::ng-deep .form-field.field-error .mat-mdc-select-trigger {
-      color: #f44336 !important;
-    }
-
-    /* ENHANCED Checkbox Error Styling */
-    ::ng-deep .checkbox-container.field-error .mat-mdc-checkbox {
-      --mdc-checkbox-outline-color: #f44336 !important;
-      --mdc-checkbox-selected-checkmark-color: white !important;
-      --mdc-checkbox-selected-focus-icon-color: #f44336 !important;
-      --mdc-checkbox-selected-hover-icon-color: #f44336 !important;
-      --mdc-checkbox-selected-icon-color: #f44336 !important;
-      --mdc-checkbox-selected-pressed-icon-color: #f44336 !important;
-    }
-
-    /* ENHANCED Focus States for Error Fields */
-    ::ng-deep .form-field.field-error .mat-mdc-form-field-focus-overlay {
-      background-color: rgba(244, 67, 54, 0.12) !important;
-    }
-
-    ::ng-deep .form-field.field-error:not(.mat-mdc-form-field-disabled) .mat-mdc-form-field-flex:hover .mat-mdc-form-field-outline {
-      color: #f44336 !important;
-      border-color: #f44336 !important;
-    }
-
-    ::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-text-field-wrapper {
-      background-color: rgba(244, 67, 54, 0.04) !important;
-    }
-
-    ::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-form-field-outline-thick {
-      color: #f44336 !important;
-      border-color: #f44336 !important;
-    }
-
-    .checkbox-container.ng-invalid {
-      border-color: #f44336 !important;
-      background-color: rgba(244, 67, 54, 0.04) !important;
-    }
-
-    ::ng-deep .mat-mdc-form-field-outline {
-      border-radius: 8px;
-    }
-
-    ::ng-deep .mat-mdc-form-field-focus-overlay {
-      border-radius: 8px;
-    }
-
+    /* Responsive */
     @media (max-width: 768px) {
       .form-grid {
         grid-template-columns: 1fr;
         gap: 16px;
       }
 
-      .form-card {
+      .enhanced-form-card {
         width: 95vw;
         margin: 10px;
       }
 
-      .form-content {
+      .enhanced-form-content {
         padding: 20px;
+      }
+
+      .enhanced-form-actions {
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .actions-left, .actions-right {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .header-content {
+        flex-direction: column;
+        gap: 16px;
       }
     }
   `]
 })
-export class ResourceFormComponent implements OnInit, OnChanges {
+export class EnhancedResourceFormComponent implements OnInit, OnDestroy, OnChanges {
   @Input() resource!: Resource;
   @Input() editingRecord: any = null;
   @Input() submitting = false;
@@ -700,160 +1107,371 @@ export class ResourceFormComponent implements OnInit, OnChanges {
 
   form!: FormGroup;
   formFields: ResourceField[] = [];
-  fileFields: { [key: string]: File } = {};
-  selectedFiles: { [key: string]: File | null } = {};
+  editState!: EditModeState;
+  autoSaveEnabled = false;
 
-  constructor(private formBuilder: FormBuilderService) {}
+  // File handling
+  fileFields: { [key: string]: FileFieldInfo } = {};
+
+  // Many-to-many handling
+  manyToManySelections: { [key: string]: any[] } = {};
+
+  private destroy$ = new Subject<void>();
+  private autoSaveSubject = new Subject<string>();
+
+  constructor(
+    private formBuilder: FormBuilderService,
+    private editModeService: EditModeService,
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar
+  ) {}
 
   ngOnInit(): void {
+    this.initializeEditMode();
     this.buildForm();
+    this.setupAutoSave();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+    this.editModeService.exitEditMode();
   }
 
   ngOnChanges(): void {
     if (this.resource) {
       this.buildForm();
-      this.fileFields = {}; // Clear file fields when resource changes
-      this.selectedFiles = {}; // Clear selected files when resource changes
+      this.resetFileFields();
+      this.resetManyToManySelections();
     }
 
-    // Handle validation errors from backend - ENHANCED
     if (this.validationErrors && Object.keys(this.validationErrors).length > 0) {
       this.setFormErrors();
     } else {
-      // Clear errors when no validation errors
       this.clearServerErrors();
     }
   }
 
-  get isEdit(): boolean {
-    return !!this.editingRecord;
+  private initializeEditMode(): void {
+    // Subscribe to edit state changes
+    this.editModeService.editState$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(state => {
+        this.editState = state;
+      });
+
+    // Initialize edit mode if we have editing record
+    if (this.editingRecord) {
+      this.editModeService.setEditData(this.editingRecord);
+    }
   }
 
   private buildForm(): void {
     this.form = this.formBuilder.buildDynamicForm(this.resource, this.editingRecord);
     this.formFields = this.formBuilder.getFormFields(this.resource);
-  }
 
-  // ENHANCED error setting method
-  private setFormErrors(): void {
-    if (!this.form || !this.validationErrors) return;
-
-    // Set server-side validation errors on form controls
-    for (const fieldName in this.validationErrors) {
-      const control = this.form.get(fieldName);
-      if (control) {
-        const errors = this.validationErrors[fieldName];
-
-        // Preserve existing errors and add server errors
-        const currentErrors = control.errors || {};
-        control.setErrors({
-          ...currentErrors,
-          serverError: Array.isArray(errors) ? errors : [errors]
+    // Setup form value changes tracking
+    this.form.valueChanges
+      .pipe(
+        takeUntil(this.destroy$),
+        debounceTime(300),
+        distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr))
+      )
+      .subscribe(formValue => {
+        // Update edit mode service with current form state
+        Object.keys(formValue).forEach(fieldName => {
+          this.editModeService.updateField(fieldName, formValue[fieldName]);
         });
 
-        // Force the control to be touched and dirty to show errors immediately
-        control.markAsTouched();
-        control.markAsDirty();
+        // Auto-save if enabled
+        if (this.autoSaveEnabled && this.editState.hasChanges) {
+          this.autoSaveSubject.next('auto-save');
+        }
+      });
 
-        // Update the control's status
-        control.updateValueAndValidity();
+    // Initialize file fields for edit mode
+    if (this.editingRecord) {
+      this.initializeFileFields();
+      this.initializeManyToManyFields();
+    }
+  }
+
+  private setupAutoSave(): void {
+    this.autoSaveSubject
+      .pipe(
+        takeUntil(this.destroy$),
+        debounceTime(2000) // Wait 2 seconds after last change
+      )
+      .subscribe(() => {
+        if (this.autoSaveEnabled && this.editState.hasChanges && this.form.valid) {
+          this.performAutoSave();
+        }
+      });
+  }
+
+  private performAutoSave(): void {
+    const changedData = this.editModeService.getChangedFields();
+    this.onSubmit.emit({ ...changedData, _autoSave: true });
+
+    this.snackBar.open('Auto-saved changes', 'Close', {
+      duration: 2000,
+      panelClass: ['success-snackbar']
+    });
+  }
+
+  // File handling methods
+  private initializeFileFields(): void {
+    this.formFields.forEach(field => {
+      if (this.isFileField(field) && this.editingRecord) {
+        const existingValue = this.editingRecord[field.name];
+        this.fileFields[field.name] = {
+          hasExistingFile: !!existingValue,
+          existingFileUrl: existingValue,
+          existingFileName: this.extractFileName(existingValue),
+          replaceFile: false
+        };
+      }
+    });
+  }
+
+  private resetFileFields(): void {
+    this.fileFields = {};
+    this.initializeFileFields();
+  }
+
+  private extractFileName(url: string): string {
+    if (!url) return '';
+    try {
+      const urlParts = url.split('/');
+      return urlParts[urlParts.length - 1] || 'File';
+    } catch {
+      return 'File';
+    }
+  }
+
+  getFileInfo(fieldName: string): FileFieldInfo {
+    return this.fileFields[fieldName] || {
+      hasExistingFile: false,
+      replaceFile: false
+    };
+  }
+
+  toggleFileReplace(fieldName: string): void {
+    if (this.fileFields[fieldName]) {
+      this.fileFields[fieldName].replaceFile = !this.fileFields[fieldName].replaceFile;
+
+      // Clear new file if canceling replace
+      if (!this.fileFields[fieldName].replaceFile) {
+        delete this.fileFields[fieldName].newFile;
+        this.form.get(fieldName)?.setValue(null);
       }
     }
-
-    // Force form validation update
-    this.form.updateValueAndValidity();
   }
 
-  onOverlayClick(event: Event): void {
-    this.onCancel.emit();
-  }
-
-  // Simple file handling
   onFileChange(event: any, fieldName: string): void {
     const file = event.target.files[0];
     if (file) {
-      this.fileFields[fieldName] = file;
-      this.selectedFiles[fieldName] = file;
-      // Set a dummy value on form control to make it valid
+      if (!this.fileFields[fieldName]) {
+        this.fileFields[fieldName] = {
+          hasExistingFile: false,
+          replaceFile: false
+        };
+      }
+
+      this.fileFields[fieldName].newFile = file;
       this.form.get(fieldName)?.setValue('file_selected');
       this.form.get(fieldName)?.markAsTouched();
-    } else {
-      delete this.fileFields[fieldName];
-      this.selectedFiles[fieldName] = null;
-      this.form.get(fieldName)?.setValue(null);
+
+      // Track change
+      this.onFieldChange(fieldName, file);
     }
   }
 
   clearFile(fieldName: string, fileInput: HTMLInputElement): void {
-    delete this.fileFields[fieldName];
-    this.selectedFiles[fieldName] = null;
+    if (this.fileFields[fieldName]) {
+      delete this.fileFields[fieldName].newFile;
+    }
     this.form.get(fieldName)?.setValue(null);
     fileInput.value = '';
+
+    // Track change
+    this.onFieldChange(fieldName, null);
   }
 
-  getSelectedFileName(fieldName: string): string {
-    const file = this.selectedFiles[fieldName];
-    return file ? file.name : '';
+  // Many-to-many handling methods
+  private initializeManyToManyFields(): void {
+    this.formFields.forEach(field => {
+      if (this.isManyToManyField(field) && this.editingRecord) {
+        const existingValue = this.editingRecord[field.name];
+        if (Array.isArray(existingValue)) {
+          this.manyToManySelections[field.name] = [...existingValue];
+        }
+      }
+    });
   }
 
-  getFileAcceptTypes(field: ResourceField): string {
-    switch (field.type) {
-      case 'ImageField':
-        return 'image/*';
-      case 'FileField':
-      default:
-        return '*/*';
+  private resetManyToManySelections(): void {
+    this.manyToManySelections = {};
+    this.initializeManyToManyFields();
+  }
+
+  isManyToManyField(field: ResourceField): boolean {
+    return field.type === 'ManyToManyField' || field.relation_type === 'ManyToManyField';
+  }
+
+  isSingleRelationField(field: ResourceField): boolean {
+    return this.isRelationField(field) && !this.isManyToManyField(field);
+  }
+
+  getManyToManySelectedItems(fieldName: string): RelationOption[] {
+    const selectedIds = this.manyToManySelections[fieldName] || [];
+    const options = this.relationOptions[fieldName] || [];
+    return options.filter(option => selectedIds.includes(option.id));
+  }
+
+  removeManyToManyItem(fieldName: string, itemId: any): void {
+    if (!this.manyToManySelections[fieldName]) {
+      this.manyToManySelections[fieldName] = [];
+    }
+
+    this.manyToManySelections[fieldName] = this.manyToManySelections[fieldName].filter(id => id !== itemId);
+    this.form.get(fieldName)?.setValue(this.manyToManySelections[fieldName]);
+    this.onFieldChange(fieldName, this.manyToManySelections[fieldName]);
+  }
+
+  clearAllManyToMany(fieldName: string): void {
+    this.manyToManySelections[fieldName] = [];
+    this.form.get(fieldName)?.setValue([]);
+    this.onFieldChange(fieldName, []);
+  }
+
+  openManyToManySelector(field: ResourceField): void {
+    const dialogData: ManyToManyData = {
+      fieldName: field.name,
+      title: this.formatColumnName(field.name),
+      options: this.relationOptions[field.name] || [],
+      selectedIds: this.manyToManySelections[field.name] || [],
+      loading: false
+    };
+
+    const dialogRef = this.dialog.open(ManyToManySelectorComponent, {
+      width: '600px',
+      maxWidth: '90vw',
+      maxHeight: '80vh',
+      data: dialogData,
+      disableClose: false
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result !== undefined) {
+        this.manyToManySelections[field.name] = result;
+        this.form.get(field.name)?.setValue(result);
+        this.onFieldChange(field.name, result);
+      }
+    });
+  }
+
+  // Change tracking methods
+  onFieldChange(fieldName: string, value: any): void {
+    this.editModeService.updateField(fieldName, value);
+  }
+
+  hasFieldChanged(fieldName: string): boolean {
+    return this.editModeService.hasFieldChanged(fieldName);
+  }
+
+  resetSingleField(fieldName: string): void {
+    this.editModeService.resetField(fieldName);
+
+    // Update form control
+    const originalValue = this.editState.originalData?.[fieldName];
+    this.form.get(fieldName)?.setValue(originalValue);
+
+    // Reset file field if needed
+    if (this.isFileField(this.getFieldByName(fieldName)) && this.fileFields[fieldName]) {
+      this.fileFields[fieldName].replaceFile = false;
+      delete this.fileFields[fieldName].newFile;
+    }
+
+    // Reset many-to-many if needed
+    if (this.isManyToManyField(this.getFieldByName(fieldName))) {
+      this.manyToManySelections[fieldName] = Array.isArray(originalValue) ? [...originalValue] : [];
     }
   }
 
-  getFieldPlaceholder(field: ResourceField): string {
-    return FieldTypeUtils.getFieldPlaceholder(field);
-  }
+  resetAllChanges(): void {
+    this.editModeService.resetAllChanges();
 
-  getFieldIcon(fieldType: string): string {
-    switch (fieldType) {
-      case 'CharField':
-      case 'TextField':
-        return 'text_fields';
-      case 'EmailField':
-        return 'email';
-      case 'URLField':
-        return 'link';
-      case 'IntegerField':
-      case 'BigIntegerField':
-      case 'DecimalField':
-      case 'FloatField':
-        return 'numbers';
-      case 'DateField':
-        return 'calendar_today';
-      case 'DateTimeField':
-        return 'schedule';
-      case 'TimeField':
-        return 'access_time';
-      case 'BooleanField':
-        return 'check_box';
-      case 'FileField':
-      case 'ImageField':
-        return 'attach_file';
-      case 'ForeignKey':
-      case 'OneToOneField':
-      case 'ManyToManyField':
-        return 'link';
-      default:
-        return 'input';
+    // Reset form to original values
+    const originalData = this.editState.originalData;
+    if (originalData) {
+      this.form.patchValue(originalData);
+
+      // Reset file fields
+      this.resetFileFields();
+
+      // Reset many-to-many
+      this.resetManyToManySelections();
     }
   }
 
+  getChangedFieldsCount(): number {
+    return Object.values(this.editState.fieldChanges).filter(changed => changed).length;
+  }
+
+  getChangesSummary(): { field: string; oldValue: any; newValue: any }[] {
+    return this.editModeService.getChangesSummary();
+  }
+
+  formatValue(value: any): string {
+    if (value === null || value === undefined) return 'Empty';
+    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+    if (Array.isArray(value)) return `${value.length} items`;
+    if (typeof value === 'object') return 'Object';
+    const str = String(value);
+    return str.length > 30 ? str.substring(0, 30) + '...' : str;
+  }
+
+  // Auto-save handling
+  onAutoSaveToggle(event: any): void {
+    this.autoSaveEnabled = event.checked;
+    if (this.autoSaveEnabled && this.editState.hasChanges) {
+      this.snackBar.open('Auto-save enabled - changes will be saved automatically', 'Close', {
+        duration: 3000
+      });
+    }
+  }
+
+  // Form submission
   submitForm(): void {
-    // Clear any previous server-side validation errors
     this.clearServerErrors();
 
     if (this.form.valid) {
-      const formData = { ...this.form.value };
+      const formData: any = this.editState.isEditing ?
+        this.editModeService.getChangedFields() :
+        { ...this.form.value };
 
       // Add files to form data
       for (const fieldName in this.fileFields) {
-        formData[fieldName] = this.fileFields[fieldName];
+        const fileInfo = this.fileFields[fieldName];
+        if (fileInfo.newFile) {
+          formData[fieldName] = fileInfo.newFile;
+        } else if (!this.editState.isEditing || fileInfo.replaceFile) {
+          // Include null for file fields when creating or explicitly replacing
+          formData[fieldName] = null;
+        }
+      }
+
+      // Add many-to-many selections
+      for (const fieldName in this.manyToManySelections) {
+        if (this.editState.isEditing) {
+          // Only include if changed
+          if (this.hasFieldChanged(fieldName)) {
+            formData[fieldName] = this.manyToManySelections[fieldName];
+          }
+        } else {
+          formData[fieldName] = this.manyToManySelections[fieldName];
+        }
       }
 
       this.onSubmit.emit(formData);
@@ -865,20 +1483,85 @@ export class ResourceFormComponent implements OnInit, OnChanges {
         control?.markAsDirty();
       });
 
-      // Force form validation update
       this.form.updateValueAndValidity();
     }
   }
 
+  // Cancel handling
+  handleCancel(): void {
+    if (this.editState.hasChanges) {
+      const dialogRef = this.dialog.open(ConfirmCancelDialogComponent, {
+        width: '400px',
+        data: {
+          changesCount: this.getChangedFieldsCount(),
+          changes: this.getChangesSummary()
+        }
+      });
+
+      dialogRef.afterClosed().subscribe(result => {
+        if (result === 'discard') {
+          this.onCancel.emit();
+        } else if (result === 'save') {
+          this.submitForm();
+        }
+        // 'cancel' does nothing - keeps dialog open
+      });
+    } else {
+      this.onCancel.emit();
+    }
+  }
+
+  retryLoadRecord(): void {
+    if (this.editingRecord && this.editingRecord.id) {
+      this.editModeService.initializeEditMode(this.resource, this.editingRecord.id, {
+        loadFreshData: true
+      }).subscribe({
+        next: (data) => {
+          this.buildForm();
+          this.snackBar.open('Record data reloaded successfully', 'Close', { duration: 3000 });
+        },
+        error: (error) => {
+          this.snackBar.open('Failed to reload record data', 'Close', { duration: 3000 });
+        }
+      });
+    }
+  }
+
+  onOverlayClick(event: Event): void {
+    this.handleCancel();
+  }
+
+  // Utility methods
+  private getFieldByName(fieldName: string): ResourceField {
+    return this.formFields.find(f => f.name === fieldName) || {} as ResourceField;
+  }
+
+  private setFormErrors(): void {
+    if (!this.form || !this.validationErrors) return;
+
+    for (const fieldName in this.validationErrors) {
+      const control = this.form.get(fieldName);
+      if (control) {
+        const errors = this.validationErrors[fieldName];
+        const currentErrors = control.errors || {};
+        control.setErrors({
+          ...currentErrors,
+          serverError: Array.isArray(errors) ? errors : [errors]
+        });
+        control.markAsTouched();
+        control.markAsDirty();
+        control.updateValueAndValidity();
+      }
+    }
+    this.form.updateValueAndValidity();
+  }
+
   private clearServerErrors(): void {
-    // Clear server-side validation errors from form controls
     Object.keys(this.form.controls).forEach(key => {
       const control = this.form.get(key);
       if (control && control.errors && control.errors['serverError']) {
         const errors = { ...control.errors };
         delete errors['serverError'];
-
-        // If no other errors remain, set to null
         if (Object.keys(errors).length === 0) {
           control.setErrors(null);
         } else {
@@ -888,7 +1571,7 @@ export class ResourceFormComponent implements OnInit, OnChanges {
     });
   }
 
-  // Field type checking methods
+  // Field type checking methods (delegate to FieldTypeUtils)
   formatColumnName(name: string): string {
     return FieldTypeUtils.formatColumnName(name);
   }
@@ -941,18 +1624,19 @@ export class ResourceFormComponent implements OnInit, OnChanges {
     return FieldTypeUtils.getNumberStep(fieldType);
   }
 
-  shouldShowFormField(field: ResourceField): boolean {
-    return !this.isBooleanField(field) && !this.isFileField(field);
+  getFileAcceptTypes(field: ResourceField): string {
+    return FieldTypeUtils.getFileAcceptTypes(field.type);
   }
 
-  // ENHANCED error detection method
+  shouldShowFormField(field: ResourceField): boolean {
+    return !this.isBooleanField(field) && !this.isFileField(field) && !this.isManyToManyField(field);
+  }
+
   getFieldErrors(fieldName: string): string[] {
     const errors: string[] = [];
 
-    // Check form control errors first
     const control = this.form.get(fieldName);
     if (control && control.errors) {
-      // Handle server-side validation errors
       if (control.errors['serverError']) {
         if (Array.isArray(control.errors['serverError'])) {
           errors.push(...control.errors['serverError']);
@@ -961,7 +1645,6 @@ export class ResourceFormComponent implements OnInit, OnChanges {
         }
       }
 
-      // Handle client-side validation errors
       if (control.errors['email'] && control.touched) {
         errors.push('Please enter a valid email address');
       }
@@ -971,7 +1654,6 @@ export class ResourceFormComponent implements OnInit, OnChanges {
       }
     }
 
-    // Also check direct validation errors from server
     if (this.validationErrors && this.validationErrors[fieldName]) {
       const serverErrors = this.validationErrors[fieldName];
       if (Array.isArray(serverErrors)) {
@@ -981,16 +1663,10 @@ export class ResourceFormComponent implements OnInit, OnChanges {
       }
     }
 
-    return [...new Set(errors)]; // Remove duplicates
+    return [...new Set(errors)];
   }
 
-  hasValidationErrors(): boolean {
-    return this.validationErrors && Object.keys(this.validationErrors).length > 0;
-  }
-
-  // ENHANCED error detection method
   hasFieldError(fieldName: string): boolean {
-    // Check if there are direct validation errors from server
     if (this.validationErrors && this.validationErrors[fieldName]) {
       return true;
     }
@@ -998,33 +1674,132 @@ export class ResourceFormComponent implements OnInit, OnChanges {
     const control = this.form.get(fieldName);
     if (!control) return false;
 
-    // Check if field has any errors
     const hasErrors = !!(control.errors && Object.keys(control.errors).length > 0);
     if (!hasErrors) return false;
 
-    // Show server errors immediately, client errors only after interaction
     const hasServerErrors = !!(control.errors && control.errors['serverError']);
     const isInteracted = control.touched || control.dirty;
 
     return hasServerErrors || isInteracted;
   }
+}
 
-  getValidationErrorSummary(): string[] {
-    const errors: string[] = [];
+// Confirm Cancel Dialog Component
+@Component({
+  selector: 'app-confirm-cancel-dialog',
+  template: `
+    <div class="confirm-dialog">
+      <h2 mat-dialog-title>
+        <mat-icon class="warning-icon">warning</mat-icon>
+        Unsaved Changes
+      </h2>
 
-    for (const fieldName in this.validationErrors) {
-      const fieldErrors = this.validationErrors[fieldName];
-      const fieldLabel = this.formatColumnName(fieldName);
+      <mat-dialog-content>
+        <p>You have <strong>{{ data.changesCount }}</strong> unsaved change{{ data.changesCount !== 1 ? 's' : '' }}.</p>
+        <p>What would you like to do?</p>
 
-      if (Array.isArray(fieldErrors)) {
-        fieldErrors.forEach(error => {
-          errors.push(`${fieldLabel}: ${error}`);
-        });
-      } else {
-        errors.push(`${fieldLabel}: ${fieldErrors}`);
-      }
+        <div class="changes-preview" *ngIf="data.changes.length > 0">
+          <h4>Changed fields:</h4>
+          <ul class="changes-list">
+            <li *ngFor="let change of data.changes.slice(0, 3)">
+              {{ formatColumnName(change.field) }}
+            </li>
+            <li *ngIf="data.changes.length > 3">
+              and {{ data.changes.length - 3 }} more...
+            </li>
+          </ul>
+        </div>
+      </mat-dialog-content>
+
+      <mat-dialog-actions class="dialog-actions">
+        <button mat-button (click)="onCancel()" class="cancel-btn">
+          Continue Editing
+        </button>
+        <button mat-button color="warn" (click)="onDiscard()" class="discard-btn">
+          <mat-icon>delete</mat-icon>
+          Discard Changes
+        </button>
+        <button mat-raised-button color="primary" (click)="onSave()" class="save-btn">
+          <mat-icon>save</mat-icon>
+          Save & Close
+        </button>
+      </mat-dialog-actions>
+    </div>
+  `,
+  styles: [`
+    .confirm-dialog {
+      min-width: 350px;
     }
 
-    return errors;
+    .warning-icon {
+      color: #ff9800;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    .changes-preview {
+      margin-top: 16px;
+      padding: 12px;
+      background: #f5f5f5;
+      border-radius: 6px;
+    }
+
+    .changes-preview h4 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .changes-list {
+      margin: 0;
+      padding-left: 20px;
+      font-size: 13px;
+    }
+
+    .changes-list li {
+      margin-bottom: 4px;
+    }
+
+    .dialog-actions {
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .cancel-btn {
+      color: #666;
+    }
+
+    .discard-btn {
+      color: #f44336;
+    }
+
+    .save-btn {
+      background: #4caf50;
+      color: white;
+    }
+  `],
+  standalone: true,
+  imports: [CommonModule, MatDialogModule, MatButtonModule, MatIconModule]
+})
+export class ConfirmCancelDialogComponent {
+  constructor(
+    public dialogRef: MatDialogRef<ConfirmCancelDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any
+  ) {}
+
+  onCancel(): void {
+    this.dialogRef.close('cancel');
+  }
+
+  onDiscard(): void {
+    this.dialogRef.close('discard');
+  }
+
+  onSave(): void {
+    this.dialogRef.close('save');
+  }
+
+  formatColumnName(name: string): string {
+    return FieldTypeUtils.formatColumnName(name);
   }
 }

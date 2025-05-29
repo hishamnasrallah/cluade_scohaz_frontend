@@ -1,5 +1,4 @@
-
-// models/api.models.ts
+// models/api.models.ts - FIXED with proper typing
 export interface ApiResponse {
   applications: {
     api_version: string;
@@ -15,12 +14,28 @@ export interface ApiEndpoint {
   name: string;
   methods: string[];
   parameters: string[];
-  keys: string[];
+  keys: ApiKey[];
   other_info: string;
-  query_params: string[];
+  query_params: any[];
   permissions: string[];
   methods_info: { [key: string]: MethodInfo };
   available_actions: string[];
+}
+
+export interface ApiKey {
+  name: string;
+  type: string;
+  required: boolean;
+  read_only: boolean;
+  default: any;
+  help_text: string;
+  choices?: Array<{
+    value: string;
+    label: string;
+  }>;
+  relation_type?: string;
+  related_model?: string;
+  limit_choices_to?: string;
 }
 
 export interface MethodInfo {
