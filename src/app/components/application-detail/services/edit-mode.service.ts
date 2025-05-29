@@ -1,8 +1,8 @@
-// services/edit-mode.service.ts - Enhanced Edit Mode Management
+// services/edit-mode.service.ts - FIXED
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
-import { ApiService } from '../../services/api.service';
+import { ApiService } from '../../../services/api.service'; // FIXED: Correct import path
 import { Resource, ResourceField, TableData } from '../models/resource.model';
 
 export interface EditModeState {
@@ -38,7 +38,7 @@ export class EditModeService {
 
   public editState$ = this.editStateSubject.asObservable();
 
-  constructor(public apiService: ApiService) {}
+  constructor(private apiService: ApiService) {} // FIXED: Made private instead of public
 
   get currentState(): EditModeState {
     return this.editStateSubject.value;
@@ -46,9 +46,9 @@ export class EditModeService {
 
   // Initialize edit mode with fresh data loading
   initializeEditMode(
-    resource: Resource,
-    recordId: any,
-    config: Partial<EditModeConfig> = {}
+      resource: Resource,
+      recordId: any,
+      config: Partial<EditModeConfig> = {}
   ): Observable<any> {
     const defaultConfig: EditModeConfig = {
       autoSave: false,
@@ -84,33 +84,37 @@ export class EditModeService {
     const path = this.cleanPath(resource.detailEndpoint.path, recordId);
 
     return this.apiService.executeApiCall(path, 'GET').pipe(
-      map(data => {
-        this.updateState({
-          originalData: { ...data },
-          currentData: { ...data },
-          loadingRecord: false,
-          error: null,
-          hasChanges: false,
-          fieldChanges: {}
-        });
-        return data;
-      }),
-      catchError(error => {
-        this.updateState({
-          error: `Failed to load record: ${error.message}`,
-          loadingRecord: false
-        });
-        throw error;
-      })
+        map(data => {
+          // FIXED: Add null check before spreading
+          const safeData = data || {};
+          this.updateState({
+            originalData: { ...safeData },
+            currentData: { ...safeData },
+            loadingRecord: false,
+            error: null,
+            hasChanges: false,
+            fieldChanges: {}
+          });
+          return data;
+        }),
+        catchError(error => {
+          this.updateState({
+            error: `Failed to load record: ${error.message || 'Unknown error'}`,
+            loadingRecord: false
+          });
+          throw error;
+        })
     );
   }
 
   // Set edit data (for cases where we already have the data)
   setEditData(data: any): void {
+    // FIXED: Add null check before spreading
+    const safeData = data || {};
     this.updateState({
       isEditing: true,
-      originalData: { ...data },
-      currentData: { ...data },
+      originalData: { ...safeData },
+      currentData: { ...safeData },
       hasChanges: false,
       loadingRecord: false,
       error: null,
@@ -127,7 +131,7 @@ export class EditModeService {
     const hasChanged = !this.deepEqual(originalValue, newValue);
 
     const updatedCurrentData = {
-      ...state.currentData,
+      ...(state.currentData || {}), // FIXED: Add null check
       [fieldName]: newValue
     };
 
@@ -148,7 +152,7 @@ export class EditModeService {
   // Get changed fields only
   getChangedFields(): any {
     const state = this.currentState;
-    if (!state.isEditing || !state.hasChanges) return {};
+    if (!state.isEditing || !state.hasChanges || !state.currentData) return {};
 
     const changedData: any = {};
     Object.keys(state.fieldChanges).forEach(fieldName => {
@@ -184,8 +188,10 @@ export class EditModeService {
     const state = this.currentState;
     if (!state.isEditing || !state.originalData) return;
 
+    // FIXED: Add null check before spreading
+    const safeOriginalData = state.originalData || {};
     this.updateState({
-      currentData: { ...state.originalData },
+      currentData: { ...safeOriginalData },
       hasChanges: false,
       fieldChanges: {}
     });
@@ -212,7 +218,7 @@ export class EditModeService {
   // Get summary of changes for user confirmation
   getChangesSummary(): { field: string; oldValue: any; newValue: any }[] {
     const state = this.currentState;
-    if (!state.isEditing || !state.hasChanges) return [];
+    if (!state.isEditing || !state.hasChanges || !state.originalData || !state.currentData) return [];
 
     const changes: { field: string; oldValue: any; newValue: any }[] = [];
 
@@ -259,7 +265,7 @@ export class EditModeService {
   private cleanPath(path: string, id?: any): string {
     let cleanedPath = path.replace(/\/$/, '');
     if (id) {
-      cleanedPath = cleanedPath.replace(/<pk>/, id);
+      cleanedPath = cleanedPath.replace(/<pk>/, id.toString());
     }
     cleanedPath = cleanedPath.replace(/<[^>]+>/g, '');
     cleanedPath = cleanedPath.replace(/\.<format>/, '');

@@ -1,12 +1,12 @@
-// utils/field-type.utils.ts - ENHANCED
+// utils/field-type.utils.ts - CORRECTED VERSION
 import { ResourceField } from '../models/resource.model';
 
 export class FieldTypeUtils {
   static isTextInput(field: ResourceField): boolean {
     if (!field || !field.type) return false;
     return ['CharField', 'TextField', 'EmailField', 'URLField', 'SlugField'].includes(field.type) &&
-      !this.hasChoices(field) &&
-      !this.isRelationField(field);
+        !this.hasChoices(field) &&
+        !this.isRelationField(field);
   }
 
   static isNumberInput(field: ResourceField): boolean {
@@ -19,21 +19,22 @@ export class FieldTypeUtils {
     return Boolean(field.choices && Array.isArray(field.choices) && field.choices.length > 0);
   }
 
+  // ENHANCED relationship detection
   static isRelationField(field: ResourceField): boolean {
     if (!field || !field.name) return false;
 
-    // Check if field has related_model property
+    // Check if field has related_model property (most reliable indicator)
     if (field.related_model) {
       return true;
     }
 
-    // Check explicit relation types
+    // Check explicit relation types in field.type
     if (field.type && ['ForeignKey', 'OneToOneField', 'ManyToManyField'].includes(field.type)) {
       return true;
     }
 
     // Check if field has relation_type property
-    if (field.relation_type) {
+    if (field.relation_type && ['ForeignKey', 'OneToOneField', 'ManyToManyField'].includes(field.relation_type)) {
       return true;
     }
 
@@ -43,6 +44,74 @@ export class FieldTypeUtils {
     }
 
     return false;
+  }
+
+  // CORRECTED: Specific relationship type detection with proper null checks
+  static isForeignKeyField(field: ResourceField): boolean {
+    if (!field) return false;
+
+    return field.type === 'ForeignKey' ||
+        field.relation_type === 'ForeignKey' ||
+        (!!field.related_model && field.name.endsWith('_id'));
+  }
+
+  static isOneToOneField(field: ResourceField): boolean {
+    if (!field) return false;
+
+    return field.type === 'OneToOneField' ||
+        field.relation_type === 'OneToOneField';
+  }
+
+  static isManyToManyField(field: ResourceField): boolean {
+    if (!field) return false;
+
+    return field.type === 'ManyToManyField' ||
+        field.relation_type === 'ManyToManyField';
+  }
+
+  // CORRECTED: Check if field is a lookup relation with proper null checks
+  static isLookupField(field: ResourceField): boolean {
+    if (!field) return false;
+
+    return field.related_model === 'lookup.lookup' ||
+        (!!field.limit_choices_to && field.limit_choices_to.includes('lookup'));
+  }
+
+  // NEW: Get relationship type for a field
+  static getRelationshipType(field: ResourceField): 'ForeignKey' | 'OneToOneField' | 'ManyToManyField' | 'Lookup' | null {
+    if (!field || !this.isRelationField(field)) return null;
+
+    if (this.isLookupField(field)) return 'Lookup';
+    if (this.isManyToManyField(field)) return 'ManyToManyField';
+    if (this.isOneToOneField(field)) return 'OneToOneField';
+    if (this.isForeignKeyField(field)) return 'ForeignKey';
+
+    return null;
+  }
+
+  // NEW: Parse related model info
+  static parseRelatedModel(field: ResourceField): { app: string; model: string } | null {
+    if (!field.related_model) return null;
+
+    const parts = field.related_model.split('.');
+    if (parts.length !== 2) return null;
+
+    return {
+      app: parts[0],
+      model: parts[1]
+    };
+  }
+
+  // NEW: Get expected endpoint patterns for a related model
+  static getExpectedEndpointPatterns(appName: string, modelName: string): string[] {
+    return [
+      `${appName}/${modelName}/`,
+      `${appName}/${modelName}s/`,
+      `api/${appName}/${modelName}/`,
+      `api/${appName}/${modelName}s/`,
+      `${modelName}/`,
+      `${modelName}s/`,
+    ];
   }
 
   // ENHANCED file field detection
@@ -137,20 +206,20 @@ export class FieldTypeUtils {
     ];
 
     return !handledTypes.includes(field.type) &&
-      !this.hasChoices(field) &&
-      !this.isRelationField(field);
+        !this.hasChoices(field) &&
+        !this.isRelationField(field);
   }
 
   static formatColumnName(name: string): string {
     if (!name) return '';
     return name
-      .replace(/_/g, ' ')
-      .replace(/([A-Z])/g, ' $1') // Add space before capital letters
-      .replace(/\b\w/g, l => l.toUpperCase())
-      .trim();
+        .replace(/_/g, ' ')
+        .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+        .replace(/\b\w/g, l => l.toUpperCase())
+        .trim();
   }
 
-  // Helper method to get field validation rules
+  // NEW: Helper method to get field validation rules with relationship info
   static getFieldValidationRules(field: ResourceField): string[] {
     const rules: string[] = [];
 
@@ -174,13 +243,50 @@ export class FieldTypeUtils {
       rules.push('File upload');
     }
 
+    // Add relationship-specific rules
+    if (this.isRelationField(field)) {
+      const relType = this.getRelationshipType(field);
+      switch (relType) {
+        case 'ForeignKey':
+          rules.push('Select a related record');
+          break;
+        case 'OneToOneField':
+          rules.push('Select one related record');
+          break;
+        case 'ManyToManyField':
+          rules.push('Select one or more related records');
+          break;
+        case 'Lookup':
+          rules.push('Select from lookup values');
+          break;
+      }
+    }
+
     return rules;
   }
 
-  // Helper method to get field placeholder text
+  // NEW: Helper method to get field placeholder text with relationship context
   static getFieldPlaceholder(field: ResourceField): string {
     const fieldName = this.formatColumnName(field.name);
 
+    // Handle relationship fields
+    if (this.isRelationField(field)) {
+      const relType = this.getRelationshipType(field);
+      switch (relType) {
+        case 'ForeignKey':
+          return `Select a ${fieldName.toLowerCase().replace(' id', '')}`;
+        case 'OneToOneField':
+          return `Select ${fieldName.toLowerCase()}`;
+        case 'ManyToManyField':
+          return `Select multiple ${fieldName.toLowerCase()}`;
+        case 'Lookup':
+          return `Select from ${fieldName.toLowerCase()} options`;
+        default:
+          return `Select ${fieldName.toLowerCase()}`;
+      }
+    }
+
+    // Handle regular fields
     switch (field.type) {
       case 'EmailField':
         return `Enter a valid email address`;
@@ -210,6 +316,33 @@ export class FieldTypeUtils {
       case 'CharField':
       default:
         return `Enter ${fieldName.toLowerCase()}`;
+    }
+  }
+
+  // NEW: Helper to determine if field should show as dropdown
+  static shouldShowAsDropdown(field: ResourceField): boolean {
+    return this.hasChoices(field) || this.isRelationField(field);
+  }
+
+  // NEW: Helper to determine if field needs special loading
+  static needsAsyncOptions(field: ResourceField): boolean {
+    return this.isRelationField(field) && !this.hasChoices(field);
+  }
+
+  // NEW: Get display name for relation type
+  static getRelationTypeDisplayName(field: ResourceField): string {
+    const relType = this.getRelationshipType(field);
+    switch (relType) {
+      case 'ForeignKey':
+        return 'Foreign Key';
+      case 'OneToOneField':
+        return 'One-to-One';
+      case 'ManyToManyField':
+        return 'Many-to-Many';
+      case 'Lookup':
+        return 'Lookup';
+      default:
+        return 'Unknown';
     }
   }
 }

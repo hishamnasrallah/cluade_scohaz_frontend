@@ -102,17 +102,16 @@
     </div>
 
     <!-- Enhanced Form Modal -->
-    <app-enhanced-resource-form
+    <app-resource-form
             *ngIf="showForm"
             [resource]="selectedResource!"
             [editingRecord]="editingRecord"
             [submitting]="submitting"
             [relationOptions]="relationOptions"
             [validationErrors]="formValidationErrors"
-            [showDebug]="false"
             (onSubmit)="handleFormSubmit($event)"
             (onCancel)="closeForm()">
-    </app-enhanced-resource-form>
+    </app-resource-form>
 
     <!-- Detail Modal -->
     <app-resource-detail

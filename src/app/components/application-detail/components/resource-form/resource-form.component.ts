@@ -1,4 +1,4 @@
-// components/enhanced-resource-form/enhanced-resource-form.component.ts
+// components/resource-form/resource-form.component.ts - CORRECTED VERSION
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
@@ -46,7 +46,7 @@ export interface FileFieldInfo {
 }
 
 @Component({
-  selector: 'app-enhanced-resource-form',
+  selector: 'app-resource-form',
   standalone: true,
   imports: [
     CommonModule,
@@ -75,7 +75,7 @@ export interface FileFieldInfo {
   templateUrl: './resource-form.component.html',
   styleUrl: './resource-form.component.scss'
 })
-export class EnhancedResourceFormComponent implements OnInit, OnDestroy, OnChanges {
+export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
   @Input() resource!: Resource;
   @Input() editingRecord: any = null;
   @Input() submitting = false;
@@ -134,14 +134,12 @@ export class EnhancedResourceFormComponent implements OnInit, OnDestroy, OnChang
   }
 
   private initializeEditMode(): void {
-    // Subscribe to edit state changes
     this.editModeService.editState$
         .pipe(takeUntil(this.destroy$))
         .subscribe(state => {
           this.editState = state;
         });
 
-    // Initialize edit mode if we have editing record
     if (this.editingRecord) {
       this.editModeService.setEditData(this.editingRecord);
     }
@@ -151,7 +149,6 @@ export class EnhancedResourceFormComponent implements OnInit, OnDestroy, OnChang
     this.form = this.formBuilder.buildDynamicForm(this.resource, this.editingRecord);
     this.formFields = this.formBuilder.getFormFields(this.resource);
 
-    // Setup form value changes tracking
     this.form.valueChanges
         .pipe(
             takeUntil(this.destroy$),
@@ -159,18 +156,15 @@ export class EnhancedResourceFormComponent implements OnInit, OnDestroy, OnChang
             distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr))
         )
         .subscribe(formValue => {
-          // Update edit mode service with current form state
           Object.keys(formValue).forEach(fieldName => {
             this.editModeService.updateField(fieldName, formValue[fieldName]);
           });
 
-          // Auto-save if enabled
           if (this.autoSaveEnabled && this.editState.hasChanges) {
             this.autoSaveSubject.next('auto-save');
           }
         });
 
-    // Initialize file fields for edit mode
     if (this.editingRecord) {
       this.initializeFileFields();
       this.initializeManyToManyFields();
@@ -181,7 +175,7 @@ export class EnhancedResourceFormComponent implements OnInit, OnDestroy, OnChang
     this.autoSaveSubject
         .pipe(
             takeUntil(this.destroy$),
-            debounceTime(2000) // Wait 2 seconds after last change
+            debounceTime(2000)
         )
         .subscribe(() => {
           if (this.autoSaveEnabled && this.editState.hasChanges && this.form.valid) {
@@ -241,7 +235,6 @@ export class EnhancedResourceFormComponent implements OnInit, OnDestroy, OnChang
     if (this.fileFields[fieldName]) {
       this.fileFields[fieldName].replaceFile = !this.fileFields[fieldName].replaceFile;
 
-      // Clear new file if canceling replace
       if (!this.fileFields[fieldName].replaceFile) {
         delete this.fileFields[fieldName].newFile;
         this.form.get(fieldName)?.setValue(null);
@@ -263,7 +256,6 @@ export class EnhancedResourceFormComponent implements OnInit, OnDestroy, OnChang
       this.form.get(fieldName)?.setValue('file_selected');
       this.form.get(fieldName)?.markAsTouched();
 
-      // Track change
       this.onFieldChange(fieldName, file);
     }
   }
@@ -275,7 +267,6 @@ export class EnhancedResourceFormComponent implements OnInit, OnDestroy, OnChang
     this.form.get(fieldName)?.setValue(null);
     fileInput.value = '';
 
-    // Track change
     this.onFieldChange(fieldName, null);
   }
 
@@ -297,11 +288,40 @@ export class EnhancedResourceFormComponent implements OnInit, OnDestroy, OnChang
   }
 
   isManyToManyField(field: ResourceField): boolean {
-    return field.type === 'ManyToManyField' || field.relation_type === 'ManyToManyField';
+    return FieldTypeUtils.isManyToManyField(field);
   }
 
+  // ENHANCED: Better relationship field detection
   isSingleRelationField(field: ResourceField): boolean {
-    return this.isRelationField(field) && !this.isManyToManyField(field);
+    return FieldTypeUtils.isRelationField(field) && !this.isManyToManyField(field);
+  }
+
+  // NEW: Specific relationship type checks
+  isForeignKeyField(field: ResourceField): boolean {
+    return FieldTypeUtils.isForeignKeyField(field);
+  }
+
+  isOneToOneField(field: ResourceField): boolean {
+    return FieldTypeUtils.isOneToOneField(field);
+  }
+
+  isLookupField(field: ResourceField): boolean {
+    return FieldTypeUtils.isLookupField(field);
+  }
+
+  // NEW: Get relationship type for display
+  getRelationshipType(field: ResourceField): string {
+    return FieldTypeUtils.getRelationTypeDisplayName(field);
+  }
+
+  // NEW: Check if relation options are available
+  hasRelationOptions(field: ResourceField): boolean {
+    return this.relationOptions[field.name] && this.relationOptions[field.name].length > 0;
+  }
+
+  // NEW: Get relation options with loading state
+  getRelationOptions(field: ResourceField): RelationOption[] {
+    return this.relationOptions[field.name] || [];
   }
 
   getManyToManySelectedItems(fieldName: string): RelationOption[] {
@@ -364,17 +384,14 @@ export class EnhancedResourceFormComponent implements OnInit, OnDestroy, OnChang
   resetSingleField(fieldName: string): void {
     this.editModeService.resetField(fieldName);
 
-    // Update form control
     const originalValue = this.editState.originalData?.[fieldName];
     this.form.get(fieldName)?.setValue(originalValue);
 
-    // Reset file field if needed
     if (this.isFileField(this.getFieldByName(fieldName)) && this.fileFields[fieldName]) {
       this.fileFields[fieldName].replaceFile = false;
       delete this.fileFields[fieldName].newFile;
     }
 
-    // Reset many-to-many if needed
     if (this.isManyToManyField(this.getFieldByName(fieldName))) {
       this.manyToManySelections[fieldName] = Array.isArray(originalValue) ? [...originalValue] : [];
     }
@@ -383,15 +400,10 @@ export class EnhancedResourceFormComponent implements OnInit, OnDestroy, OnChang
   resetAllChanges(): void {
     this.editModeService.resetAllChanges();
 
-    // Reset form to original values
     const originalData = this.editState.originalData;
     if (originalData) {
       this.form.patchValue(originalData);
-
-      // Reset file fields
       this.resetFileFields();
-
-      // Reset many-to-many
       this.resetManyToManySelections();
     }
   }
@@ -438,7 +450,6 @@ export class EnhancedResourceFormComponent implements OnInit, OnDestroy, OnChang
         if (fileInfo.newFile) {
           formData[fieldName] = fileInfo.newFile;
         } else if (!this.editState.isEditing || fileInfo.replaceFile) {
-          // Include null for file fields when creating or explicitly replacing
           formData[fieldName] = null;
         }
       }
@@ -446,7 +457,6 @@ export class EnhancedResourceFormComponent implements OnInit, OnDestroy, OnChang
       // Add many-to-many selections
       for (const fieldName in this.manyToManySelections) {
         if (this.editState.isEditing) {
-          // Only include if changed
           if (this.hasFieldChanged(fieldName)) {
             formData[fieldName] = this.manyToManySelections[fieldName];
           }
@@ -457,7 +467,6 @@ export class EnhancedResourceFormComponent implements OnInit, OnDestroy, OnChang
 
       this.onSubmit.emit(formData);
     } else {
-      // Mark all fields as touched to show validation errors
       Object.keys(this.form.controls).forEach(key => {
         const control = this.form.get(key);
         control?.markAsTouched();
@@ -485,7 +494,6 @@ export class EnhancedResourceFormComponent implements OnInit, OnDestroy, OnChang
         } else if (result === 'save') {
           this.submitForm();
         }
-        // 'cancel' does nothing - keeps dialog open
       });
     } else {
       this.onCancel.emit();
@@ -645,6 +653,12 @@ export class EnhancedResourceFormComponent implements OnInit, OnDestroy, OnChang
     }
 
     return [...new Set(errors)];
+  }
+
+  // ADDED: Method that was missing in the template
+  getFieldErrorMessage(fieldName: string): string {
+    const errors = this.getFieldErrors(fieldName);
+    return errors.length > 0 ? errors[0] : '';
   }
 
   hasFieldError(fieldName: string): boolean {
