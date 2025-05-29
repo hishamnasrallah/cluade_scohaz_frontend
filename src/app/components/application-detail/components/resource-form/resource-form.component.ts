@@ -1,4 +1,4 @@
-// components/resource-form/resource-form.component.ts - FIXED MISSING METHODS
+// components/resource-form/resource-form.component.ts - FIXED Many-to-Many Dialog
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
@@ -270,13 +270,20 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
     this.onFieldChange(fieldName, null);
   }
 
-  // Many-to-many handling methods
+  // ENHANCED: Many-to-many handling methods
   private initializeManyToManyFields(): void {
+    console.log('🔍 DEBUG: Initializing many-to-many fields');
     this.formFields.forEach(field => {
       if (this.isManyToManyField(field) && this.editingRecord) {
         const existingValue = this.editingRecord[field.name];
+        console.log(`🔍 DEBUG: M2M field ${field.name} existing value:`, existingValue);
+
         if (Array.isArray(existingValue)) {
           this.manyToManySelections[field.name] = [...existingValue];
+          console.log(`✅ Initialized M2M field ${field.name} with:`, this.manyToManySelections[field.name]);
+        } else {
+          this.manyToManySelections[field.name] = [];
+          console.log(`ℹ️ Initialized M2M field ${field.name} as empty array`);
         }
       }
     });
@@ -289,6 +296,98 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
 
   isManyToManyField(field: ResourceField): boolean {
     return FieldTypeUtils.isManyToManyField(field);
+  }
+
+  // ENHANCED: Better M2M selected items display
+  getManyToManySelectedItems(fieldName: string): RelationOption[] {
+    const selectedIds = this.manyToManySelections[fieldName] || [];
+    const options = this.relationOptions[fieldName] || [];
+
+    console.log(`🔍 DEBUG: Getting M2M selected items for ${fieldName}`);
+    console.log(`🔍 DEBUG: Selected IDs:`, selectedIds);
+    console.log(`🔍 DEBUG: Available options:`, options);
+
+    const selectedItems = options.filter(option => selectedIds.includes(option.id));
+    console.log(`🔍 DEBUG: Selected items:`, selectedItems);
+
+    return selectedItems;
+  }
+
+  removeManyToManyItem(fieldName: string, itemId: any): void {
+    console.log(`🔍 DEBUG: Removing M2M item ${itemId} from ${fieldName}`);
+
+    if (!this.manyToManySelections[fieldName]) {
+      this.manyToManySelections[fieldName] = [];
+    }
+
+    this.manyToManySelections[fieldName] = this.manyToManySelections[fieldName].filter(id => id !== itemId);
+    console.log(`✅ Updated M2M selection for ${fieldName}:`, this.manyToManySelections[fieldName]);
+
+    this.form.get(fieldName)?.setValue(this.manyToManySelections[fieldName]);
+    this.onFieldChange(fieldName, this.manyToManySelections[fieldName]);
+  }
+
+  clearAllManyToMany(fieldName: string): void {
+    console.log(`🔍 DEBUG: Clearing all M2M items for ${fieldName}`);
+    this.manyToManySelections[fieldName] = [];
+    this.form.get(fieldName)?.setValue([]);
+    this.onFieldChange(fieldName, []);
+  }
+
+  // ENHANCED: Fixed M2M selector dialog opening
+  openManyToManySelector(field: ResourceField): void {
+    console.log(`🔍 DEBUG: Opening M2M selector for field:`, field);
+    console.log(`🔍 DEBUG: Available options:`, this.relationOptions[field.name]);
+    console.log(`🔍 DEBUG: Current selections:`, this.manyToManySelections[field.name]);
+
+    // Check if options are loaded
+    const options = this.relationOptions[field.name] || [];
+    if (options.length === 0) {
+      console.warn(`⚠️ No options available for ${field.name}. Make sure relation options are loaded.`);
+      this.snackBar.open(`No ${field.name} options available. Please try again.`, 'Close', {
+        duration: 3000
+      });
+      return;
+    }
+
+    const dialogData: ManyToManyData = {
+      fieldName: field.name,
+      title: this.formatColumnName(field.name),
+      options: options,
+      selectedIds: this.manyToManySelections[field.name] || [],
+      loading: false
+    };
+
+    console.log(`🔍 DEBUG: Dialog data for ${field.name}:`, dialogData);
+
+    const dialogRef = this.dialog.open(ManyToManySelectorComponent, {
+      width: '600px',
+      maxWidth: '90vw',
+      maxHeight: '80vh',
+      data: dialogData, // FIXED: Pass data correctly
+      disableClose: false,
+      panelClass: 'many-to-many-dialog-panel'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      console.log(`🔍 DEBUG: M2M dialog closed with result:`, result);
+
+      if (result !== undefined && Array.isArray(result)) {
+        console.log(`✅ Updating M2M selection for ${field.name}:`, result);
+
+        this.manyToManySelections[field.name] = result;
+        this.form.get(field.name)?.setValue(result);
+        this.onFieldChange(field.name, result);
+
+        // Show success message
+        const selectedCount = result.length;
+        this.snackBar.open(`Selected ${selectedCount} ${field.name}`, 'Close', {
+          duration: 2000
+        });
+      } else {
+        console.log(`ℹ️ M2M dialog cancelled or no changes made`);
+      }
+    });
   }
 
   // *** ENHANCED RELATIONSHIP FIELD DETECTION ***
@@ -344,54 +443,6 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
       options: this.relationOptions[field.name]?.slice(0, 3) // Show first 3 options
     };
     return JSON.stringify(debugInfo, null, 2);
-  }
-
-  getManyToManySelectedItems(fieldName: string): RelationOption[] {
-    const selectedIds = this.manyToManySelections[fieldName] || [];
-    const options = this.relationOptions[fieldName] || [];
-    return options.filter(option => selectedIds.includes(option.id));
-  }
-
-  removeManyToManyItem(fieldName: string, itemId: any): void {
-    if (!this.manyToManySelections[fieldName]) {
-      this.manyToManySelections[fieldName] = [];
-    }
-
-    this.manyToManySelections[fieldName] = this.manyToManySelections[fieldName].filter(id => id !== itemId);
-    this.form.get(fieldName)?.setValue(this.manyToManySelections[fieldName]);
-    this.onFieldChange(fieldName, this.manyToManySelections[fieldName]);
-  }
-
-  clearAllManyToMany(fieldName: string): void {
-    this.manyToManySelections[fieldName] = [];
-    this.form.get(fieldName)?.setValue([]);
-    this.onFieldChange(fieldName, []);
-  }
-
-  openManyToManySelector(field: ResourceField): void {
-    const dialogData: ManyToManyData = {
-      fieldName: field.name,
-      title: this.formatColumnName(field.name),
-      options: this.relationOptions[field.name] || [],
-      selectedIds: this.manyToManySelections[field.name] || [],
-      loading: false
-    };
-
-    const dialogRef = this.dialog.open(ManyToManySelectorComponent, {
-      width: '600px',
-      maxWidth: '90vw',
-      maxHeight: '80vh',
-      data: dialogData,
-      disableClose: false
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result !== undefined) {
-        this.manyToManySelections[field.name] = result;
-        this.form.get(field.name)?.setValue(result);
-        this.onFieldChange(field.name, result);
-      }
-    });
   }
 
   // Change tracking methods
@@ -487,6 +538,7 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
         }
       }
 
+      console.log('🔍 DEBUG: Final form data being submitted:', formData);
       this.onSubmit.emit(formData);
     } else {
       Object.keys(this.form.controls).forEach(key => {

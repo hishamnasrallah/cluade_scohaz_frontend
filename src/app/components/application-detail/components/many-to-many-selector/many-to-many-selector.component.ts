@@ -1,5 +1,5 @@
-// components/many-to-many-selector/many-to-many-selector.component.ts
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+// components/many-to-many-selector/many-to-many-selector.component.ts - FIXED
+import { Component, Input, Output, EventEmitter, OnInit, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -42,25 +42,30 @@ export interface ManyToManyData {
   styleUrl: './many-to-many-selector.component.scss'
 })
 export class ManyToManySelectorComponent implements OnInit {
-  @Input() data!: ManyToManyData;
-  @Output() onSelection = new EventEmitter<any[]>();
-  @Output() onClose = new EventEmitter<void>();
-
   searchControl = new FormControl('');
   selectedIds: Set<any> = new Set();
   filteredOptions: RelationOption[] = [];
 
   constructor(
-      public dialogRef: MatDialogRef<ManyToManySelectorComponent>
-  ) {}
+      public dialogRef: MatDialogRef<ManyToManySelectorComponent>,
+      @Inject(MAT_DIALOG_DATA) public data: ManyToManyData // FIXED: Properly inject dialog data
+  ) {
+    console.log('🔍 DEBUG: ManyToMany dialog data:', data);
+  }
 
   ngOnInit(): void {
+    console.log('🔍 DEBUG: ManyToMany ngOnInit - data:', this.data);
+    console.log('🔍 DEBUG: ManyToMany options:', this.data.options);
+    console.log('🔍 DEBUG: ManyToMany selectedIds:', this.data.selectedIds);
+
     // Initialize selected IDs
-    if (this.data.selectedIds) {
+    if (this.data.selectedIds && Array.isArray(this.data.selectedIds)) {
       this.selectedIds = new Set(this.data.selectedIds);
     }
 
-    this.filteredOptions = [...this.data.options];
+    // Initialize filtered options
+    this.filteredOptions = [...(this.data.options || [])];
+    console.log('🔍 DEBUG: Initial filteredOptions:', this.filteredOptions);
 
     // Setup search filter
     this.searchControl.valueChanges.subscribe(searchTerm => {
@@ -69,25 +74,26 @@ export class ManyToManySelectorComponent implements OnInit {
   }
 
   get loading(): boolean {
-    return this.data.loading;
+    return this.data?.loading || false;
   }
 
   get title(): string {
-    return this.data.title || this.data.fieldName;
+    return this.data?.title || this.data?.fieldName || 'Select Items';
   }
 
   get selectedItems(): RelationOption[] {
-    return this.data.options.filter(option => this.selectedIds.has(option.id));
+    const options = this.data?.options || [];
+    return options.filter(option => this.selectedIds.has(option.id));
   }
 
   private filterOptions(searchTerm: string): void {
     if (!searchTerm.trim()) {
-      this.filteredOptions = [...this.data.options];
+      this.filteredOptions = [...(this.data.options || [])];
       return;
     }
 
     const term = searchTerm.toLowerCase();
-    this.filteredOptions = this.data.options.filter(option =>
+    this.filteredOptions = (this.data.options || []).filter(option =>
         option.display.toLowerCase().includes(term) ||
         option.id.toString().toLowerCase().includes(term)
     );
@@ -98,21 +104,27 @@ export class ManyToManySelectorComponent implements OnInit {
   }
 
   toggleSelection(id: any): void {
+    console.log('🔍 DEBUG: Toggling selection for ID:', id);
     if (this.selectedIds.has(id)) {
       this.selectedIds.delete(id);
+      console.log('🔍 DEBUG: Removed ID:', id);
     } else {
       this.selectedIds.add(id);
+      console.log('🔍 DEBUG: Added ID:', id);
     }
+    console.log('🔍 DEBUG: Current selected IDs:', Array.from(this.selectedIds));
   }
 
   selectAll(): void {
     this.filteredOptions.forEach(option => {
       this.selectedIds.add(option.id);
     });
+    console.log('🔍 DEBUG: Selected all, current IDs:', Array.from(this.selectedIds));
   }
 
   deselectAll(): void {
     this.selectedIds.clear();
+    console.log('🔍 DEBUG: Deselected all');
   }
 
   trackByOption(index: number, option: RelationOption): any {
@@ -121,12 +133,12 @@ export class ManyToManySelectorComponent implements OnInit {
 
   onConfirm(): void {
     const selectedItems = Array.from(this.selectedIds);
-    this.onSelection.emit(selectedItems);
+    console.log('🔍 DEBUG: Confirming selection:', selectedItems);
     this.dialogRef.close(selectedItems);
   }
 
   onCancel(): void {
-    this.onClose.emit();
+    console.log('🔍 DEBUG: Cancelling selection');
     this.dialogRef.close();
   }
 }

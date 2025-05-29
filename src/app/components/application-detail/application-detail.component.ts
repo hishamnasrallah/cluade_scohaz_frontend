@@ -1,4 +1,4 @@
-// application-detail.component.ts - SIMPLIFIED VERSION
+// application-detail.component.ts - FIXED Many-to-Many Loading
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -202,7 +202,11 @@ export class ApplicationDetailComponent implements OnInit {
     this.formValidationErrors = {};
     this.showForm = true;
 
-    this.loadRelationOptions(resource);
+    // ENHANCED: Load relation options with better loading state
+    this.loadRelationOptionsWithCallback(resource, () => {
+      console.log('✅ Relation options loaded for create dialog');
+    });
+
     this.editModeService.exitEditMode();
   }
 
@@ -213,7 +217,10 @@ export class ApplicationDetailComponent implements OnInit {
     this.formValidationErrors = {};
     this.showForm = true;
 
-    this.loadRelationOptions(resource);
+    // ENHANCED: Load relation options with better loading state
+    this.loadRelationOptionsWithCallback(resource, () => {
+      console.log('✅ Relation options loaded for edit dialog');
+    });
 
     const recordId = record['id'] || record['pk'];
     if (recordId) {
@@ -233,8 +240,8 @@ export class ApplicationDetailComponent implements OnInit {
     }
   }
 
-  // *** SIMPLIFIED RELATION OPTIONS LOADING ***
-  private loadRelationOptions(resource: Resource): void {
+  // ENHANCED: Load relation options with callback
+  private loadRelationOptionsWithCallback(resource: Resource, callback?: () => void): void {
     console.log('🔍 DEBUG: Loading relation options for resource:', resource.name);
 
     // Reset relation options
@@ -242,15 +249,35 @@ export class ApplicationDetailComponent implements OnInit {
 
     if (!resource.fields || resource.fields.length === 0) {
       console.log('❌ No fields found for resource');
+      if (callback) callback();
       return;
     }
 
-    // Process each field that is a relation field
-    resource.fields.forEach(field => {
-      if (this.isRelationField(field)) {
-        console.log(`✅ Loading options for relation field: ${field.name}`);
-        this.loadOptionsForField(field);
-      }
+    // Count total relation fields to track loading progress
+    const relationFields = resource.fields.filter(field => this.isRelationField(field));
+    if (relationFields.length === 0) {
+      console.log('ℹ️ No relation fields found for resource');
+      if (callback) callback();
+      return;
+    }
+
+    let loadedCount = 0;
+    const totalCount = relationFields.length;
+
+    console.log(`🔍 DEBUG: Found ${totalCount} relation fields to load`);
+
+    // Process each relation field
+    relationFields.forEach(field => {
+      console.log(`✅ Loading options for relation field: ${field.name}`);
+      this.loadOptionsForField(field, () => {
+        loadedCount++;
+        console.log(`✅ Loaded ${loadedCount}/${totalCount} relation fields`);
+
+        if (loadedCount === totalCount) {
+          console.log('✅ All relation options loaded');
+          if (callback) callback();
+        }
+      });
     });
   }
 
@@ -272,18 +299,25 @@ export class ApplicationDetailComponent implements OnInit {
     );
   }
 
-  private loadOptionsForField(field: ResourceField): void {
+  private loadOptionsForField(field: ResourceField, callback?: () => void): void {
     console.log(`🔍 DEBUG: Loading options for field: ${field.name}`);
+    console.log(`🔍 DEBUG: Field details:`, {
+      name: field.name,
+      type: field.type,
+      relation_type: field.relation_type,
+      related_model: field.related_model,
+      limit_choices_to: field.limit_choices_to
+    });
 
     // Initialize empty array
     this.relationOptions[field.name] = [];
 
     if (this.isLookupField(field)) {
-      this.loadLookupOptions(field);
+      this.loadLookupOptions(field, callback);
     } else if (field.related_model) {
-      this.loadRelatedModelOptions(field);
+      this.loadRelatedModelOptions(field, callback);
     } else {
-      this.loadFallbackOptions(field);
+      this.loadFallbackOptions(field, callback);
     }
   }
 
@@ -308,17 +342,17 @@ export class ApplicationDetailComponent implements OnInit {
     }
   }
 
-  private loadLookupOptions(field: ResourceField): void {
+  private loadLookupOptions(field: ResourceField, callback?: () => void): void {
     console.log(`🔍 DEBUG: Loading lookup options for ${field.name}`);
 
     const lookupName = this.extractLookupName(field);
     if (!lookupName) {
       console.error(`❌ Could not extract lookup name for field: ${field.name}`);
       this.relationOptions[field.name] = [];
+      if (callback) callback();
       return;
     }
 
-    // Complete URL with query parameter
     const lookupUrl = `/lookups/?name=${encodeURIComponent(lookupName)}`;
     console.log(`🔍 DEBUG: Loading lookup from URL: ${lookupUrl}`);
 
@@ -334,71 +368,99 @@ export class ApplicationDetailComponent implements OnInit {
           console.warn(`⚠️ Lookup response is not an array for ${field.name}`);
           this.relationOptions[field.name] = [];
         }
+
+        if (callback) callback();
       },
       error: (error) => {
         console.error(`❌ Error loading lookup options for ${field.name}:`, error);
         this.relationOptions[field.name] = [];
+        if (callback) callback();
       }
     });
   }
 
-  private loadRelatedModelOptions(field: ResourceField): void {
+  // ENHANCED: Better Many-to-Many loading
+  private loadRelatedModelOptions(field: ResourceField, callback?: () => void): void {
     console.log(`🔍 DEBUG: Loading related model options for ${field.name}`);
+    console.log(`🔍 DEBUG: Related model: ${field.related_model}`);
 
-    if (!field.related_model) return;
+    if (!field.related_model) {
+      if (callback) callback();
+      return;
+    }
 
     const parts = field.related_model.split('.');
     if (parts.length !== 2) {
       console.warn(`❌ Invalid related_model format: ${field.related_model}`);
+      if (callback) callback();
       return;
     }
 
     const [appName, modelName] = parts;
-    const url = `/${appName}/${modelName}/`;
 
-    console.log(`🔍 DEBUG: Loading related model from: ${url}`);
+    // FIXED: Try multiple URL patterns for many-to-many fields
+    const possibleUrls = [
+      `${appName}/${modelName}/`,        // Standard format
+      `/${appName}/${modelName}/`,       // With leading slash
+      `api/${appName}/${modelName}/`,    // With api prefix
+      `/api/${appName}/${modelName}/`,   // With api prefix and leading slash
+    ];
+
+    console.log(`🔍 DEBUG: Trying URLs for ${field.name}:`, possibleUrls);
+
+    // Try the first URL pattern
+    this.tryLoadFromUrls(field, possibleUrls, 0, callback);
+  }
+
+  // ENHANCED: Try multiple URL patterns
+  private tryLoadFromUrls(field: ResourceField, urls: string[], index: number, callback?: () => void): void {
+    if (index >= urls.length) {
+      console.error(`❌ All URL patterns failed for ${field.name}`);
+      this.relationOptions[field.name] = [];
+      if (callback) callback();
+      return;
+    }
+
+    const url = urls[index];
+    console.log(`🔍 DEBUG: Trying URL ${index + 1}/${urls.length}: ${url}`);
 
     this.apiService.executeApiCall(url, 'GET').subscribe({
       next: (response) => {
+        console.log(`✅ Success loading from URL: ${url}`, response);
         const data = response.results || response || [];
+
         if (Array.isArray(data)) {
           this.relationOptions[field.name] = this.formatOptions(data, 'model');
           console.log(`✅ Loaded ${this.relationOptions[field.name].length} related model options for ${field.name}`);
         } else {
+          console.warn(`⚠️ Response is not an array for ${field.name}:`, data);
           this.relationOptions[field.name] = [];
         }
+
+        if (callback) callback();
       },
       error: (error) => {
-        console.error(`❌ Error loading related model options for ${field.name}:`, error);
-        this.relationOptions[field.name] = [];
+        console.warn(`⚠️ Failed to load from URL: ${url}`, error);
+        // Try next URL
+        this.tryLoadFromUrls(field, urls, index + 1, callback);
       }
     });
   }
 
-  private loadFallbackOptions(field: ResourceField): void {
+  private loadFallbackOptions(field: ResourceField, callback?: () => void): void {
     console.log(`🔍 DEBUG: Loading fallback options for ${field.name}`);
 
     // Try to guess from field name
-    const baseName = field.name.replace(/_id$/, '');
-    const url = `/${this.appName}/${baseName}/`;
+    const baseName = field.name.replace(/_id$/, '').replace(/s$/, ''); // Remove _id and trailing s
+    const possibleUrls = [
+      `${this.appName}/${baseName}/`,
+      `/${this.appName}/${baseName}/`,
+      `${this.appName}/${field.name.replace(/_id$/, '')}/`,
+      `/${this.appName}/${field.name.replace(/_id$/, '')}/`,
+    ];
 
-    console.log(`🔍 DEBUG: Loading fallback from: ${url}`);
-
-    this.apiService.executeApiCall(url, 'GET').subscribe({
-      next: (response) => {
-        const data = response.results || response || [];
-        if (Array.isArray(data)) {
-          this.relationOptions[field.name] = this.formatOptions(data, 'fallback');
-          console.log(`✅ Loaded ${this.relationOptions[field.name].length} fallback options for ${field.name}`);
-        } else {
-          this.relationOptions[field.name] = [];
-        }
-      },
-      error: (error) => {
-        console.error(`❌ Error loading fallback options for ${field.name}:`, error);
-        this.relationOptions[field.name] = [];
-      }
-    });
+    console.log(`🔍 DEBUG: Fallback URLs for ${field.name}:`, possibleUrls);
+    this.tryLoadFromUrls(field, possibleUrls, 0, callback);
   }
 
   private formatOptions(data: any[], type: string): RelationOption[] {

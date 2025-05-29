@@ -1,3 +1,4 @@
+// FIXED: @use rules must come FIRST
 @use '@angular/material' as mat;
 
 @include mat.core();
@@ -18,3 +19,198 @@ $my-theme: mat.m2-define-light-theme((
 
 // Include all component themes
 @include mat.all-component-themes($my-theme);
+
+/* ENHANCED: Global styles for Many-to-Many dialog */
+.many-to-many-dialog-panel {
+  .mat-mdc-dialog-container {
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+  }
+
+  .mat-mdc-dialog-content {
+    padding: 0;
+    margin: 0;
+    max-height: none;
+  }
+
+  .mat-mdc-dialog-actions {
+    padding: 0;
+    margin: 0;
+  }
+}
+
+/* Custom scrollbar for better UX */
+.many-to-many-dialog .options-list {
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+
+    &:hover {
+      background: #a8a8a8;
+    }
+  }
+}
+
+/* Enhanced Material UI overrides for better form styling */
+.mat-mdc-form-field {
+  &.relation-field {
+    .mat-mdc-text-field-wrapper {
+      background: linear-gradient(135deg, #f8f9ff 0%, #e8f0ff 100%);
+      border: 1px solid #2196f3;
+      border-radius: 8px;
+    }
+
+    .mat-mdc-form-field-label {
+      color: #1976d2;
+      font-weight: 500;
+    }
+  }
+}
+
+/* Loading animation for relation fields */
+@keyframes loadingPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.loading-relations {
+  animation: loadingPulse 2s infinite;
+}
+
+/* Snackbar styles for better notifications */
+.success-snackbar {
+  background: #4caf50;
+  color: white;
+}
+
+.error-snackbar {
+  background: #f44336;
+  color: white;
+}
+
+.warning-snackbar {
+  background: #ff9800;
+  color: white;
+}
+
+/* Enhanced chip styling for many-to-many selections */
+.selected-chips {
+  .mat-mdc-chip {
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+    }
+  }
+}
+
+/* Enhanced button styling for many-to-many actions */
+.many-to-many-container button[mat-stroked-button] {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+/* Accessibility improvements */
+.mat-mdc-checkbox {
+  .mdc-checkbox__native-control:focus ~ .mdc-checkbox__background {
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.3);
+  }
+}
+
+/* Dialog animation improvements */
+.mat-mdc-dialog-container {
+  animation: dialogEnter 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+@keyframes dialogEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Better focus states for form fields */
+.mat-mdc-form-field.mat-focused {
+  .mat-mdc-text-field-wrapper {
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+  }
+}
+
+/* Enhanced table styling */
+.resource-table {
+  .mat-mdc-row:hover {
+    background: rgba(33, 150, 243, 0.04);
+  }
+
+  .action-btn {
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: scale(1.1);
+    }
+  }
+}
+
+/* Mobile responsive improvements */
+@media (max-width: 768px) {
+  .many-to-many-dialog-panel {
+    .mat-mdc-dialog-container {
+      margin: 8px;
+      max-height: calc(100vh - 16px);
+      max-width: calc(100vw - 16px);
+    }
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dashboard-stats {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  .mat-mdc-dialog-container,
+  .mat-mdc-snack-bar-container,
+  .action-buttons,
+  .header-actions {
+    display: none !important;
+  }
+
+  .main-content {
+    box-shadow: none !important;
+    border: 1px solid #ccc;
+  }
+}

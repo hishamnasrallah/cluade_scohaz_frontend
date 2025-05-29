@@ -1,4 +1,4 @@
-<!-- many-to-many-selector.component.html -->
+<!-- many-to-many-selector.component.html - FIXED -->
 <div class="many-to-many-dialog">
   <div class="dialog-header">
     <h2>Select {{ title }}</h2>
@@ -60,36 +60,54 @@
         </div>
       </div>
 
-      <mat-selection-list class="options-list" [multiple]="true">
-        <mat-list-option
-          *ngFor="let option of filteredOptions; trackBy: trackByOption"
-          [selected]="isSelected(option.id)"
-          (click)="toggleSelection(option.id)"
-          class="option-item">
+      <!-- Options List with proper Material components -->
+      <div class="options-list-container" *ngIf="filteredOptions.length > 0">
+        <mat-selection-list class="options-list" [multiple]="true">
+          <mat-list-option
+            *ngFor="let option of filteredOptions; trackBy: trackByOption"
+            [selected]="isSelected(option.id)"
+            (click)="toggleSelection(option.id)"
+            class="option-item">
 
-          <div class="option-content">
-            <mat-checkbox
-              [checked]="isSelected(option.id)"
-              (change)="toggleSelection(option.id)"
-              (click)="$event.stopPropagation()"
-              class="option-checkbox">
-            </mat-checkbox>
-            <div class="option-text">
-              <span class="option-display">{{ option.display }}</span>
-              <span class="option-id">ID: {{ option.id }}</span>
+            <div class="option-content">
+              <mat-checkbox
+                [checked]="isSelected(option.id)"
+                (change)="toggleSelection(option.id)"
+                (click)="$event.stopPropagation()"
+                class="option-checkbox">
+              </mat-checkbox>
+              <div class="option-text">
+                <span class="option-display">{{ option.display }}</span>
+                <span class="option-id">ID: {{ option.id }}</span>
+              </div>
             </div>
-          </div>
-        </mat-list-option>
-      </mat-selection-list>
+          </mat-list-option>
+        </mat-selection-list>
+      </div>
 
       <!-- No Options Message -->
       <div class="no-options" *ngIf="filteredOptions.length === 0 && !loading">
         <mat-icon class="no-options-icon">inbox</mat-icon>
-        <p>No options available</p>
-        <p class="no-options-subtitle" *ngIf="searchControl.value">
-          Try adjusting your search terms
+        <h3>No options available</h3>
+        <p *ngIf="!searchControl.value" class="no-options-subtitle">
+          No {{ title.toLowerCase() }} options are currently available.
         </p>
+        <p *ngIf="searchControl.value" class="no-options-subtitle">
+          No options match your search: "<strong>{{ searchControl.value }}</strong>"
+          <br>Try adjusting your search terms.
+        </p>
+        <div class="no-options-actions">
+          <button mat-button
+                  *ngIf="searchControl.value"
+                  (click)="searchControl.setValue('')"
+                  class="clear-search-btn">
+            <mat-icon>clear</mat-icon>
+            Clear Search
+          </button>
+        </div>
       </div>
+
+      <!-- Debug Info removed to avoid compilation error -->
     </div>
   </div>
 
