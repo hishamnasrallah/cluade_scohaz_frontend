@@ -1,0 +1,108 @@
+<!-- many-to-many-selector.component.html -->
+<div class="many-to-many-dialog">
+  <div class="dialog-header">
+    <h2>Select {{ title }}</h2>
+    <button mat-icon-button (click)="onCancel()" class="close-btn">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="dialog-content">
+    <!-- Search Filter -->
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Search options</mat-label>
+      <input matInput
+             [formControl]="searchControl"
+             placeholder="Type to search...">
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+
+    <!-- Selected Items Summary -->
+    <div class="selected-summary" *ngIf="selectedItems.length > 0">
+      <h4>Selected ({{ selectedItems.length }}):</h4>
+      <mat-chip-set class="selected-chips">
+        <mat-chip *ngFor="let item of selectedItems"
+                  (removed)="toggleSelection(item.id)"
+                  removable="true">
+          {{ item.display }}
+          <mat-icon matChipRemove>cancel</mat-icon>
+        </mat-chip>
+      </mat-chip-set>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-container" *ngIf="loading">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading options...</p>
+    </div>
+
+    <!-- Options List -->
+    <div class="options-container" *ngIf="!loading">
+      <div class="options-header">
+        <span class="options-count">
+          {{ filteredOptions.length }} option{{ filteredOptions.length !== 1 ? 's' : '' }} available
+        </span>
+        <div class="bulk-actions">
+          <button mat-button
+                  (click)="selectAll()"
+                  [disabled]="filteredOptions.length === 0"
+                  class="bulk-btn">
+            <mat-icon>select_all</mat-icon>
+            Select All
+          </button>
+          <button mat-button
+                  (click)="deselectAll()"
+                  [disabled]="selectedItems.length === 0"
+                  class="bulk-btn">
+            <mat-icon>deselect</mat-icon>
+            Clear All
+          </button>
+        </div>
+      </div>
+
+      <mat-selection-list class="options-list" [multiple]="true">
+        <mat-list-option
+          *ngFor="let option of filteredOptions; trackBy: trackByOption"
+          [selected]="isSelected(option.id)"
+          (click)="toggleSelection(option.id)"
+          class="option-item">
+
+          <div class="option-content">
+            <mat-checkbox
+              [checked]="isSelected(option.id)"
+              (change)="toggleSelection(option.id)"
+              (click)="$event.stopPropagation()"
+              class="option-checkbox">
+            </mat-checkbox>
+            <div class="option-text">
+              <span class="option-display">{{ option.display }}</span>
+              <span class="option-id">ID: {{ option.id }}</span>
+            </div>
+          </div>
+        </mat-list-option>
+      </mat-selection-list>
+
+      <!-- No Options Message -->
+      <div class="no-options" *ngIf="filteredOptions.length === 0 && !loading">
+        <mat-icon class="no-options-icon">inbox</mat-icon>
+        <p>No options available</p>
+        <p class="no-options-subtitle" *ngIf="searchControl.value">
+          Try adjusting your search terms
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="dialog-actions">
+    <button mat-button (click)="onCancel()" class="cancel-btn">
+      Cancel
+    </button>
+    <button mat-raised-button
+            color="primary"
+            (click)="onConfirm()"
+            class="confirm-btn">
+      <mat-icon>check</mat-icon>
+      Confirm Selection ({{ selectedItems.length }})
+    </button>
+  </div>
+</div>

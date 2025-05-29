@@ -1,4 +1,3 @@
-
 // components/app.component.ts
 import { Component, OnInit } from '@angular/core';
 import {Router, RouterOutlet} from '@angular/router';
@@ -33,28 +32,25 @@ import {NgIf} from "@angular/common";
     MatButton,
     NgIf
   ],
-  styles: [`
-    .spacer {
-      flex: 1 1 auto;
-    }
-  `]
+  styleUrl: './app.component.scss'
 })
 export class AppComponent implements OnInit {
   isAuthenticated = false;
   showConfigButton = false;
+  title = 'cluade-lowcode';
 
   constructor(
-    private authService: AuthService,
-    private configService: ConfigService,
-    private router: Router
+      private authService: AuthService,
+      private configService: ConfigService,
+      private router: Router
   ) {}
 
   ngOnInit(): void {
     this.authService.isAuthenticated$.subscribe(
-      isAuth => {
-        this.isAuthenticated = isAuth;
-        this.showConfigButton = isAuth || this.configService.isConfigured();
-      }
+        isAuth => {
+          this.isAuthenticated = isAuth;
+          this.showConfigButton = isAuth || this.configService.isConfigured();
+        }
     );
 
     if (!this.configService.isConfigured()) {

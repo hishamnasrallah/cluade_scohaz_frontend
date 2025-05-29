@@ -38,7 +38,7 @@ export class EditModeService {
 
   public editState$ = this.editStateSubject.asObservable();
 
-  constructor(private apiService: ApiService) {}
+  constructor(public apiService: ApiService) {}
 
   get currentState(): EditModeState {
     return this.editStateSubject.value;

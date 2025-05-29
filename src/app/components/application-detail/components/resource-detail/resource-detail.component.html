@@ -1,10 +1,73 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Title</title>
-</head>
-<body>
+<!-- resource-detail.component.html -->
+<div class="detail-overlay" (click)="onOverlayClick($event)">
+    <mat-card class="detail-card" (click)="$event.stopPropagation()">
+        <mat-card-header class="detail-header">
+            <mat-card-title class="detail-title">
+                {{ formatColumnName(resource.name) }} Details
+            </mat-card-title>
+            <button mat-icon-button (click)="onClose.emit()" class="close-button">
+                <mat-icon>close</mat-icon>
+            </button>
+        </mat-card-header>
 
-</body>
-</html>
+        <mat-card-content class="detail-content">
+            <div class="detail-grid">
+                <div *ngFor="let field of displayFields" class="detail-field">
+                    <div class="field-label">{{ formatColumnName(field.name) }}</div>
+                    <div class="field-value">
+                        <!-- File field -->
+                        <div *ngIf="isFileField(field) && getFieldValue(field.name)" class="file-value">
+                            <a [href]="getFieldValue(field.name)"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               class="file-link">
+                                <mat-icon class="file-icon">attachment</mat-icon>
+                                View File
+                            </a>
+                        </div>
+
+                        <!-- Boolean field -->
+                        <div *ngIf="isBooleanField(field)" class="boolean-value">
+                            <mat-icon [class]="getBooleanIcon(getFieldValue(field.name))">
+                                {{ getBooleanIcon(getFieldValue(field.name)) }}
+                            </mat-icon>
+                            <span>{{ formatBooleanValue(getFieldValue(field.name)) }}</span>
+                        </div>
+
+                        <!-- Date/DateTime field -->
+                        <div *ngIf="isDateTimeField(field)" class="datetime-value">
+                            <mat-icon class="datetime-icon">schedule</mat-icon>
+                            <span>{{ formatDateTimeValue(getFieldValue(field.name)) }}</span>
+                        </div>
+
+                        <!-- Regular field -->
+                        <div *ngIf="!isFileField(field) && !isBooleanField(field) && !isDateTimeField(field)"
+                             class="regular-value">
+                            {{ formatCellValue(getFieldValue(field.name)) }}
+                        </div>
+
+                        <!-- Empty field -->
+                        <div *ngIf="!getFieldValue(field.name)" class="empty-value">
+                            <mat-icon class="empty-icon">remove</mat-icon>
+                            <span>No data</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </mat-card-content>
+
+        <mat-card-actions class="detail-actions">
+            <button mat-button (click)="onClose.emit()" class="close-btn">
+                Close
+            </button>
+            <button mat-raised-button
+                    color="primary"
+                    (click)="onEdit.emit(record)"
+                    class="edit-btn"
+                    *ngIf="resource.canUpdate">
+                <mat-icon>edit</mat-icon>
+                Edit
+            </button>
+        </mat-card-actions>
+    </mat-card>
+</div>

@@ -1,123 +1,137 @@
 <!-- application-detail.component.html -->
 <div class="app-detail-container">
-  <!-- Header Section -->
-  <header class="app-header">
-    <button mat-icon-button (click)="goBack()" class="back-btn">
-      <mat-icon>arrow_back</mat-icon>
-    </button>
-    <div class="header-content">
-      <h1 class="app-title">{{ appName | titlecase }}</h1>
-      <p class="app-subtitle">Application Management Dashboard</p>
-    </div>
-    <div class="header-actions">
-      <button mat-icon-button class="refresh-btn" (click)="loadApplicationData()" [disabled]="loading">
-        <mat-icon [class.spinning]="loading">refresh</mat-icon>
-      </button>
-    </div>
-  </header>
+    <!-- Header -->
+    <header class="app-header">
+        <button mat-icon-button (click)="goBack()" class="back-btn">
+            <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div class="header-content">
+            <h1 class="app-title">{{ appName | titlecase }}</h1>
+            <p class="app-subtitle">Application Management Dashboard</p>
+        </div>
+        <div class="header-actions">
+            <button mat-icon-button
+                    class="refresh-btn"
+                    (click)="loadApplicationData()"
+                    [disabled]="loading"
+                    matTooltip="Refresh application data">
+                <mat-icon [class.spinning]="loading">refresh</mat-icon>
+            </button>
+        </div>
+    </header>
 
-  <!-- Loading State -->
-  <div *ngIf="loading" class="loading-container">
-    <div class="loading-content">
-      <mat-spinner diameter="50"></mat-spinner>
-      <p class="loading-text">Loading application data...</p>
-      <div class="loading-progress">
-        <div class="progress-bar"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Main Content -->
-  <div *ngIf="!loading && resources.length > 0" class="main-content">
-    <div class="content-header">
-      <h2 class="section-title">Resources</h2>
-      <p class="section-subtitle">Manage your application resources</p>
-    </div>
-
-    <mat-tab-group class="resource-tabs"
-                   animationDuration="300ms"
-                   [selectedIndex]="selectedTabIndex"
-                   (selectedTabChange)="onTabChange($event)">
-      <mat-tab *ngFor="let resource of resources; let i = index"
-               [label]="resource.name | titlecase">
-        <ng-template matTabContent>
-          <div class="tab-content">
-            <app-resource-table
-              *ngIf="resource.hasListView"
-              [resource]="resource"
-              [data]="resourceData[resource.name] || []"
-              [loading]="loadingData[resource.name] || false"
-              (onCreate)="openCreateDialog(resource)"
-              (onRefresh)="refreshResourceData(resource)"
-              (onView)="viewResourceDetails(resource, $event)"
-              (onEdit)="editResource(resource, $event)"
-              (onDelete)="deleteResource(resource, $event)">
-            </app-resource-table>
-
-            <!-- No List View Available -->
-            <div *ngIf="!resource.hasListView" class="no-list-view">
-              <mat-icon class="info-icon">info</mat-icon>
-              <h3>No List View Available</h3>
-              <p>This resource doesn't support list operations.</p>
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-container">
+        <div class="loading-content">
+            <mat-spinner diameter="50"></mat-spinner>
+            <p class="loading-text">Loading application data...</p>
+            <div class="loading-progress">
+                <div class="progress-bar"></div>
             </div>
-          </div>
-        </ng-template>
-      </mat-tab>
-    </mat-tab-group>
-  </div>
-
-  <!-- Empty State -->
-  <div *ngIf="!loading && resources.length === 0" class="empty-state">
-    <div class="empty-content">
-      <mat-icon class="empty-icon">folder_open</mat-icon>
-      <h2 class="empty-title">No Resources Found</h2>
-      <p class="empty-subtitle">
-        This application doesn't have any accessible resources.
-        <br>Please check your API configuration or contact your administrator.
-      </p>
-      <div class="empty-actions">
-        <button mat-raised-button color="primary" (click)="goBack()" class="back-to-dashboard">
-          <mat-icon>dashboard</mat-icon>
-          Back to Dashboard
-        </button>
-        <button mat-stroked-button (click)="loadApplicationData()" class="retry-btn">
-          <mat-icon>refresh</mat-icon>
-          Retry
-        </button>
-      </div>
+        </div>
     </div>
-  </div>
 
-  <!-- Form Modal -->
-  <app-resource-form
-    *ngIf="showForm"
-    [resource]="selectedResource!"
-    [editingRecord]="editingRecord"
-    [submitting]="submitting"
-    [relationOptions]="relationOptions"
-    [showDebug]="false"
-    (onSubmit)="handleFormSubmit($event)"
-    (onCancel)="closeForm()">
-  </app-resource-form>
+    <!-- Main Content -->
+    <div *ngIf="!loading && resources.length > 0" class="main-content">
+        <div class="content-header">
+            <h2 class="section-title">Resources</h2>
+            <p class="section-subtitle">Manage your application resources with enhanced editing capabilities</p>
+        </div>
 
-  <!-- Detail Modal (Future Enhancement) -->
-  <app-resource-detail
-    *ngIf="showDetail"
-    [resource]="selectedResource!"
-    [record]="detailRecord"
-    (onEdit)="editFromDetail($event)"
-    (onClose)="closeDetail()">
-  </app-resource-detail>
+        <mat-tab-group class="resource-tabs"
+                       animationDuration="300ms"
+                       [selectedIndex]="selectedTabIndex"
+                       (selectedTabChange)="onTabChange($event)">
+            <mat-tab *ngFor="let resource of resources; let i = index"
+                     [label]="resource.name | titlecase">
+                <ng-template matTabContent>
+                    <div class="tab-content">
+                        <app-resource-table
+                                *ngIf="resource.hasListView"
+                                [resource]="resource"
+                                [data]="resourceData[resource.name] || []"
+                                [loading]="loadingData[resource.name] || false"
+                                (onCreate)="openCreateDialog(resource)"
+                                (onRefresh)="refreshResourceData(resource)"
+                                (onView)="viewResourceDetails(resource, $event)"
+                                (onEdit)="editResource(resource, $event)"
+                                (onDelete)="deleteResource(resource, $event)">
+                        </app-resource-table>
 
-  <!-- Success/Error Messages -->
-  <div class="notification-container"
-       [class.show]="showNotification"
-       [class.success]="notificationType === 'success'"
-       [class.error]="notificationType === 'error'">
-    <mat-icon>{{ notificationType === 'success' ? 'check_circle' : 'error' }}</mat-icon>
-    <span>{{ notificationMessage }}</span>
-    <button mat-icon-button (click)="hideNotification()">
-      <mat-icon>close</mat-icon>
-    </button>
-  </div>
+                        <!-- No List View Available -->
+                        <div *ngIf="!resource.hasListView" class="no-list-view">
+                            <mat-icon class="info-icon">info</mat-icon>
+                            <h3>No List View Available</h3>
+                            <p>This resource doesn't support list operations.</p>
+                            <div class="resource-actions">
+                                <button mat-raised-button
+                                        color="primary"
+                                        *ngIf="resource.canCreate"
+                                        (click)="openCreateDialog(resource)">
+                                    <mat-icon>add</mat-icon>
+                                    Create New {{ resource.name | titlecase }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </ng-template>
+            </mat-tab>
+        </mat-tab-group>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && resources.length === 0" class="empty-state">
+        <div class="empty-content">
+            <mat-icon class="empty-icon">folder_open</mat-icon>
+            <h2 class="empty-title">No Resources Found</h2>
+            <p class="empty-subtitle">
+                This application doesn't have any accessible resources.
+                <br>Please check your API configuration or contact your administrator.
+            </p>
+            <div class="empty-actions">
+                <button mat-raised-button color="primary" (click)="goBack()" class="back-to-dashboard">
+                    <mat-icon>dashboard</mat-icon>
+                    Back to Dashboard
+                </button>
+                <button mat-stroked-button (click)="loadApplicationData()" class="retry-btn">
+                    <mat-icon>refresh</mat-icon>
+                    Retry
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Form Modal -->
+    <app-enhanced-resource-form
+            *ngIf="showForm"
+            [resource]="selectedResource!"
+            [editingRecord]="editingRecord"
+            [submitting]="submitting"
+            [relationOptions]="relationOptions"
+            [validationErrors]="formValidationErrors"
+            [showDebug]="false"
+            (onSubmit)="handleFormSubmit($event)"
+            (onCancel)="closeForm()">
+    </app-enhanced-resource-form>
+
+    <!-- Detail Modal -->
+    <app-resource-detail
+            *ngIf="showDetail"
+            [resource]="selectedResource!"
+            [record]="detailRecord"
+            (onEdit)="editFromDetail($event)"
+            (onClose)="closeDetail()">
+    </app-resource-detail>
+
+    <!-- Success/Error Messages -->
+    <div class="notification-container"
+         [class.show]="showNotification"
+         [class.success]="notificationType === 'success'"
+         [class.error]="notificationType === 'error'">
+        <mat-icon>{{ notificationType === 'success' ? 'check_circle' : 'error' }}</mat-icon>
+        <span>{{ notificationMessage }}</span>
+        <button mat-icon-button (click)="hideNotification()">
+            <mat-icon>close</mat-icon>
+        </button>
+    </div>
 </div>
