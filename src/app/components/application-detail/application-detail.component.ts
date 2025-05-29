@@ -1,4 +1,4 @@
-// application-detail.component.ts - FIXED
+// application-detail.component.ts - ENHANCED with File Upload Support
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -15,6 +15,7 @@ import { FormBuilderService } from './services/form-builder.service';
 
 import { ResourceTableComponent } from './components/resource-table/resource-table.component';
 import { ResourceFormComponent } from './components/resource-form/resource-form.component';
+import { ResourceDetailComponent } from './components/resource-detail/resource-detail.component';
 
 import { Resource, ResourceField, RelationOption, TableData, convertApiKeysToResourceFields } from './models/resource.model';
 import { ApiResponse, ApiEndpoint } from '../../models/api.models';
@@ -30,7 +31,8 @@ import { ApiResponse, ApiEndpoint } from '../../models/api.models';
     MatIconModule,
     MatProgressSpinnerModule,
     ResourceTableComponent,
-    ResourceFormComponent
+    ResourceFormComponent,
+    ResourceDetailComponent
   ],
   template: `
     <div class="app-detail-container">
@@ -95,6 +97,15 @@ import { ApiResponse, ApiEndpoint } from '../../models/api.models';
         (onSubmit)="handleFormSubmit($event)"
         (onCancel)="closeForm()">
       </app-resource-form>
+
+      <!-- Detail Modal -->
+      <app-resource-detail
+        *ngIf="showDetail"
+        [resource]="selectedResource!"
+        [record]="detailRecord"
+        (onEdit)="editFromDetail($event)"
+        (onClose)="closeDetail()">
+      </app-resource-detail>
     </div>
   `,
   styles: [`
@@ -264,6 +275,7 @@ export class ApplicationDetailComponent implements OnInit {
   loading = true;
   loadingData: { [key: string]: boolean } = {};
   resourceData: { [key: string]: TableData[] } = {};
+  apiData: any = null; // Store API data for relation lookups
 
   // Form state
   showForm = false;
@@ -272,6 +284,10 @@ export class ApplicationDetailComponent implements OnInit {
   submitting = false;
   relationOptions: { [key: string]: RelationOption[] } = {};
   formValidationErrors: any = {};
+
+  // Detail view state
+  showDetail = false;
+  detailRecord: any = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -298,6 +314,7 @@ export class ApplicationDetailComponent implements OnInit {
 
     this.apiService.getApplications().subscribe({
       next: (data) => {
+        this.apiData = data; // Store for relation lookups
         const endpoints = data.applications?.applications?.[this.appName] || [];
         this.resources = this.processEndpoints(endpoints);
         this.loading = false;
@@ -347,7 +364,6 @@ export class ApplicationDetailComponent implements OnInit {
         resource.canCreate = endpoint.methods.includes('POST');
         resource.listEndpoint = endpoint;
         if (endpoint.keys && endpoint.keys.length > 0) {
-          // FIXED: Convert API keys to ResourceField[]
           resource.fields = convertApiKeysToResourceFields(endpoint.keys);
         }
       }
@@ -359,7 +375,6 @@ export class ApplicationDetailComponent implements OnInit {
         resource.canDelete = endpoint.methods.includes('DELETE');
         resource.detailEndpoint = endpoint;
         if (endpoint.keys && endpoint.keys.length > 0 && resource.fields.length === 0) {
-          // FIXED: Convert API keys to ResourceField[]
           resource.fields = convertApiKeysToResourceFields(endpoint.keys);
         }
       }
@@ -409,8 +424,9 @@ export class ApplicationDetailComponent implements OnInit {
   }
 
   viewResourceDetails(resource: Resource, record: TableData): void {
-    // TODO: Implement detail view component
-    this.snackBar.open('Detail view coming soon!', 'Close', { duration: 2000 });
+    this.selectedResource = resource;
+    this.detailRecord = record;
+    this.showDetail = true;
   }
 
   deleteResource(resource: Resource, record: TableData): void {
@@ -418,7 +434,6 @@ export class ApplicationDetailComponent implements OnInit {
       return;
     }
 
-    // FIXED: Use bracket notation for dynamic properties
     const recordId = record['id'] || record['pk'];
     const path = this.cleanPath(resource.detailEndpoint.path, recordId);
 
@@ -434,16 +449,18 @@ export class ApplicationDetailComponent implements OnInit {
     });
   }
 
+  // ENHANCED form submission with file support
   handleFormSubmit(formData: any): void {
     this.submitting = true;
     const resource = this.selectedResource!;
+
+    // Use the enhanced data formatter to prepare data (handles files)
     const preparedData = this.dataFormatter.prepareFormData(formData, resource.fields);
 
     let path: string;
     let method: string;
 
     if (this.editingRecord) {
-      // FIXED: Use bracket notation for dynamic properties
       const recordId = this.editingRecord['id'] || this.editingRecord['pk'];
       path = this.cleanPath(resource.detailEndpoint.path, recordId);
       method = 'PUT';
@@ -452,30 +469,51 @@ export class ApplicationDetailComponent implements OnInit {
       method = 'POST';
     }
 
+    console.log('Submitting data:', preparedData);
+    console.log('Is FormData:', preparedData instanceof FormData);
+
     this.apiService.executeApiCall(path, method, preparedData).subscribe({
-      next: () => {
+      next: (response) => {
         this.submitting = false;
         this.showForm = false;
+        this.formValidationErrors = {}; // Clear validation errors on success
+
+        const action = this.editingRecord ? 'updated' : 'created';
         this.snackBar.open(
-          `${resource.name} ${this.editingRecord ? 'updated' : 'created'} successfully`,
+          `${resource.name} ${action} successfully`,
           'Close',
           { duration: 3000 }
         );
+
         this.loadResourceData(resource);
       },
       error: (error) => {
         this.submitting = false;
         console.error('Error submitting form:', error);
 
-        // Handle validation errors from backend
+        // Enhanced error handling
         if (error.status === 400 && error.error) {
           this.handleValidationErrors(error.error);
+        } else if (error.status === 413) {
+          // File too large
+          this.snackBar.open(
+            'File is too large. Please choose a smaller file.',
+            'Close',
+            { duration: 5000, panelClass: ['error-snackbar'] }
+          );
+        } else if (error.status === 415) {
+          // Unsupported media type
+          this.snackBar.open(
+            'Unsupported file type. Please choose a different file.',
+            'Close',
+            { duration: 5000, panelClass: ['error-snackbar'] }
+          );
         } else {
-          // Handle other errors
+          // Other errors
           this.snackBar.open(
             `Failed to ${this.editingRecord ? 'update' : 'create'} ${resource.name}`,
             'Close',
-            { duration: 3000 }
+            { duration: 3000, panelClass: ['error-snackbar'] }
           );
         }
       }
@@ -529,13 +567,255 @@ export class ApplicationDetailComponent implements OnInit {
     this.formValidationErrors = {}; // Clear validation errors
   }
 
+  closeDetail(): void {
+    this.showDetail = false;
+    this.selectedResource = null;
+    this.detailRecord = null;
+  }
+
+  editFromDetail(record: TableData): void {
+    // Close detail view and open edit form
+    this.showDetail = false;
+    this.editingRecord = record;
+    this.formValidationErrors = {}; // Clear any previous errors
+    this.showForm = true;
+    this.loadRelationOptionsForResource(this.selectedResource!);
+  }
+
   private loadRelationOptionsForResource(resource: Resource): void {
     resource.fields.forEach(field => {
-      if (field.relation_type) {
-        // TODO: Load relation options
+      if (this.shouldLoadRelationOptions(field)) {
+        this.loadRelationOptions(field);
+      }
+    });
+  }
+
+  private shouldLoadRelationOptions(field: ResourceField): boolean {
+    return !!(
+      field.related_model ||
+      field.relation_type ||
+      this.isRelationField(field) ||
+      field.name.endsWith('_id')
+    );
+  }
+
+  private loadRelationOptions(field: ResourceField): void {
+    // Initialize with empty array
+    this.relationOptions[field.name] = [];
+
+    if (field.related_model) {
+      if (field.related_model === 'lookup.lookup') {
+        // Handle lookup.lookup case - extract name from limit_choices_to
+        this.loadLookupOptions(field);
+      } else {
+        // Handle other models like crm.crmstage
+        this.loadModelOptions(field);
+      }
+    } else {
+      // Fallback for fields without related_model
+      this.loadFallbackOptions(field);
+    }
+  }
+
+  private loadLookupOptions(field: ResourceField): void {
+    let lookupName = '';
+
+    // Extract lookup name from limit_choices_to
+    if (field.limit_choices_to) {
+      try {
+        // Handle different formats of limit_choices_to
+        let choicesString = field.limit_choices_to;
+
+        // If it's a string that looks like a dict, parse it
+        if (typeof choicesString === 'string') {
+          // Extract the name from patterns like "{'parent_lookup__name': 'Applicant Type'}"
+          const nameMatch = choicesString.match(/'([^']+)'\s*:\s*'([^']+)'/);
+          if (nameMatch && nameMatch[1].includes('name')) {
+            lookupName = nameMatch[2];
+          } else {
+            // Try other patterns
+            const simpleMatch = choicesString.match(/'([^']+)'/g);
+            if (simpleMatch && simpleMatch.length > 1) {
+              lookupName = simpleMatch[1].replace(/'/g, '');
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('Error parsing limit_choices_to:', error);
+      }
+    }
+
+    if (!lookupName) {
+      // Fallback: try to use field name
+      lookupName = this.formatColumnName(field.name);
+    }
+
+    // Call the lookups API
+    const lookupUrl = `lookups/?name=${encodeURIComponent(lookupName)}`;
+
+    this.apiService.executeApiCall(lookupUrl, 'GET').subscribe({
+      next: (response) => {
+        const data = response.results || response || [];
+        this.relationOptions[field.name] = this.formatLookupOptions(data);
+      },
+      error: (error) => {
+        console.warn(`Could not load lookup options for ${field.name} with name "${lookupName}":`, error);
         this.relationOptions[field.name] = [];
       }
     });
+  }
+
+  private loadModelOptions(field: ResourceField): void {
+    const relatedModel = field.related_model!; // e.g., "crm.crmstage"
+
+    // Convert model name to API endpoint
+    // "crm.crmstage" -> try "api/crm/crmstage/" or similar patterns
+    const [app, model] = relatedModel.split('.');
+
+    const endpointPatterns = [
+      `api/${app}/${model}/`,
+      `api/${app}/${model}s/`,
+      `${app}/${model}/`,
+      `${app}/${model}s/`,
+      `api/${model}/`,
+      `api/${model}s/`,
+      `${model}/`,
+      `${model}s/`,
+    ];
+
+    // Also try to find exact endpoint from loaded API data
+    const relatedEndpoints = this.findRelatedEndpointsByModel(relatedModel);
+    if (relatedEndpoints.length > 0) {
+      const listEndpoint = relatedEndpoints.find(ep => ep.name.includes('-list'));
+      if (listEndpoint) {
+        const path = this.cleanPath(listEndpoint.path);
+        this.loadFromEndpoint(field, path);
+        return;
+      }
+    }
+
+    // Try common patterns
+    this.tryEndpointPatterns(field, endpointPatterns);
+  }
+
+  private loadFallbackOptions(field: ResourceField): void {
+    // Try to determine the related resource name from the field name
+    let relatedResourceName = field.name.replace(/_id$/, '') || field.name;
+    this.tryCommonEndpointPatterns(field, relatedResourceName);
+  }
+
+  private findRelatedEndpointsByModel(relatedModel: string): any[] {
+    if (!this.apiData?.applications?.applications) return [];
+
+    const allEndpoints = Object.values(this.apiData.applications.applications).flat();
+    const [app, model] = relatedModel.split('.');
+
+    return allEndpoints.filter(endpoint => {
+      const name = endpoint.name.toLowerCase();
+      return name.includes(model.toLowerCase()) ||
+        name.includes(`${app}-${model}`.toLowerCase()) ||
+        name.includes(`${app}_${model}`.toLowerCase());
+    });
+  }
+
+  private tryEndpointPatterns(field: ResourceField, patterns: string[]): void {
+    let patternIndex = 0;
+
+    const tryNext = () => {
+      if (patternIndex >= patterns.length) {
+        console.warn(`Could not load options for ${field.name} - all patterns failed`);
+        this.relationOptions[field.name] = [];
+        return;
+      }
+
+      const pattern = patterns[patternIndex];
+      console.log(`Trying pattern ${patternIndex + 1}/${patterns.length}:`, pattern);
+
+      this.apiService.executeApiCall(pattern, 'GET').subscribe({
+        next: (response) => {
+          const data = response.results || response || [];
+          console.log('Pattern success, loaded data:', data);
+          this.relationOptions[field.name] = this.formatRelationOptions(data, field.related_model || field.name);
+        },
+        error: (error) => {
+          patternIndex++;
+          tryNext();
+        }
+      });
+    };
+
+    tryNext();
+  }
+
+  private loadFromEndpoint(field: ResourceField, endpoint: string): void {
+    this.apiService.executeApiCall(endpoint, 'GET').subscribe({
+      next: (response) => {
+        const data = response.results || response || [];
+        console.log('Loaded from exact endpoint:', data);
+        this.relationOptions[field.name] = this.formatRelationOptions(data, field.related_model || field.name);
+      },
+      error: (error) => {
+        console.warn(`Could not load from endpoint ${endpoint}:`, error);
+        this.relationOptions[field.name] = [];
+      }
+    });
+  }
+
+  private formatLookupOptions(data: any[]): RelationOption[] {
+    if (!Array.isArray(data)) return [];
+
+    return data.map(item => ({
+      id: item.id || item.pk,
+      display: item.name || item.title || item.label || item.value || `Lookup #${item.id || item.pk || 'Unknown'}`
+    }));
+  }
+
+  private findRelatedEndpoints(resourceName: string): any[] {
+    if (!this.apiData?.applications?.applications) return [];
+
+    const allEndpoints = Object.values(this.apiData.applications.applications).flat();
+    return allEndpoints.filter(endpoint =>
+      endpoint.name.toLowerCase().includes(resourceName.toLowerCase())
+    );
+  }
+
+  private tryCommonEndpointPatterns(field: ResourceField, resourceName: string): void {
+    const commonPatterns = [
+      `api/${resourceName}/`,
+      `api/${resourceName}s/`,
+      `${resourceName}/`,
+      `${resourceName}s/`,
+    ];
+
+    console.log('Trying fallback patterns:', commonPatterns);
+    this.tryEndpointPatterns(field, commonPatterns);
+  }
+
+  private formatRelationOptions(data: any[], resourceName: string): RelationOption[] {
+    if (!Array.isArray(data)) return [];
+
+    return data.map(item => {
+      let display = '';
+
+      // Try common display field patterns
+      if (item.name) display = item.name;
+      else if (item.title) display = item.title;
+      else if (item.label) display = item.label;
+      else if (item.display_name) display = item.display_name;
+      else if (item.full_name) display = item.full_name;
+      else if (item.email) display = item.email;
+      else if (item.username) display = item.username;
+      else display = `${resourceName} #${item.id || item.pk || 'Unknown'}`;
+
+      return {
+        id: item.id || item.pk,
+        display: display
+      };
+    });
+  }
+
+  private isRelationField(field: ResourceField): boolean {
+    return ['ForeignKey', 'OneToOneField', 'ManyToManyField'].includes(field.type);
   }
 
   private cleanPath(path: string, id?: any): string {

@@ -1,4 +1,4 @@
-// services/data-formatter.service.ts
+// services/data-formatter.service.ts - ENHANCED with File Support
 import { Injectable } from '@angular/core';
 import { ResourceField } from '../models/resource.model';
 
@@ -116,13 +116,23 @@ export class DataFormatterService {
         case 'TimeField':
           return this.formatTimeForInput(value);
         case 'BooleanField':
+        case 'NullBooleanField':
           return !!value;
         case 'DecimalField':
         case 'FloatField':
           return value ? parseFloat(value) : null;
         case 'IntegerField':
         case 'BigIntegerField':
+        case 'PositiveIntegerField':
+        case 'SmallIntegerField':
           return value ? parseInt(value) : null;
+        case 'FileField':
+        case 'ImageField':
+        case 'DocumentField':
+        case 'MediaField':
+          // For file fields, don't set a default value in edit mode
+          // The user will need to choose a new file if they want to change it
+          return null;
         default:
           return value;
       }
@@ -131,9 +141,12 @@ export class DataFormatterService {
     // Default values for new records
     switch (field.type) {
       case 'BooleanField':
+      case 'NullBooleanField':
         return field.default !== null ? field.default : false;
       case 'IntegerField':
       case 'BigIntegerField':
+      case 'PositiveIntegerField':
+      case 'SmallIntegerField':
         return field.default !== null ? field.default : null;
       case 'DecimalField':
       case 'FloatField':
@@ -142,12 +155,64 @@ export class DataFormatterService {
       case 'DateTimeField':
       case 'TimeField':
         return field.default !== null ? field.default : null;
+      case 'FileField':
+      case 'ImageField':
+      case 'DocumentField':
+      case 'MediaField':
+        return null; // Files always start as null
       default:
         return field.default !== null ? field.default : null;
     }
   }
 
-  prepareFormData(formValue: any, fields: ResourceField[]): any {
+  // ENHANCED to handle file uploads
+  prepareFormData(formValue: any, fields: ResourceField[]): FormData | any {
+    // Check if we have any file fields
+    const hasFileFields = fields.some(field =>
+      field && this.isFileField(field.type) && formValue[field.name] instanceof File
+    );
+
+    if (hasFileFields) {
+      // Use FormData for file uploads
+      return this.prepareMultipartFormData(formValue, fields);
+    } else {
+      // Use regular JSON for non-file forms
+      return this.prepareJsonData(formValue, fields);
+    }
+  }
+
+  private prepareMultipartFormData(formValue: any, fields: ResourceField[]): FormData {
+    const formData = new FormData();
+
+    fields.forEach((field: ResourceField) => {
+      if (!field || !field.name || field.read_only) return;
+
+      const value = formValue[field.name];
+
+      if (value === null || value === undefined) {
+        // Don't append null/undefined values to FormData
+        return;
+      }
+
+      if (this.isFileField(field.type)) {
+        if (value instanceof File) {
+          formData.append(field.name, value, value.name);
+        }
+        // Skip if not a File instance (could be null or undefined)
+        return;
+      }
+
+      // Handle other field types
+      const processedValue = this.processFieldValue(value, field);
+      if (processedValue !== null && processedValue !== undefined) {
+        formData.append(field.name, processedValue.toString());
+      }
+    });
+
+    return formData;
+  }
+
+  private prepareJsonData(formValue: any, fields: ResourceField[]): any {
     const preparedData: any = {};
 
     fields.forEach((field: ResourceField) => {
@@ -160,61 +225,88 @@ export class DataFormatterService {
         return;
       }
 
-      switch (field.type) {
-        case 'DateField':
-          // Ensure date is in YYYY-MM-DD format
-          if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}$/)) {
-            preparedData[field.name] = value;
-          } else if (value instanceof Date) {
-            preparedData[field.name] = this.formatDateForInput(value);
-          } else {
-            preparedData[field.name] = null;
-          }
-          break;
-
-        case 'DateTimeField':
-          // Convert datetime-local format to proper datetime string
-          if (typeof value === 'string' && value.includes('T')) {
-            const date = new Date(value);
-            if (!isNaN(date.getTime())) {
-              preparedData[field.name] = date.toISOString().slice(0, 19).replace('T', ' ');
-            } else {
-              preparedData[field.name] = null;
-            }
-          } else {
-            preparedData[field.name] = null;
-          }
-          break;
-
-        case 'TimeField':
-          // Ensure time is in HH:mm:ss format
-          if (typeof value === 'string' && value.match(/^\d{2}:\d{2}$/)) {
-            preparedData[field.name] = value + ':00'; // Add seconds
-          } else {
-            preparedData[field.name] = value;
-          }
-          break;
-
-        case 'IntegerField':
-        case 'BigIntegerField':
-          preparedData[field.name] = value ? parseInt(value) : null;
-          break;
-
-        case 'DecimalField':
-        case 'FloatField':
-          preparedData[field.name] = value ? parseFloat(value) : null;
-          break;
-
-        case 'BooleanField':
-          preparedData[field.name] = !!value;
-          break;
-
-        default:
-          preparedData[field.name] = value;
-          break;
-      }
+      preparedData[field.name] = this.processFieldValue(value, field);
     });
 
     return preparedData;
+  }
+
+  private processFieldValue(value: any, field: ResourceField): any {
+    switch (field.type) {
+      case 'DateField':
+        // Ensure date is in YYYY-MM-DD format
+        if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          return value;
+        } else if (value instanceof Date) {
+          return this.formatDateForInput(value);
+        } else {
+          return null;
+        }
+
+      case 'DateTimeField':
+        // Convert datetime-local format to proper datetime string
+        if (typeof value === 'string' && value.includes('T')) {
+          const date = new Date(value);
+          if (!isNaN(date.getTime())) {
+            return date.toISOString().slice(0, 19).replace('T', ' ');
+          } else {
+            return null;
+          }
+        } else {
+          return null;
+        }
+
+      case 'TimeField':
+        // Ensure time is in HH:mm:ss format
+        if (typeof value === 'string' && value.match(/^\d{2}:\d{2}$/)) {
+          return value + ':00'; // Add seconds
+        } else {
+          return value;
+        }
+
+      case 'IntegerField':
+      case 'BigIntegerField':
+      case 'PositiveIntegerField':
+      case 'SmallIntegerField':
+        return value ? parseInt(value) : null;
+
+      case 'DecimalField':
+      case 'FloatField':
+        return value ? parseFloat(value) : null;
+
+      case 'BooleanField':
+      case 'NullBooleanField':
+        return !!value;
+
+      case 'FileField':
+      case 'ImageField':
+      case 'DocumentField':
+      case 'MediaField':
+        // File fields should be handled separately in multipart form data
+        return value instanceof File ? value : null;
+
+      default:
+        return value;
+    }
+  }
+
+  private isFileField(fieldType: string): boolean {
+    return ['FileField', 'ImageField', 'DocumentField', 'MediaField'].includes(fieldType);
+  }
+
+  // Helper method to check if a field should be displayed as URL in table view
+  isFileFieldDisplayUrl(field: ResourceField, value: any): boolean {
+    return this.isFileField(field.type) && typeof value === 'string' && value.startsWith('http');
+  }
+
+  // Helper method to extract filename from URL
+  getFilenameFromUrl(url: string): string {
+    try {
+      const urlObj = new URL(url);
+      const pathname = urlObj.pathname;
+      return pathname.substring(pathname.lastIndexOf('/') + 1) || 'File';
+    } catch {
+      return 'File';
+    }
   }
 }

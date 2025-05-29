@@ -64,9 +64,6 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
             <mat-icon class="error-icon">error</mat-icon>
             <div class="error-content">
               <h4>Please fix the following errors:</h4>
-              <ul>
-                <li *ngFor="let error of getValidationErrorSummary()">{{ error }}</li>
-              </ul>
             </div>
           </div>
 
@@ -101,38 +98,24 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
                   </div>
                 </div>
 
-                <!-- File field as URL input -->
-                <mat-form-field *ngIf="isFileField(field)"
-                                appearance="outline"
-                                class="form-field"
-                                [class.field-error]="hasFieldError(field.name)">
-                  <mat-label>{{ formatColumnName(field.name) }} URL</mat-label>
-                  <input matInput
-                         type="url"
-                         [formControlName]="field.name"
+                <!-- File field -->
+                <div *ngIf="isFileField(field)" class="file-field-container">
+                  <label class="file-label">{{ formatColumnName(field.name) }}</label>
+                  <input type="file"
                          [required]="field.required"
-                         [placeholder]="'Enter ' + formatColumnName(field.name) + ' URL'"
-                         [class.input-error]="hasFieldError(field.name)">
-
-                  <button *ngIf="form.get(field.name)?.value"
-                          matSuffix
-                          mat-icon-button
-                          type="button"
-                          (click)="previewFile(form.get(field.name)?.value)"
-                          matTooltip="Preview file in new tab"
-                          class="preview-btn">
-                    <mat-icon>visibility</mat-icon>
-                  </button>
+                         [accept]="getFileAcceptTypes(field)"
+                         (change)="onFileChange($event, field.name)"
+                         class="file-input"
+                         #fileInput>
 
                   <mat-error *ngIf="form.get(field.name)?.hasError('required') && form.get(field.name)?.touched">
-                    <mat-icon>error</mat-icon>
                     {{ formatColumnName(field.name) }} is required
                   </mat-error>
-                  <mat-error *ngFor="let error of getFieldErrors(field.name)">
-                    <mat-icon>error</mat-icon>
+                  <div *ngFor="let error of getFieldErrors(field.name)" class="field-error-message">
+                    <mat-icon class="error-icon-small">error</mat-icon>
                     {{ error }}
-                  </mat-error>
-                </mat-form-field>
+                  </div>
+                </div>
 
                 <!-- Regular form fields -->
                 <mat-form-field *ngIf="shouldShowFormField(field)"
@@ -201,7 +184,7 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
                     </mat-option>
                   </mat-select>
 
-                  <!-- Relation fields -->
+                  <!-- Relation fields - FIXED highlighting -->
                   <mat-select *ngIf="isRelationField(field)"
                               [formControlName]="field.name"
                               [required]="field.required"
@@ -225,10 +208,11 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
                     <mat-icon>error</mat-icon>
                     {{ formatColumnName(field.name) }} is required
                   </mat-error>
-                  <mat-error *ngFor="let error of getFieldErrors(field.name)">
-                    <mat-icon>error</mat-icon>
+                  <!-- Server validation errors -->
+                  <div *ngFor="let error of getFieldErrors(field.name)" class="field-error-message">
+                    <mat-icon class="error-icon-small">error</mat-icon>
                     {{ error }}
-                  </mat-error>
+                  </div>
                 </mat-form-field>
               </div>
             </div>
@@ -399,12 +383,12 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
       transition: all 0.3s ease;
     }
 
-    /* Error Field Highlighting */
+    /* Error Field Highlighting - ENHANCED */
     .form-field.field-error {
-      background: rgba(244, 67, 54, 0.02);
-      border: 2px solid rgba(244, 67, 54, 0.3);
-      animation: errorPulse 0.6s ease-in-out;
-      box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+      background: rgba(244, 67, 54, 0.04) !important;
+      border: 2px solid rgba(244, 67, 54, 0.5) !important;
+      animation: errorPulse 0.6s ease-in-out !important;
+      box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1) !important;
     }
 
     .checkbox-container {
@@ -416,10 +400,43 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
     }
 
     .checkbox-container.field-error {
-      border: 2px solid #f44336;
-      background: rgba(244, 67, 54, 0.02);
-      animation: errorPulse 0.6s ease-in-out;
-      box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+      border: 2px solid #f44336 !important;
+      background: rgba(244, 67, 54, 0.04) !important;
+      animation: errorPulse 0.6s ease-in-out !important;
+      box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1) !important;
+    }
+
+    /* File field styling */
+    .file-field-container {
+      width: 100%;
+      margin-bottom: 20px;
+    }
+
+    .file-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #333;
+    }
+
+    .file-input {
+      width: 100%;
+      padding: 12px;
+      border: 2px dashed #ddd;
+      border-radius: 8px;
+      background: white;
+      font-size: 14px;
+      transition: border-color 0.3s ease;
+    }
+
+    .file-input:hover {
+      border-color: #677eea;
+    }
+
+    .file-input:focus {
+      border-color: #677eea;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(103, 126, 234, 0.1);
     }
 
     .input-error {
@@ -433,7 +450,7 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
       gap: 6px;
       color: #f44336;
       font-size: 12px;
-      margin-top: 8px;
+      margin-top: 4px;
       font-weight: 500;
       animation: slideDown 0.3s ease-out;
     }
@@ -470,23 +487,43 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
       }
     }
 
+    .field-error-message {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #f44336;
+      font-size: 12px;
+      margin-top: 4px;
+      font-weight: 500;
+      animation: slideDown 0.3s ease-out;
+      min-height: 18px;
+    }
+
+    .error-icon-small {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+
     .custom-checkbox {
       font-size: 16px;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .help-text {
       color: #666;
       font-size: 14px;
       font-style: italic;
-    }
-
-    .preview-btn {
-      color: #1976d2;
-      transition: color 0.2s ease;
-    }
-
-    .preview-btn:hover {
-      color: #1565c0;
     }
 
     .form-actions {
@@ -538,13 +575,15 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
       height: 14px;
     }
 
-    /* Material Form Field Error States */
+    /* ENHANCED Material Form Field Error States */
     ::ng-deep .form-field.field-error .mat-mdc-form-field-outline {
       color: #f44336 !important;
+      border-color: #f44336 !important;
     }
 
     ::ng-deep .form-field.field-error .mat-mdc-form-field-outline-thick {
       color: #f44336 !important;
+      border-color: #f44336 !important;
       border-width: 3px !important;
     }
 
@@ -560,18 +599,14 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
       color: #f44336 !important;
     }
 
-    /* Input Error Styling */
+    /* ENHANCED Input Error Styling */
     ::ng-deep .input-error.mat-mdc-input-element {
       color: #f44336 !important;
       font-weight: 500 !important;
+      border-color: #f44336 !important;
     }
 
-    /* Select/Dropdown Error Styling */
-    ::ng-deep .input-error.mat-mdc-select {
-      color: #f44336 !important;
-      font-weight: 500 !important;
-    }
-
+    /* ENHANCED Select/Dropdown Error Styling */
     ::ng-deep .form-field.field-error .mat-mdc-select {
       color: #f44336 !important;
       font-weight: 500 !important;
@@ -589,64 +624,42 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
       color: #f44336 !important;
     }
 
-    /* Select trigger styling when in error state */
     ::ng-deep .form-field.field-error .mat-mdc-select-trigger {
       color: #f44336 !important;
     }
 
-    /* Select panel styling */
-    ::ng-deep .mat-mdc-select-panel {
-      border-top: 3px solid #f44336 !important;
-    }
-
-    /* Focus and hover states for error selects */
-    ::ng-deep .form-field.field-error .mat-mdc-select:focus {
-      color: #f44336 !important;
-    }
-
-    ::ng-deep .form-field.field-error .mat-mdc-select-focused {
-      color: #f44336 !important;
-    }
-
-    /* Checkbox Error Styling */
+    /* ENHANCED Checkbox Error Styling */
     ::ng-deep .checkbox-container.field-error .mat-mdc-checkbox {
-      --mdc-checkbox-outline-color: #f44336;
-      --mdc-checkbox-selected-checkmark-color: white;
-      --mdc-checkbox-selected-focus-icon-color: #f44336;
-      --mdc-checkbox-selected-hover-icon-color: #f44336;
-      --mdc-checkbox-selected-icon-color: #f44336;
-      --mdc-checkbox-selected-pressed-icon-color: #f44336;
+      --mdc-checkbox-outline-color: #f44336 !important;
+      --mdc-checkbox-selected-checkmark-color: white !important;
+      --mdc-checkbox-selected-focus-icon-color: #f44336 !important;
+      --mdc-checkbox-selected-hover-icon-color: #f44336 !important;
+      --mdc-checkbox-selected-icon-color: #f44336 !important;
+      --mdc-checkbox-selected-pressed-icon-color: #f44336 !important;
     }
 
-    /* Focus States for Error Fields */
+    /* ENHANCED Focus States for Error Fields */
     ::ng-deep .form-field.field-error .mat-mdc-form-field-focus-overlay {
       background-color: rgba(244, 67, 54, 0.12) !important;
     }
 
     ::ng-deep .form-field.field-error:not(.mat-mdc-form-field-disabled) .mat-mdc-form-field-flex:hover .mat-mdc-form-field-outline {
       color: #f44336 !important;
+      border-color: #f44336 !important;
     }
 
-    .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-text-field-wrapper {
-      background-color: rgba(244, 67, 54, 0.04);
+    ::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-text-field-wrapper {
+      background-color: rgba(244, 67, 54, 0.04) !important;
     }
 
-    .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-form-field-outline-thick {
-      color: #f44336;
+    ::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-form-field-outline-thick {
+      color: #f44336 !important;
+      border-color: #f44336 !important;
     }
 
     .checkbox-container.ng-invalid {
-      border-color: #f44336;
-      background-color: rgba(244, 67, 54, 0.04);
-    }
-
-    ::ng-deep .error-snackbar {
-      background-color: #f44336 !important;
-      color: white !important;
-    }
-
-    ::ng-deep .error-snackbar .mat-mdc-snack-bar-action {
-      color: white !important;
+      border-color: #f44336 !important;
+      background-color: rgba(244, 67, 54, 0.04) !important;
     }
 
     ::ng-deep .mat-mdc-form-field-outline {
@@ -660,6 +673,7 @@ import { FieldTypeUtils } from '../../utils/field-type.utils';
     @media (max-width: 768px) {
       .form-grid {
         grid-template-columns: 1fr;
+        gap: 16px;
       }
 
       .form-card {
@@ -686,6 +700,8 @@ export class ResourceFormComponent implements OnInit, OnChanges {
 
   form!: FormGroup;
   formFields: ResourceField[] = [];
+  fileFields: { [key: string]: File } = {};
+  selectedFiles: { [key: string]: File | null } = {};
 
   constructor(private formBuilder: FormBuilderService) {}
 
@@ -696,11 +712,16 @@ export class ResourceFormComponent implements OnInit, OnChanges {
   ngOnChanges(): void {
     if (this.resource) {
       this.buildForm();
+      this.fileFields = {}; // Clear file fields when resource changes
+      this.selectedFiles = {}; // Clear selected files when resource changes
     }
 
-    // Handle validation errors from backend
+    // Handle validation errors from backend - ENHANCED
     if (this.validationErrors && Object.keys(this.validationErrors).length > 0) {
       this.setFormErrors();
+    } else {
+      // Clear errors when no validation errors
+      this.clearServerErrors();
     }
   }
 
@@ -713,6 +734,7 @@ export class ResourceFormComponent implements OnInit, OnChanges {
     this.formFields = this.formBuilder.getFormFields(this.resource);
   }
 
+  // ENHANCED error setting method
   private setFormErrors(): void {
     if (!this.form || !this.validationErrors) return;
 
@@ -721,37 +743,130 @@ export class ResourceFormComponent implements OnInit, OnChanges {
       const control = this.form.get(fieldName);
       if (control) {
         const errors = this.validationErrors[fieldName];
+
+        // Preserve existing errors and add server errors
+        const currentErrors = control.errors || {};
         control.setErrors({
+          ...currentErrors,
           serverError: Array.isArray(errors) ? errors : [errors]
         });
-        control.markAsTouched(); // Show the error immediately
+
+        // Force the control to be touched and dirty to show errors immediately
+        control.markAsTouched();
+        control.markAsDirty();
+
+        // Update the control's status
+        control.updateValueAndValidity();
       }
     }
+
+    // Force form validation update
+    this.form.updateValueAndValidity();
   }
 
   onOverlayClick(event: Event): void {
-    // Close form when clicking overlay
     this.onCancel.emit();
   }
 
-  previewFile(url: string): void {
-    if (url) {
-      window.open(url, '_blank');
+  // Simple file handling
+  onFileChange(event: any, fieldName: string): void {
+    const file = event.target.files[0];
+    if (file) {
+      this.fileFields[fieldName] = file;
+      this.selectedFiles[fieldName] = file;
+      // Set a dummy value on form control to make it valid
+      this.form.get(fieldName)?.setValue('file_selected');
+      this.form.get(fieldName)?.markAsTouched();
+    } else {
+      delete this.fileFields[fieldName];
+      this.selectedFiles[fieldName] = null;
+      this.form.get(fieldName)?.setValue(null);
     }
   }
 
-  // FIXED: Changed from calling onSubmit() to emitting the form value
+  clearFile(fieldName: string, fileInput: HTMLInputElement): void {
+    delete this.fileFields[fieldName];
+    this.selectedFiles[fieldName] = null;
+    this.form.get(fieldName)?.setValue(null);
+    fileInput.value = '';
+  }
+
+  getSelectedFileName(fieldName: string): string {
+    const file = this.selectedFiles[fieldName];
+    return file ? file.name : '';
+  }
+
+  getFileAcceptTypes(field: ResourceField): string {
+    switch (field.type) {
+      case 'ImageField':
+        return 'image/*';
+      case 'FileField':
+      default:
+        return '*/*';
+    }
+  }
+
+  getFieldPlaceholder(field: ResourceField): string {
+    return FieldTypeUtils.getFieldPlaceholder(field);
+  }
+
+  getFieldIcon(fieldType: string): string {
+    switch (fieldType) {
+      case 'CharField':
+      case 'TextField':
+        return 'text_fields';
+      case 'EmailField':
+        return 'email';
+      case 'URLField':
+        return 'link';
+      case 'IntegerField':
+      case 'BigIntegerField':
+      case 'DecimalField':
+      case 'FloatField':
+        return 'numbers';
+      case 'DateField':
+        return 'calendar_today';
+      case 'DateTimeField':
+        return 'schedule';
+      case 'TimeField':
+        return 'access_time';
+      case 'BooleanField':
+        return 'check_box';
+      case 'FileField':
+      case 'ImageField':
+        return 'attach_file';
+      case 'ForeignKey':
+      case 'OneToOneField':
+      case 'ManyToManyField':
+        return 'link';
+      default:
+        return 'input';
+    }
+  }
+
   submitForm(): void {
     // Clear any previous server-side validation errors
     this.clearServerErrors();
 
     if (this.form.valid) {
-      this.onSubmit.emit(this.form.value);
+      const formData = { ...this.form.value };
+
+      // Add files to form data
+      for (const fieldName in this.fileFields) {
+        formData[fieldName] = this.fileFields[fieldName];
+      }
+
+      this.onSubmit.emit(formData);
     } else {
       // Mark all fields as touched to show validation errors
       Object.keys(this.form.controls).forEach(key => {
-        this.form.get(key)?.markAsTouched();
+        const control = this.form.get(key);
+        control?.markAsTouched();
+        control?.markAsDirty();
       });
+
+      // Force form validation update
+      this.form.updateValueAndValidity();
     }
   }
 
@@ -830,49 +945,68 @@ export class ResourceFormComponent implements OnInit, OnChanges {
     return !this.isBooleanField(field) && !this.isFileField(field);
   }
 
+  // ENHANCED error detection method
   getFieldErrors(fieldName: string): string[] {
-    const control = this.form.get(fieldName);
-    if (!control || !control.errors) {
-      return [];
-    }
-
     const errors: string[] = [];
 
-    // Handle server-side validation errors
-    if (control.errors['serverError']) {
-      if (Array.isArray(control.errors['serverError'])) {
-        errors.push(...control.errors['serverError']);
-      } else {
-        errors.push(control.errors['serverError']);
+    // Check form control errors first
+    const control = this.form.get(fieldName);
+    if (control && control.errors) {
+      // Handle server-side validation errors
+      if (control.errors['serverError']) {
+        if (Array.isArray(control.errors['serverError'])) {
+          errors.push(...control.errors['serverError']);
+        } else {
+          errors.push(control.errors['serverError']);
+        }
+      }
+
+      // Handle client-side validation errors
+      if (control.errors['email'] && control.touched) {
+        errors.push('Please enter a valid email address');
+      }
+
+      if (control.errors['url'] && control.touched) {
+        errors.push('Please enter a valid URL');
       }
     }
 
-    // Handle client-side validation errors
-    if (control.errors['required'] && control.touched) {
-      // Required error is already handled in template
+    // Also check direct validation errors from server
+    if (this.validationErrors && this.validationErrors[fieldName]) {
+      const serverErrors = this.validationErrors[fieldName];
+      if (Array.isArray(serverErrors)) {
+        errors.push(...serverErrors);
+      } else {
+        errors.push(serverErrors);
+      }
     }
 
-    if (control.errors['email'] && control.touched) {
-      errors.push('Please enter a valid email address');
-    }
-
-    if (control.errors['url'] && control.touched) {
-      errors.push('Please enter a valid URL');
-    }
-
-    return errors;
+    return [...new Set(errors)]; // Remove duplicates
   }
 
   hasValidationErrors(): boolean {
     return this.validationErrors && Object.keys(this.validationErrors).length > 0;
   }
 
+  // ENHANCED error detection method
   hasFieldError(fieldName: string): boolean {
+    // Check if there are direct validation errors from server
+    if (this.validationErrors && this.validationErrors[fieldName]) {
+      return true;
+    }
+
     const control = this.form.get(fieldName);
     if (!control) return false;
 
-    // Check if field has any errors and is touched or dirty
-    return !!(control.errors && (control.touched || control.dirty));
+    // Check if field has any errors
+    const hasErrors = !!(control.errors && Object.keys(control.errors).length > 0);
+    if (!hasErrors) return false;
+
+    // Show server errors immediately, client errors only after interaction
+    const hasServerErrors = !!(control.errors && control.errors['serverError']);
+    const isInteracted = control.touched || control.dirty;
+
+    return hasServerErrors || isInteracted;
   }
 
   getValidationErrorSummary(): string[] {

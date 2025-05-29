@@ -1,17 +1,17 @@
-// utils/field-type.utils.ts - FIXED
+// utils/field-type.utils.ts - ENHANCED
 import { ResourceField } from '../models/resource.model';
 
 export class FieldTypeUtils {
   static isTextInput(field: ResourceField): boolean {
     if (!field || !field.type) return false;
-    return ['CharField', 'TextField', 'EmailField', 'URLField'].includes(field.type) &&
+    return ['CharField', 'TextField', 'EmailField', 'URLField', 'SlugField'].includes(field.type) &&
       !this.hasChoices(field) &&
       !this.isRelationField(field);
   }
 
   static isNumberInput(field: ResourceField): boolean {
     if (!field || !field.type) return false;
-    return ['IntegerField', 'BigIntegerField', 'DecimalField', 'FloatField'].includes(field.type);
+    return ['IntegerField', 'BigIntegerField', 'DecimalField', 'FloatField', 'PositiveIntegerField', 'SmallIntegerField'].includes(field.type);
   }
 
   static hasChoices(field: ResourceField): boolean {
@@ -20,18 +20,40 @@ export class FieldTypeUtils {
   }
 
   static isRelationField(field: ResourceField): boolean {
-    if (!field || !field.type) return false;
-    return ['ForeignKey', 'OneToOneField', 'ManyToManyField'].includes(field.type);
+    if (!field || !field.name) return false;
+
+    // Check if field has related_model property
+    if (field.related_model) {
+      return true;
+    }
+
+    // Check explicit relation types
+    if (field.type && ['ForeignKey', 'OneToOneField', 'ManyToManyField'].includes(field.type)) {
+      return true;
+    }
+
+    // Check if field has relation_type property
+    if (field.relation_type) {
+      return true;
+    }
+
+    // Check common naming patterns for foreign keys
+    if (field.name.endsWith('_id')) {
+      return true;
+    }
+
+    return false;
   }
 
+  // ENHANCED file field detection
   static isFileField(field: ResourceField): boolean {
     if (!field || !field.type) return false;
-    return field.type === 'FileField';
+    return ['FileField', 'ImageField', 'DocumentField', 'MediaField'].includes(field.type);
   }
 
   static isBooleanField(field: ResourceField): boolean {
     if (!field || !field.type) return false;
-    return field.type === 'BooleanField';
+    return ['BooleanField', 'NullBooleanField'].includes(field.type);
   }
 
   static isDateField(field: ResourceField): boolean {
@@ -55,6 +77,11 @@ export class FieldTypeUtils {
         return 'email';
       case 'URLField':
         return 'url';
+      case 'PasswordField':
+        return 'password';
+      case 'CharField':
+      case 'TextField':
+      case 'SlugField':
       default:
         return 'text';
     }
@@ -65,8 +92,27 @@ export class FieldTypeUtils {
       case 'DecimalField':
       case 'FloatField':
         return '0.01';
+      case 'IntegerField':
+      case 'BigIntegerField':
+      case 'PositiveIntegerField':
+      case 'SmallIntegerField':
       default:
         return '1';
+    }
+  }
+
+  // ENHANCED file accept types
+  static getFileAcceptTypes(fieldType: string): string {
+    switch (fieldType) {
+      case 'ImageField':
+        return 'image/*';
+      case 'DocumentField':
+        return '.pdf,.doc,.docx,.txt,.rtf';
+      case 'MediaField':
+        return 'image/*,video/*,audio/*';
+      case 'FileField':
+      default:
+        return '*/*';
     }
   }
 
@@ -76,10 +122,18 @@ export class FieldTypeUtils {
     }
 
     const handledTypes = [
-      'CharField', 'TextField', 'EmailField', 'URLField',
-      'IntegerField', 'BigIntegerField', 'DecimalField', 'FloatField',
+      // Text fields
+      'CharField', 'TextField', 'EmailField', 'URLField', 'SlugField',
+      // Number fields
+      'IntegerField', 'BigIntegerField', 'DecimalField', 'FloatField', 'PositiveIntegerField', 'SmallIntegerField',
+      // Date/Time fields
       'DateField', 'DateTimeField', 'TimeField',
-      'BooleanField', 'FileField'
+      // Boolean fields
+      'BooleanField', 'NullBooleanField',
+      // File fields
+      'FileField', 'ImageField', 'DocumentField', 'MediaField',
+      // Relation fields
+      'ForeignKey', 'OneToOneField', 'ManyToManyField'
     ];
 
     return !handledTypes.includes(field.type) &&
@@ -91,6 +145,71 @@ export class FieldTypeUtils {
     if (!name) return '';
     return name
       .replace(/_/g, ' ')
-      .replace(/\b\w/g, l => l.toUpperCase());
+      .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+      .replace(/\b\w/g, l => l.toUpperCase())
+      .trim();
+  }
+
+  // Helper method to get field validation rules
+  static getFieldValidationRules(field: ResourceField): string[] {
+    const rules: string[] = [];
+
+    if (field.required) {
+      rules.push('Required');
+    }
+
+    if (field.type === 'EmailField') {
+      rules.push('Valid email format');
+    }
+
+    if (field.type === 'URLField') {
+      rules.push('Valid URL format');
+    }
+
+    if (this.isNumberInput(field)) {
+      rules.push('Numeric value only');
+    }
+
+    if (this.isFileField(field)) {
+      rules.push('File upload');
+    }
+
+    return rules;
+  }
+
+  // Helper method to get field placeholder text
+  static getFieldPlaceholder(field: ResourceField): string {
+    const fieldName = this.formatColumnName(field.name);
+
+    switch (field.type) {
+      case 'EmailField':
+        return `Enter a valid email address`;
+      case 'URLField':
+        return `Enter a valid URL (https://...)`;
+      case 'DateField':
+        return `Select a date`;
+      case 'DateTimeField':
+        return `Select date and time`;
+      case 'TimeField':
+        return `Select time`;
+      case 'FileField':
+      case 'ImageField':
+        return `Choose a file`;
+      case 'BooleanField':
+        return `Check if applicable`;
+      case 'DecimalField':
+      case 'FloatField':
+        return `Enter decimal number`;
+      case 'IntegerField':
+      case 'BigIntegerField':
+      case 'PositiveIntegerField':
+      case 'SmallIntegerField':
+        return `Enter whole number`;
+      case 'TextField':
+        return `Enter detailed ${fieldName.toLowerCase()}`;
+      case 'CharField':
+      default:
+        return `Enter ${fieldName.toLowerCase()}`;
+    }
   }
 }
