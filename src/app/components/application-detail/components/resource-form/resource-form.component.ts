@@ -1,4 +1,4 @@
-// components/resource-form/resource-form.component.ts - CORRECTED VERSION
+// components/resource-form/resource-form.component.ts - FIXED MISSING METHODS
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
@@ -291,12 +291,11 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
     return FieldTypeUtils.isManyToManyField(field);
   }
 
-  // ENHANCED: Better relationship field detection
+  // *** ENHANCED RELATIONSHIP FIELD DETECTION ***
   isSingleRelationField(field: ResourceField): boolean {
-    return FieldTypeUtils.isRelationField(field) && !this.isManyToManyField(field);
+    return FieldTypeUtils.isSingleRelationField(field);
   }
 
-  // NEW: Specific relationship type checks
   isForeignKeyField(field: ResourceField): boolean {
     return FieldTypeUtils.isForeignKeyField(field);
   }
@@ -309,19 +308,42 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
     return FieldTypeUtils.isLookupField(field);
   }
 
-  // NEW: Get relationship type for display
   getRelationshipType(field: ResourceField): string {
     return FieldTypeUtils.getRelationTypeDisplayName(field);
   }
 
-  // NEW: Check if relation options are available
   hasRelationOptions(field: ResourceField): boolean {
-    return this.relationOptions[field.name] && this.relationOptions[field.name].length > 0;
+    const options = this.relationOptions[field.name];
+    return Boolean(options && Array.isArray(options) && options.length > 0);
   }
 
-  // NEW: Get relation options with loading state
   getRelationOptions(field: ResourceField): RelationOption[] {
     return this.relationOptions[field.name] || [];
+  }
+
+  // *** FIXED: MISSING METHODS FROM TEMPLATE ***
+  getFieldPlaceholder(field: ResourceField): string {
+    return FieldTypeUtils.getFieldPlaceholder(field);
+  }
+
+  getRelationTypeDisplayName(field: ResourceField): string {
+    return FieldTypeUtils.getRelationTypeDisplayName(field);
+  }
+
+  getFieldDebugInfo(field: ResourceField): string {
+    const debugInfo = {
+      name: field.name,
+      type: field.type,
+      relation_type: field.relation_type,
+      related_model: field.related_model,
+      limit_choices_to: field.limit_choices_to,
+      isRelationField: this.isRelationField(field),
+      relationshipType: this.getRelationshipType(field),
+      isSingleRelation: this.isSingleRelationField(field),
+      optionsCount: this.relationOptions[field.name]?.length || 0,
+      options: this.relationOptions[field.name]?.slice(0, 3) // Show first 3 options
+    };
+    return JSON.stringify(debugInfo, null, 2);
   }
 
   getManyToManySelectedItems(fieldName: string): RelationOption[] {
@@ -655,7 +677,6 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
     return [...new Set(errors)];
   }
 
-  // ADDED: Method that was missing in the template
   getFieldErrorMessage(fieldName: string): string {
     const errors = this.getFieldErrors(fieldName);
     return errors.length > 0 ? errors[0] : '';

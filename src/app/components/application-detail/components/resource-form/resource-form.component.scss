@@ -1,4 +1,4 @@
-// resource-form.component.scss - BEAUTIFUL & PROFESSIONAL STYLING
+// resource-form.component.scss - ENHANCED WITH RELATIONSHIP STYLING
 :host {
   display: block;
   width: 100%;
@@ -11,6 +11,7 @@ $secondary-color: #424242;
 $success-color: #4caf50;
 $error-color: #f44336;
 $warning-color: #ff9800;
+$info-color: #2196f3;
 
 $background-overlay: rgba(0, 0, 0, 0.6);
 $card-background: #ffffff;
@@ -49,6 +50,11 @@ $spacing-xl: 48px;
   to {
     opacity: 1;
   }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 // Main overlay
@@ -337,6 +343,9 @@ $spacing-xl: 48px;
     font-weight: 600;
     color: $secondary-color;
     margin-bottom: $spacing-sm;
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
   }
 
   .selected-items {
@@ -376,11 +385,78 @@ $spacing-xl: 48px;
     gap: $spacing-xs;
     transition: all 0.3s ease;
 
-    &:hover {
+    &:hover:not(:disabled) {
       background: $primary-color;
       color: white;
       transform: translateY(-1px);
       box-shadow: $shadow-light;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .option-count {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-left: 4px;
+    }
+  }
+}
+
+// *** NEW: RELATIONSHIP-SPECIFIC STYLING ***
+
+// Relation badge
+.relation-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  color: $info-color;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+// Loading relations indicator
+.loading-relations {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  color: $info-color;
+  font-size: 14px;
+  margin-bottom: $spacing-sm;
+  padding: $spacing-sm;
+  background: rgba($info-color, 0.1);
+  border-radius: $border-radius-sm;
+
+  .loading-spinner {
+    animation: spin 1s linear infinite;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+// Enhanced select styling for relations
+::ng-deep {
+  .mat-mdc-select {
+    &.relation-select {
+      .mat-mdc-select-trigger {
+        background: linear-gradient(135deg, #f8f9ff 0%, #e8f0ff 100%);
+        border: 1px solid $info-color;
+      }
+    }
+  }
+
+  // Loading spinner in select options
+  .mat-mdc-option {
+    .loading-spinner {
+      animation: spin 1s linear infinite;
+      margin-right: 8px;
     }
   }
 }
@@ -441,6 +517,12 @@ $spacing-xl: 48px;
     font-size: 11px;
     font-style: italic;
     margin-top: 4px;
+
+    &.relation-hint {
+      color: $info-color;
+      font-style: normal;
+      font-weight: 500;
+    }
   }
 }
 
@@ -475,6 +557,38 @@ $spacing-xl: 48px;
 
     .mat-mdc-form-field-label {
       color: $error-color !important;
+    }
+  }
+}
+
+// *** NEW: DEBUG INFO STYLING ***
+.debug-info {
+  margin-top: $spacing-sm;
+  padding: $spacing-sm;
+  background: #f8f8f8;
+  border-radius: $border-radius-sm;
+  border-left: 4px solid $warning-color;
+
+  details {
+    summary {
+      cursor: pointer;
+      font-weight: 500;
+      color: $warning-color;
+      padding: 4px 0;
+
+      &:hover {
+        color: darken($warning-color, 10%);
+      }
+    }
+
+    pre {
+      margin-top: $spacing-xs;
+      padding: $spacing-sm;
+      background: white;
+      border-radius: $border-radius-sm;
+      font-size: 11px;
+      color: $secondary-color;
+      overflow-x: auto;
     }
   }
 }
@@ -638,5 +752,14 @@ $spacing-xl: 48px;
   .form-actions {
     background: #2e2e2e;
     border-color: #5e5e5e;
+  }
+
+  .debug-info {
+    background: #4e4e4e;
+    color: white;
+
+    pre {
+      background: #3e3e3e;
+    }
   }
 }

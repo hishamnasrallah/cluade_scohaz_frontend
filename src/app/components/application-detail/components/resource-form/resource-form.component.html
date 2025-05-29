@@ -1,4 +1,4 @@
-<!-- resource-form.component.html - FIXED INLINE VALIDATION -->
+<!-- resource-form.component.html - FIXED RELATIONSHIP HANDLING -->
 <div class="form-overlay" (click)="onOverlayClick($event)">
     <mat-card class="form-card" (click)="$event.stopPropagation()">
 
@@ -72,7 +72,14 @@
                             <label class="field-label">
                                 {{ formatColumnName(field.name) }}
                                 <span *ngIf="field.required" class="required-indicator">*</span>
+                                <span class="relation-badge">Many-to-Many</span>
                             </label>
+
+                            <!-- Loading indicator for relation options -->
+                            <div class="loading-relations" *ngIf="!relationOptions || !relationOptions[field.name] || relationOptions[field.name].length === 0">
+                                <mat-icon class="loading-spinner">refresh</mat-icon>
+                                <span>Loading options...</span>
+                            </div>
 
                             <div class="selected-items" *ngIf="getManyToManySelectedItems(field.name).length > 0">
                                 <mat-chip-set class="selected-chips">
@@ -85,9 +92,15 @@
                                 </mat-chip-set>
                             </div>
 
-                            <button type="button" mat-stroked-button (click)="openManyToManySelector(field)">
+                            <button type="button"
+                                    mat-stroked-button
+                                    (click)="openManyToManySelector(field)"
+                                    [disabled]="!relationOptions || !relationOptions[field.name] || relationOptions[field.name].length === 0">
                                 <mat-icon>{{ getManyToManySelectedItems(field.name).length > 0 ? 'edit' : 'add' }}</mat-icon>
                                 {{ getManyToManySelectedItems(field.name).length > 0 ? 'Edit Selection' : 'Select Items' }}
+                                <span class="option-count" *ngIf="relationOptions && relationOptions[field.name] && relationOptions[field.name].length > 0">
+                                    ({{ relationOptions[field.name].length }} available)
+                                </span>
                             </button>
 
                             <!-- Inline error messages for many-to-many -->
@@ -108,6 +121,10 @@
                             <mat-label>
                                 {{ formatColumnName(field.name) }}
                                 <span *ngIf="field.required" class="required-indicator">*</span>
+                                <!-- Relation type indicator -->
+                                <span *ngIf="isRelationField(field)" class="relation-badge">
+                                    {{ getRelationTypeDisplayName(field) }}
+                                </span>
                             </mat-label>
 
                             <!-- Text inputs -->
@@ -116,7 +133,7 @@
                                    [type]="getInputType(field.type)"
                                    [formControlName]="field.name"
                                    [required]="field.required"
-                                   [placeholder]="'Enter ' + formatColumnName(field.name)">
+                                   [placeholder]="getFieldPlaceholder(field)">
 
                             <!-- Number inputs -->
                             <input *ngIf="isNumberInput(field)"
@@ -125,7 +142,7 @@
                                    [step]="getNumberStep(field.type)"
                                    [formControlName]="field.name"
                                    [required]="field.required"
-                                   [placeholder]="'Enter ' + formatColumnName(field.name)">
+                                   [placeholder]="getFieldPlaceholder(field)">
 
                             <!-- Date input -->
                             <ng-container *ngIf="isDateField(field)">
@@ -133,7 +150,7 @@
                                        [matDatepicker]="datePicker"
                                        [formControlName]="field.name"
                                        [required]="field.required"
-                                       [placeholder]="'Select ' + formatColumnName(field.name)">
+                                       [placeholder]="getFieldPlaceholder(field)">
                                 <mat-datepicker-toggle matSuffix [for]="datePicker"></mat-datepicker-toggle>
                                 <mat-datepicker #datePicker></mat-datepicker>
                             </ng-container>
@@ -144,7 +161,7 @@
                                    type="datetime-local"
                                    [formControlName]="field.name"
                                    [required]="field.required"
-                                   [placeholder]="'Select ' + formatColumnName(field.name)">
+                                   [placeholder]="getFieldPlaceholder(field)">
 
                             <!-- Time input -->
                             <input *ngIf="isTimeField(field)"
@@ -152,25 +169,46 @@
                                    type="time"
                                    [formControlName]="field.name"
                                    [required]="field.required"
-                                   [placeholder]="'Select ' + formatColumnName(field.name)">
+                                   [placeholder]="getFieldPlaceholder(field)">
 
-                            <!-- Select for choices -->
-                            <mat-select *ngIf="hasChoices(field)"
+                            <!-- Select for static choices -->
+                            <mat-select *ngIf="hasChoices(field) && !isRelationField(field)"
                                         [formControlName]="field.name"
-                                        [required]="field.required">
+                                        [required]="field.required"
+                                        [placeholder]="getFieldPlaceholder(field)">
                                 <mat-option [value]="null">-- Select {{ formatColumnName(field.name) }} --</mat-option>
                                 <mat-option *ngFor="let choice of field.choices" [value]="choice.value">
                                     {{ choice.label }}
                                 </mat-option>
                             </mat-select>
 
-                            <!-- Foreign Key relation fields -->
+                            <!-- Single Relation Fields (ForeignKey, OneToOne, Lookup) -->
                             <mat-select *ngIf="isSingleRelationField(field)"
                                         [formControlName]="field.name"
-                                        [required]="field.required">
-                                <mat-option [value]="null">-- Select {{ formatColumnName(field.name) }} --</mat-option>
-                                <mat-option *ngFor="let option of relationOptions[field.name]" [value]="option.id">
+                                        [required]="field.required"
+                                        [placeholder]="getFieldPlaceholder(field)">
+
+                                <mat-option [value]="null">
+                                    -- Select {{ formatColumnName(field.name) }} --
+                                </mat-option>
+
+                                <!-- Show loading option if no data loaded yet -->
+                                <mat-option *ngIf="!relationOptions || !relationOptions[field.name] || relationOptions[field.name].length === 0"
+                                            [value]="null" disabled>
+                                    <mat-icon class="loading-spinner">refresh</mat-icon>
+                                    Loading options...
+                                </mat-option>
+
+                                <!-- Show actual options -->
+                                <mat-option *ngFor="let option of (relationOptions && relationOptions[field.name] ? relationOptions[field.name] : [])"
+                                            [value]="option.id">
                                     {{ option.display }}
+                                </mat-option>
+
+                                <!-- Show message if no options available -->
+                                <mat-option *ngIf="relationOptions && relationOptions[field.name] && relationOptions[field.name].length === 0"
+                                            [value]="null" disabled>
+                                    No options available
                                 </mat-option>
                             </mat-select>
 
@@ -188,11 +226,27 @@
                                 </div>
                             </div>
 
-                            <!-- Help text -->
+                            <!-- Help text with relationship info -->
                             <mat-hint *ngIf="field.help_text && !hasFieldError(field.name)">
                                 {{ field.help_text }}
                             </mat-hint>
+
+                            <!-- Relationship info hint -->
+                            <mat-hint *ngIf="isRelationField(field) && !field.help_text && !hasFieldError(field.name)">
+                                Related to: {{ field.related_model || 'external model' }}
+                                <span *ngIf="relationOptions && relationOptions[field.name] && relationOptions[field.name].length > 0">
+                                    ({{ relationOptions[field.name].length }} options available)
+                                </span>
+                            </mat-hint>
                         </mat-form-field>
+
+                        <!-- Debug info for relationships (only in development) -->
+                        <div *ngIf="showDebug && isRelationField(field)" class="debug-info">
+                            <details>
+                                <summary>Debug: {{ field.name }}</summary>
+                                <pre>{{ getFieldDebugInfo(field) }}</pre>
+                            </details>
+                        </div>
                     </div>
                 </div>
             </form>

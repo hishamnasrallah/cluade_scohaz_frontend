@@ -1,16 +1,16 @@
-// utils/field-type.utils.ts - CORRECTED VERSION
+// utils/field-type.utils.ts - FIXED TYPE SAFETY
 import { ResourceField } from '../models/resource.model';
 
 export class FieldTypeUtils {
   static isTextInput(field: ResourceField): boolean {
-    if (!field || !field.type) return false;
+    if (!field?.type) return false;
     return ['CharField', 'TextField', 'EmailField', 'URLField', 'SlugField'].includes(field.type) &&
         !this.hasChoices(field) &&
         !this.isRelationField(field);
   }
 
   static isNumberInput(field: ResourceField): boolean {
-    if (!field || !field.type) return false;
+    if (!field?.type) return false;
     return ['IntegerField', 'BigIntegerField', 'DecimalField', 'FloatField', 'PositiveIntegerField', 'SmallIntegerField'].includes(field.type);
   }
 
@@ -19,65 +19,107 @@ export class FieldTypeUtils {
     return Boolean(field.choices && Array.isArray(field.choices) && field.choices.length > 0);
   }
 
-  // ENHANCED relationship detection
+  // *** ENHANCED RELATIONSHIP DETECTION WITH PROPER TYPE SAFETY ***
   static isRelationField(field: ResourceField): boolean {
-    if (!field || !field.name) return false;
+    if (!field?.name) return false;
 
-    // Check if field has related_model property (most reliable indicator)
-    if (field.related_model) {
-      return true;
-    }
+    console.log(`🔍 DEBUG: Checking isRelationField for ${field.name}`);
+    console.log(`🔍 DEBUG: - type: ${field.type}`);
+    console.log(`🔍 DEBUG: - relation_type: ${field.relation_type}`);
+    console.log(`🔍 DEBUG: - related_model: ${field.related_model}`);
 
-    // Check explicit relation types in field.type
+    // Primary check: explicit relation types in field.type
     if (field.type && ['ForeignKey', 'OneToOneField', 'ManyToManyField'].includes(field.type)) {
+      console.log(`✅ ${field.name} is relation field: type = ${field.type}`);
       return true;
     }
 
-    // Check if field has relation_type property
+    // Secondary check: explicit relation types in field.relation_type
     if (field.relation_type && ['ForeignKey', 'OneToOneField', 'ManyToManyField'].includes(field.relation_type)) {
+      console.log(`✅ ${field.name} is relation field: relation_type = ${field.relation_type}`);
       return true;
     }
 
-    // Check common naming patterns for foreign keys
+    // Tertiary check: has related_model property
+    if (field.related_model && field.related_model.trim()) {
+      console.log(`✅ ${field.name} is relation field: has related_model = ${field.related_model}`);
+      return true;
+    }
+
+    // Quaternary check: naming pattern (field ends with _id)
     if (field.name.endsWith('_id')) {
+      console.log(`✅ ${field.name} is relation field: ends with _id`);
       return true;
     }
 
+    // Final check: has limit_choices_to (usually indicates lookup relation)
+    if (field.limit_choices_to && field.limit_choices_to.trim()) {
+      console.log(`✅ ${field.name} is relation field: has limit_choices_to`);
+      return true;
+    }
+
+    console.log(`❌ ${field.name} is NOT a relation field`);
     return false;
   }
 
-  // CORRECTED: Specific relationship type detection with proper null checks
+  // *** SPECIFIC RELATIONSHIP TYPE DETECTION WITH TYPE SAFETY ***
   static isForeignKeyField(field: ResourceField): boolean {
     if (!field) return false;
 
-    return field.type === 'ForeignKey' ||
+    const isForeignKey = field.type === 'ForeignKey' ||
         field.relation_type === 'ForeignKey' ||
-        (!!field.related_model && field.name.endsWith('_id'));
+        (field.related_model && field.related_model !== 'lookup.lookup' && field.name.endsWith('_id'));
+
+    return Boolean(isForeignKey);
   }
 
   static isOneToOneField(field: ResourceField): boolean {
     if (!field) return false;
 
-    return field.type === 'OneToOneField' ||
+    const isOneToOne = field.type === 'OneToOneField' ||
         field.relation_type === 'OneToOneField';
+
+    return Boolean(isOneToOne);
   }
 
   static isManyToManyField(field: ResourceField): boolean {
     if (!field) return false;
 
-    return field.type === 'ManyToManyField' ||
-        field.relation_type === 'ManyToManyField';
+    const isManyToMany = field.type === 'ManyToManyField' ||
+        field.relation_type === 'ManyToManyField' ||
+        (field.related_model && field.name.endsWith('s') && !field.name.endsWith('_id'));
+
+    return Boolean(isManyToMany);
   }
 
-  // CORRECTED: Check if field is a lookup relation with proper null checks
+  // *** SIMPLIFIED LOOKUP DETECTION - KEEP AS SPECIAL CASE ***
   static isLookupField(field: ResourceField): boolean {
     if (!field) return false;
 
-    return field.related_model === 'lookup.lookup' ||
-        (!!field.limit_choices_to && field.limit_choices_to.includes('lookup'));
+    const isLookup = (field.related_model === 'lookup.lookup') ||
+        (field.limit_choices_to && field.limit_choices_to.includes('lookup'));
+
+    return Boolean(isLookup);
   }
 
-  // NEW: Get relationship type for a field
+  // *** SINGLE VS MULTIPLE RELATIONSHIP DETECTION ***
+  static isSingleRelationField(field: ResourceField): boolean {
+    if (!this.isRelationField(field)) return false;
+
+    // Single relation: ForeignKey, OneToOne, or Lookup
+    return this.isForeignKeyField(field) ||
+        this.isOneToOneField(field) ||
+        this.isLookupField(field);
+  }
+
+  static isMultipleRelationField(field: ResourceField): boolean {
+    if (!this.isRelationField(field)) return false;
+
+    // Multiple relation: ManyToMany
+    return this.isManyToManyField(field);
+  }
+
+  // *** RELATIONSHIP TYPE UTILITIES ***
   static getRelationshipType(field: ResourceField): 'ForeignKey' | 'OneToOneField' | 'ManyToManyField' | 'Lookup' | null {
     if (!field || !this.isRelationField(field)) return null;
 
@@ -89,9 +131,8 @@ export class FieldTypeUtils {
     return null;
   }
 
-  // NEW: Parse related model info
   static parseRelatedModel(field: ResourceField): { app: string; model: string } | null {
-    if (!field.related_model) return null;
+    if (!field?.related_model) return null;
 
     const parts = field.related_model.split('.');
     if (parts.length !== 2) return null;
@@ -102,7 +143,6 @@ export class FieldTypeUtils {
     };
   }
 
-  // NEW: Get expected endpoint patterns for a related model
   static getExpectedEndpointPatterns(appName: string, modelName: string): string[] {
     return [
       `${appName}/${modelName}/`,
@@ -114,32 +154,35 @@ export class FieldTypeUtils {
     ];
   }
 
-  // ENHANCED file field detection
+  // *** FILE FIELD DETECTION ***
   static isFileField(field: ResourceField): boolean {
-    if (!field || !field.type) return false;
+    if (!field?.type) return false;
     return ['FileField', 'ImageField', 'DocumentField', 'MediaField'].includes(field.type);
   }
 
+  // *** BOOLEAN FIELD DETECTION ***
   static isBooleanField(field: ResourceField): boolean {
-    if (!field || !field.type) return false;
+    if (!field?.type) return false;
     return ['BooleanField', 'NullBooleanField'].includes(field.type);
   }
 
+  // *** DATE/TIME FIELD DETECTION ***
   static isDateField(field: ResourceField): boolean {
-    if (!field || !field.type) return false;
+    if (!field?.type) return false;
     return field.type === 'DateField';
   }
 
   static isDateTimeField(field: ResourceField): boolean {
-    if (!field || !field.type) return false;
+    if (!field?.type) return false;
     return field.type === 'DateTimeField';
   }
 
   static isTimeField(field: ResourceField): boolean {
-    if (!field || !field.type) return false;
+    if (!field?.type) return false;
     return field.type === 'TimeField';
   }
 
+  // *** INPUT TYPE UTILITIES ***
   static getInputType(fieldType: string): string {
     switch (fieldType) {
       case 'EmailField':
@@ -170,7 +213,6 @@ export class FieldTypeUtils {
     }
   }
 
-  // ENHANCED file accept types
   static getFileAcceptTypes(fieldType: string): string {
     switch (fieldType) {
       case 'ImageField':
@@ -185,8 +227,9 @@ export class FieldTypeUtils {
     }
   }
 
+  // *** FIELD VALIDATION ***
   static isUnhandledField(field: ResourceField): boolean {
-    if (!field || !field.name || !field.type) {
+    if (!field?.name || !field?.type) {
       return false;
     }
 
@@ -210,6 +253,7 @@ export class FieldTypeUtils {
         !this.isRelationField(field);
   }
 
+  // *** DISPLAY UTILITIES ***
   static formatColumnName(name: string): string {
     if (!name) return '';
     return name
@@ -219,7 +263,6 @@ export class FieldTypeUtils {
         .trim();
   }
 
-  // NEW: Helper method to get field validation rules with relationship info
   static getFieldValidationRules(field: ResourceField): string[] {
     const rules: string[] = [];
 
@@ -265,7 +308,6 @@ export class FieldTypeUtils {
     return rules;
   }
 
-  // NEW: Helper method to get field placeholder text with relationship context
   static getFieldPlaceholder(field: ResourceField): string {
     const fieldName = this.formatColumnName(field.name);
 
@@ -319,17 +361,15 @@ export class FieldTypeUtils {
     }
   }
 
-  // NEW: Helper to determine if field should show as dropdown
+  // *** FORM FIELD UTILITIES ***
   static shouldShowAsDropdown(field: ResourceField): boolean {
     return this.hasChoices(field) || this.isRelationField(field);
   }
 
-  // NEW: Helper to determine if field needs special loading
   static needsAsyncOptions(field: ResourceField): boolean {
     return this.isRelationField(field) && !this.hasChoices(field);
   }
 
-  // NEW: Get display name for relation type
   static getRelationTypeDisplayName(field: ResourceField): string {
     const relType = this.getRelationshipType(field);
     switch (relType) {
@@ -344,5 +384,19 @@ export class FieldTypeUtils {
       default:
         return 'Unknown';
     }
+  }
+
+  // *** DEBUGGING UTILITIES ***
+  static debugField(field: ResourceField): void {
+    console.log(`🔍 DEBUG: Field Analysis for "${field.name}"`);
+    console.log(`  - Type: ${field.type}`);
+    console.log(`  - Relation Type: ${field.relation_type}`);
+    console.log(`  - Related Model: ${field.related_model}`);
+    console.log(`  - Limit Choices To: ${field.limit_choices_to}`);
+    console.log(`  - Has Choices: ${this.hasChoices(field)}`);
+    console.log(`  - Is Relation Field: ${this.isRelationField(field)}`);
+    console.log(`  - Relation Type: ${this.getRelationshipType(field)}`);
+    console.log(`  - Is Single Relation: ${this.isSingleRelationField(field)}`);
+    console.log(`  - Is Multiple Relation: ${this.isMultipleRelationField(field)}`);
   }
 }
