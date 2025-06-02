@@ -1,103 +1,375 @@
-<!-- resource-table.component.html -->
 <div class="table-container">
-    <div class="actions-bar">
-        <button mat-raised-button color="primary"
-                *ngIf="resource.canCreate"
-                (click)="onCreate.emit()">
-            <mat-icon>add</mat-icon>
-            Add New {{ formatColumnName(resource.name) }}
+  <!-- Enhanced Table Header -->
+  <div class="table-header">
+    <div class="header-main">
+      <div class="table-info">
+        <h3 class="table-title">
+          {{ formatColumnName(resource.name) }}
+          <mat-icon class="title-icon">{{ getResourceIcon() }}</mat-icon>
+        </h3>
+        <p class="table-subtitle">
+          {{ getTableDescription() }}
+        </p>
+      </div>
+
+      <div class="table-actions">
+        <!-- Bulk Actions -->
+        <div class="bulk-actions" *ngIf="selection.hasValue()">
+          <button mat-button
+                  [matMenuTriggerFor]="bulkMenu"
+                  class="bulk-btn">
+            <mat-icon>checklist</mat-icon>
+            <span>{{ selection.selected.length }} selected</span>
+            <mat-icon>expand_more</mat-icon>
+          </button>
+
+          <mat-menu #bulkMenu="matMenu">
+            <button mat-menu-item (click)="bulkDelete()" class="bulk-delete">
+              <mat-icon>delete</mat-icon>
+              <span>Delete Selected</span>
+            </button>
+            <button mat-menu-item (click)="bulkExport()">
+              <mat-icon>download</mat-icon>
+              <span>Export Selected</span>
+            </button>
+            <button mat-menu-item (click)="deselectAll()">
+              <mat-icon>clear</mat-icon>
+              <span>Clear Selection</span>
+            </button>
+          </mat-menu>
+        </div>
+
+        <!-- Primary Actions -->
+        <button mat-button
+                (click)="onRefresh.emit()"
+                class="refresh-btn"
+                matTooltip="Refresh Data">
+          <mat-icon [class.spinning]="loading">refresh</mat-icon>
+          <span class="btn-text">Refresh</span>
         </button>
-        <button mat-button (click)="onRefresh.emit()">
-            <mat-icon>refresh</mat-icon>
-            Refresh
-        </button>
-    </div>
 
-    <div *ngIf="loading" class="loading-data">
-        <mat-spinner diameter="30"></mat-spinner>
-        <span>Loading data...</span>
-    </div>
-
-    <div *ngIf="!loading && data && data.length > 0" class="table-wrapper">
-        <table mat-table [dataSource]="data" class="resource-table">
-            <!-- Dynamic columns -->
-            <ng-container *ngFor="let col of displayColumns" [matColumnDef]="col">
-                <th mat-header-cell *matHeaderCellDef class="table-header">
-                    {{ formatColumnName(col) }}
-                </th>
-                <td mat-cell *matCellDef="let element" class="table-cell">
-                    <!-- File field -->
-                    <span *ngIf="getFieldType(col) === 'FileField' && element[col]" class="file-link">
-            <a [href]="element[col]" target="_blank" rel="noopener noreferrer" class="file-url">
-              <mat-icon class="file-icon">attachment</mat-icon>
-              View File
-            </a>
-          </span>
-                    <span *ngIf="getFieldType(col) === 'FileField' && !element[col]" class="no-file">
-            No file
-          </span>
-
-                    <!-- Regular fields -->
-                    <span *ngIf="getFieldType(col) !== 'FileField' && !isRelation(col)" class="cell-content">
-            {{ formatCellValue(element[col]) }}
-          </span>
-
-                    <!-- Relation fields -->
-                    <span *ngIf="isRelation(col)" class="relation-field">
-            {{ element[col] || 'N/A' }}
-          </span>
-                </td>
-            </ng-container>
-
-            <!-- Actions column -->
-            <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef class="actions-header">Actions</th>
-                <td mat-cell *matCellDef="let element" class="actions-cell">
-                    <div class="action-buttons">
-                        <button mat-icon-button
-                                *ngIf="resource.canRead"
-                                (click)="onView.emit(element)"
-                                matTooltip="View Details"
-                                class="action-btn view-btn">
-                            <mat-icon>visibility</mat-icon>
-                        </button>
-                        <button mat-icon-button
-                                *ngIf="resource.canUpdate"
-                                (click)="onEdit.emit(element)"
-                                matTooltip="Edit"
-                                class="action-btn edit-btn">
-                            <mat-icon>edit</mat-icon>
-                        </button>
-                        <button mat-icon-button
-                                *ngIf="resource.canDelete"
-                                (click)="onDelete.emit(element)"
-                                matTooltip="Delete"
-                                color="warn"
-                                class="action-btn delete-btn">
-                            <mat-icon>delete</mat-icon>
-                        </button>
-                    </div>
-                </td>
-            </ng-container>
-
-            <tr mat-header-row *matHeaderRowDef="allColumns" class="table-header-row"></tr>
-            <tr mat-row *matRowDef="let row; columns: allColumns;" class="table-row"></tr>
-        </table>
-
-        <mat-paginator [pageSizeOptions]="[5, 10, 20]"
-                       showFirstLastButtons
-                       class="table-paginator">
-        </mat-paginator>
-    </div>
-
-    <div *ngIf="!loading && (!data || data.length === 0)" class="no-data">
-        <mat-icon class="no-data-icon">inbox</mat-icon>
-        <p class="no-data-text">No {{ resource.name }} records found</p>
-        <button mat-raised-button color="primary"
+        <button mat-raised-button
+                color="primary"
                 *ngIf="resource.canCreate"
-                (click)="onCreate.emit()"
+                (click)="onCreateNew()"
+                class="create-btn">
+          <mat-icon>add</mat-icon>
+          <span>Add {{ formatColumnName(resource.name) }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Enhanced Search and Filters -->
+    <div class="table-controls">
+      <div class="search-section">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Search {{ formatColumnName(resource.name) }}</mat-label>
+          <input matInput
+                 (keyup)="applyFilter($event)"
+                 placeholder="Type to search..."
+                 #searchInput>
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <div class="filter-section">
+        <mat-form-field appearance="outline" class="page-size-field">
+          <mat-label>Show</mat-label>
+          <mat-select [value]="pageSize" (selectionChange)="updatePageSize($event.value)">
+            <mat-option [value]="5">5 per page</mat-option>
+            <mat-option [value]="10">10 per page</mat-option>
+            <mat-option [value]="25">25 per page</mat-option>
+            <mat-option [value]="50">50 per page</mat-option>
+            <mat-option [value]="100">100 per page</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <button mat-button
+                [matMenuTriggerFor]="filterMenu"
+                class="filter-btn">
+          <mat-icon>filter_list</mat-icon>
+          <span>Filters</span>
+          <span *ngIf="activeFilters > 0"
+                [matBadge]="activeFilters"
+                matBadgeSize="small"
+                matBadgeColor="accent"
+                matBadgeOverlap="false"
+                class="badge-indicator">
+              </span>
+
+        </button>
+
+        <mat-menu #filterMenu="matMenu" class="filter-menu">
+          <div class="filter-content" (click)="$event.stopPropagation()">
+            <h4>Filter Options</h4>
+            <div class="filter-chips">
+              <mat-chip-set multiple>
+                <mat-chip-option *ngFor="let filter of availableFilters"
+                                 [selected]="filter.active"
+                                 (click)="toggleFilter(filter)">
+                  {{ filter.label }}
+                </mat-chip-option>
+              </mat-chip-set>
+
+
+            </div>
+            <div class="filter-actions">
+              <button mat-button (click)="clearAllFilters()">Clear All</button>
+              <button mat-button color="primary" (click)="applyFilters()">Apply</button>
+            </div>
+          </div>
+        </mat-menu>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-overlay" *ngIf="loading">
+    <div class="loading-content">
+      <mat-spinner diameter="48"></mat-spinner>
+      <p class="loading-text">Loading {{ formatColumnName(resource.name) }}...</p>
+    </div>
+  </div>
+
+  <!-- Enhanced Data Table -->
+  <div class="table-wrapper" *ngIf="!loading">
+    <table mat-table
+           [dataSource]="dataSource"
+           matSort
+           class="resource-table"
+           multiTemplateDataRows>
+
+      <!-- Selection Column -->
+      <ng-container matColumnDef="select">
+        <th mat-header-cell *matHeaderCellDef class="select-header">
+          <mat-checkbox (change)="$event ? toggleAllRows() : null"
+                        [checked]="selection.hasValue() && isAllSelected()"
+                        [indeterminate]="selection.hasValue() && !isAllSelected()"
+                        [aria-label]="checkboxLabel()"
+                        class="select-all-checkbox">
+          </mat-checkbox>
+        </th>
+        <td mat-cell *matCellDef="let row" class="select-cell">
+          <mat-checkbox (click)="$event.stopPropagation()"
+                        (change)="$event ? selection.toggle(row) : null"
+                        [checked]="selection.isSelected(row)"
+                        [aria-label]="checkboxLabel(row)"
+                        class="row-checkbox">
+          </mat-checkbox>
+        </td>
+      </ng-container>
+
+      <!-- Dynamic Data Columns -->
+      <ng-container *ngFor="let col of displayColumns" [matColumnDef]="col">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header class="data-header">
+          <div class="header-content">
+            <span class="header-label">{{ formatColumnName(col) }}</span>
+            <mat-icon class="header-icon"
+                      *ngIf="getFieldType(col)"
+                      [matTooltip]="getFieldTypeTooltip(col)">
+              {{ getFieldTypeIcon(col) }}
+            </mat-icon>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let element" class="data-cell" [attr.data-label]="formatColumnName(col)">
+          <div class="cell-content">
+            <!-- File field -->
+            <div *ngIf="getFieldType(col) === 'FileField' && element[col]" class="file-cell">
+              <a [href]="element[col]"
+                 target="_blank"
+                 rel="noopener noreferrer"
+                 class="file-link">
+                <mat-icon class="file-icon">attachment</mat-icon>
+                <span class="file-text">View File</span>
+              </a>
+            </div>
+
+            <!-- Boolean field -->
+            <div *ngIf="isBooleanField(col)" class="boolean-cell">
+              <mat-icon [class]="getBooleanClass(element[col])">
+                {{ getBooleanIcon(element[col]) }}
+              </mat-icon>
+              <span class="boolean-text">{{ formatBooleanValue(element[col]) }}</span>
+            </div>
+
+            <!-- Date/DateTime field -->
+            <div *ngIf="isDateTimeField(col)" class="datetime-cell">
+              <mat-icon class="datetime-icon">schedule</mat-icon>
+              <div class="datetime-content">
+                <span class="datetime-value">{{ formatDateTimeValue(element[col]) }}</span>
+                <span class="datetime-relative">{{ getRelativeTime(element[col]) }}</span>
+              </div>
+            </div>
+
+            <!-- Status/Badge field -->
+            <div *ngIf="isStatusField(col)" class="status-cell">
+              <mat-chip [class]="getStatusClass(element[col])">
+                {{ element[col] }}
+              </mat-chip>
+            </div>
+
+            <!-- Email field -->
+            <div *ngIf="isEmailField(col)" class="email-cell">
+              <a [href]="'mailto:' + element[col]" class="email-link">
+                <mat-icon class="email-icon">email</mat-icon>
+                <span>{{ element[col] }}</span>
+              </a>
+            </div>
+
+            <!-- URL field -->
+            <div *ngIf="isUrlField(col)" class="url-cell">
+              <a [href]="element[col]" target="_blank" rel="noopener noreferrer" class="url-link">
+                <mat-icon class="url-icon">link</mat-icon>
+                <span>{{ formatUrl(element[col]) }}</span>
+              </a>
+            </div>
+
+            <!-- Regular field -->
+            <div *ngIf="!getFieldType(col) && !isSpecialField(col)" class="regular-cell">
+                  <span class="cell-value" [title]="formatCellValue(element[col])">
+                    {{ truncateText(formatCellValue(element[col]), 50) }}
+                  </span>
+            </div>
+
+            <!-- Empty field -->
+            <div *ngIf="!element[col] && element[col] !== 0 && element[col] !== false" class="empty-cell">
+              <mat-icon class="empty-icon">remove</mat-icon>
+              <span class="empty-text">No data</span>
+            </div>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Actions Column -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef class="actions-header">
+          <span>Actions</span>
+        </th>
+        <td mat-cell *matCellDef="let element" class="actions-cell">
+          <div class="action-buttons">
+            <button mat-icon-button
+                    *ngIf="resource.canRead"
+                    (click)="onView.emit(element); $event.stopPropagation()"
+                    matTooltip="View Details"
+                    class="action-btn view-btn">
+              <mat-icon>visibility</mat-icon>
+            </button>
+
+            <button mat-icon-button
+                    *ngIf="resource.canUpdate"
+                    (click)="onEdit.emit(element); $event.stopPropagation()"
+                    matTooltip="Edit Record"
+                    class="action-btn edit-btn">
+              <mat-icon>edit</mat-icon>
+            </button>
+
+            <button mat-icon-button
+                    *ngIf="resource.canDelete"
+                    (click)="confirmDelete(element); $event.stopPropagation()"
+                    matTooltip="Delete Record"
+                    class="action-btn delete-btn">
+              <mat-icon>delete</mat-icon>
+            </button>
+
+            <button mat-icon-button
+                    [matMenuTriggerFor]="rowMenu"
+                    matTooltip="More Actions"
+                    class="action-btn more-btn">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+
+            <mat-menu #rowMenu="matMenu">
+              <button mat-menu-item (click)="duplicateRecord(element)">
+                <mat-icon>content_copy</mat-icon>
+                <span>Duplicate</span>
+              </button>
+              <button mat-menu-item (click)="exportRecord(element)">
+                <mat-icon>download</mat-icon>
+                <span>Export</span>
+              </button>
+              <mat-divider></mat-divider>
+              <button mat-menu-item (click)="viewHistory(element)">
+                <mat-icon>history</mat-icon>
+                <span>View History</span>
+              </button>
+            </mat-menu>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Table Headers and Rows -->
+      <tr mat-header-row *matHeaderRowDef="allColumns; sticky: true" class="table-header-row"></tr>
+      <tr mat-row
+          *matRowDef="let row; columns: allColumns;"
+          class="table-row"
+          [class.selected]="selection.isSelected(row)"
+          (click)="selectRow(row)"></tr>
+    </table>
+
+    <!-- Enhanced Paginator -->
+    <mat-paginator #paginator
+                   [pageSizeOptions]="[5, 10, 25, 50, 100]"
+                   [pageSize]="pageSize"
+                   [showFirstLastButtons]="true"
+                   class="table-paginator">
+    </mat-paginator>
+  </div>
+
+  <!-- Enhanced Empty State -->
+  <div class="empty-state" *ngIf="!loading && (!data || data.length === 0)">
+    <div class="empty-container">
+      <div class="empty-animation">
+        <div class="empty-icon-wrapper">
+          <mat-icon class="empty-icon">{{ getEmptyStateIcon() }}</mat-icon>
+        </div>
+        <div class="empty-dots">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+      </div>
+
+      <h3 class="empty-title">{{ getEmptyStateTitle() }}</h3>
+      <p class="empty-subtitle">{{ getEmptyStateMessage() }}</p>
+
+      <div class="empty-actions">
+        <button mat-raised-button
+                color="primary"
+                *ngIf="resource.canCreate"
+                (click)="onCreateNew()"
                 class="create-first-btn">
-            Create First {{ formatColumnName(resource.name) }}
+          <mat-icon>add</mat-icon>
+          Create First {{ formatColumnName(resource.name) }}
         </button>
+
+        <button mat-button
+                (click)="onRefresh.emit()"
+                class="refresh-empty-btn">
+          <mat-icon>refresh</mat-icon>
+          Refresh Data
+        </button>
+      </div>
     </div>
+  </div>
+
+  <!-- Table Stats Footer -->
+  <div class="table-footer" *ngIf="!loading && data && data.length > 0">
+    <div class="footer-content">
+      <div class="stats-info">
+            <span class="record-count">
+              {{ getRecordCountText() }}
+            </span>
+        <span class="last-updated" *ngIf="lastUpdated">
+              Last updated: {{ formatLastUpdated(lastUpdated) }}
+            </span>
+      </div>
+
+      <div class="footer-actions">
+        <button mat-button class="export-all-btn" (click)="exportAll()">
+          <mat-icon>download</mat-icon>
+          Export All
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
