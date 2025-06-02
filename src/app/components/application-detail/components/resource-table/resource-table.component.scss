@@ -870,3 +870,48 @@
 .spinning {
   animation: spin 1s linear infinite;
 }
+
+/* Foreign Key Cell Styling */
+.foreign-key-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fk-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: #667eea;
+  opacity: 0.7;
+}
+
+.fk-value {
+  color: #667eea;
+  font-weight: 500;
+  font-size: 0.9rem;
+  padding: 4px 8px;
+  background: rgba(102, 126, 234, 0.08);
+  border-radius: 6px;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  transition: all 0.2s ease;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &:hover {
+    background: rgba(102, 126, 234, 0.12);
+    border-color: rgba(102, 126, 234, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+  }
+}
+
+// For loading state in foreign key cells
+.fk-value.loading {
+  background: rgba(148, 163, 184, 0.08);
+  color: #94a3b8;
+  border-color: rgba(148, 163, 184, 0.2);
+  font-style: italic;
+}

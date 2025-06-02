@@ -224,11 +224,19 @@
               </a>
             </div>
 
-            <!-- Regular field -->
-            <div *ngIf="!getFieldType(col) && !isSpecialField(col)" class="regular-cell">
-                  <span class="cell-value" [title]="formatCellValue(element[col])">
-                    {{ truncateText(formatCellValue(element[col]), 50) }}
-                  </span>
+            <!-- Foreign Key / Lookup field -->
+            <div *ngIf="isForeignKeyField(col)" class="foreign-key-cell">
+<!--              <mat-icon class="fk-icon">link</mat-icon>-->
+              <span class="fk-value" [title]="getForeignKeyDisplayValue(col, element[col])">
+                {{ getForeignKeyDisplayValue(col, element[col]) }}
+              </span>
+            </div>
+
+            <!-- Regular field - FIXED CONDITION -->
+            <div *ngIf="!isBooleanField(col) && !isDateTimeField(col) && !isStatusField(col) && !isEmailField(col) && !isUrlField(col) && !(getFieldType(col) === 'FileField') && !isForeignKeyField(col)" class="regular-cell">
+              <span class="cell-value" [title]="formatCellValue(element[col])">
+                {{ truncateText(formatCellValue(element[col]), 50) }}
+              </span>
             </div>
 
             <!-- Empty field -->
