@@ -23,7 +23,7 @@ export class ConfigGuard implements CanActivate {
         {
           duration: 5000,
           panelClass: ['info-snackbar'],
-          action: 'Configure Now'
+          // action: 'Configure Now'
         }
       ).onAction().subscribe(() => {
         this.router.navigate(['/config']);
