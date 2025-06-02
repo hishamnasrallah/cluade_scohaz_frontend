@@ -1,41 +1,28 @@
-// resource-form.component.scss - ENHANCED WITH RELATIONSHIP STYLING
+// resource-form.component.scss - ENHANCED PROFESSIONAL DESIGN
 :host {
   display: block;
   width: 100%;
   height: 100%;
 }
 
-// Color palette
-$primary-color: #1976d2;
-$secondary-color: #424242;
-$success-color: #4caf50;
-$error-color: #f44336;
-$warning-color: #ff9800;
-$info-color: #2196f3;
+// Professional color palette
+$primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$secondary-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+$success-gradient: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+$error-gradient: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+$warning-gradient: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
 
-$background-overlay: rgba(0, 0, 0, 0.6);
-$card-background: #ffffff;
-$field-background: #fafafa;
+$text-primary: #1e293b;
+$text-secondary: #64748b;
+$text-muted: #94a3b8;
+$border-color: #e2e8f0;
+$background-light: #f8fafc;
 
-$border-radius: 12px;
-$border-radius-lg: 16px;
-$border-radius-sm: 8px;
-
-$shadow-light: 0 2px 8px rgba(0, 0, 0, 0.1);
-$shadow-medium: 0 4px 20px rgba(0, 0, 0, 0.15);
-$shadow-heavy: 0 8px 40px rgba(0, 0, 0, 0.25);
-
-$spacing-xs: 8px;
-$spacing-sm: 16px;
-$spacing-md: 24px;
-$spacing-lg: 32px;
-$spacing-xl: 48px;
-
-// Animations
-@keyframes fadeInUp {
+// Enhanced animations
+@keyframes slideInUp {
   from {
     opacity: 0;
-    transform: translateY(30px) scale(0.95);
+    transform: translateY(40px) scale(0.95);
   }
   to {
     opacity: 1;
@@ -43,58 +30,81 @@ $spacing-xl: 48px;
   }
 }
 
-@keyframes fadeIn {
+@keyframes fadeInBlur {
   from {
     opacity: 0;
+    backdrop-filter: blur(0px);
   }
   to {
     opacity: 1;
+    backdrop-filter: blur(20px);
   }
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
-// Main overlay
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+// Main overlay with enhanced backdrop
 .form-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: $background-overlay;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.9) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: $spacing-sm;
-  animation: fadeIn 0.3s ease-out;
+  padding: 20px;
+  animation: fadeInBlur 0.4s ease-out;
 }
 
-// Form card
+// Enhanced form card with glassmorphism
 .form-card {
   width: 100%;
-  max-width: 900px;
-  max-height: 90vh;
-  background: $card-background;
-  border-radius: $border-radius-lg;
-  box-shadow: $shadow-heavy;
+  max-width: 1000px;
+  max-height: 95vh;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-radius: 24px;
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
   overflow: hidden;
-  animation: fadeInUp 0.4s ease-out;
+  animation: slideInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: $primary-gradient;
+    z-index: 1;
+  }
 }
 
-// Header styling
+// Professional header with gradient accent
 .form-header {
-  background: linear-gradient(135deg, $primary-color 0%, #1565c0 100%);
-  color: white;
-  padding: $spacing-md;
-  border-radius: 0;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  padding: 32px 40px 24px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
   position: relative;
 
   .header-content {
@@ -105,266 +115,397 @@ $spacing-xl: 48px;
   }
 
   .form-title {
-    font-size: 24px;
-    font-weight: 600;
+    font-size: 2rem;
+    font-weight: 700;
     margin: 0;
+    background: $primary-gradient;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     display: flex;
     align-items: center;
-    gap: $spacing-sm;
+    gap: 16px;
 
     .mode-icon {
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: $border-radius-sm;
-      padding: 8px;
-      font-size: 20px;
-      width: 36px;
-      height: 36px;
+      width: 56px;
+      height: 56px;
+      background: $primary-gradient;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
     }
   }
 
   .close-button {
-    color: white;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    width: 44px;
-    height: 44px;
-    transition: all 0.2s ease;
+    width: 48px;
+    height: 48px;
+    background: rgba(248, 250, 252, 0.8);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    color: $text-secondary;
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     &:hover {
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #ef4444;
       transform: scale(1.05);
+    }
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
     }
   }
 }
 
-// Content area
+// Enhanced content area with better scrolling
 .form-content {
   flex: 1;
   overflow-y: auto;
-  padding: $spacing-lg;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 40px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
 
   // Custom scrollbar
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
   }
 
   &::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
+    background: rgba(226, 232, 240, 0.3);
+    border-radius: 4px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 3px;
+    background: rgba(102, 126, 234, 0.3);
+    border-radius: 4px;
+    transition: background 0.3s ease;
 
     &:hover {
-      background: #a8a8a8;
+      background: rgba(102, 126, 234, 0.5);
     }
   }
 }
 
-// Dynamic form
-.dynamic-form {
-  width: 100%;
-}
-
-// Form grid
+// Professional form grid
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: $spacing-md;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 32px;
 
-  @media (max-width: 768px) {
+  @media (max-width: 900px) {
     grid-template-columns: 1fr;
-    gap: $spacing-sm;
+    gap: 24px;
   }
 }
 
-// Form field container
+// Enhanced form field containers
 .form-field-container {
   width: 100%;
+  position: relative;
 }
 
-// Enhanced form fields
+// Professional form fields with enhanced styling
 .form-field {
   width: 100%;
-  margin-bottom: $spacing-sm;
-  background: white;
-  border-radius: $border-radius;
-  transition: all 0.3s ease;
+  margin-bottom: 24px;
+  position: relative;
 
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: $shadow-light;
-  }
-
-  &:focus-within {
-    transform: translateY(-2px);
-    box-shadow: $shadow-medium;
-  }
-
-  // Custom input styling
   ::ng-deep {
-    .mat-mdc-form-field-flex {
-      background: white;
-      border-radius: $border-radius;
-    }
+    .mat-mdc-form-field {
+      width: 100%;
 
-    .mat-mdc-text-field-wrapper {
-      border-radius: $border-radius;
-    }
+      .mat-mdc-text-field-wrapper {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 16px;
+        border: 2px solid transparent;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 
-    .mdc-text-field--outlined {
-      .mdc-notched-outline {
-        .mdc-notched-outline__leading,
-        .mdc-notched-outline__notch,
-        .mdc-notched-outline__trailing {
-          border-color: #e0e0e0;
-          border-width: 1px;
+        &:hover {
+          background: rgba(255, 255, 255, 1);
+          border-color: rgba(102, 126, 234, 0.3);
+          box-shadow: 0 8px 25px -5px rgba(102, 126, 234, 0.1);
         }
       }
 
-      &:hover .mdc-notched-outline {
-        .mdc-notched-outline__leading,
-        .mdc-notched-outline__notch,
-        .mdc-notched-outline__trailing {
-          border-color: $primary-color;
-        }
+      &.mat-focused .mat-mdc-text-field-wrapper {
+        border-color: #667eea;
+        background: rgba(255, 255, 255, 1);
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
       }
 
-      &.mdc-text-field--focused .mdc-notched-outline {
-        .mdc-notched-outline__leading,
-        .mdc-notched-outline__notch,
-        .mdc-notched-outline__trailing {
-          border-color: $primary-color;
-          border-width: 2px;
-        }
+      .mat-mdc-form-field-label {
+        color: $text-secondary;
+        font-weight: 600;
+        font-size: 0.95rem;
       }
-    }
 
-    .mat-mdc-form-field-label {
-      color: $secondary-color;
-      font-weight: 500;
-    }
+      .mat-mdc-input-element {
+        color: $text-primary;
+        font-size: 1rem;
+        font-weight: 500;
+        padding: 20px 24px;
+      }
 
-    .mat-mdc-input-element {
-      color: $secondary-color;
-      font-size: 16px;
+      .mdc-text-field--outlined .mdc-notched-outline {
+        border: none !important;
+      }
     }
   }
 }
 
-// Checkbox container
+// Enhanced checkbox container
 .checkbox-container {
-  background: white;
-  padding: $spacing-md;
-  border-radius: $border-radius;
-  border: 1px solid #e0e0e0;
-  margin-bottom: $spacing-sm;
-  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 24px 28px;
+  border-radius: 16px;
+  border: 2px solid transparent;
+  margin-bottom: 24px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+    border-radius: 16px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
 
   &:hover {
-    border-color: $primary-color;
-    box-shadow: $shadow-light;
+    border-color: rgba(102, 126, 234, 0.3);
+    box-shadow: 0 8px 25px -5px rgba(102, 126, 234, 0.1);
+
+    &::before {
+      opacity: 1;
+    }
   }
 
   .custom-checkbox {
     width: 100%;
-    font-size: 16px;
-    font-weight: 500;
+    font-size: 1rem;
+    font-weight: 600;
+    color: $text-primary;
+    position: relative;
+    z-index: 1;
 
     ::ng-deep {
       .mat-mdc-checkbox-label {
-        color: $secondary-color;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .mdc-checkbox {
+        .mdc-checkbox__background {
+          border-radius: 6px;
+          border-width: 2px;
+        }
+
+        &.mdc-checkbox--selected .mdc-checkbox__background {
+          background: $primary-gradient;
+          border-color: transparent;
+        }
       }
     }
   }
 }
 
-// File container
+// Enhanced file container with drag & drop styling
 .file-container {
-  background: white;
-  padding: $spacing-md;
-  border-radius: $border-radius;
-  border: 2px dashed #e0e0e0;
-  margin-bottom: $spacing-sm;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 32px 28px;
+  border-radius: 16px;
+  border: 2px dashed rgba(102, 126, 234, 0.3);
+  margin-bottom: 24px;
   text-align: center;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.03) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
 
   &:hover {
-    border-color: $primary-color;
-    background: #f8f9ff;
+    border-color: #667eea;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 8px 25px -5px rgba(102, 126, 234, 0.1);
+
+    &::before {
+      opacity: 1;
+    }
   }
 
   .file-label {
-    display: block;
-    font-size: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    font-size: 1rem;
     font-weight: 600;
-    color: $secondary-color;
-    margin-bottom: $spacing-sm;
+    color: $text-primary;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+
+    &::before {
+      content: '📁';
+      font-size: 3rem;
+      opacity: 0.7;
+    }
   }
 
   .file-input {
     width: 100%;
-    padding: $spacing-sm;
-    font-size: 14px;
-    color: $secondary-color;
+    padding: 16px;
+    border: 2px dashed rgba(148, 163, 184, 0.3);
+    border-radius: 12px;
+    background: rgba(248, 250, 252, 0.5);
+    font-size: 0.9rem;
+    color: $text-secondary;
+    position: relative;
+    z-index: 1;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: rgba(102, 126, 234, 0.5);
+      background: rgba(248, 250, 252, 0.8);
+    }
 
     &::-webkit-file-upload-button {
-      background: $primary-color;
+      background: $primary-gradient;
       color: white;
       border: none;
-      padding: 8px 16px;
-      border-radius: $border-radius-sm;
-      font-weight: 500;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-weight: 600;
       cursor: pointer;
-      margin-right: $spacing-sm;
-      transition: all 0.2s ease;
+      margin-right: 16px;
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
 
       &:hover {
-        background: #1565c0;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
       }
     }
   }
 }
 
-// Many-to-many container
+// Enhanced many-to-many container
 .many-to-many-container {
-  background: white;
-  padding: $spacing-md;
-  border-radius: $border-radius;
-  border: 1px solid #e0e0e0;
-  margin-bottom: $spacing-sm;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 28px;
+  border-radius: 16px;
+  border: 2px solid transparent;
+  margin-bottom: 24px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.05) 100%);
+    border-radius: 16px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  &:hover {
+    border-color: rgba(79, 172, 254, 0.3);
+    box-shadow: 0 8px 25px -5px rgba(79, 172, 254, 0.1);
+
+    &::before {
+      opacity: 1;
+    }
+  }
 
   .field-label {
-    display: block;
-    font-size: 16px;
-    font-weight: 600;
-    color: $secondary-color;
-    margin-bottom: $spacing-sm;
     display: flex;
     align-items: center;
-    gap: $spacing-xs;
+    gap: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: $text-primary;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+
+    &::before {
+      content: '🔗';
+      font-size: 1.2rem;
+    }
   }
 
   .selected-items {
-    margin-bottom: $spacing-sm;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
 
     .selected-chips {
       display: flex;
       flex-wrap: wrap;
-      gap: $spacing-xs;
+      gap: 10px;
 
       mat-chip {
-        background: #e3f2fd;
-        color: $primary-color;
-        font-size: 14px;
+        background: linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 100%);
+        color: #0277bd;
+        font-size: 0.85rem;
+        font-weight: 600;
         border-radius: 20px;
+        border: 1px solid rgba(2, 119, 189, 0.2);
+        transition: all 0.3s ease;
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(2, 119, 189, 0.2);
+        }
 
         ::ng-deep {
           .mat-mdc-chip-label {
-            font-weight: 500;
+            font-weight: 600;
+          }
+
+          .mat-mdc-chip-remove {
+            color: rgba(2, 119, 189, 0.7);
+            transition: all 0.2s ease;
+
+            &:hover {
+              color: #0277bd;
+              background: rgba(2, 119, 189, 0.1);
+              border-radius: 50%;
+            }
           }
         }
       }
@@ -373,393 +514,432 @@ $spacing-xl: 48px;
 
   button[mat-stroked-button] {
     width: 100%;
-    height: 48px;
-    border: 2px solid $primary-color;
-    color: $primary-color;
-    font-weight: 600;
-    font-size: 16px;
-    border-radius: $border-radius;
+    height: 56px;
+    border: 2px solid transparent;
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(0, 242, 254, 0.1) 100%);
+    color: #0369a1;
+    font-weight: 700;
+    font-size: 1rem;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: $spacing-xs;
-    transition: all 0.3s ease;
+    gap: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+      transition: left 0.5s ease;
+    }
 
     &:hover:not(:disabled) {
-      background: $primary-color;
+      background: $secondary-gradient;
       color: white;
-      transform: translateY(-1px);
-      box-shadow: $shadow-light;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(79, 172, 254, 0.3);
+
+      &::before {
+        left: 100%;
+      }
     }
 
     &:disabled {
       opacity: 0.6;
       cursor: not-allowed;
+      transform: none;
     }
 
     .option-count {
-      font-size: 12px;
-      opacity: 0.7;
-      margin-left: 4px;
+      font-size: 0.8rem;
+      opacity: 0.8;
+      margin-left: 8px;
+      font-weight: 500;
+    }
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
     }
   }
 }
 
-// *** NEW: RELATIONSHIP-SPECIFIC STYLING ***
-
-// Relation badge
+// Enhanced relation badge
 .relation-badge {
-  display: inline-block;
-  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-  color: $info-color;
-  font-size: 10px;
-  font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 10px;
-  margin-left: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 100%);
+  color: #0277bd;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 12px;
+  margin-left: 8px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  border: 1px solid rgba(2, 119, 189, 0.2);
+
+  &::before {
+    content: '🔗';
+    font-size: 0.7rem;
+  }
 }
 
-// Loading relations indicator
+// Enhanced loading relations indicator
 .loading-relations {
   display: flex;
   align-items: center;
-  gap: $spacing-xs;
-  color: $info-color;
-  font-size: 14px;
-  margin-bottom: $spacing-sm;
-  padding: $spacing-sm;
-  background: rgba($info-color, 0.1);
-  border-radius: $border-radius-sm;
+  gap: 12px;
+  color: #0369a1;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.05) 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(79, 172, 254, 0.2);
 
   .loading-spinner {
     animation: spin 1s linear infinite;
     font-size: 16px;
     width: 16px;
     height: 16px;
-  }
-}
-
-// Enhanced select styling for relations
-::ng-deep {
-  .mat-mdc-select {
-    &.relation-select {
-      .mat-mdc-select-trigger {
-        background: linear-gradient(135deg, #f8f9ff 0%, #e8f0ff 100%);
-        border: 1px solid $info-color;
-      }
-    }
-  }
-
-  // Loading spinner in select options
-  .mat-mdc-option {
-    .loading-spinner {
-      animation: spin 1s linear infinite;
-      margin-right: 8px;
-    }
+    color: #0369a1;
   }
 }
 
 // Enhanced validation error styling
 .field-errors {
-  margin-top: 8px;
+  margin-top: 12px;
 }
 
 .field-error-message {
   display: flex;
   align-items: center;
-  gap: $spacing-xs;
-  color: $error-color;
-  font-size: 12px;
-  margin-top: 4px;
-  font-weight: 500;
-  padding: 4px 8px;
-  background: rgba($error-color, 0.1);
-  border-radius: 4px;
-  border-left: 3px solid $error-color;
+  gap: 8px;
+  color: #dc2626;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 6px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(220, 38, 38, 0.05) 100%);
+  border-radius: 10px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  animation: slideInUp 0.3s ease-out;
 
   .error-icon-small {
-    font-size: 14px;
-    width: 14px;
-    height: 14px;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: #dc2626;
   }
 }
 
-.additional-errors {
-  margin-top: 4px;
-}
-
-// Field error states
+// Enhanced field error states
 .field-error {
-  border-color: $error-color !important;
-  background: rgba($error-color, 0.02) !important;
-
+  .form-field,
   &.checkbox-container,
   &.file-container,
   &.many-to-many-container {
-    border: 2px solid $error-color;
-    background: rgba($error-color, 0.05);
+    border-color: #ef4444 !important;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.02) 0%, rgba(220, 38, 38, 0.02) 100%) !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
   }
 }
 
-// Required indicator
+// Enhanced required indicator
 .required-indicator {
-  color: $error-color;
-  font-weight: bold;
-  margin-left: 2px;
+  color: #ef4444;
+  font-weight: 800;
+  margin-left: 4px;
+  font-size: 1.1rem;
 }
 
-// Help text styling
-::ng-deep {
-  .mat-mdc-form-field-hint {
-    color: #666;
-    font-size: 11px;
-    font-style: italic;
-    margin-top: 4px;
-
-    &.relation-hint {
-      color: $info-color;
-      font-style: normal;
-      font-weight: 500;
-    }
-  }
-}
-
-// Mat error styling
+// Enhanced Material Design error styling
 ::ng-deep {
   .mat-mdc-form-field-error {
-    color: $error-color;
-    font-size: 12px;
-    font-weight: 500;
+    color: #dc2626;
+    font-size: 0.85rem;
+    font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 4px;
-    margin-top: 4px;
+    gap: 6px;
+    margin-top: 8px;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(220, 38, 38, 0.05) 100%);
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(239, 68, 68, 0.2);
 
     .error-icon {
-      font-size: 14px;
-      width: 14px;
-      height: 14px;
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
     }
   }
 
-  // Enhanced error styling for form fields
   .mat-mdc-form-field.field-error {
-    .mdc-text-field--outlined .mdc-notched-outline {
-      .mdc-notched-outline__leading,
-      .mdc-notched-outline__notch,
-      .mdc-notched-outline__trailing {
-        border-color: $error-color !important;
-        border-width: 2px !important;
-      }
+    .mat-mdc-text-field-wrapper {
+      border-color: #ef4444 !important;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
     }
 
     .mat-mdc-form-field-label {
-      color: $error-color !important;
+      color: #dc2626 !important;
     }
   }
 }
 
-// *** NEW: DEBUG INFO STYLING ***
-.debug-info {
-  margin-top: $spacing-sm;
-  padding: $spacing-sm;
-  background: #f8f8f8;
-  border-radius: $border-radius-sm;
-  border-left: 4px solid $warning-color;
-
-  details {
-    summary {
-      cursor: pointer;
-      font-weight: 500;
-      color: $warning-color;
-      padding: 4px 0;
-
-      &:hover {
-        color: darken($warning-color, 10%);
-      }
-    }
-
-    pre {
-      margin-top: $spacing-xs;
-      padding: $spacing-sm;
-      background: white;
-      border-radius: $border-radius-sm;
-      font-size: 11px;
-      color: $secondary-color;
-      overflow-x: auto;
-    }
-  }
-}
-
-// Actions section
+// Professional actions section
 .form-actions {
-  padding: $spacing-md $spacing-lg;
-  background: white;
-  border-top: 1px solid #e0e0e0;
+  padding: 32px 40px;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: $spacing-sm;
+  gap: 20px;
 }
 
 .cancel-btn {
-  color: $secondary-color;
-  border: 2px solid #e0e0e0;
+  height: 52px;
+  color: $text-secondary;
+  border: 2px solid rgba(148, 163, 184, 0.3);
+  background: rgba(248, 250, 252, 0.8);
   font-weight: 600;
-  height: 48px;
-  padding: 0 $spacing-md;
-  border-radius: $border-radius;
-  transition: all 0.3s ease;
+  padding: 0 32px;
+  border-radius: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 1rem;
 
   &:hover {
-    border-color: $secondary-color;
-    background: rgba($secondary-color, 0.05);
+    border-color: #94a3b8;
+    background: rgba(248, 250, 252, 1);
+    color: $text-primary;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(148, 163, 184, 0.2);
   }
 }
 
 .submit-btn {
-  background: linear-gradient(135deg, $success-color 0%, #388e3c 100%);
+  height: 52px;
+  background: $success-gradient;
   color: white;
   border: none;
-  font-weight: 600;
-  height: 48px;
-  padding: 0 $spacing-lg;
-  border-radius: $border-radius;
-  box-shadow: 0 4px 15px rgba($success-color, 0.3);
-  transition: all 0.3s ease;
+  font-weight: 700;
+  padding: 0 40px;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(74, 222, 128, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: $spacing-xs;
-  min-width: 140px;
+  gap: 12px;
+  min-width: 180px;
+  font-size: 1rem;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+  }
 
   &:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba($success-color, 0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(74, 222, 128, 0.5);
+
+    &::before {
+      left: 100%;
+    }
+  }
+
+  &:active {
+    transform: translateY(-1px);
   }
 
   &:disabled {
-    background: #e0e0e0;
-    color: #9e9e9e;
+    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+    color: #94a3b8;
     box-shadow: none;
     cursor: not-allowed;
+    transform: none;
   }
 
-  mat-spinner {
-    margin-right: $spacing-xs;
-  }
+  .button-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 
-  mat-icon {
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
+    &.loading {
+      gap: 12px;
+    }
+
+    mat-spinner {
+      margin-right: 4px;
+    }
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
   }
 }
 
-// Responsive design
-@media (max-width: 1024px) {
-  .form-card {
-    max-width: 800px;
-  }
-
+// Responsive design enhancements
+@media (max-width: 1200px) {
   .form-grid {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: 1fr;
+    gap: 24px;
   }
 }
 
 @media (max-width: 768px) {
   .form-overlay {
-    padding: $spacing-xs;
+    padding: 12px;
   }
 
   .form-card {
-    max-height: 95vh;
+    border-radius: 20px;
+    max-height: 98vh;
   }
 
   .form-header {
-    padding: $spacing-sm;
+    padding: 24px 24px 20px;
 
     .form-title {
-      font-size: 20px;
+      font-size: 1.5rem;
 
       .mode-icon {
-        width: 32px;
-        height: 32px;
-        font-size: 18px;
+        width: 48px;
+        height: 48px;
+
+        mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
       }
     }
 
     .close-button {
-      width: 40px;
-      height: 40px;
+      width: 44px;
+      height: 44px;
     }
   }
 
   .form-content {
-    padding: $spacing-sm;
+    padding: 24px;
   }
 
   .form-grid {
-    gap: $spacing-sm;
+    gap: 20px;
   }
 
   .form-actions {
     flex-direction: column;
+    padding: 24px;
 
     .cancel-btn,
     .submit-btn {
       width: 100%;
+      height: 48px;
     }
   }
 }
 
 @media (max-width: 480px) {
+  .form-card {
+    border-radius: 16px;
+  }
+
+  .form-header {
+    padding: 20px 20px 16px;
+  }
+
+  .form-content {
+    padding: 20px;
+  }
+
   .form-grid {
     grid-template-columns: 1fr;
   }
 
-  .form-header .form-title {
-    font-size: 18px;
-  }
-
-  .form-content {
-    padding: $spacing-xs;
+  .checkbox-container,
+  .file-container,
+  .many-to-many-container {
+    padding: 20px;
   }
 }
 
-// Dark theme support (optional)
+// Animation classes
+.fade-in {
+  animation: slideInUp 0.3s ease-out;
+}
+
+.shimmer-loading {
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+    animation: shimmer 1.5s infinite;
+  }
+}
+
+.pulse-loading {
+  animation: pulse 2s infinite;
+}
+
+// Dark theme support
 @media (prefers-color-scheme: dark) {
   .form-card {
-    background: #2e2e2e;
-    color: white;
+    background: rgba(30, 41, 59, 0.95);
+    color: #f1f5f9;
+  }
+
+  .form-header {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border-color: rgba(71, 85, 105, 0.8);
   }
 
   .form-content {
-    background: linear-gradient(135deg, #3e3e3e 0%, #4e4e4e 100%);
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
   }
 
   .form-field,
   .checkbox-container,
   .file-container,
   .many-to-many-container {
-    background: #3e3e3e;
-    border-color: #5e5e5e;
-    color: white;
+    background: rgba(15, 23, 42, 0.8);
+    border-color: rgba(71, 85, 105, 0.3);
+    color: #f1f5f9;
   }
 
   .form-actions {
-    background: #2e2e2e;
-    border-color: #5e5e5e;
-  }
-
-  .debug-info {
-    background: #4e4e4e;
-    color: white;
-
-    pre {
-      background: #3e3e3e;
-    }
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border-color: rgba(71, 85, 105, 0.8);
   }
 }
