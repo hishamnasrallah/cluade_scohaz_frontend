@@ -559,8 +559,12 @@ import { FieldTypeUtils } from './utils/field-type.utils';
     }
 
     @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     .actions-btn {
@@ -597,9 +601,15 @@ import { FieldTypeUtils } from './utils/field-type.utils';
     }
 
     @keyframes progressSlide {
-      0% { transform: translateX(-100%); }
-      50% { transform: translateX(0); }
-      100% { transform: translateX(100%); }
+      0% {
+        transform: translateX(-100%);
+      }
+      50% {
+        transform: translateX(0);
+      }
+      100% {
+        transform: translateX(100%);
+      }
     }
 
     /* Main Content */
@@ -652,14 +662,28 @@ import { FieldTypeUtils } from './utils/field-type.utils';
       border-radius: 50%;
       animation: loadingDots 1.5s infinite;
 
-      &.dot-1 { animation-delay: 0s; }
-      &.dot-2 { animation-delay: 0.5s; }
-      &.dot-3 { animation-delay: 1s; }
+      &.dot-1 {
+        animation-delay: 0s;
+      }
+
+      &.dot-2 {
+        animation-delay: 0.5s;
+      }
+
+      &.dot-3 {
+        animation-delay: 1s;
+      }
     }
 
     @keyframes loadingDots {
-      0%, 100% { opacity: 0.3; transform: scale(0.8); }
-      50% { opacity: 1; transform: scale(1.2); }
+      0%, 100% {
+        opacity: 0.3;
+        transform: scale(0.8);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1.2);
+      }
     }
 
     .loading-title {
@@ -691,7 +715,7 @@ import { FieldTypeUtils } from './utils/field-type.utils';
     /* Enhanced Tab Styling */
     ::ng-deep .resource-tabs {
       .mat-mdc-tab-header {
-        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-bottom: 1px solid #e2e8f0;
       }
 
