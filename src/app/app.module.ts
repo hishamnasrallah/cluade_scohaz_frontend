@@ -41,11 +41,11 @@ const routes: Routes = [
 
 @NgModule({
   declarations: [
-    AppComponent,
-    LoginComponent,
-    ConfigComponent,
-    DashboardComponent,
-    ApplicationDetailComponent
+    // AppComponent,
+    // LoginComponent,
+    // ConfigComponent,
+    // DashboardComponent,
+    // ApplicationDetailComponent
   ],
   imports: [
     BrowserModule,

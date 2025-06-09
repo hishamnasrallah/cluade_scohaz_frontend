@@ -1,4 +1,4 @@
-// app.routes.ts - ENHANCED with proper guards and navigation
+// app.routes.ts - ENHANCED with Applications route
 import { Routes } from '@angular/router';
 import { AuthGuard } from './guards/auth.guard';
 import { ConfigGuard } from './guards/config.guard';
@@ -7,6 +7,7 @@ import { LoginComponent } from './components/login/login.component';
 import { ConfigComponent } from './components/config/config.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { ApplicationDetailComponent } from './components/application-detail/application-detail.component';
+import { ApplicationsInboxComponent } from './components/applications-inbox/applications-inbox.component';
 
 export const routes: Routes = [
   // Default route - redirect to dashboard
@@ -56,6 +57,24 @@ export const routes: Routes = [
   },
 
   {
+    path: 'applications',
+    component: ApplicationsInboxComponent,
+    canActivate: [AuthGuard],
+    data: {
+      title: 'Applications',
+      description: 'Manage your applications and inbox',
+      icon: 'inbox',
+      requiresAuth: true
+    }
+  },
+
+  {
+    path: 'inbox',
+    redirectTo: '/applications',
+    pathMatch: 'full'
+  },
+
+  {
     path: 'app/:appName',
     component: ApplicationDetailComponent,
     canActivate: [AuthGuard],
@@ -82,6 +101,12 @@ export const ROUTE_CONFIG = {
     icon: 'dashboard',
     isHomePage: true
   },
+  '/applications': {
+    title: 'Applications',
+    description: 'Manage applications and cases',
+    icon: 'inbox',
+    requiresAuth: true
+  },
   '/config': {
     title: 'Configuration',
     description: 'System settings',
@@ -93,5 +118,6 @@ export const ROUTE_CONFIG = {
     description: 'Access your account',
     icon: 'login',
     isPublic: true
-  }
+  },
+
 };

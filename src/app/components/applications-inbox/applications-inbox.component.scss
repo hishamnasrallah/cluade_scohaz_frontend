@@ -1,0 +1,419 @@
+// components/applications-inbox/applications-inbox.component.scss
+.applications-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 72px);
+  max-height: calc(100vh - 72px);
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  overflow: hidden;
+}
+
+/* Professional Page Header */
+.page-header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  padding: 24px 32px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+
+  mat-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+  }
+}
+
+.header-text {
+  .page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .page-subtitle {
+    color: #64748b;
+    margin: 4px 0 0 0;
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.refresh-btn {
+  height: 44px;
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 12px;
+  font-weight: 600;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+
+  &:hover:not(:disabled) {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: #22c55e;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .spinning {
+    animation: spin 1s linear infinite;
+  }
+}
+
+/* Loading Overlay */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.loading-content {
+  text-align: center;
+}
+
+.loading-text {
+  margin-top: 16px;
+  color: #64748b;
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+/* Content Wrapper */
+.content-wrapper {
+  flex: 1;
+  padding: 32px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Critical for proper flex behavior */
+}
+
+/* Enhanced Tabs Card */
+.tabs-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+}
+
+/* Professional Tabs Styling */
+.applications-tabs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+
+  ::ng-deep {
+    .mat-mdc-tab-header {
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      border-bottom: 1px solid #e2e8f0;
+      border-radius: 20px 20px 0 0;
+
+      .mat-mdc-tab-label-container {
+        padding: 0 24px;
+      }
+
+      .mat-mdc-tab {
+        height: 72px;
+        padding: 0 32px;
+        min-width: 200px;
+        color: #64748b;
+        font-weight: 600;
+        border-radius: 12px 12px 0 0;
+        margin: 12px 4px 0;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+        &:hover {
+          background: rgba(102, 126, 234, 0.08);
+          color: #667eea;
+        }
+
+        &.mdc-tab--active {
+          background: white;
+          color: #667eea;
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+          border: 1px solid rgba(102, 126, 234, 0.2);
+          border-bottom: none;
+        }
+      }
+
+      .mat-mdc-tab-label-content {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .mdc-tab-indicator {
+        display: none; // Hide default indicator since we're using custom styling
+      }
+    }
+
+    .mat-mdc-tab-body-wrapper {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .mat-mdc-tab-body {
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .mat-mdc-tab-body-content {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+}
+
+/* Tab Label Styling */
+.tab-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.95rem;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .count-chip {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 12px;
+    padding: 4px 8px;
+    min-width: auto;
+    height: 20px;
+    line-height: 1;
+
+    &.available {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+  }
+}
+
+/* Tab Content */
+.tab-content {
+  flex: 1;
+  padding: 32px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: calc(100vh - 250px); /* Constrain height */
+
+  app-case-table {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-height: 100%;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .content-wrapper {
+    padding: 24px;
+  }
+
+  .page-header {
+    padding: 20px 24px;
+  }
+
+  .tab-content {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .applications-container {
+    height: calc(100vh - 64px);
+    max-height: calc(100vh - 64px);
+  }
+
+  .header-content {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  .header-info {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+  }
+
+  .header-icon {
+    width: 48px;
+    height: 48px;
+
+    mat-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+  }
+
+  .content-wrapper {
+    padding: 16px;
+  }
+
+  .tab-content {
+    padding: 16px;
+    max-height: calc(100vh - 200px);
+  }
+
+  .applications-tabs ::ng-deep {
+    .mat-mdc-tab {
+      min-width: 150px;
+      padding: 0 20px;
+    }
+
+    .mat-mdc-tab-label-container {
+      padding: 0 16px;
+    }
+  }
+
+  .tab-label {
+    font-size: 0.85rem;
+    gap: 8px;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .page-header {
+    padding: 16px 20px;
+  }
+
+  .content-wrapper {
+    padding: 12px;
+  }
+
+  .tab-content {
+    padding: 12px;
+    max-height: calc(100vh - 180px);
+  }
+
+  .tabs-card {
+    border-radius: 16px;
+  }
+
+  .applications-tabs ::ng-deep .mat-mdc-tab-header {
+    border-radius: 16px 16px 0 0;
+  }
+}
+
+/* Animation Classes */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Dark Theme Support */
+@media (prefers-color-scheme: dark) {
+  .applications-container {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+
+  .page-header {
+    background: rgba(30, 41, 59, 0.95);
+    border-color: rgba(71, 85, 105, 0.8);
+  }
+
+  .page-title,
+  .page-subtitle {
+    color: #f1f5f9;
+  }
+
+  .tabs-card {
+    background: rgba(30, 41, 59, 0.9);
+    border-color: rgba(71, 85, 105, 0.3);
+  }
+
+  .applications-tabs ::ng-deep .mat-mdc-tab-header {
+    background: rgba(15, 23, 42, 0.8);
+    border-color: rgba(71, 85, 105, 0.5);
+  }
+
+  .loading-overlay {
+    background: rgba(15, 23, 42, 0.9);
+  }
+
+  .loading-text {
+    color: #cbd5e1;
+  }
+}
