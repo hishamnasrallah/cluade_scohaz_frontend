@@ -1,4 +1,4 @@
-// app.routes.ts - ENHANCED with Settings Module
+// app.routes.ts - ENHANCED with CRUD Permissions Module
 import { Routes } from '@angular/router';
 import { AuthGuard } from './guards/auth.guard';
 import { ConfigGuard } from './guards/config.guard';
@@ -114,6 +114,11 @@ export const routes: Routes = [
         path: 'versions',
         loadComponent: () => import('./components/settings/version-control/version-control.component').then(m => m.VersionControlComponent),
         data: { title: 'Version Control', icon: 'history' }
+      },
+      {
+        path: 'permissions',
+        loadComponent: () => import('./components/settings/crud-permissions-management/crud-permissions-management.component').then(m => m.CrudPermissionsManagementComponent),
+        data: { title: 'CRUD Permissions', icon: 'security' }
       },
       // {
       //   path: 'users',
