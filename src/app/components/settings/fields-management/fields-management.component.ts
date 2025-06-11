@@ -1,7 +1,7 @@
 // components/settings/fields-management/fields-management.component.ts
 import { Component, OnInit, ViewChild, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
@@ -771,7 +771,8 @@ export class FieldsManagementComponent implements OnInit {
   fieldTypes: FieldType[] = [];
   parentLookups: LookupItem[] = [];
 
-  fieldForm: FormGroup;
+  // Fix: Use definite assignment assertion to tell TypeScript this will be initialized
+  fieldForm!: FormGroup;
   editingField: Field | null = null;
   selectedFieldType: FieldType | null = null;
 

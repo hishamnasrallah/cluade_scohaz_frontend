@@ -1,7 +1,7 @@
-// components/shared/validation-display/validation-display.component.ts - NEW SHARED COMPONENT
-import { Component, Input } from '@angular/core';
+// components/shared/validation-display/validation-display.component.ts - FIXED SHARED COMPONENT
+import { Component, Input, Injectable } from '@angular/core';
 import { CommonModule } from '@angular/common';
-// import { AbstractControl } from '@angular/forms';
+import { AbstractControl, ValidatorFn, ValidationErrors } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
@@ -242,9 +242,6 @@ export class ValidationDisplayComponent {
 }
 
 // Validation Helper Service
-import { Injectable } from '@angular/core';
-import { AbstractControl, ValidatorFn, ValidationErrors } from '@angular/forms';
-
 @Injectable({
   providedIn: 'root'
 })

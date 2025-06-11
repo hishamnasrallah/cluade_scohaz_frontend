@@ -1,5 +1,5 @@
-// components/settings/version-control/version-control.component.ts
-import { Component, OnInit, ViewChild, TemplateRef } from '@angular/core';
+// components/settings/version-control/version-control.component.ts - BUTTONS FIXED
+import { Component, OnInit, ViewChild, TemplateRef, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,19 +17,26 @@ import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ConfigService } from '../../../services/config.service';
+import { Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 interface Version {
   id?: number;
   version_number: string;
   operating_system: 'IOS' | 'Android' | null;
-  _environment: '0' | '1' | '2' | '3' | null; // Staging, Prod, Dev, Local
+  _environment: '0' | '1' | '2' | '3' | null;
   backend_endpoint: string;
   active_ind: boolean;
   expiration_date: string | null;
   created_date?: string;
   updated_date?: string;
+}
+
+interface VersionResponse {
+  count: number;
+  results: Version[];
 }
 
 @Component({
@@ -64,11 +71,11 @@ interface Version {
             <p>Manage application versions, environments, and deployment settings</p>
           </div>
           <div class="header-actions">
-            <button mat-button (click)="refreshData()">
+            <button mat-button (click)="handleRefresh($event)">
               <mat-icon>refresh</mat-icon>
               Refresh
             </button>
-            <button mat-raised-button color="primary" (click)="openCreateDialog()">
+            <button mat-raised-button color="primary" (click)="handleCreate($event)">
               <mat-icon>add</mat-icon>
               New Version
             </button>
@@ -122,9 +129,22 @@ interface Version {
         <p>Loading versions...</p>
       </div>
 
+      <!-- Error State -->
+      <div class="error-section" *ngIf="errorMessage && !isLoading">
+        <div class="error-content">
+          <mat-icon class="error-icon">error_outline</mat-icon>
+          <h3>Unable to Load Versions</h3>
+          <p>{{ errorMessage }}</p>
+          <button mat-raised-button color="primary" (click)="handleRefresh($event)">
+            <mat-icon>refresh</mat-icon>
+            Try Again
+          </button>
+        </div>
+      </div>
+
       <!-- Versions by Environment -->
-      <div class="versions-content" *ngIf="!isLoading">
-        <div class="environment-section" *ngFor="let env of getEnvironmentGroups()">
+      <div class="versions-content" *ngIf="!isLoading && !errorMessage">
+        <div class="environment-section" *ngFor="let env of getEnvironmentGroups(); trackBy: trackByEnvironment">
           <div class="environment-header">
             <div class="env-info">
               <div class="env-icon" [style.background]="getEnvironmentColor(env.key)">
@@ -136,7 +156,7 @@ interface Version {
               </div>
             </div>
             <div class="env-actions">
-              <button mat-button (click)="deployToEnvironment(env.key)">
+              <button mat-button (click)="handleDeploy($event, env.key)">
                 <mat-icon>publish</mat-icon>
                 Deploy
               </button>
@@ -144,7 +164,7 @@ interface Version {
           </div>
 
           <div class="versions-grid">
-            <mat-card *ngFor="let version of env.versions"
+            <mat-card *ngFor="let version of env.versions; trackBy: trackByVersion"
                       class="version-card"
                       [class.inactive]="!version.active_ind"
                       [class.expired]="isExpired(version)">
@@ -162,21 +182,46 @@ interface Version {
                       </span>
                     </div>
                   </div>
+
+                  <!-- FIXED ACTION BUTTONS -->
                   <div class="version-actions">
-                    <button mat-icon-button (click)="editVersion(version)" matTooltip="Edit">
+                    <!-- Edit Button -->
+                    <button type="button"
+                            mat-icon-button
+                            matTooltip="Edit Version"
+                            [disabled]="isProcessing"
+                            (click)="handleEdit($event, version)"
+                            class="action-btn edit-btn">
                       <mat-icon>edit</mat-icon>
                     </button>
-                    <button mat-icon-button
-                            (click)="toggleVersionStatus(version)"
-                            [matTooltip]="version.active_ind ? 'Deactivate' : 'Activate'">
+
+                    <!-- Toggle Status Button -->
+                    <button type="button"
+                            mat-icon-button
+                            [matTooltip]="version.active_ind ? 'Deactivate Version' : 'Activate Version'"
+                            [disabled]="isProcessing"
+                            (click)="handleToggle($event, version)"
+                            class="action-btn toggle-btn">
                       <mat-icon>{{ version.active_ind ? 'visibility_off' : 'visibility' }}</mat-icon>
                     </button>
-                    <button mat-icon-button
-                            (click)="duplicateVersion(version)"
-                            matTooltip="Duplicate">
+
+                    <!-- Duplicate Button -->
+                    <button type="button"
+                            mat-icon-button
+                            matTooltip="Duplicate Version"
+                            [disabled]="isProcessing"
+                            (click)="handleDuplicate($event, version)"
+                            class="action-btn duplicate-btn">
                       <mat-icon>content_copy</mat-icon>
                     </button>
-                    <button mat-icon-button (click)="deleteVersion(version)" matTooltip="Delete">
+
+                    <!-- Delete Button -->
+                    <button type="button"
+                            mat-icon-button
+                            matTooltip="Delete Version"
+                            [disabled]="isProcessing"
+                            (click)="handleDelete($event, version)"
+                            class="action-btn delete-btn">
                       <mat-icon>delete</mat-icon>
                     </button>
                   </div>
@@ -187,7 +232,9 @@ interface Version {
                 <div class="version-details">
                   <div class="detail-row" *ngIf="version.backend_endpoint">
                     <span class="detail-label">Endpoint:</span>
-                    <span class="detail-value endpoint">{{ version.backend_endpoint }}</span>
+                    <span class="detail-value endpoint" [title]="version.backend_endpoint">
+                      {{ version.backend_endpoint }}
+                    </span>
                   </div>
                   <div class="detail-row" *ngIf="version.expiration_date">
                     <span class="detail-label">Expires:</span>
@@ -207,7 +254,7 @@ interface Version {
             </mat-card>
 
             <!-- Add Version Card -->
-            <div class="add-version-card" (click)="createVersionForEnvironment(env.key)">
+            <div class="add-version-card" (click)="handleCreateForEnv($event, env.key)">
               <mat-icon>add</mat-icon>
               <span>Add Version</span>
             </div>
@@ -219,11 +266,17 @@ interface Version {
           <mat-icon>layers</mat-icon>
           <h3>No versions found</h3>
           <p>Start by creating your first application version</p>
-          <button mat-raised-button color="primary" (click)="openCreateDialog()">
+          <button mat-raised-button color="primary" (click)="handleCreate($event)">
             <mat-icon>add</mat-icon>
             Create First Version
           </button>
         </div>
+      </div>
+
+      <!-- Processing Overlay -->
+      <div class="processing-overlay" *ngIf="isProcessing">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>{{ processingMessage }}</p>
       </div>
     </div>
 
@@ -239,6 +292,9 @@ interface Version {
               <mat-hint>Semantic versioning recommended (major.minor.patch)</mat-hint>
               <mat-error *ngIf="versionForm.get('version_number')?.hasError('required')">
                 Version number is required
+              </mat-error>
+              <mat-error *ngIf="versionForm.get('version_number')?.hasError('pattern')">
+                Please use semantic versioning format (e.g., 1.0.0)
               </mat-error>
             </mat-form-field>
 
@@ -279,6 +335,9 @@ interface Version {
             <mat-label>Backend Endpoint</mat-label>
             <input matInput formControlName="backend_endpoint" placeholder="https://api.example.com">
             <mat-hint>Backend API endpoint for this version</mat-hint>
+            <mat-error *ngIf="versionForm.get('backend_endpoint')?.hasError('pattern')">
+              Please enter a valid URL
+            </mat-error>
           </mat-form-field>
 
           <mat-checkbox formControlName="active_ind" class="active-checkbox">
@@ -287,10 +346,10 @@ interface Version {
         </form>
       </mat-dialog-content>
       <mat-dialog-actions align="end">
-        <button mat-button mat-dialog-close>Cancel</button>
+        <button mat-button (click)="handleDialogCancel($event)">Cancel</button>
         <button mat-raised-button
                 color="primary"
-                (click)="saveVersion()"
+                (click)="handleSave($event)"
                 [disabled]="!versionForm.valid || isSaving">
           <mat-spinner diameter="20" *ngIf="isSaving"></mat-spinner>
           <span *ngIf="!isSaving">{{ editingVersion?.id ? 'Update' : 'Create' }}</span>
@@ -303,6 +362,7 @@ interface Version {
       padding: 24px;
       max-width: 1400px;
       margin: 0 auto;
+      position: relative;
     }
 
     .page-header {
@@ -379,7 +439,7 @@ interface Version {
       font-size: 0.9rem;
     }
 
-    .loading-section {
+    .loading-section, .error-section {
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -390,6 +450,29 @@ interface Version {
 
     .loading-section p {
       margin-top: 16px;
+      color: #64748b;
+    }
+
+    .error-content {
+      max-width: 400px;
+    }
+
+    .error-icon {
+      font-size: 64px;
+      width: 64px;
+      height: 64px;
+      margin-bottom: 16px;
+      color: #ef4444;
+    }
+
+    .error-content h3 {
+      font-size: 1.5rem;
+      margin: 0 0 8px 0;
+      color: #334155;
+    }
+
+    .error-content p {
+      margin: 0 0 24px 0;
       color: #64748b;
     }
 
@@ -509,9 +592,45 @@ interface Version {
       &.expired { background: #ef4444; }
     }
 
+    /* FIXED ACTION BUTTONS STYLES */
     .version-actions {
       display: flex;
-      gap: 4px;
+      gap: 6px;
+      flex-shrink: 0;
+      padding: 4px;
+      border-radius: 8px;
+      background: rgba(248, 250, 252, 0.8);
+    }
+
+    .action-btn {
+      width: 36px !important;
+      height: 36px !important;
+      min-width: 36px !important;
+      padding: 0 !important;
+      border-radius: 8px !important;
+      transition: all 0.2s ease !important;
+      position: relative !important;
+      z-index: 10 !important;
+
+      &:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+      }
+
+      &:active {
+        transform: translateY(0) !important;
+      }
+
+      &:disabled {
+        opacity: 0.5 !important;
+        cursor: not-allowed !important;
+        transform: none !important;
+      }
+
+      &.edit-btn:hover { background: rgba(59, 130, 246, 0.1) !important; color: #3b82f6 !important; }
+      &.toggle-btn:hover { background: rgba(245, 158, 11, 0.1) !important; color: #f59e0b !important; }
+      &.duplicate-btn:hover { background: rgba(34, 197, 94, 0.1) !important; color: #22c55e !important; }
+      &.delete-btn:hover { background: rgba(239, 68, 68, 0.1) !important; color: #ef4444 !important; }
     }
 
     .version-details {
@@ -632,6 +751,28 @@ interface Version {
       margin-top: 8px;
     }
 
+    /* PROCESSING OVERLAY */
+    .processing-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      color: white;
+
+      p {
+        margin-top: 16px;
+        font-size: 1.1rem;
+        font-weight: 500;
+      }
+    }
+
     @media (max-width: 768px) {
       .version-control {
         padding: 16px;
@@ -659,6 +800,12 @@ interface Version {
       .form-row {
         grid-template-columns: 1fr;
       }
+
+      .version-actions {
+        flex-direction: column;
+        gap: 4px;
+        width: 44px;
+      }
     }
   `]
 })
@@ -667,9 +814,12 @@ export class VersionControlComponent implements OnInit {
 
   isLoading = false;
   isSaving = false;
+  isProcessing = false;
+  processingMessage = '';
   versions: Version[] = [];
+  errorMessage: string = '';
 
-  versionForm: FormGroup;
+  versionForm!: FormGroup;
   editingVersion: Version | null = null;
 
   private environmentConfig = {
@@ -689,38 +839,266 @@ export class VersionControlComponent implements OnInit {
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
     private http: HttpClient,
-    private configService: ConfigService
+    private configService: ConfigService,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {
-    this.versionForm = this.fb.group({
-      version_number: ['', Validators.required],
-      operating_system: [null],
-      _environment: ['', Validators.required],
-      backend_endpoint: [''],
-      active_ind: [true],
-      expiration_date: [null]
-    });
+    this.initializeForm();
   }
 
   ngOnInit(): void {
     this.loadVersions();
   }
 
-  loadVersions(): void {
-    this.isLoading = true;
-    const baseUrl = this.configService.getBaseUrl();
+  private initializeForm(): void {
+    const urlPattern = /^https?:\/\/.+/;
+    const versionPattern = /^\d+\.\d+\.\d+$/;
 
-    this.http.get<{count: number, results: Version[]}>(`${baseUrl}/version/versions/`)
+    this.versionForm = this.fb.group({
+      version_number: ['', [Validators.required, Validators.pattern(versionPattern)]],
+      operating_system: [null],
+      _environment: ['', Validators.required],
+      backend_endpoint: ['', [Validators.pattern(urlPattern)]],
+      active_ind: [true],
+      expiration_date: [null]
+    });
+  }
+
+  // FIXED EVENT HANDLERS
+  handleEdit(event: Event, version: Version): void {
+    this.stopEvent(event);
+    this.performAction('edit', version);
+  }
+
+  handleToggle(event: Event, version: Version): void {
+    this.stopEvent(event);
+    this.performAction('toggle', version);
+  }
+
+  handleDuplicate(event: Event, version: Version): void {
+    this.stopEvent(event);
+    this.performAction('duplicate', version);
+  }
+
+  handleDelete(event: Event, version: Version): void {
+    this.stopEvent(event);
+    this.performAction('delete', version);
+  }
+
+  handleCreate(event: Event): void {
+    this.stopEvent(event);
+    this.performAction('create');
+  }
+
+  handleCreateForEnv(event: Event, environment: string): void {
+    this.stopEvent(event);
+    this.performAction('createForEnv', null, environment);
+  }
+
+  handleRefresh(event: Event): void {
+    this.stopEvent(event);
+    this.performAction('refresh');
+  }
+
+  handleDeploy(event: Event, environment: string): void {
+    this.stopEvent(event);
+    this.performAction('deploy', null, environment);
+  }
+
+  handleSave(event: Event): void {
+    this.stopEvent(event);
+    this.performAction('save');
+  }
+
+  handleDialogCancel(event: Event): void {
+    this.stopEvent(event);
+    this.dialog.closeAll();
+    this.editingVersion = null;
+    this.forceUpdate();
+  }
+
+  private stopEvent(event: Event): void {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+  }
+
+  private async performAction(action: string, version?: Version | null, param?: string): Promise<void> {
+    if (this.isProcessing) {
+      console.log('Action blocked - already processing');
+      return;
+    }
+
+    console.log(`Performing action: ${action}`, { version, param });
+
+    this.ngZone.run(() => {
+      this.isProcessing = true;
+      this.processingMessage = this.getProcessingMessage(action);
+      this.forceUpdate();
+    });
+
+    try {
+      switch (action) {
+        case 'edit':
+          if (version) await this.editVersion(version);
+          break;
+        case 'toggle':
+          if (version) await this.toggleVersionStatus(version);
+          break;
+        case 'duplicate':
+          if (version) await this.duplicateVersion(version);
+          break;
+        case 'delete':
+          if (version) await this.deleteVersion(version);
+          break;
+        case 'create':
+          this.openCreateDialog();
+          break;
+        case 'createForEnv':
+          if (param) this.createVersionForEnvironment(param);
+          break;
+        case 'refresh':
+          await this.loadVersions();
+          break;
+        case 'deploy':
+          if (param) this.deployToEnvironment(param);
+          break;
+        case 'save':
+          await this.saveVersion();
+          break;
+      }
+    } catch (error) {
+      console.error(`Error in action ${action}:`, error);
+      this.showError(`Error in ${action}: ${error}`);
+    } finally {
+      this.ngZone.run(() => {
+        this.isProcessing = false;
+        this.processingMessage = '';
+        this.forceUpdate();
+      });
+    }
+  }
+
+  private getProcessingMessage(action: string): string {
+    const messages: { [key: string]: string } = {
+      'edit': 'Opening editor...',
+      'toggle': 'Updating status...',
+      'duplicate': 'Duplicating version...',
+      'delete': 'Deleting version...',
+      'refresh': 'Loading versions...',
+      'save': 'Saving version...',
+      'deploy': 'Starting deployment...'
+    };
+    return messages[action] || 'Processing...';
+  }
+
+  private forceUpdate(): void {
+    this.cdr.markForCheck();
+    this.cdr.detectChanges();
+  }
+
+  private showError(message: string): void {
+    this.snackBar.open(message, 'Close', { duration: 5000 });
+  }
+
+  private showSuccess(message: string): void {
+    this.snackBar.open(message, 'Close', { duration: 3000 });
+  }
+
+  // CORE BUSINESS LOGIC (Async)
+  loadVersions(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.isLoading = true;
+      this.errorMessage = '';
+      const baseUrl = this.configService.getBaseUrl();
+
+      const possibleEndpoints = [
+        '/version/versions/',
+        '/api/version/versions/',
+        '/api/versions/',
+        '/versions/'
+      ];
+
+      this.tryEndpoints(possibleEndpoints, 0, resolve, reject);
+    });
+  }
+
+  private tryEndpoints(endpoints: string[], index: number, resolve: Function, reject: Function): void {
+    if (index >= endpoints.length) {
+      this.isLoading = false;
+      this.errorMessage = 'Version control API endpoint not found. Please check your backend configuration.';
+      this.forceUpdate();
+      reject(new Error(this.errorMessage));
+      return;
+    }
+
+    const baseUrl = this.configService.getBaseUrl();
+    const endpoint = endpoints[index];
+
+    this.http.get<VersionResponse>(`${baseUrl}${endpoint}`)
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          console.error(`Endpoint ${endpoint} failed:`, error);
+          if (index < endpoints.length - 1) {
+            this.tryEndpoints(endpoints, index + 1, resolve, reject);
+          } else {
+            this.isLoading = false;
+            this.errorMessage = this.getErrorMessage(error);
+            this.forceUpdate();
+            reject(error);
+          }
+          return of(null);
+        })
+      )
       .subscribe({
         next: (response) => {
-          this.versions = response.results;
-          this.isLoading = false;
-        },
-        error: (err) => {
-          console.error('Error loading versions:', err);
-          this.snackBar.open('Error loading versions', 'Close', { duration: 3000 });
-          this.isLoading = false;
+          if (response) {
+            this.versions = response.results || [];
+            this.isLoading = false;
+            this.errorMessage = '';
+            localStorage.setItem('version_endpoint', endpoint);
+            this.forceUpdate();
+            resolve(undefined);
+          }
         }
       });
+  }
+
+  private getVersionEndpoint(): string {
+    return localStorage.getItem('version_endpoint') || '/version/versions/';
+  }
+
+  private getErrorMessage(error: HttpErrorResponse): string {
+    if (error.status === 0) {
+      return 'Network error. Please check your connection and backend server.';
+    } else if (error.status === 401) {
+      return 'Authentication failed. Please login again.';
+    } else if (error.status === 403) {
+      return 'Access denied. You do not have permission to access version control.';
+    } else if (error.status === 404) {
+      return 'Version control API not found. Please contact your administrator.';
+    } else {
+      return `Server error (${error.status}): ${error.message}`;
+    }
+  }
+
+  async editVersion(version: Version): Promise<void> {
+    try {
+      this.editingVersion = { ...version };
+      this.versionForm.reset();
+      this.versionForm.patchValue({
+        version_number: version.version_number || '',
+        operating_system: version.operating_system,
+        _environment: version._environment || '',
+        backend_endpoint: version.backend_endpoint || '',
+        active_ind: version.active_ind !== undefined ? version.active_ind : true,
+        expiration_date: version.expiration_date ? new Date(version.expiration_date) : null
+      });
+      this.openDialog();
+    } catch (error) {
+      throw new Error(`Failed to edit version: ${error}`);
+    }
   }
 
   openCreateDialog(): void {
@@ -729,133 +1107,199 @@ export class VersionControlComponent implements OnInit {
     this.openDialog();
   }
 
-  editVersion(version: Version): void {
-    this.editingVersion = version;
-    this.versionForm.patchValue({
-      ...version,
-      expiration_date: version.expiration_date ? new Date(version.expiration_date) : null
-    });
-    this.openDialog();
-  }
-
   createVersionForEnvironment(environment: string): void {
     this.editingVersion = null;
     this.versionForm.reset({
+      version_number: '',
+      operating_system: null,
+      _environment: environment,
+      backend_endpoint: '',
       active_ind: true,
-      _environment: environment
+      expiration_date: null
     });
     this.openDialog();
   }
 
-  duplicateVersion(version: Version): void {
-    this.editingVersion = null;
-    const duplicatedVersion = {
-      ...version,
-      version_number: this.generateNextVersion(version.version_number),
-      id: undefined
-    };
-    this.versionForm.patchValue({
-      ...duplicatedVersion,
-      expiration_date: duplicatedVersion.expiration_date ? new Date(duplicatedVersion.expiration_date) : null
-    });
-    this.openDialog();
+  async duplicateVersion(version: Version): Promise<void> {
+    try {
+      this.editingVersion = null;
+      const nextVersion = this.generateNextVersion(version.version_number);
+
+      this.versionForm.reset();
+      this.versionForm.patchValue({
+        version_number: nextVersion,
+        operating_system: version.operating_system,
+        _environment: version._environment,
+        backend_endpoint: version.backend_endpoint || '',
+        active_ind: true,
+        expiration_date: version.expiration_date ? new Date(version.expiration_date) : null
+      });
+
+      this.openDialog();
+    } catch (error) {
+      throw new Error(`Failed to duplicate version: ${error}`);
+    }
   }
 
   private openDialog(): void {
-    this.dialog.open(this.editDialog, {
+    const dialogRef = this.dialog.open(this.editDialog, {
       width: '600px',
-      maxHeight: '90vh'
+      maxHeight: '90vh',
+      disableClose: false,
+      panelClass: 'version-dialog'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      this.editingVersion = null;
+      this.forceUpdate();
     });
   }
 
-  saveVersion(): void {
-    if (!this.versionForm.valid) return;
+  async saveVersion(): Promise<void> {
+    if (!this.versionForm.valid) {
+      this.markFormGroupTouched();
+      this.showError('Please fix form errors before saving');
+      return;
+    }
 
     this.isSaving = true;
-    const versionData = { ...this.versionForm.value };
+    try {
+      const formValue = this.versionForm.value;
+      const versionData: any = {
+        version_number: formValue.version_number?.trim(),
+        operating_system: formValue.operating_system || null,
+        _environment: formValue._environment,
+        backend_endpoint: formValue.backend_endpoint?.trim() || '',
+        active_ind: Boolean(formValue.active_ind)
+      };
 
-    // Format date properly
-    if (versionData.expiration_date) {
-      versionData.expiration_date = versionData.expiration_date.toISOString().split('T')[0];
+      if (formValue.expiration_date) {
+        try {
+          const date = new Date(formValue.expiration_date);
+          versionData.expiration_date = date.toISOString().split('T')[0];
+        } catch (error) {
+          versionData.expiration_date = null;
+        }
+      } else {
+        versionData.expiration_date = null;
+      }
+
+      const baseUrl = this.configService.getBaseUrl();
+      const endpoint = this.getVersionEndpoint();
+
+      let request: Observable<any>;
+      if (this.editingVersion?.id) {
+        const url = `${baseUrl}${endpoint}${this.editingVersion.id}/`;
+        request = this.http.put(url, versionData);
+      } else {
+        const url = `${baseUrl}${endpoint}`;
+        request = this.http.post(url, versionData);
+      }
+
+      await request.toPromise();
+      this.showSuccess(`Version ${this.editingVersion?.id ? 'updated' : 'created'} successfully`);
+      await this.loadVersions();
+      this.dialog.closeAll();
+      this.editingVersion = null;
+    } catch (err: any) {
+      let errorMessage = 'Error saving version';
+      if (err.error?.detail) {
+        errorMessage = `Error: ${err.error.detail}`;
+      } else if (err.error?.message) {
+        errorMessage = `Error: ${err.error.message}`;
+      } else if (err.message) {
+        errorMessage = `Error: ${err.message}`;
+      }
+      this.showError(errorMessage);
+    } finally {
+      this.isSaving = false;
+      this.forceUpdate();
+    }
+  }
+
+  async toggleVersionStatus(version: Version): Promise<void> {
+    if (!version.id) {
+      throw new Error('Version ID is missing');
+    }
+
+    const newStatus = !version.active_ind;
+    const action = newStatus ? 'activate' : 'deactivate';
+
+    if (!confirm(`Are you sure you want to ${action} version "${version.version_number}"?`)) {
+      return;
+    }
+
+    const updatedVersion = { ...version, active_ind: newStatus };
+    const baseUrl = this.configService.getBaseUrl();
+    const endpoint = this.getVersionEndpoint();
+    const url = `${baseUrl}${endpoint}${version.id}/`;
+
+    try {
+      await this.http.put(url, updatedVersion).toPromise();
+      this.showSuccess(`Version "${version.version_number}" ${newStatus ? 'activated' : 'deactivated'} successfully`);
+      await this.loadVersions();
+    } catch (err: any) {
+      let errorMessage = 'Error updating version status';
+      if (err.error?.detail) {
+        errorMessage = `Error: ${err.error.detail}`;
+      }
+      throw new Error(errorMessage);
+    }
+  }
+
+  async deleteVersion(version: Version): Promise<void> {
+    if (!version.id) {
+      throw new Error('Version ID is missing');
+    }
+
+    const confirmMessage = `Are you sure you want to delete version "${version.version_number}"?\n\nThis action cannot be undone.`;
+
+    if (!confirm(confirmMessage)) {
+      return;
     }
 
     const baseUrl = this.configService.getBaseUrl();
-    const request = this.editingVersion?.id
-      ? this.http.put(`${baseUrl}/version/versions/${this.editingVersion.id}/`, versionData)
-      : this.http.post(`${baseUrl}/version/versions/`, versionData);
+    const endpoint = this.getVersionEndpoint();
+    const url = `${baseUrl}${endpoint}${version.id}/`;
 
-    request.subscribe({
-      next: (response) => {
-        this.snackBar.open(
-          `Version ${this.editingVersion?.id ? 'updated' : 'created'} successfully`,
-          'Close',
-          { duration: 3000 }
-        );
-        this.loadVersions();
-        this.dialog.closeAll();
-        this.isSaving = false;
-      },
-      error: (err) => {
-        console.error('Error saving version:', err);
-        this.snackBar.open('Error saving version', 'Close', { duration: 3000 });
-        this.isSaving = false;
+    try {
+      await this.http.delete(url).toPromise();
+      this.showSuccess(`Version "${version.version_number}" deleted successfully`);
+      await this.loadVersions();
+    } catch (err: any) {
+      let errorMessage = 'Error deleting version';
+      if (err.status === 404) {
+        errorMessage = 'Version not found (may have been already deleted)';
+      } else if (err.error?.detail) {
+        errorMessage = `Error: ${err.error.detail}`;
+      } else if (err.error?.message) {
+        errorMessage = `Error: ${err.error.message}`;
       }
-    });
-  }
-
-  toggleVersionStatus(version: Version): void {
-    const updatedVersion = { ...version, active_ind: !version.active_ind };
-    const baseUrl = this.configService.getBaseUrl();
-
-    this.http.put(`${baseUrl}/version/versions/${version.id}/`, updatedVersion)
-      .subscribe({
-        next: () => {
-          this.snackBar.open(
-            `Version ${updatedVersion.active_ind ? 'activated' : 'deactivated'}`,
-            'Close',
-            { duration: 2000 }
-          );
-          this.loadVersions();
-        },
-        error: (err) => {
-          console.error('Error updating version status:', err);
-          this.snackBar.open('Error updating status', 'Close', { duration: 3000 });
-        }
-      });
-  }
-
-  deleteVersion(version: Version): void {
-    if (confirm(`Are you sure you want to delete version "${version.version_number}"?`)) {
-      const baseUrl = this.configService.getBaseUrl();
-
-      this.http.delete(`${baseUrl}/version/versions/${version.id}/`)
-        .subscribe({
-          next: () => {
-            this.snackBar.open('Version deleted successfully', 'Close', { duration: 3000 });
-            this.loadVersions();
-          },
-          error: (err) => {
-            console.error('Error deleting version:', err);
-            this.snackBar.open('Error deleting version', 'Close', { duration: 3000 });
-          }
-        });
+      throw new Error(errorMessage);
     }
   }
 
   deployToEnvironment(environment: string): void {
-    this.snackBar.open(
-      `Deployment to ${this.getEnvironmentName(environment)} initiated`,
-      'Close',
-      { duration: 3000 }
-    );
-    // Here you would implement actual deployment logic
+    this.showSuccess(`Deployment to ${this.getEnvironmentName(environment)} initiated`);
   }
 
-  refreshData(): void {
-    this.loadVersions();
+  private markFormGroupTouched(): void {
+    Object.keys(this.versionForm.controls).forEach(key => {
+      const control = this.versionForm.get(key);
+      control?.markAsTouched();
+    });
   }
 
-  // Utility methods
+  // TRACKING FUNCTIONS FOR PERFORMANCE
+  trackByVersion(index: number, version: Version): any {
+    return version.id || index;
+  }
+
+  trackByEnvironment(index: number, env: any): any {
+    return env.key;
+  }
+
+  // UTILITY METHODS
   getActiveVersions(): Version[] {
     return this.versions.filter(v => v.active_ind);
   }
@@ -881,7 +1325,6 @@ export class VersionControlComponent implements OnInit {
       groups[env].push(version);
     });
 
-    // Sort by environment priority (Production, Staging, Development, Local)
     const sortOrder = ['1', '0', '2', '3', 'unassigned'];
     return sortOrder
       .filter(key => groups[key])
@@ -933,7 +1376,11 @@ export class VersionControlComponent implements OnInit {
 
   formatDate(dateString: string | null): string {
     if (!dateString) return 'Not set';
-    return new Date(dateString).toLocaleDateString();
+    try {
+      return new Date(dateString).toLocaleDateString();
+    } catch {
+      return 'Invalid date';
+    }
   }
 
   private generateNextVersion(currentVersion: string): string {
