@@ -1,0 +1,186 @@
+<div class="dashboard-layout">
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <div class="hero-text">
+        <h1 class="hero-title">
+          Welcome to <span class="brand-gradient">LowCode Pro</span>
+        </h1>
+        <p class="hero-subtitle">
+          Enterprise-grade platform for rapid application development and API management
+        </p>
+        <div class="hero-stats">
+          <div class="stat-item">
+            <span class="stat-number">{{ apiData?.applications?.total_applications || 0 }}</span>
+            <span class="stat-label">Applications</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">{{ apiData?.applications?.total_urls || 0 }}</span>
+            <span class="stat-label">API Endpoints</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">{{ getTotalMethods() }}</span>
+            <span class="stat-label">HTTP Methods</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="floating-card card-1">
+          <mat-icon>api</mat-icon>
+        </div>
+        <div class="floating-card card-2">
+          <mat-icon>dashboard</mat-icon>
+        </div>
+        <div class="floating-card card-3">
+          <mat-icon>speed</mat-icon>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Platform Overview -->
+  <section class="overview-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Platform Overview</h2>
+        <p class="section-subtitle">Real-time insights into your development ecosystem</p>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-icon api-icon">
+            <mat-icon>api</mat-icon>
+          </div>
+          <div class="metric-content">
+            <h3 class="metric-number">{{ apiData?.applications?.api_version || 'N/A' }}</h3>
+            <p class="metric-label">API Version</p>
+            <span class="metric-status status-active">Active</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon endpoints-icon">
+            <mat-icon>hub</mat-icon>
+          </div>
+          <div class="metric-content">
+            <h3 class="metric-number">{{ apiData?.applications?.total_urls || 0 }}</h3>
+            <p class="metric-label">Total Endpoints</p>
+            <span class="metric-trend positive">+12% this month</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon apps-icon">
+            <mat-icon>apps</mat-icon>
+          </div>
+          <div class="metric-content">
+            <h3 class="metric-number">{{ apiData?.applications?.total_applications || 0 }}</h3>
+            <p class="metric-label">Applications</p>
+            <span class="metric-trend positive">All operational</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon time-icon">
+            <mat-icon>schedule</mat-icon>
+          </div>
+          <div class="metric-content">
+            <h3 class="metric-number">{{ getFormattedDate(apiData?.applications?.schema_generated_on) }}</h3>
+            <p class="metric-label">Last Updated</p>
+            <span class="metric-status status-recent">Recent</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Loading State -->
+  <section class="loading-section" *ngIf="isLoading">
+    <div class="container">
+      <div class="loading-state">
+        <div class="loading-content">
+          <mat-spinner diameter="48"></mat-spinner>
+          <h3>Loading dashboard data...</h3>
+          <p>Please wait while we fetch your platform information</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Error State -->
+  <section class="error-section" *ngIf="error && !isLoading">
+    <div class="container">
+      <div class="error-state">
+        <div class="error-content">
+          <mat-icon class="error-icon">error_outline</mat-icon>
+          <h3>Unable to Load Dashboard Data</h3>
+          <p>{{ error }}</p>
+          <button mat-raised-button color="primary" (click)="loadDashboardData()" class="retry-btn">
+            <mat-icon>refresh</mat-icon>
+            Try Again
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Actions Section -->
+  <section class="quick-actions-section" *ngIf="!isLoading">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Quick Actions</h2>
+        <p class="section-subtitle">Common tasks and platform utilities</p>
+      </div>
+
+      <div class="actions-grid">
+        <div class="action-card" (click)="goToApplications()" matRipple>
+          <div class="action-icon apps-action-icon">
+            <mat-icon>apps</mat-icon>
+          </div>
+          <h4>View Applications</h4>
+          <p>Explore all available applications</p>
+        </div>
+
+        <div class="action-card" (click)="loadDashboardData()" matRipple>
+          <div class="action-icon refresh-icon">
+            <mat-icon>refresh</mat-icon>
+          </div>
+          <h4>Refresh Data</h4>
+          <p>Update application data and metrics</p>
+        </div>
+
+        <div class="action-card" (click)="goToConfig()" matRipple>
+          <div class="action-icon config-icon">
+            <mat-icon>settings</mat-icon>
+          </div>
+          <h4>Configuration</h4>
+          <p>Manage platform settings</p>
+        </div>
+
+        <div class="action-card" (click)="goToInbox()" matRipple>
+          <div class="action-icon inbox-icon">
+            <mat-icon>inbox</mat-icon>
+          </div>
+          <h4>Inbox</h4>
+          <p>Check your messages and notifications</p>
+        </div>
+
+        <div class="action-card" matRipple>
+          <div class="action-icon docs-icon">
+            <mat-icon>description</mat-icon>
+          </div>
+          <h4>API Documentation</h4>
+          <p>View API reference guides</p>
+        </div>
+
+        <div class="action-card" matRipple>
+          <div class="action-icon analytics-icon">
+            <mat-icon>analytics</mat-icon>
+          </div>
+          <h4>Analytics</h4>
+          <p>View usage statistics</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

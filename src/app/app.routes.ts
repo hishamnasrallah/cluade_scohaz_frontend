@@ -1,4 +1,4 @@
-// app.routes.ts - ENHANCED with Applications route
+// app.routes.ts - ENHANCED with User Management route
 import { Routes } from '@angular/router';
 import { AuthGuard } from './guards/auth.guard';
 import { ConfigGuard } from './guards/config.guard';
@@ -63,7 +63,7 @@ export const routes: Routes = [
     data: {
       title: 'Applications',
       description: 'Manage your applications and inbox',
-      icon: 'inbox',
+      icon: 'apps',
       requiresAuth: true
     }
   },
@@ -72,6 +72,20 @@ export const routes: Routes = [
     path: 'inbox',
     redirectTo: '/applications',
     pathMatch: 'full'
+  },
+
+  // User Management route - for now redirects to dashboard
+  // TODO: Create UserManagementComponent when needed
+  {
+    path: 'user-management',
+    redirectTo: '/dashboard',
+    pathMatch: 'full',
+    data: {
+      title: 'User Management',
+      description: 'Manage users and permissions',
+      icon: 'people',
+      requiresAuth: true
+    }
   },
 
   {
@@ -104,7 +118,7 @@ export const ROUTE_CONFIG = {
   '/applications': {
     title: 'Applications',
     description: 'Manage applications and cases',
-    icon: 'inbox',
+    icon: 'apps',
     requiresAuth: true
   },
   '/config': {
@@ -119,5 +133,10 @@ export const ROUTE_CONFIG = {
     icon: 'login',
     isPublic: true
   },
-
+  '/user-management': {
+    title: 'User Management',
+    description: 'Manage users and permissions',
+    icon: 'people',
+    requiresAuth: true
+  }
 };
