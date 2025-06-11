@@ -35,14 +35,6 @@
           </div>
           <mat-divider></mat-divider>
 
-          <!-- View All Applications -->
-          <!--              <button mat-menu-item (click)="goToApplications()" class="menu-item-primary">-->
-          <!--&lt;!&ndash;                <mat-icon>view_list</mat-icon>&ndash;&gt;-->
-          <!--&lt;!&ndash;                <span>View All Applications</span>&ndash;&gt;-->
-          <!--              </button>-->
-
-          <mat-divider *ngIf="applications.length > 0"></mat-divider>
-
           <!-- Dynamic Applications List -->
           <div class="applications-list" *ngIf="applications.length > 0">
             <button mat-menu-item
@@ -81,16 +73,6 @@
                 matTooltipPosition="below">
           <mat-icon>settings</mat-icon>
           <span>Configurations</span>
-        </button>
-
-        <!-- User Management Menu -->
-        <button mat-button
-                (click)="goToUserManagement()"
-                class="nav-menu-item"
-                matTooltip="User Management"
-                matTooltipPosition="below">
-          <mat-icon>people</mat-icon>
-          <span>User Management</span>
         </button>
 
         <!-- Inbox Menu -->
@@ -143,14 +125,61 @@
           </button>
 
           <mat-menu #userMenuRef="matMenu" class="user-dropdown">
-<!--            <button mat-menu-item (click)="goToConfig()">-->
-<!--              <mat-icon>settings</mat-icon>-->
-<!--              <span>Configuration</span>-->
-<!--            </button>-->
-            <button mat-menu-item (click)="goToDashboard()">
+            <!-- Settings Menu with Submenu -->
+            <button mat-menu-item [matMenuTriggerFor]="settingsSubmenu" class="settings-menu-item">
               <mat-icon>settings</mat-icon>
               <span>Settings</span>
+              <mat-icon class="submenu-arrow">chevron_right</mat-icon>
             </button>
+
+            <mat-menu #settingsSubmenu="matMenu" class="settings-submenu">
+              <div class="submenu-header">
+                <mat-icon>settings</mat-icon>
+                <span>Platform Settings</span>
+              </div>
+              <mat-divider></mat-divider>
+
+              <button mat-menu-item (click)="goToSettings('overview')">
+                <mat-icon>dashboard</mat-icon>
+                <span>Overview</span>
+              </button>
+
+              <button mat-menu-item (click)="goToSettings('lookups')">
+                <mat-icon>list</mat-icon>
+                <span>Lookups</span>
+              </button>
+
+              <button mat-menu-item (click)="goToSettings('field-types')">
+                <mat-icon>input</mat-icon>
+                <span>Field Types</span>
+              </button>
+
+              <button mat-menu-item (click)="goToSettings('fields')">
+                <mat-icon>dynamic_form</mat-icon>
+                <span>Fields</span>
+              </button>
+
+              <button mat-menu-item (click)="goToSettings('versions')">
+                <mat-icon>history</mat-icon>
+                <span>Version Control</span>
+              </button>
+
+              <button mat-menu-item (click)="goToSettings('users')">
+                <mat-icon>people</mat-icon>
+                <span>User Management</span>
+              </button>
+
+              <button mat-menu-item (click)="goToSettings('licenses')">
+                <mat-icon>receipt</mat-icon>
+                <span>Licenses</span>
+              </button>
+
+              <button mat-menu-item (click)="goToSettings('system')">
+                <mat-icon>tune</mat-icon>
+                <span>System Settings</span>
+              </button>
+            </mat-menu>
+
             <mat-divider></mat-divider>
             <button mat-menu-item (click)="logout()" class="logout-item">
               <mat-icon>logout</mat-icon>

@@ -1,4 +1,4 @@
-// components/app.component.ts - ENHANCED with Dynamic Navigation Menu
+// components/app.component.ts - ENHANCED with Settings Navigation
 import { Component, OnInit } from '@angular/core';
 import {Router, RouterOutlet, NavigationEnd} from '@angular/router';
 import { AuthService } from '../services/auth.service';
@@ -154,6 +154,8 @@ export class AppComponent implements OnInit {
     if (url.startsWith('/app/')) {
       const appName = url.split('/')[2];
       this.currentPageTitle = `${appName} Application`;
+    } else if (url.startsWith('/settings')) {
+      this.currentPageTitle = 'Settings';
     } else if (url === '/config') {
       this.currentPageTitle = 'Configuration';
     } else if (url === '/login') {
@@ -258,6 +260,15 @@ export class AppComponent implements OnInit {
 
   goToInbox(): void {
     this.router.navigate(['/inbox']); // This redirects to /applications as defined in routes
+  }
+
+  // Settings navigation
+  goToSettings(section: string = ''): void {
+    if (section) {
+      this.router.navigate(['/settings', section]);
+    } else {
+      this.router.navigate(['/settings']);
+    }
   }
 
   // Application-specific navigation

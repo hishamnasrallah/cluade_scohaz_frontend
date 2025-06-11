@@ -1,4 +1,4 @@
-// app.routes.ts - ENHANCED with User Management route
+// app.routes.ts - ENHANCED with Settings Module
 import { Routes } from '@angular/router';
 import { AuthGuard } from './guards/auth.guard';
 import { ConfigGuard } from './guards/config.guard';
@@ -74,18 +74,63 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
 
-  // User Management route - for now redirects to dashboard
-  // TODO: Create UserManagementComponent when needed
+  // Settings Module Routes
   {
-    path: 'user-management',
-    redirectTo: '/dashboard',
-    pathMatch: 'full',
+    path: 'settings',
+    canActivate: [AuthGuard],
     data: {
-      title: 'User Management',
-      description: 'Manage users and permissions',
-      icon: 'people',
+      title: 'Settings',
+      description: 'Platform administration and configuration',
+      icon: 'settings',
       requiresAuth: true
-    }
+    },
+    children: [
+      {
+        path: '',
+        redirectTo: 'overview',
+        pathMatch: 'full'
+      },
+      {
+        path: 'overview',
+        loadComponent: () => import('./components/settings/settings-overview/settings-overview.component').then(m => m.SettingsOverviewComponent),
+        data: { title: 'Settings Overview', icon: 'dashboard' }
+      },
+      {
+        path: 'lookups',
+        loadComponent: () => import('./components/settings/lookups-management/lookups-management.component').then(m => m.LookupsManagementComponent),
+        data: { title: 'Lookups Management', icon: 'list' }
+      },
+      {
+        path: 'field-types',
+        loadComponent: () => import('./components/settings/field-types-management/field-types-management.component').then(m => m.FieldTypesManagementComponent),
+        data: { title: 'Field Types', icon: 'input' }
+      },
+      {
+        path: 'fields',
+        loadComponent: () => import('./components/settings/fields-management/fields-management.component').then(m => m.FieldsManagementComponent),
+        data: { title: 'Fields Management', icon: 'dynamic_form' }
+      },
+      {
+        path: 'versions',
+        loadComponent: () => import('./components/settings/version-control/version-control.component').then(m => m.VersionControlComponent),
+        data: { title: 'Version Control', icon: 'history' }
+      },
+      {
+        path: 'users',
+        loadComponent: () => import('./components/settings/user-management/user-management.component').then(m => m.UserManagementComponent),
+        data: { title: 'User Management', icon: 'people' }
+      },
+      {
+        path: 'licenses',
+        loadComponent: () => import('./components/settings/licenses-management/licenses-management.component').then(m => m.LicensesManagementComponent),
+        data: { title: 'Licenses & Subscriptions', icon: 'receipt' }
+      },
+      {
+        path: 'system',
+        loadComponent: () => import('./components/settings/system-settings/system-settings.component').then(m => m.SystemSettingsComponent),
+        data: { title: 'System Settings', icon: 'tune' }
+      }
+    ]
   },
 
   {
@@ -133,10 +178,10 @@ export const ROUTE_CONFIG = {
     icon: 'login',
     isPublic: true
   },
-  '/user-management': {
-    title: 'User Management',
-    description: 'Manage users and permissions',
-    icon: 'people',
+  '/settings': {
+    title: 'Settings',
+    description: 'Platform administration',
+    icon: 'settings',
     requiresAuth: true
   }
 };
