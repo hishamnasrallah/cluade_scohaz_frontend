@@ -126,6 +126,11 @@ export const routes: Routes = [
       //   data: { title: 'User Management', icon: 'people' }
       // },
       {
+        path: 'translations',
+        loadComponent: () => import('./components/settings/translation-management/translation-management.component').then(m => m.TranslationManagementComponent),
+        data: { title: 'Translation Management', icon: 'translate' }
+      },
+      {
         path: 'licenses',
         loadComponent: () => import('./components/settings/licenses-management/licenses-management.component').then(m => m.LicensesManagementComponent),
         data: { title: 'Licenses & Subscriptions', icon: 'receipt' }
