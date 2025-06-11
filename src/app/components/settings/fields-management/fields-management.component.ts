@@ -186,10 +186,10 @@ interface LookupItem {
             </div>
 
             <!-- Child Fields -->
-            <div class="child-fields" *ngIf="getChildFields(field.id).length > 0">
-              <h4>Child Fields ({{ getChildFields(field.id).length }})</h4>
+            <div class="child-fields" *ngIf="field.id && getChildFields(field.id).length > 0">
+              <h4>Child Fields ({{ field.id ? getChildFields(field.id).length : 0 }})</h4>
               <div class="child-fields-list">
-                <div *ngFor="let child of getChildFields(field.id)" class="child-field-item">
+                <div *ngFor="let child of field.id ? getChildFields(field.id) : []" class="child-field-item">
                   <div class="child-field-icon">
                     <mat-icon>{{ getFieldTypeIcon(child._field_type) }}</mat-icon>
                   </div>

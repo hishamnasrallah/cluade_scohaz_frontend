@@ -1,5 +1,5 @@
-// components/settings/lookups-management/lookups-management.component.ts
-import { Component, OnInit } from '@angular/core';
+// components/settings/lookups-management/lookups-management.component.ts - FIXED
+import { Component, OnInit, ViewChild, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -192,7 +192,7 @@ interface LookupTree extends LookupItem {
       </div>
     </div>
 
-    <!-- Create/Edit Dialog -->
+    <!-- Create/Edit Dialog - FIXED -->
     <ng-template #editDialog>
       <div mat-dialog-title>{{ editingLookup?.id ? 'Edit' : 'Create' }} Lookup</div>
       <mat-dialog-content>
@@ -539,6 +539,8 @@ interface LookupTree extends LookupItem {
   `]
 })
 export class LookupsManagementComponent implements OnInit {
+  @ViewChild('editDialog') editDialog!: TemplateRef<any>; // FIXED: Added ViewChild reference
+
   isLoading = false;
   isSaving = false;
   allLookups: LookupItem[] = [];
@@ -636,15 +638,11 @@ export class LookupsManagementComponent implements OnInit {
   }
 
   private openDialog(): void {
-    const dialogRef = this.dialog.open(this.editDialogTemplate, {
+    // FIXED: Proper dialog opening
+    this.dialog.open(this.editDialog, {
       width: '500px',
       maxHeight: '90vh'
     });
-  }
-
-  get editDialogTemplate() {
-    // This would typically be a separate component, but for simplicity using template
-    return null; // Would implement proper dialog component
   }
 
   saveLookup(): void {

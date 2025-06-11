@@ -62,7 +62,37 @@ export interface Field {
   _is_hidden: boolean;
   _is_disabled: boolean;
   active_ind: boolean;
-  // ... other field properties
+  // Number validation fields
+  _value_greater_than?: number | null;
+  _value_less_than?: number | null;
+  _integer_only?: boolean;
+  _positive_only?: boolean;
+  // Date validation fields
+  _date_greater_than?: string | null;
+  _date_less_than?: string | null;
+  _future_only?: boolean;
+  _past_only?: boolean;
+  // Boolean default
+  _default_boolean?: boolean;
+  // File validation fields
+  _file_types?: string;
+  _max_file_size?: number;
+  _image_max_width?: number;
+  _image_max_height?: number;
+  // Choice validation fields
+  allowed_lookups?: number[];
+  _max_selections?: number;
+  _min_selections?: number;
+  // Advanced validation fields
+  _precision?: number;
+  _unique?: boolean;
+  _default_value?: string;
+  _regex_pattern?: string;
+  _allowed_characters?: string;
+  _forbidden_words?: string;
+  // Geographical and special validations
+  _coordinates_format?: boolean;
+  _uuid_format?: boolean;
 }
 
 export interface FieldType {

@@ -115,21 +115,21 @@ export const routes: Routes = [
         loadComponent: () => import('./components/settings/version-control/version-control.component').then(m => m.VersionControlComponent),
         data: { title: 'Version Control', icon: 'history' }
       },
-      {
-        path: 'users',
-        loadComponent: () => import('./components/settings/user-management/user-management.component').then(m => m.UserManagementComponent),
-        data: { title: 'User Management', icon: 'people' }
-      },
+      // {
+      //   path: 'users',
+      //   loadComponent: () => import('./components/settings/user-management/user-management.component').then(m => m.UserManagementComponent),
+      //   data: { title: 'User Management', icon: 'people' }
+      // },
       {
         path: 'licenses',
         loadComponent: () => import('./components/settings/licenses-management/licenses-management.component').then(m => m.LicensesManagementComponent),
         data: { title: 'Licenses & Subscriptions', icon: 'receipt' }
       },
-      {
-        path: 'system',
-        loadComponent: () => import('./components/settings/system-settings/system-settings.component').then(m => m.SystemSettingsComponent),
-        data: { title: 'System Settings', icon: 'tune' }
-      }
+      // {
+      //   path: 'system',
+      //   loadComponent: () => import('./components/settings/system-settings/system-settings.component').then(m => m.SystemSettingsComponent),
+      //   data: { title: 'System Settings', icon: 'tune' }
+      // }
     ]
   },
 
