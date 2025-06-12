@@ -1,0 +1,32 @@
+/* ===== ANIMATION UTILITIES ===== */
+/* Animation class utilities */
+
+.animate-none { animation: none; }
+.animate-spin { animation: spin 1s linear infinite; }
+.animate-ping { animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite; }
+.animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+.animate-bounce { animation: bounce 1s infinite; }
+.animate-fade-in { animation: fadeIn var(--duration-normal) var(--ease-out); }
+.animate-fade-out { animation: fadeOut var(--duration-normal) var(--ease-in); }
+.animate-slide-in-up { animation: slideInUp var(--duration-normal) var(--ease-out); }
+.animate-slide-in-down { animation: slideInDown var(--duration-normal) var(--ease-out); }
+.animate-slide-in-left { animation: slideInLeft var(--duration-normal) var(--ease-out); }
+.animate-slide-in-right { animation: slideInRight var(--duration-normal) var(--ease-out); }
+.animate-scale-in { animation: scaleIn var(--duration-fast) var(--ease-out); }
+.animate-scale-out { animation: scaleOut var(--duration-fast) var(--ease-in); }
+.animate-rotate-in { animation: rotateIn var(--duration-normal) var(--ease-out); }
+.animate-rotate-out { animation: rotateOut var(--duration-normal) var(--ease-in); }
+.animate-flip { animation: flip var(--duration-normal) var(--ease-in-out); }
+.animate-wobble { animation: wobble var(--duration-slow) var(--ease-in-out); }
+.animate-shake { animation: shake 0.82s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+.animate-swing { animation: swing var(--duration-slow) var(--ease-in-out); }
+.animate-rubber-band { animation: rubberBand var(--duration-slow) var(--ease-out); }
+.animate-jello { animation: jello var(--duration-slow) var(--ease-in-out); }
+.animate-heart-beat { animation: heartBeat 1.3s ease-in-out infinite; }
+.animate-flash { animation: flash var(--duration-slow) var(--ease-in-out); }
+.animate-zoom-in { animation: zoomIn var(--duration-normal) var(--ease-out); }
+.animate-zoom-out { animation: zoomOut var(--duration-normal) var(--ease-in); }
+.animate-flip-x { animation: flipX var(--duration-normal) var(--ease-in-out); }
+.animate-flip-y { animation: flipY var(--duration-normal) var(--ease-in-out); }
+.animate-light-speed-in { animation: lightSpeedIn var(--duration-normal) var(--ease-out); }
+.animate-light-speed-out { animation: lightSpeedOut var(--duration-normal) var(--ease-in); }

@@ -1,0 +1,61 @@
+/* ===== CONTAINER SYSTEM ===== */
+
+/* Base Container */
+.container {
+  max-width: var(--container-7xl);
+  margin: 0 auto;
+  padding: 0 var(--spacing-4);
+}
+
+/* Container Size Variants */
+.container-xs { max-width: var(--container-xs); }
+.container-sm { max-width: var(--container-sm); }
+.container-md { max-width: var(--container-md); }
+.container-lg { max-width: var(--container-lg); }
+.container-xl { max-width: var(--container-xl); }
+.container-2xl { max-width: var(--container-2xl); }
+.container-3xl { max-width: var(--container-3xl); }
+.container-4xl { max-width: var(--container-4xl); }
+.container-5xl { max-width: var(--container-5xl); }
+.container-6xl { max-width: var(--container-6xl); }
+.container-7xl { max-width: var(--container-7xl); }
+.container-full { max-width: var(--container-full); }
+.container-screen { max-width: var(--container-screen); }
+
+/* Fluid Container */
+.container-fluid {
+  width: 100%;
+  padding: 0 var(--spacing-4);
+}
+
+/* Responsive Container Padding */
+@media (min-width: 640px) {
+  .container,
+  .container-fluid {
+    padding: 0 var(--spacing-6);
+  }
+}
+
+@media (min-width: 768px) {
+  .container,
+  .container-fluid {
+    padding: 0 var(--spacing-8);
+  }
+}
+
+@media (min-width: 1024px) {
+  .container,
+  .container-fluid {
+    padding: 0 var(--spacing-12);
+  }
+}
+
+/* Container with no padding */
+.container-no-padding {
+  padding: 0;
+}
+
+/* Centered Container */
+.container-center {
+  margin: 0 auto;
+}

@@ -1,0 +1,214 @@
+/* ===== TABLET-SPECIFIC STYLES ===== */
+/* Styles optimized for tablet devices */
+
+/* Tablet Base Styles */
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* Typography adjustments for tablets */
+  body {
+    font-size: var(--text-base);
+    line-height: var(--leading-normal);
+  }
+
+  h1, .h1 {
+    font-size: var(--text-3xl);
+    line-height: var(--leading-tight);
+  }
+
+  h2, .h2 {
+    font-size: var(--text-2xl);
+    line-height: var(--leading-tight);
+  }
+
+  h3, .h3 {
+    font-size: var(--text-xl);
+    line-height: var(--leading-snug);
+  }
+
+  /* Tablet spacing */
+  .tablet\:p-4 { padding: var(--spacing-4); }
+  .tablet\:p-5 { padding: var(--spacing-5); }
+  .tablet\:p-6 { padding: var(--spacing-6); }
+
+  .tablet\:px-6 {
+    padding-left: var(--spacing-6);
+    padding-right: var(--spacing-6);
+  }
+
+  .tablet\:py-4 {
+    padding-top: var(--spacing-4);
+    padding-bottom: var(--spacing-4);
+  }
+
+  .tablet\:m-4 { margin: var(--spacing-4); }
+  .tablet\:mx-auto {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Tablet layout */
+  .tablet\:flex-row { flex-direction: row; }
+  .tablet\:flex-wrap { flex-wrap: wrap; }
+
+  .tablet\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .tablet\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .tablet\:grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+  .tablet\:gap-4 { gap: var(--spacing-4); }
+  .tablet\:gap-5 { gap: var(--spacing-5); }
+  .tablet\:gap-6 { gap: var(--spacing-6); }
+
+  /* Tablet sizing */
+  .tablet\:w-1\/2 { width: 50%; }
+  .tablet\:w-1\/3 { width: 33.333333%; }
+  .tablet\:w-2\/3 { width: 66.666667%; }
+  .tablet\:w-auto { width: auto; }
+  .tablet\:max-w-2xl { max-width: var(--container-2xl); }
+  .tablet\:max-w-3xl { max-width: var(--container-3xl); }
+
+  /* Tablet text */
+  .tablet\:text-base { font-size: var(--text-base); }
+  .tablet\:text-lg { font-size: var(--text-lg); }
+  .tablet\:text-left { text-align: left; }
+  .tablet\:text-center { text-align: center; }
+
+  /* Tablet visibility */
+  .tablet\:hidden { display: none; }
+  .tablet\:block { display: block; }
+  .tablet\:inline-block { display: inline-block; }
+  .tablet\:flex { display: flex; }
+  .tablet\:grid { display: grid; }
+
+  /* Tablet-specific navigation */
+  .tablet-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-4) var(--spacing-6);
+  }
+
+  .tablet-nav-menu {
+    display: flex;
+    gap: var(--spacing-6);
+    align-items: center;
+  }
+
+  /* Tablet sidebar layout */
+  .tablet-sidebar-layout {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: var(--spacing-6);
+  }
+
+  .tablet-sidebar {
+    position: sticky;
+    top: var(--spacing-4);
+    height: fit-content;
+    max-height: calc(100vh - var(--spacing-8));
+    overflow-y: auto;
+  }
+
+  /* Tablet cards grid */
+  .tablet-card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-5);
+  }
+
+  /* Tablet modal sizing */
+  .tablet-modal {
+    max-width: 600px;
+    width: 90%;
+    margin: var(--spacing-8) auto;
+  }
+
+  /* Split view for tablets */
+  .tablet-split-view {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-6);
+  }
+
+  /* Tablet-optimized forms */
+  .tablet-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-4);
+  }
+
+  .tablet-form-grid > .full-width {
+    grid-column: 1 / -1;
+  }
+
+  /* Tablet table styles */
+  .tablet-table {
+    font-size: var(--text-sm);
+  }
+
+  .tablet-table th,
+  .tablet-table td {
+    padding: var(--spacing-3) var(--spacing-4);
+  }
+
+  /* Floating action button for tablets */
+  .tablet-fab {
+    position: fixed;
+    bottom: var(--spacing-6);
+    right: var(--spacing-6);
+    width: 56px;
+    height: 56px;
+    border-radius: var(--rounded-full);
+    box-shadow: var(--shadow-lg);
+    z-index: var(--z-fixed);
+  }
+
+  /* Tablet header with search */
+  .tablet-header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: var(--spacing-4);
+    align-items: center;
+    padding: var(--spacing-4) var(--spacing-6);
+  }
+
+  .tablet-search {
+    max-width: 400px;
+    width: 100%;
+  }
+
+  /* Tablet dropdown menus */
+  .tablet-dropdown {
+    min-width: 200px;
+    max-width: 300px;
+  }
+
+  /* Tablet tooltips */
+  .tablet-tooltip {
+    max-width: 300px;
+    font-size: var(--text-sm);
+  }
+}
+
+/* Portrait tablet specific */
+@media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
+  .tablet-portrait\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .tablet-portrait\:flex-col { flex-direction: column; }
+  .tablet-portrait\:text-center { text-align: center; }
+}
+
+/* Landscape tablet specific */
+@media (min-width: 768px) and (max-width: 1023px) and (orientation: landscape) {
+  .tablet-landscape\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .tablet-landscape\:flex-row { flex-direction: row; }
+  .tablet-landscape\:max-h-screen { max-height: 100vh; }
+}
+
+/* Large tablets / small laptops (1024px to 1279px) */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .large-tablet\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .large-tablet\:grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .large-tablet\:px-8 {
+    padding-left: var(--spacing-8);
+    padding-right: var(--spacing-8);
+  }
+  .large-tablet\:text-lg { font-size: var(--text-lg); }
+}

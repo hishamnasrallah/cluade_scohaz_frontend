@@ -1,0 +1,171 @@
+/* ===== THEME VARIANTS ===== */
+
+/* ===== DARK MODE VARIABLES ===== */
+:root[data-theme="dark"],
+.dark-mode {
+  /* Surface Colors - Dark Mode */
+  --surface-background: #0f172a;
+  --surface-foreground: #f8fafc;
+  --surface-card: #1e293b;
+  --surface-popover: #1e293b;
+  --surface-modal: #1e293b;
+  --surface-sheet: #334155;
+  --surface-overlay: rgba(0,0,0,0.8);
+  --surface-hover: #334155;
+  --surface-active: #475569;
+  --surface-focus: #1e40af;
+  --surface-selected: #1e3a8a;
+  --surface-disabled: #1e293b;
+
+  /* Text Colors - Dark Mode */
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --text-quaternary: #64748b;
+  --text-inverse: #0f172a;
+  --text-disabled: #475569;
+  --text-placeholder: #64748b;
+  --text-link: #60a5fa;
+  --text-link-hover: #93c5fd;
+  --text-link-visited: #c084fc;
+
+  /* Border Colors - Dark Mode */
+  --border-default: #334155;
+  --border-muted: #1e293b;
+  --border-subtle: #0f172a;
+  --border-strong: #475569;
+  --border-focus: #3b82f6;
+  --border-error: #ef4444;
+  --border-success: #10b981;
+  --border-warning: #f59e0b;
+
+  /* Shadows - Dark Mode */
+  --shadow-neumorphism-light: var(--shadow-neumorphism-dark);
+  --shadow-glassmorphism: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* ===== HIGH CONTRAST MODE ===== */
+:root[data-theme="high-contrast"],
+.high-contrast {
+  --text-primary: #000000;
+  --surface-background: #ffffff;
+  --border-default: #000000;
+  --color-primary-500: #0000ff;
+  --color-error-500: #ff0000;
+  --color-success-500: #008000;
+  --color-warning-500: #ff8000;
+}
+
+/* High Contrast Dark Mode */
+:root[data-theme="high-contrast-dark"],
+.high-contrast.dark-mode {
+  --text-primary: #ffffff;
+  --surface-background: #000000;
+  --border-default: #ffffff;
+  --color-primary-500: #00ffff;
+  --color-error-500: #ff6666;
+  --color-success-500: #00ff00;
+  --color-warning-500: #ffff00;
+}
+
+/* ===== THEME TRANSITIONS ===== */
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-duration: var(--duration-normal);
+  transition-timing-function: var(--ease-out);
+}
+
+/* ===== THEME UTILITIES ===== */
+.theme-light {
+  color-scheme: light;
+}
+
+.theme-dark {
+  color-scheme: dark;
+}
+
+.theme-auto {
+  color-scheme: light dark;
+}
+
+/* ===== SYSTEM PREFERENCE THEMES ===== */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    /* Auto dark mode based on system preference */
+    --surface-background: #0f172a;
+    --surface-foreground: #f8fafc;
+    --surface-card: #1e293b;
+    --surface-popover: #1e293b;
+    --surface-modal: #1e293b;
+    --surface-sheet: #334155;
+    --surface-overlay: rgba(0,0,0,0.8);
+    --surface-hover: #334155;
+    --surface-active: #475569;
+    --surface-focus: #1e40af;
+    --surface-selected: #1e3a8a;
+    --surface-disabled: #1e293b;
+
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-tertiary: #94a3b8;
+    --text-quaternary: #64748b;
+    --text-inverse: #0f172a;
+    --text-disabled: #475569;
+    --text-placeholder: #64748b;
+    --text-link: #60a5fa;
+    --text-link-hover: #93c5fd;
+    --text-link-visited: #c084fc;
+
+    --border-default: #334155;
+    --border-muted: #1e293b;
+    --border-subtle: #0f172a;
+    --border-strong: #475569;
+    --border-focus: #3b82f6;
+    --border-error: #ef4444;
+    --border-success: #10b981;
+    --border-warning: #f59e0b;
+
+    --shadow-neumorphism-light: var(--shadow-neumorphism-dark);
+    --shadow-glassmorphism: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  }
+}
+
+@media (prefers-contrast: high) {
+  :root:not([data-theme]) {
+    --text-primary: #000000;
+    --surface-background: #ffffff;
+    --border-default: #000000;
+    --color-primary-500: #0000ff;
+    --color-error-500: #ff0000;
+    --color-success-500: #008000;
+    --color-warning-500: #ff8000;
+  }
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  :root {
+    --surface-background: #ffffff;
+    --text-primary: #000000;
+    --text-secondary: #333333;
+    --border-default: #000000;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  a[href]:after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #666;
+  }
+
+  abbr[title]:after {
+    content: " (" attr(title) ")";
+  }
+}

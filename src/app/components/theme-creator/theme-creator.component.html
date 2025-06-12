@@ -1,0 +1,184 @@
+<div class="theme-creator-container">
+  <div class="theme-creator-grid">
+    <!-- Theme Controls Panel -->
+    <div class="theme-controls-panel">
+      <header class="panel-header">
+        <h2>Theme Creator</h2>
+        <div class="header-actions">
+          <button class="btn btn-sm btn-outline" (click)="resetTheme()">
+            🔄 Reset
+          </button>
+          <button class="btn btn-sm btn-primary" (click)="exportTheme()">
+            📤 Export
+          </button>
+          <button class="btn btn-sm btn-secondary" (click)="importTheme()">
+            📥 Import
+          </button>
+          <input
+            #importInput
+            type="file"
+            accept=".json"
+            style="display: none"
+            (change)="handleImport($event)"
+          />
+        </div>
+      </header>
+
+      <!-- Design Presets -->
+      <section class="presets-section">
+        <h3>Design Presets</h3>
+        <div class="presets-grid" *ngIf="presets$ | async as presets">
+          <button
+            *ngFor="let preset of presets"
+            class="preset-button"
+            (click)="applyPreset(preset.id)"
+            [title]="preset.description"
+          >
+            <span class="preset-name">{{ preset.name }}</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Tab Navigation -->
+      <nav class="tab-navigation">
+        <button
+          *ngFor="let tab of tabs"
+          class="tab-button"
+          [class.active]="activeTab === tab.id"
+          (click)="setActiveTab(tab.id)"
+        >
+          <span class="tab-icon">{{ tab.icon }}</span>
+          <span class="tab-label">{{ tab.label }}</span>
+        </button>
+      </nav>
+
+      <!-- Tab Content -->
+      <div class="tab-content" *ngIf="theme$ | async as theme">
+        <!-- Colors Tab -->
+        <div *ngIf="activeTab === 'colors'" class="tab-panel">
+          <app-color-picker
+            [theme]="theme"
+            (themeChange)="themeService.updateTheme($event)"
+          ></app-color-picker>
+        </div>
+
+        <!-- Typography Tab -->
+        <div *ngIf="activeTab === 'typography'" class="tab-panel">
+          <app-typography-controls
+            [theme]="theme"
+            (themeChange)="themeService.updateTheme($event)"
+          ></app-typography-controls>
+        </div>
+
+        <!-- Layout Tab -->
+        <div *ngIf="activeTab === 'layout'" class="tab-panel">
+          <app-spacing-controls
+            [theme]="theme"
+            (themeChange)="themeService.updateTheme($event)"
+          ></app-spacing-controls>
+        </div>
+
+        <!-- Effects Tab -->
+        <div *ngIf="activeTab === 'effects'" class="tab-panel">
+          <app-effects-controls
+            [theme]="theme"
+            (themeChange)="themeService.updateTheme($event)"
+          ></app-effects-controls>
+        </div>
+
+        <!-- Accessibility Tab -->
+        <div *ngIf="activeTab === 'accessibility'" class="tab-panel">
+          <div class="control-group">
+            <h4>Theme Mode</h4>
+            <div class="button-group">
+              <button
+                class="mode-button"
+                [class.active]="theme.mode === 'light'"
+                (click)="themeService.updateThemeProperty('mode', 'light')"
+              >
+                ☀️ Light
+              </button>
+              <button
+                class="mode-button"
+                [class.active]="theme.mode === 'dark'"
+                (click)="themeService.updateThemeProperty('mode', 'dark')"
+              >
+                🌙 Dark
+              </button>
+              <button
+                class="mode-button"
+                [class.active]="theme.mode === 'auto'"
+                (click)="themeService.updateThemeProperty('mode', 'auto')"
+              >
+                🔄 Auto
+              </button>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <h4>Accessibility Options</h4>
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                [checked]="theme.reducedMotion"
+                (change)="themeService.updateThemeProperty('reducedMotion', $any($event.target).checked)"
+              />
+              <span>Reduced Motion</span>
+            </label>
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                [checked]="theme.highContrast"
+                (change)="themeService.updateThemeProperty('highContrast', $any($event.target).checked)"
+              />
+              <span>High Contrast</span>
+            </label>
+          </div>
+
+          <div class="control-group">
+            <label>Focus Outline Width</label>
+            <input
+              type="range"
+              min="1"
+              max="5"
+              [value]="theme.focusOutlineWidth"
+              (input)="themeService.updateThemeProperty('focusOutlineWidth', +$any($event.target).value)"
+            />
+            <span class="value-display">{{ theme.focusOutlineWidth }}px</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Preview Panel -->
+    <div class="preview-panel">
+      <app-theme-preview></app-theme-preview>
+    </div>
+  </div>
+
+  <!-- Export Modal -->
+  <div class="modal-overlay" *ngIf="showExportModal" (click)="showExportModal = false">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Export Theme CSS</h3>
+        <button class="close-button" (click)="showExportModal = false">✕</button>
+      </div>
+      <div class="modal-body">
+        <textarea
+          class="code-output"
+          [value]="exportedCode"
+          readonly
+          rows="20"
+        ></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" (click)="copyToClipboard(exportedCode)">
+          📋 Copy to Clipboard
+        </button>
+        <button class="btn btn-secondary" (click)="exportJSON()">
+          💾 Download JSON
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,170 @@
+/* ===== HIGH CONTRAST MODE ===== */
+/* Styles for high contrast mode and accessibility */
+
+/* High Contrast Mode Variables */
+:root[data-theme="high-contrast"],
+.high-contrast {
+  --text-primary: #000000;
+  --text-secondary: #000000;
+  --text-tertiary: #000000;
+  --text-inverse: #ffffff;
+  --surface-background: #ffffff;
+  --surface-foreground: #000000;
+  --surface-card: #ffffff;
+  --border-default: #000000;
+  --border-strong: #000000;
+  --color-primary-500: #0000ff;
+  --color-error-500: #ff0000;
+  --color-success-500: #008000;
+  --color-warning-500: #ff8000;
+  --shadow-sm: 0 0 0 1px #000000;
+  --shadow-md: 0 0 0 2px #000000;
+  --shadow-lg: 0 0 0 3px #000000;
+}
+
+/* High Contrast Dark Mode */
+:root[data-theme="high-contrast-dark"],
+.high-contrast-dark {
+  --text-primary: #ffffff;
+  --text-secondary: #ffffff;
+  --text-tertiary: #ffffff;
+  --text-inverse: #000000;
+  --surface-background: #000000;
+  --surface-foreground: #ffffff;
+  --surface-card: #000000;
+  --border-default: #ffffff;
+  --border-strong: #ffffff;
+  --color-primary-500: #00ffff;
+  --color-error-500: #ff6666;
+  --color-success-500: #66ff66;
+  --color-warning-500: #ffff00;
+  --shadow-sm: 0 0 0 1px #ffffff;
+  --shadow-md: 0 0 0 2px #ffffff;
+  --shadow-lg: 0 0 0 3px #ffffff;
+}
+
+/* High Contrast Utilities */
+.high-contrast {
+  /* Forced Colors */
+  forced-color-adjust: none;
+
+  /* Enhanced borders */
+  * {
+    border-color: var(--border-strong) !important;
+  }
+
+  /* Enhanced focus */
+  *:focus {
+    outline: 3px solid var(--border-focus) !important;
+    outline-offset: 2px !important;
+  }
+
+  /* Remove decorative elements */
+  &::before,
+  &::after {
+    content: none !important;
+  }
+}
+
+/* Windows High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  :root {
+    --text-primary: WindowText;
+    --text-secondary: WindowText;
+    --text-inverse: Window;
+    --surface-background: Window;
+    --surface-foreground: WindowText;
+    --border-default: WindowText;
+    --color-primary-500: LinkText;
+    --color-error-500: WindowText;
+  }
+
+  /* Ensure borders are visible */
+  * {
+    border-color: WindowText !important;
+  }
+
+  /* Ensure focus is visible */
+  *:focus {
+    outline: 3px solid WindowText !important;
+    outline-offset: 2px !important;
+  }
+
+  /* Links should use system colors */
+  a {
+    color: LinkText !important;
+  }
+
+  a:visited {
+    color: VisitedText !important;
+  }
+
+  /* Buttons should have visible borders */
+  button,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"] {
+    border: 2px solid WindowText !important;
+  }
+
+  /* Form inputs should have visible borders */
+  input,
+  textarea,
+  select {
+    border: 2px solid WindowText !important;
+  }
+
+  /* Disabled elements */
+  :disabled,
+  [aria-disabled="true"] {
+    color: GrayText !important;
+    border-color: GrayText !important;
+  }
+}
+
+/* Forced Colors Mode */
+@media (forced-colors: active) {
+  /* Ensure all text is visible */
+  * {
+    forced-color-adjust: auto;
+  }
+
+  /* Preserve button boundaries */
+  button {
+    border: 1px solid ButtonText;
+  }
+
+  /* Ensure links are distinguishable */
+  a {
+    forced-color-adjust: none;
+    color: LinkText;
+  }
+
+  a:visited {
+    color: VisitedText;
+  }
+
+  /* Selected text */
+  ::selection {
+    background-color: Highlight;
+    color: HighlightText;
+    forced-color-adjust: none;
+  }
+}
+
+/* High Contrast Utility Classes */
+.hc-border { border: 2px solid var(--border-strong) !important; }
+.hc-border-top { border-top: 2px solid var(--border-strong) !important; }
+.hc-border-right { border-right: 2px solid var(--border-strong) !important; }
+.hc-border-bottom { border-bottom: 2px solid var(--border-strong) !important; }
+.hc-border-left { border-left: 2px solid var(--border-strong) !important; }
+
+.hc-outline { outline: 2px solid var(--border-strong) !important; }
+.hc-outline-thick { outline: 3px solid var(--border-strong) !important; }
+
+.hc-text { color: var(--text-primary) !important; }
+.hc-bg { background-color: var(--surface-background) !important; }
+.hc-invert {
+  color: var(--text-inverse) !important;
+  background-color: var(--surface-foreground) !important;
+}

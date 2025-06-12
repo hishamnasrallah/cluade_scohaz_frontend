@@ -1,0 +1,136 @@
+/* ===== SCREEN READER UTILITIES ===== */
+/* Utilities for screen reader accessibility */
+
+/* Screen Reader Only - Visually hidden but accessible to screen readers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Not Screen Reader Only - Make visible again */
+.not-sr-only {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Screen Reader Only Focusable - Visible when focused */
+.sr-only-focusable:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Aria Hidden - Hide from screen readers */
+.aria-hidden {
+  aria-hidden: true;
+}
+
+/* Visually Hidden - Alternative to sr-only */
+.visually-hidden {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
+  white-space: nowrap;
+}
+
+/* Assistive Text */
+.assistive-text {
+  position: absolute !important;
+  clip: rect(1px, 1px, 1px, 1px);
+  padding: 0 !important;
+  border: 0 !important;
+  height: 1px !important;
+  width: 1px !important;
+  overflow: hidden;
+}
+
+/* Live Region Utilities */
+.aria-live-polite {
+  aria-live: polite;
+}
+
+.aria-live-assertive {
+  aria-live: assertive;
+}
+
+.aria-live-off {
+  aria-live: off;
+}
+
+/* Aria Label Utilities */
+.aria-label {
+  position: relative;
+}
+
+/* Screen Reader Text Utilities */
+.sr-text-xs { font-size: 0; }
+.sr-text-xs::before {
+  content: attr(aria-label);
+  font-size: var(--text-xs);
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Focusable Screen Reader Only */
+.sr-only-focusable {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sr-only-focusable:active,
+.sr-only-focusable:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Reading Order Utilities */
+.reading-order-1 { order: 1; }
+.reading-order-2 { order: 2; }
+.reading-order-3 { order: 3; }
+.reading-order-4 { order: 4; }
+.reading-order-5 { order: 5; }
+.reading-order-6 { order: 6; }
+.reading-order-first { order: -9999; }
+.reading-order-last { order: 9999; }
+.reading-order-none { order: 0; }

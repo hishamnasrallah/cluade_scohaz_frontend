@@ -1,0 +1,149 @@
+<div class="preview-container" *ngIf="theme$ | async as theme">
+  <!-- Header -->
+  <header class="preview-header">
+    <div class="header-content">
+      <div class="brand">
+        <span class="logo">{{ theme.logoUrl || '🏢' }}</span>
+        <div class="brand-info">
+          <h1>{{ theme.brandName }}</h1>
+          <p>Enterprise Dynamic Theme System</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-outline" (click)="openModal()">
+          🔧 Settings
+        </button>
+        <button class="btn btn-ghost">
+          {{ theme.mode === 'light' ? '🌙' : '☀️' }}
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="preview-main">
+    <!-- Navigation -->
+    <nav class="navigation-bar">
+      <a
+        *ngFor="let item of navigationItems"
+        class="nav-item"
+        [class.active]="activeNavItem === item"
+        (click)="activeNavItem = item"
+      >
+        {{ item }}
+      </a>
+    </nav>
+
+    <!-- Metrics Cards -->
+    <section class="metrics-section">
+      <h2>Dashboard Overview</h2>
+      <div class="metrics-grid">
+        <div
+          *ngFor="let metric of metrics"
+          class="metric-card"
+          [attr.data-card-style]="theme.cardStyle"
+        >
+          <div class="metric-header">
+            <span class="metric-icon">{{ metric.icon }}</span>
+            <span class="metric-change" [ngClass]="getTrendClass(metric.trend)">
+              {{ metric.change }}
+            </span>
+          </div>
+          <h3 class="metric-value">{{ metric.value }}</h3>
+          <p class="metric-title">{{ metric.title }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Form Example -->
+    <section class="form-section">
+      <div class="form-card" [attr.data-card-style]="theme.cardStyle">
+        <h3>Sample Form</h3>
+        <form class="sample-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" placeholder="Enter your name" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" placeholder="Enter your email" class="form-input" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Message</label>
+            <textarea
+              placeholder="Enter your message"
+              rows="3"
+              class="form-textarea"
+            ></textarea>
+          </div>
+          <div class="button-group">
+            <button type="button" class="btn btn-primary">Submit</button>
+            <button type="button" class="btn btn-secondary">Save Draft</button>
+            <button type="button" class="btn btn-outline">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Features Grid -->
+    <section class="features-section">
+      <h2>Enterprise Features</h2>
+      <div class="features-grid">
+        <div
+          *ngFor="let feature of features"
+          class="feature-card"
+          [attr.data-card-style]="theme.cardStyle"
+        >
+          <div class="feature-icon">{{ feature.icon }}</div>
+          <h3>{{ feature.title }}</h3>
+          <p>{{ feature.description }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Button Showcase -->
+    <section class="buttons-section">
+      <div class="buttons-card" [attr.data-card-style]="theme.cardStyle">
+        <h3>Button Styles</h3>
+        <div class="button-showcase">
+          <button class="btn btn-primary">Primary</button>
+          <button class="btn btn-secondary">Secondary</button>
+          <button class="btn btn-outline">Outline</button>
+          <button class="btn btn-ghost">Ghost</button>
+          <button class="btn btn-success">Success</button>
+          <button class="btn btn-warning">Warning</button>
+          <button class="btn btn-error">Error</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal Example -->
+  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div
+      class="modal"
+      [attr.data-card-style]="theme.cardStyle"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="modal-header">
+        <h2>Advanced Settings</h2>
+        <button class="btn btn-ghost" (click)="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>This modal showcases the dynamic theming system in action:</p>
+        <ul>
+          <li>✓ Consistent styling with theme</li>
+          <li>✓ Smooth animations (if enabled)</li>
+          <li>✓ Responsive design</li>
+          <li>✓ Accessibility features</li>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" (click)="closeModal()">Got it!</button>
+        <button class="btn btn-outline" (click)="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>

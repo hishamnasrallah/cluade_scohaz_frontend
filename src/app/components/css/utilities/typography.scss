@@ -1,0 +1,244 @@
+/* ===== TYPOGRAPHY UTILITIES ===== */
+/* Text utilities & typography system */
+
+/* Headings */
+h1, .h1 {
+  font-size: var(--text-4xl);
+  font-weight: var(--font-bold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  margin-bottom: var(--spacing-6);
+  font-family: var(--font-display);
+}
+
+h2, .h2 {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  margin-bottom: var(--spacing-5);
+  font-family: var(--font-display);
+}
+
+h3, .h3 {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-snug);
+  margin-bottom: var(--spacing-4);
+}
+
+h4, .h4 {
+  font-size: var(--text-xl);
+  font-weight: var(--font-medium);
+  line-height: var(--leading-snug);
+  margin-bottom: var(--spacing-3);
+}
+
+h5, .h5 {
+  font-size: var(--text-lg);
+  font-weight: var(--font-medium);
+  line-height: var(--leading-normal);
+  margin-bottom: var(--spacing-3);
+}
+
+h6, .h6 {
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+  line-height: var(--leading-normal);
+  margin-bottom: var(--spacing-2);
+}
+
+p {
+  margin-bottom: var(--spacing-4);
+  line-height: var(--leading-relaxed);
+}
+
+.lead {
+  font-size: var(--text-xl);
+  font-weight: var(--font-light);
+  line-height: var(--leading-relaxed);
+  color: var(--text-secondary);
+}
+
+.small, small {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.large {
+  font-size: var(--text-lg);
+}
+
+/* Font Size Utilities */
+.text-xs { font-size: var(--text-xs); }
+.text-sm { font-size: var(--text-sm); }
+.text-base { font-size: var(--text-base); }
+.text-lg { font-size: var(--text-lg); }
+.text-xl { font-size: var(--text-xl); }
+.text-2xl { font-size: var(--text-2xl); }
+.text-3xl { font-size: var(--text-3xl); }
+.text-4xl { font-size: var(--text-4xl); }
+.text-5xl { font-size: var(--text-5xl); }
+.text-6xl { font-size: var(--text-6xl); }
+.text-7xl { font-size: var(--text-7xl); }
+.text-8xl { font-size: var(--text-8xl); }
+.text-9xl { font-size: var(--text-9xl); }
+.text-10xl { font-size: var(--text-10xl); }
+.text-11xl { font-size: var(--text-11xl); }
+.text-12xl { font-size: var(--text-12xl); }
+
+/* Font Weight Utilities */
+.font-thin { font-weight: var(--font-thin); }
+.font-extralight { font-weight: var(--font-extralight); }
+.font-light { font-weight: var(--font-light); }
+.font-normal { font-weight: var(--font-normal); }
+.font-medium { font-weight: var(--font-medium); }
+.font-semibold { font-weight: var(--font-semibold); }
+.font-bold { font-weight: var(--font-bold); }
+.font-extrabold { font-weight: var(--font-extrabold); }
+.font-black { font-weight: var(--font-black); }
+.font-heavy { font-weight: var(--font-heavy); }
+
+/* Font Family Utilities */
+.font-sans { font-family: var(--font-sans); }
+.font-serif { font-family: var(--font-serif); }
+.font-mono { font-family: var(--font-mono); }
+.font-display { font-family: var(--font-display); }
+.font-handwriting { font-family: var(--font-handwriting); }
+.font-decorative { font-family: var(--font-decorative); }
+.font-brand { font-family: var(--font-brand); }
+
+/* Line Height Utilities */
+.leading-none { line-height: var(--leading-none); }
+.leading-tight { line-height: var(--leading-tight); }
+.leading-snug { line-height: var(--leading-snug); }
+.leading-normal { line-height: var(--leading-normal); }
+.leading-relaxed { line-height: var(--leading-relaxed); }
+.leading-loose { line-height: var(--leading-loose); }
+.leading-heading { line-height: var(--leading-heading); }
+.leading-body { line-height: var(--leading-body); }
+
+/* Letter Spacing Utilities */
+.tracking-tighter { letter-spacing: var(--tracking-tighter); }
+.tracking-tight { letter-spacing: var(--tracking-tight); }
+.tracking-normal { letter-spacing: var(--tracking-normal); }
+.tracking-wide { letter-spacing: var(--tracking-wide); }
+.tracking-wider { letter-spacing: var(--tracking-wider); }
+.tracking-widest { letter-spacing: var(--tracking-widest); }
+.tracking-headline { letter-spacing: var(--tracking-headline); }
+.tracking-subhead { letter-spacing: var(--tracking-subhead); }
+
+/* Text Alignment */
+.text-left { text-align: left; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-justify { text-align: justify; }
+.text-start { text-align: start; }
+.text-end { text-align: end; }
+
+/* Text Color Utilities */
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-tertiary { color: var(--text-tertiary); }
+.text-quaternary { color: var(--text-quaternary); }
+.text-inverse { color: var(--text-inverse); }
+.text-disabled { color: var(--text-disabled); }
+.text-placeholder { color: var(--text-placeholder); }
+.text-link { color: var(--text-link); }
+
+.text-success { color: var(--color-success-500); }
+.text-warning { color: var(--color-warning-500); }
+.text-error { color: var(--color-error-500); }
+.text-info { color: var(--color-info-500); }
+.text-help { color: var(--color-help-500); }
+.text-note { color: var(--color-note-500); }
+
+.text-primary-500 { color: var(--color-primary-500); }
+.text-secondary-500 { color: var(--color-secondary-500); }
+.text-tertiary-500 { color: var(--color-tertiary-500); }
+.text-accent-500 { color: var(--color-accent-500); }
+.text-neutral-500 { color: var(--color-neutral-500); }
+
+/* Text Decoration */
+.text-decoration-none { text-decoration: none; }
+.text-decoration-underline { text-decoration: underline; }
+.text-decoration-overline { text-decoration: overline; }
+.text-decoration-line-through { text-decoration: line-through; }
+
+/* Text Transform */
+.text-transform-none { text-transform: none; }
+.text-transform-uppercase { text-transform: uppercase; }
+.text-transform-lowercase { text-transform: lowercase; }
+.text-transform-capitalize { text-transform: capitalize; }
+.text-transform-full-width { text-transform: full-width; }
+
+/* Text Overflow */
+.text-overflow-ellipsis {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.text-overflow-clip { text-overflow: clip; }
+
+/* White Space */
+.white-space-normal { white-space: normal; }
+.white-space-nowrap { white-space: nowrap; }
+.white-space-pre { white-space: pre; }
+.white-space-pre-line { white-space: pre-line; }
+.white-space-pre-wrap { white-space: pre-wrap; }
+.white-space-break-spaces { white-space: break-spaces; }
+
+/* Word Break */
+.word-break-normal { word-break: normal; }
+.word-break-words { word-break: break-word; }
+.word-break-all { word-break: break-all; }
+.word-break-keep { word-break: keep-all; }
+
+/* Hyphens */
+.hyphens-none { hyphens: none; }
+.hyphens-manual { hyphens: manual; }
+.hyphens-auto { hyphens: auto; }
+
+/* Text Shadows */
+.text-shadow-none { text-shadow: var(--text-shadow-none); }
+.text-shadow-sm { text-shadow: var(--text-shadow-sm); }
+.text-shadow-md { text-shadow: var(--text-shadow-md); }
+.text-shadow-lg { text-shadow: var(--text-shadow-lg); }
+.text-shadow-xl { text-shadow: var(--text-shadow-xl); }
+.text-shadow-glow { text-shadow: var(--text-shadow-glow); }
+.text-shadow-neon { text-shadow: var(--text-shadow-neon); }
+.text-shadow-emboss { text-shadow: var(--text-shadow-emboss); }
+.text-shadow-inset { text-shadow: var(--text-shadow-inset); }
+
+/* Gradient Text */
+.text-gradient {
+  background: var(--gradient-text);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+.text-gradient-primary {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+.text-gradient-secondary {
+  background: var(--gradient-secondary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+.text-gradient-rainbow {
+  background: var(--gradient-rainbow);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}

@@ -1,0 +1,30 @@
+////@import '../src/styles'; // Your existing SCSS framework
+//@import '../styles/theme-variables.scss';
+//
+//// Theme-specific styles
+//[data-design-style="glassmorphic"] {
+//  .metric-card,
+//  .form-card,
+//  .feature-card {
+//    background: rgba(255, 255, 255, 0.1);
+//    backdrop-filter: blur(var(--blur-intensity));
+//    border: 1px solid rgba(255, 255, 255, 0.2);
+//  }
+//}
+//
+//[data-design-style="neumorphic"] {
+//  .metric-card,
+//  .form-card,
+//  .feature-card {
+//    box-shadow:
+//      calc(var(--spacing-4) * 1px) calc(var(--spacing-4) * 1px) calc(var(--spacing-4) * 2px) #bebebe,
+//      calc(var(--spacing-4) * -1px) calc(var(--spacing-4) * -1px) calc(var(--spacing-4) * 2px) #ffffff;
+//  }
+//}
+//
+//[data-theme-mode="dark"] {
+//  .preview-container {
+//    background-color: var(--surface-background);
+//    color: var(--text-primary);
+//  }
+//}

@@ -1,0 +1,104 @@
+/* ===== FOCUS MANAGEMENT ===== */
+/* Focus styles and utilities for accessibility */
+
+/* Focus Visible - Enhanced focus indicator for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+/* Remove default focus outline for mouse users */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Focus Within - Style parent when child has focus */
+.focus-within\:bg-primary-50:focus-within { background-color: var(--color-primary-50); }
+.focus-within\:border-primary-500:focus-within { border-color: var(--color-primary-500); }
+.focus-within\:shadow-lg:focus-within { box-shadow: var(--shadow-lg); }
+.focus-within\:scale-105:focus-within { transform: scale(1.05); }
+
+/* Focus Styles for specific elements */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+/* Skip to main content link */
+.skip-to-main {
+  position: absolute;
+  top: -100px;
+  left: var(--spacing-4);
+  z-index: var(--z-tooltip);
+  padding: var(--spacing-2) var(--spacing-4);
+  background: var(--surface-background);
+  color: var(--text-primary);
+  text-decoration: none;
+  border-radius: var(--rounded-md);
+  box-shadow: var(--shadow-lg);
+  transition: top var(--duration-fast) var(--ease-out);
+}
+
+.skip-to-main:focus {
+  top: var(--spacing-4);
+}
+
+/* Focus trap utilities */
+.focus-trap {
+  position: relative;
+}
+
+.focus-trap:focus {
+  outline: none;
+}
+
+/* Keyboard navigation indicators */
+.keyboard-navigating *:focus {
+  outline: 3px solid var(--border-focus) !important;
+  outline-offset: 2px !important;
+}
+
+/* Interactive element focus states */
+.interactive:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+/* Remove focus for non-interactive elements */
+div:focus,
+span:focus,
+p:focus,
+section:focus,
+article:focus {
+  outline: none;
+}
+
+/* Focus utilities */
+.focus\:outline-none:focus { outline: none; }
+.focus\:outline-primary:focus { outline: 2px solid var(--color-primary-500); }
+.focus\:outline-secondary:focus { outline: 2px solid var(--color-secondary-500); }
+.focus\:outline-success:focus { outline: 2px solid var(--color-success-500); }
+.focus\:outline-warning:focus { outline: 2px solid var(--color-warning-500); }
+.focus\:outline-error:focus { outline: 2px solid var(--color-error-500); }
+
+.focus\:ring-0:focus { box-shadow: none; }
+.focus\:ring-2:focus { box-shadow: 0 0 0 2px var(--border-focus); }
+.focus\:ring-4:focus { box-shadow: 0 0 0 4px var(--border-focus); }
+.focus\:ring-primary:focus { box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); }
+.focus\:ring-secondary:focus { box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.5); }
+.focus\:ring-success:focus { box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.5); }
+.focus\:ring-warning:focus { box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.5); }
+.focus\:ring-error:focus { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.5); }
+
+/* Focus ring offset */
+.focus\:ring-offset-0:focus { box-shadow: 0 0 0 0px var(--surface-background), 0 0 0 3px var(--border-focus); }
+.focus\:ring-offset-1:focus { box-shadow: 0 0 0 1px var(--surface-background), 0 0 0 4px var(--border-focus); }
+.focus\:ring-offset-2:focus { box-shadow: 0 0 0 2px var(--surface-background), 0 0 0 5px var(--border-focus); }
+.focus\:ring-offset-4:focus { box-shadow: 0 0 0 4px var(--surface-background), 0 0 0 7px var(--border-focus); }

@@ -8,6 +8,7 @@ import { ConfigComponent } from './components/config/config.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { ApplicationDetailComponent } from './components/application-detail/application-detail.component';
 import { ApplicationsInboxComponent } from './components/applications-inbox/applications-inbox.component';
+import { ThemeCreatorComponent } from './components/theme-creator/theme-creator.component';
 
 export const routes: Routes = [
   // Default route - redirect to dashboard
@@ -28,7 +29,10 @@ export const routes: Routes = [
       isPublic: true
     }
   },
-
+  {
+    path: 'theme-creator',
+    component: ThemeCreatorComponent
+  },
   // Authentication required routes
   {
     path: 'login',
