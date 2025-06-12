@@ -585,7 +585,7 @@ export class LookupsManagementComponent implements OnInit {
     this.isLoading = true;
     const baseUrl = this.configService.getBaseUrl();
 
-    this.http.get<{count: number, results: LookupItem[]}>(`${baseUrl}/lookups/lookup/`)
+    this.http.get<{count: number, results: LookupItem[]}>(`${baseUrl}/lookups/management//`)
       .subscribe({
         next: (response) => {
           this.allLookups = response.results;
@@ -653,8 +653,8 @@ export class LookupsManagementComponent implements OnInit {
     const baseUrl = this.configService.getBaseUrl();
 
     const request = this.editingLookup?.id
-      ? this.http.put(`${baseUrl}/lookups/lookup/${this.editingLookup.id}/`, lookupData)
-      : this.http.post(`${baseUrl}/lookups/lookup/`, lookupData);
+      ? this.http.put(`${baseUrl}/lookups/management//${this.editingLookup.id}/`, lookupData)
+      : this.http.post(`${baseUrl}/lookups/management//`, lookupData);
 
     request.subscribe({
       next: (response) => {
@@ -683,7 +683,7 @@ export class LookupsManagementComponent implements OnInit {
     const baseUrl = this.configService.getBaseUrl();
     const updatedLookup = { ...lookup, active_ind: !lookup.active_ind };
 
-    this.http.put(`${baseUrl}/lookups/lookup/${lookup.id}/`, updatedLookup)
+    this.http.put(`${baseUrl}/lookups/management//${lookup.id}/`, updatedLookup)
       .subscribe({
         next: () => {
           this.snackBar.open(
@@ -704,7 +704,7 @@ export class LookupsManagementComponent implements OnInit {
     if (confirm(`Are you sure you want to delete "${lookup.name}"?`)) {
       const baseUrl = this.configService.getBaseUrl();
 
-      this.http.delete(`${baseUrl}/lookups/lookup/${lookup.id}/`)
+      this.http.delete(`${baseUrl}/lookups/management//${lookup.id}/`)
         .subscribe({
           next: () => {
             this.snackBar.open('Lookup deleted successfully', 'Close', { duration: 3000 });
