@@ -120,11 +120,11 @@ export const routes: Routes = [
         loadComponent: () => import('./components/settings/crud-permissions-management/crud-permissions-management.component').then(m => m.CrudPermissionsManagementComponent),
         data: { title: 'CRUD Permissions', icon: 'security' }
       },
-      // {
-      //   path: 'users',
-      //   loadComponent: () => import('./components/settings/user-management/user-management.component').then(m => m.UserManagementComponent),
-      //   data: { title: 'User Management', icon: 'people' }
-      // },
+      {
+        path: 'users',
+        loadComponent: () => import('./components/settings/user-management/user-management.component').then(m => m.UserManagementComponent),
+        data: { title: 'User Management', icon: 'people' }
+      },
       {
         path: 'translations',
         loadComponent: () => import('./components/settings/translation-management/translation-management.component').then(m => m.TranslationManagementComponent),
@@ -140,11 +140,11 @@ export const routes: Routes = [
         loadComponent: () => import('./components/settings/licenses-management/licenses-management.component').then(m => m.LicensesManagementComponent),
         data: { title: 'Licenses & Subscriptions', icon: 'receipt' }
       },
-      // {
-      //   path: 'system',
-      //   loadComponent: () => import('./components/settings/system-settings/system-settings.component').then(m => m.SystemSettingsComponent),
-      //   data: { title: 'System Settings', icon: 'tune' }
-      // }
+      {
+        path: 'system',
+        loadComponent: () => import('./components/settings/system-settings/system-settings.component').then(m => m.SystemSettingsComponent),
+        data: { title: 'System Settings', icon: 'tune' }
+      }
     ]
   },
 

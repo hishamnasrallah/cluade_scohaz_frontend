@@ -788,8 +788,9 @@ export class UserManagementComponent implements OnInit {
   dataSource = new MatTableDataSource<User>();
   displayedColumns: string[] = ['user', 'email', 'role', 'status', 'lastLogin', 'actions'];
 
-  userForm: FormGroup;
-  profileForm: FormGroup;
+  // FIX 1: Initialize FormGroup properties with definite assignment assertion
+  userForm!: FormGroup;
+  profileForm!: FormGroup;
   editingUser: User | null = null;
 
   selectedGroups: number[] = [];
@@ -1045,12 +1046,13 @@ export class UserManagementComponent implements OnInit {
     }
   }
 
-  filterByGroup(groupId: number): void {
+  // FIX 3: Change parameter type to allow both string and number
+  filterByGroup(groupId: string | number): void {
     if (groupId === 'all') {
       this.dataSource.data = this.users;
     } else {
       this.dataSource.data = this.users.filter(u =>
-        u.groups?.some(g => g.id === groupId)
+        u.groups?.some(g => g.id === Number(groupId))
       );
     }
   }
