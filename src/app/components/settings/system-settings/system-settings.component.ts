@@ -746,11 +746,12 @@ export class SystemSettingsComponent implements OnInit {
   isLoading = false;
   isSaving = false;
 
-  generalForm: FormGroup;
-  securityForm: FormGroup;
-  performanceForm: FormGroup;
-  notificationForm: FormGroup;
-  maintenanceForm: FormGroup;
+  // FIX: Initialize FormGroup properties with definite assignment assertion
+  generalForm!: FormGroup;
+  securityForm!: FormGroup;
+  performanceForm!: FormGroup;
+  notificationForm!: FormGroup;
+  maintenanceForm!: FormGroup;
 
   private originalValues: any = {};
 
