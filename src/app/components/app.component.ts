@@ -1,8 +1,9 @@
-// components/app.component.ts - ENHANCED with Settings Navigation
+// components/app.component.ts - UPDATED with proper initialization
 import { Component, OnInit } from '@angular/core';
 import {Router, RouterOutlet, NavigationEnd} from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { ConfigService } from '../services/config.service';
+import { TranslationService } from '../services/translation.service'; // Add this import
 import {MatToolbar} from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import {MatButton, MatIconButton} from "@angular/material/button";
@@ -14,7 +15,7 @@ import { filter } from 'rxjs/operators';
 import {MatDivider} from '@angular/material/divider';
 import { HttpClient } from '@angular/common/http';
 
-// Import the same interfaces used in dashboard
+// ... (keep all your existing interfaces - ApiResponse, ApplicationSummary, etc.)
 interface ApiResponse {
   applications: {
     api_version: string;
@@ -89,7 +90,6 @@ interface ApplicationSummary {
   ],
   styleUrl:'app.component.scss'
 })
-
 export class AppComponent implements OnInit {
   isAuthenticated = false;
   showConfigButton = false;
@@ -97,6 +97,10 @@ export class AppComponent implements OnInit {
   isHomePage = false;
   currentPageTitle = '';
   title = 'LowCode Pro';
+
+  // Add app initialization state
+  isAppInitialized = true; // Simplified, always true now
+  initializationError = false;
 
   // Applications data for dynamic menu
   applications: ApplicationSummary[] = [];
@@ -116,13 +120,27 @@ export class AppComponent implements OnInit {
     private authService: AuthService,
     private configService: ConfigService,
     private router: Router,
-    private http: HttpClient
+    private http: HttpClient,
+    private translationService: TranslationService // Add this
   ) {}
 
   ngOnInit(): void {
+    console.log('AppComponent: Starting initialization');
+
+    // First, check if configuration is available
+    if (!this.configService.isConfigured()) {
+      console.log('AppComponent: App not configured, redirecting to config');
+      this.router.navigate(['/config']);
+      return;
+    }
+
+    // Initialize translations with default language
+    this.translationService.initializeWithDefaults().subscribe();
+
     // Subscribe to authentication state
     this.authService.isAuthenticated$.subscribe(
       isAuth => {
+        console.log('AppComponent: Authentication state changed:', isAuth);
         this.isAuthenticated = isAuth;
         this.showConfigButton = isAuth || this.configService.isConfigured();
 
@@ -141,9 +159,8 @@ export class AppComponent implements OnInit {
     });
 
     // Initial routing logic
-    if (!this.configService.isConfigured()) {
-      this.router.navigate(['/config']);
-    } else if (!this.authService.isAuthenticated()) {
+    if (!this.authService.isAuthenticated()) {
+      console.log('AppComponent: User not authenticated, redirecting to login');
       this.router.navigate(['/login']);
     }
   }
@@ -167,7 +184,7 @@ export class AppComponent implements OnInit {
     }
   }
 
-  // Load applications for the dynamic menu
+  // Load applications for the dynamic menu (keep your existing logic)
   private loadApplicationsForMenu(): void {
     this.isLoadingApplications = true;
     const baseUrl = this.configService.getBaseUrl();
@@ -222,7 +239,7 @@ export class AppComponent implements OnInit {
     return `${endpoints.length} endpoint${endpoints.length > 1 ? 's' : ''} supporting ${actionText}${actionsArray.length > 3 ? ' and more' : ''}`;
   }
 
-  // Navigation methods
+  // Navigation methods (keep your existing methods)
   logout(): void {
     this.isLoading = true;
     setTimeout(() => {
@@ -249,7 +266,6 @@ export class AppComponent implements OnInit {
     this.router.navigate(['/dashboard']);
   }
 
-  // New navigation methods for menu items
   goToApplications(): void {
     this.router.navigate(['/applications']);
   }
@@ -259,7 +275,7 @@ export class AppComponent implements OnInit {
   }
 
   goToInbox(): void {
-    this.router.navigate(['/inbox']); // This redirects to /applications as defined in routes
+    this.router.navigate(['/inbox']);
   }
 
   // Settings navigation

@@ -1,8 +1,8 @@
-// services/translation.service.ts
+// services/translation.service.ts - FIXED VERSION
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 import { ConfigService } from './config.service';
 
 export interface TranslationResponse {
@@ -14,10 +14,6 @@ export interface VersionResponse {
   version: string;
 }
 
-export interface LanguageListResponse {
-  languages: string[];
-}
-
 @Injectable({
   providedIn: 'root'
 })
@@ -26,6 +22,7 @@ export class TranslationService {
   private translations = new BehaviorSubject<TranslationResponse>({});
   private cachedTranslations: { [lang: string]: TranslationResponse } = {};
   private cachedVersions: { [lang: string]: string } = {};
+  private isInitialized = false;
 
   public currentLanguage$ = this.currentLanguage.asObservable();
   public translations$ = this.translations.asObservable();
@@ -34,25 +31,39 @@ export class TranslationService {
     private http: HttpClient,
     private configService: ConfigService
   ) {
-    this.initializeTranslations();
+    // Don't auto-initialize here - let the app component handle it
   }
 
   /**
-   * Initialize the translation service
+   * Initialize the translation service with a specific language
+   * This should be called by the app initialization process
    */
-  private initializeTranslations(): void {
-    // Get saved language from localStorage or default to 'en'
-    const savedLanguage = localStorage.getItem('app_language') || 'en';
-    this.setLanguage(savedLanguage);
+  initializeWithLanguage(language: string): Observable<TranslationResponse> {
+    console.log('TranslationService: Initializing with language:', language);
+    this.isInitialized = true;
+    return this.setLanguage(language);
+  }
+
+  /**
+   * Initialize with default language (fallback)
+   */
+  initializeWithDefaults(): Observable<TranslationResponse> {
+    console.log('TranslationService: Initializing with defaults');
+    const browserLanguage = navigator.language.split('-')[0] || 'en';
+    const savedLanguage = localStorage.getItem('app_language') || browserLanguage;
+    return this.initializeWithLanguage(savedLanguage);
   }
 
   /**
    * Set the current language and load its translations
    */
-  setLanguage(language: string): void {
+  setLanguage(language: string): Observable<TranslationResponse> {
+    console.log('TranslationService: Setting language to:', language);
+
     this.currentLanguage.next(language);
     localStorage.setItem('app_language', language);
-    this.loadTranslations(language);
+
+    return this.loadTranslations(language);
   }
 
   /**
@@ -121,6 +132,7 @@ export class TranslationService {
         })
       )
       .subscribe(translations => {
+        console.log(`TranslationService: Loaded ${Object.keys(translations).length} translations for ${language}`);
         this.cachedTranslations[language] = translations;
         this.translations.next(translations);
       });
@@ -180,102 +192,24 @@ export class TranslationService {
    */
   getAvailableLanguages(): Observable<string[]> {
     const baseUrl = this.configService.getBaseUrl();
-    return this.http.get<string[]>(`${baseUrl}/version/translation/languages/`);
+    return this.http.get<string[]>(`${baseUrl}/languages/`);
   }
 
   /**
-   * Create a new language
+   * Update the language preference (used by preferences service)
    */
-  createLanguage(languageCode: string): Observable<any> {
-    const baseUrl = this.configService.getBaseUrl();
-    return this.http.post(`${baseUrl}/version/translation/languages/`, { code: languageCode });
+  updateLanguagePreference(language: string): void {
+    console.log('TranslationService: Updating language preference to:', language);
+    if (language !== this.getCurrentLanguage()) {
+      this.setLanguage(language).subscribe();
+    }
   }
 
   /**
-   * Update translations for a language
+   * Check if service is initialized
    */
-  updateTranslations(language: string, translations: { [key: string]: string }, keysToDelete: string[] = []): Observable<any> {
-    const baseUrl = this.configService.getBaseUrl();
-    const updateData = {
-      add_or_update: translations,
-      delete: keysToDelete
-    };
-
-    return this.http.patch(`${baseUrl}/version/translations/${language}/`, updateData)
-      .pipe(
-        map(response => {
-          // Update cached translations
-          if (this.cachedTranslations[language]) {
-            // Add/update keys
-            Object.keys(translations).forEach(key => {
-              this.cachedTranslations[language][key] = translations[key];
-            });
-
-            // Delete keys
-            keysToDelete.forEach(key => {
-              delete this.cachedTranslations[language][key];
-            });
-
-            // Update current translations if this is the active language
-            if (language === this.getCurrentLanguage()) {
-              this.translations.next(this.cachedTranslations[language]);
-            }
-          }
-
-          return response;
-        })
-      );
-  }
-
-  /**
-   * Replace all translations for a language
-   */
-  replaceTranslations(language: string, translations: { [key: string]: string }): Observable<any> {
-    const baseUrl = this.configService.getBaseUrl();
-
-    return this.http.put(`${baseUrl}/version/translations/${language}/`, translations)
-      .pipe(
-        map(response => {
-          // Update cached translations
-          this.cachedTranslations[language] = translations;
-
-          // Update current translations if this is the active language
-          if (language === this.getCurrentLanguage()) {
-            this.translations.next(translations);
-          }
-
-          return response;
-        })
-      );
-  }
-
-  /**
-   * Get version information for a language
-   */
-  getLanguageVersion(language: string): Observable<VersionResponse> {
-    const baseUrl = this.configService.getBaseUrl();
-    return this.http.get<VersionResponse>(`${baseUrl}/version/latest-version/${language}/`);
-  }
-
-  /**
-   * Check if a translation key exists
-   */
-  hasTranslation(key: string): boolean {
-    return this.translations.value.hasOwnProperty(key);
-  }
-
-  /**
-   * Get all translation keys for the current language
-   */
-  getAllKeys(): string[] {
-    return Object.keys(this.translations.value);
-  }
-
-  /**
-   * Get all translations for the current language
-   */
-  getAllTranslations(): TranslationResponse {
-    return { ...this.translations.value };
+  isInitializedService(): boolean {
+    return this.isInitialized;
   }
 
   /**
@@ -285,6 +219,21 @@ export class TranslationService {
     this.cachedTranslations = {};
     this.cachedVersions = {};
     this.loadTranslations(this.getCurrentLanguage());
+  }
+
+  /**
+   * Check if the current language is RTL (Right-to-Left)
+   */
+  isRTL(): boolean {
+    const rtlLanguages = ['ar', 'he', 'fa', 'ur'];
+    return rtlLanguages.includes(this.getCurrentLanguage());
+  }
+
+  /**
+   * Get language direction for CSS
+   */
+  getLanguageDirection(): 'ltr' | 'rtl' {
+    return this.isRTL() ? 'rtl' : 'ltr';
   }
 
   /**
@@ -301,20 +250,5 @@ export class TranslationService {
       link.click();
       URL.revokeObjectURL(url);
     }
-  }
-
-  /**
-   * Check if the current language is RTL (Right-to-Left)
-   */
-  isRTL(): boolean {
-    const rtlLanguages = ['ar', 'he', 'fa', 'ur'];
-    return rtlLanguages.includes(this.getCurrentLanguage());
-  }
-
-  /**
-   * Get language direction for CSS
-   */
-  getLanguageDirection(): 'ltr' | 'rtl' {
-    return this.isRTL() ? 'rtl' : 'ltr';
   }
 }
