@@ -1,6 +1,7 @@
 // services/theme.service.ts
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, fromEvent, merge } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ThemeConfig, ThemePreset } from '../models/theme.model';
 
 @Injectable({
@@ -78,12 +79,64 @@ export class ThemeService {
   private presetsSubject = new BehaviorSubject<ThemePreset[]>(this.getDefaultPresets());
   public presets$: Observable<ThemePreset[]> = this.presetsSubject.asObservable();
 
+  private customPresetsKey = 'app-custom-presets';
+  private themeHistoryKey = 'app-theme-history';
+  private maxHistoryItems = 10;
+
   constructor() {
+    this.initializeTheme();
+    this.setupSystemPreferences();
+    this.loadCustomPresets();
+  }
+
+  private initializeTheme(): void {
     this.loadSavedTheme();
-    // Apply theme after a small delay to ensure DOM is ready
-    setTimeout(() => {
-      this.applyTheme(this.themeSubject.value);
-    }, 0);
+    // Apply theme after DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        this.applyTheme(this.themeSubject.value);
+      });
+    } else {
+      setTimeout(() => {
+        this.applyTheme(this.themeSubject.value);
+      }, 0);
+    }
+  }
+
+  private setupSystemPreferences(): void {
+    // Listen for system color scheme changes
+    if (window.matchMedia) {
+      const colorSchemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      const highContrastQuery = window.matchMedia('(prefers-contrast: high)');
+
+      // Initial check
+      this.handleSystemPreferences();
+
+      // Listen for changes
+      colorSchemeQuery.addEventListener('change', () => this.handleSystemPreferences());
+      reducedMotionQuery.addEventListener('change', () => this.handleSystemPreferences());
+      highContrastQuery.addEventListener('change', () => this.handleSystemPreferences());
+    }
+  }
+
+  private handleSystemPreferences(): void {
+    const theme = this.themeSubject.value;
+
+    if (theme.mode === 'auto') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      this.applyThemeMode(prefersDark ? 'dark' : 'light');
+    }
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion !== theme.reducedMotion) {
+      this.updateThemeProperty('reducedMotion', prefersReducedMotion);
+    }
+
+    const prefersHighContrast = window.matchMedia('(prefers-contrast: high)').matches;
+    if (prefersHighContrast !== theme.highContrast) {
+      this.updateThemeProperty('highContrast', prefersHighContrast);
+    }
   }
 
   getCurrentTheme(): ThemeConfig {
@@ -95,6 +148,7 @@ export class ThemeService {
     this.themeSubject.next(newTheme);
     this.applyTheme(newTheme);
     this.saveTheme(newTheme);
+    this.addToHistory(newTheme);
   }
 
   updateThemeProperty(property: keyof ThemeConfig, value: any): void {
@@ -102,7 +156,8 @@ export class ThemeService {
   }
 
   applyPreset(presetId: string): void {
-    const preset = this.presetsSubject.value.find(p => p.id === presetId);
+    const allPresets = [...this.presetsSubject.value, ...this.getCustomPresets()];
+    const preset = allPresets.find(p => p.id === presetId);
     if (preset) {
       this.updateTheme(preset.config);
     }
@@ -114,8 +169,46 @@ export class ThemeService {
     this.saveTheme(this.defaultTheme);
   }
 
+  private applyThemeMode(mode: 'light' | 'dark'): void {
+    const root = document.documentElement;
+
+    if (mode === 'dark') {
+      root.style.setProperty('--surface-background', '#0f172a');
+      root.style.setProperty('--surface-foreground', '#f8fafc');
+      root.style.setProperty('--surface-card', '#1e293b');
+      root.style.setProperty('--surface-modal', '#1e293b');
+      root.style.setProperty('--surface-hover', '#334155');
+      root.style.setProperty('--surface-active', '#475569');
+      root.style.setProperty('--text-primary', '#f8fafc');
+      root.style.setProperty('--text-secondary', '#cbd5e1');
+      root.style.setProperty('--text-tertiary', '#94a3b8');
+      root.style.setProperty('--text-placeholder', '#64748b');
+      root.style.setProperty('--border-default', '#334155');
+      root.style.setProperty('--border-strong', '#475569');
+    } else {
+      const theme = this.themeSubject.value;
+      root.style.setProperty('--surface-background', theme.backgroundColor);
+      root.style.setProperty('--surface-foreground', theme.textColor);
+      root.style.setProperty('--surface-card', theme.surfaceCard);
+      root.style.setProperty('--surface-modal', theme.surfaceModal);
+      root.style.setProperty('--surface-hover', theme.surfaceHover);
+      root.style.setProperty('--surface-active', '#e2e8f0');
+      root.style.setProperty('--text-primary', theme.textColor);
+      root.style.setProperty('--text-secondary', '#475569');
+      root.style.setProperty('--text-tertiary', '#64748b');
+      root.style.setProperty('--text-placeholder', '#9ca3af');
+      root.style.setProperty('--border-default', '#e2e8f0');
+      root.style.setProperty('--border-strong', '#cbd5e1');
+    }
+  }
+
   private applyTheme(theme: ThemeConfig): void {
     const root = document.documentElement;
+
+    // Handle auto mode
+    const effectiveMode = theme.mode === 'auto'
+      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      : theme.mode;
 
     // Generate color variations
     const colors = {
@@ -131,6 +224,9 @@ export class ThemeService {
     // Apply color variations
     Object.entries(colors).forEach(([name, rgb]) => {
       if (rgb) {
+        // Store RGB values for opacity utilities
+        root.style.setProperty(`--color-${name}-500-rgb`, `${rgb.r}, ${rgb.g}, ${rgb.b}`);
+
         // Generate color scale
         for (let i = 50; i <= 950; i += (i < 100 ? 50 : 100)) {
           const factor = i < 500 ? (500 - i) / 450 : (i - 500) / 450;
@@ -144,36 +240,10 @@ export class ThemeService {
       }
     });
 
-    // Apply surface colors based on mode
-    if (theme.mode === 'dark') {
-      root.style.setProperty('--surface-background', '#0f172a');
-      root.style.setProperty('--surface-foreground', '#f8fafc');
-      root.style.setProperty('--surface-card', '#1e293b');
-      root.style.setProperty('--surface-modal', '#1e293b');
-      root.style.setProperty('--surface-hover', '#334155');
-      root.style.setProperty('--surface-active', '#475569');
-      root.style.setProperty('--text-primary', '#f8fafc');
-      root.style.setProperty('--text-secondary', '#cbd5e1');
-      root.style.setProperty('--text-tertiary', '#94a3b8');
-      root.style.setProperty('--text-placeholder', '#64748b');
-      root.style.setProperty('--border-default', '#334155');
-      root.style.setProperty('--border-strong', '#475569');
-    } else {
-      root.style.setProperty('--surface-background', theme.backgroundColor);
-      root.style.setProperty('--surface-foreground', theme.textColor);
-      root.style.setProperty('--surface-card', theme.surfaceCard);
-      root.style.setProperty('--surface-modal', theme.surfaceModal);
-      root.style.setProperty('--surface-hover', theme.surfaceHover);
-      root.style.setProperty('--surface-active', '#e2e8f0');
-      root.style.setProperty('--text-primary', theme.textColor);
-      root.style.setProperty('--text-secondary', '#475569');
-      root.style.setProperty('--text-tertiary', '#64748b');
-      root.style.setProperty('--text-placeholder', '#9ca3af');
-      root.style.setProperty('--border-default', '#e2e8f0');
-      root.style.setProperty('--border-strong', '#cbd5e1');
-    }
+    // Apply mode-specific colors
+    this.applyThemeMode(effectiveMode);
 
-    // Apply typography with proper units
+    // Apply typography
     root.style.setProperty('--font-sans', theme.fontFamily);
     root.style.setProperty('--font-display', theme.headingFontFamily);
     root.style.setProperty('--text-base', `${theme.fontSizeBase}px`);
@@ -215,6 +285,7 @@ export class ThemeService {
 
     // Apply border radius
     root.style.setProperty('--rounded-none', '0');
+    root.style.setProperty('--rounded-xs', `${theme.borderRadius * 0.25}px`);
     root.style.setProperty('--rounded-sm', `${theme.borderRadius * 0.5}px`);
     root.style.setProperty('--rounded-md', `${theme.borderRadius}px`);
     root.style.setProperty('--rounded-lg', `${theme.borderRadius * 1.5}px`);
@@ -280,7 +351,24 @@ export class ThemeService {
 
     // Set data attributes
     root.setAttribute('data-design-style', theme.designStyle);
-    root.setAttribute('data-theme-mode', theme.mode);
+    root.setAttribute('data-theme-mode', effectiveMode);
+    root.setAttribute('data-card-style', theme.cardStyle);
+    root.setAttribute('data-button-style', theme.buttonStyle);
+    root.setAttribute('data-navigation-style', theme.navigationStyle);
+
+    // Update CSS custom properties for special effects
+    if (!theme.enableShadows) {
+      root.style.setProperty('--shadow-xs', 'none');
+      root.style.setProperty('--shadow-sm', 'none');
+      root.style.setProperty('--shadow-md', 'none');
+      root.style.setProperty('--shadow-lg', 'none');
+      root.style.setProperty('--shadow-xl', 'none');
+      root.style.setProperty('--shadow-2xl', 'none');
+    }
+
+    if (!theme.enableBlur) {
+      root.style.setProperty('--blur-intensity', '0px');
+    }
   }
 
   private applyDesignStyleEffects(theme: ThemeConfig): void {
@@ -291,6 +379,7 @@ export class ThemeService {
         root.style.setProperty('--glass-blur', `${theme.blurIntensity}px`);
         root.style.setProperty('--glass-opacity', '0.1');
         root.style.setProperty('--glass-border', 'rgba(255, 255, 255, 0.2)');
+        root.style.setProperty('--glass-gradient', 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))');
         break;
 
       case 'neumorphic':
@@ -298,12 +387,25 @@ export class ThemeService {
         root.style.setProperty('--neu-background', neuBg);
         root.style.setProperty('--neu-shadow-light', theme.mode === 'dark' ? '#262626' : '#ffffff');
         root.style.setProperty('--neu-shadow-dark', theme.mode === 'dark' ? '#0e0e0e' : '#bebebe');
+        root.style.setProperty('--neu-distance', `${theme.spacingUnit * 0.5}px`);
+        root.style.setProperty('--neu-blur', `${theme.spacingUnit}px`);
         break;
 
       case 'material':
         root.style.setProperty('--mat-elevation-1', '0 2px 1px -1px rgba(0,0,0,.2), 0 1px 1px 0 rgba(0,0,0,.14), 0 1px 3px 0 rgba(0,0,0,.12)');
         root.style.setProperty('--mat-elevation-2', '0 3px 1px -2px rgba(0,0,0,.2), 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12)');
         root.style.setProperty('--mat-elevation-3', '0 3px 3px -2px rgba(0,0,0,.2), 0 3px 4px 0 rgba(0,0,0,.14), 0 1px 8px 0 rgba(0,0,0,.12)');
+        root.style.setProperty('--mat-ripple-color', theme.primaryColor);
+        break;
+
+      case 'minimal':
+        root.style.setProperty('--minimal-accent', theme.primaryColor);
+        root.style.setProperty('--minimal-border', `${theme.borderWidth}px solid ${theme.mode === 'dark' ? '#334155' : '#e2e8f0'}`);
+        break;
+
+      case 'modern':
+      default:
+        // Modern style uses default properties
         break;
     }
   }
@@ -347,6 +449,327 @@ export class ThemeService {
     }
   }
 
+  // Theme History Management
+  private addToHistory(theme: ThemeConfig): void {
+    const history = this.getThemeHistory();
+    history.unshift({
+      theme,
+      timestamp: new Date().toISOString()
+    });
+
+    // Keep only the latest items
+    if (history.length > this.maxHistoryItems) {
+      history.pop();
+    }
+
+    localStorage.setItem(this.themeHistoryKey, JSON.stringify(history));
+  }
+
+  getThemeHistory(): Array<{ theme: ThemeConfig; timestamp: string }> {
+    const historyJson = localStorage.getItem(this.themeHistoryKey);
+    if (historyJson) {
+      try {
+        return JSON.parse(historyJson);
+      } catch (e) {
+        console.error('Failed to load theme history', e);
+      }
+    }
+    return [];
+  }
+
+  applyFromHistory(index: number): void {
+    const history = this.getThemeHistory();
+    if (history[index]) {
+      this.updateTheme(history[index].theme);
+    }
+  }
+
+  // Custom Preset Management
+  saveCustomPreset(name: string, description: string): void {
+    const customPresets = this.getCustomPresets();
+    const preset: ThemePreset = {
+      id: `custom-${Date.now()}`,
+      name,
+      description,
+      config: { ...this.getCurrentTheme() }
+    };
+
+    customPresets.push(preset);
+    localStorage.setItem(this.customPresetsKey, JSON.stringify(customPresets));
+    this.loadCustomPresets();
+  }
+
+  deleteCustomPreset(id: string): void {
+    const customPresets = this.getCustomPresets().filter(p => p.id !== id);
+    localStorage.setItem(this.customPresetsKey, JSON.stringify(customPresets));
+    this.loadCustomPresets();
+  }
+
+  private getCustomPresets(): ThemePreset[] {
+    const presetsJson = localStorage.getItem(this.customPresetsKey);
+    if (presetsJson) {
+      try {
+        return JSON.parse(presetsJson);
+      } catch (e) {
+        console.error('Failed to load custom presets', e);
+      }
+    }
+    return [];
+  }
+
+  private loadCustomPresets(): void {
+    const allPresets = [...this.getDefaultPresets(), ...this.getCustomPresets()];
+    this.presetsSubject.next(allPresets);
+  }
+
+  // Export/Import functionality
+  exportTheme(): string {
+    const theme = this.getCurrentTheme();
+    return JSON.stringify(theme, null, 2);
+  }
+
+  importTheme(themeJson: string): void {
+    try {
+      const theme = JSON.parse(themeJson);
+      // Validate theme structure
+      if (this.validateTheme(theme)) {
+        this.updateTheme(theme);
+      } else {
+        throw new Error('Invalid theme structure');
+      }
+    } catch (e) {
+      console.error('Failed to import theme', e);
+      throw new Error('Invalid theme JSON');
+    }
+  }
+
+  private validateTheme(theme: any): boolean {
+    const requiredProperties = [
+      'primaryColor', 'secondaryColor', 'backgroundColor', 'textColor',
+      'fontFamily', 'fontSizeBase', 'spacingUnit', 'borderRadius'
+    ];
+
+    return requiredProperties.every(prop => prop in theme);
+  }
+
+  // CSS Generation with better formatting
+  generateCSS(): string {
+    const theme = this.getCurrentTheme();
+    const timestamp = new Date().toISOString();
+
+    return `/* ================================================
+ * Generated Theme CSS
+ * Generated: ${timestamp}
+ * Theme: ${theme.brandName}
+ * Design Style: ${theme.designStyle}
+ * Mode: ${theme.mode}
+ * ================================================ */
+
+/* Root Variables */
+:root {
+  /* ===== Core Colors ===== */
+  --color-primary-500: ${theme.primaryColor};
+  --color-secondary-500: ${theme.secondaryColor};
+  --color-accent-500: ${theme.accentColor};
+
+  /* ===== Semantic Colors ===== */
+  --color-success-500: ${theme.successColor};
+  --color-warning-500: ${theme.warningColor};
+  --color-error-500: ${theme.errorColor};
+  --color-info-500: ${theme.infoColor};
+
+  /* ===== Surface Colors ===== */
+  --surface-background: ${theme.backgroundColor};
+  --surface-card: ${theme.surfaceCard};
+  --surface-modal: ${theme.surfaceModal};
+  --surface-hover: ${theme.surfaceHover};
+
+  /* ===== Text Colors ===== */
+  --text-primary: ${theme.textColor};
+
+  /* ===== Typography ===== */
+  --font-sans: ${theme.fontFamily};
+  --font-display: ${theme.headingFontFamily};
+  --text-base: ${theme.fontSizeBase}px;
+  --font-normal: ${theme.fontWeight};
+  --font-bold: ${theme.headingFontWeight};
+  --leading-normal: ${theme.lineHeight};
+  --tracking-normal: ${theme.letterSpacing}em;
+
+  /* ===== Spacing ===== */
+  --spacing-unit: ${theme.spacingUnit}px;
+  --spacing-1: ${theme.spacingUnit * 0.25}px;
+  --spacing-2: ${theme.spacingUnit * 0.5}px;
+  --spacing-3: ${theme.spacingUnit * 0.75}px;
+  --spacing-4: ${theme.spacingUnit}px;
+  --spacing-6: ${theme.spacingUnit * 1.5}px;
+  --spacing-8: ${theme.spacingUnit * 2}px;
+
+  /* ===== Layout ===== */
+  --rounded-sm: ${theme.borderRadius * 0.5}px;
+  --rounded-md: ${theme.borderRadius}px;
+  --rounded-lg: ${theme.borderRadius * 1.5}px;
+  --rounded-xl: ${theme.borderRadius * 2}px;
+  --border-width: ${theme.borderWidth}px;
+
+  /* ===== Effects ===== */
+  --shadow-intensity: ${theme.shadowIntensity};
+  --blur-intensity: ${theme.blurIntensity}px;
+
+  /* ===== Animation ===== */
+  --duration-fast: ${theme.animationSpeed * 0.5}ms;
+  --duration-normal: ${theme.animationSpeed}ms;
+  --duration-slow: ${theme.animationSpeed * 1.5}ms;
+  --ease-out: ${theme.animationEasing};
+
+  /* ===== Accessibility ===== */
+  --focus-outline-width: ${theme.focusOutlineWidth}px;
+}
+
+/* ===== Design Style Specific ===== */
+[data-design-style="${theme.designStyle}"] {
+  /* Custom styles for ${theme.designStyle} design */
+${this.generateDesignStyleCSS(theme)}
+}
+
+/* ===== Component Styles ===== */
+/* Card Style: ${theme.cardStyle} */
+[data-card-style="${theme.cardStyle}"] {
+${this.generateCardStyleCSS(theme)}
+}
+
+/* Button Style: ${theme.buttonStyle} */
+[data-button-style="${theme.buttonStyle}"] {
+${this.generateButtonStyleCSS(theme)}
+}
+
+/* Navigation Style: ${theme.navigationStyle} */
+[data-navigation-style="${theme.navigationStyle}"] {
+${this.generateNavigationStyleCSS(theme)}
+}
+
+/* ===== Performance Settings ===== */
+${!theme.enableAnimations ? `/* Animations Disabled */
+.no-animations * {
+  animation: none !important;
+  transition: none !important;
+}` : ''}
+
+${theme.reducedMotion ? `/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}` : ''}
+
+${theme.highContrast ? `/* High Contrast Mode */
+.high-contrast {
+  filter: contrast(1.5);
+}
+
+.high-contrast * {
+  border-width: 2px !important;
+}` : ''}
+
+${!theme.enableShadows ? `/* Shadows Disabled */
+* {
+  box-shadow: none !important;
+}` : ''}
+
+${!theme.enableBlur ? `/* Blur Effects Disabled */
+* {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}` : ''}`;
+  }
+
+  private generateDesignStyleCSS(theme: ThemeConfig): string {
+    switch (theme.designStyle) {
+      case 'glassmorphic':
+        return `  /* Glassmorphic properties */
+  --glass-blur: ${theme.blurIntensity}px;
+  --glass-opacity: 0.1;
+  --glass-border: rgba(255, 255, 255, 0.2);`;
+
+      case 'neumorphic':
+        return `  /* Neumorphic properties */
+  --neu-background: ${theme.mode === 'dark' ? '#1a1a1a' : '#e0e0e0'};
+  --neu-shadow-light: ${theme.mode === 'dark' ? '#262626' : '#ffffff'};
+  --neu-shadow-dark: ${theme.mode === 'dark' ? '#0e0e0e' : '#bebebe'};`;
+
+      case 'material':
+        return `  /* Material Design properties */
+  --mat-elevation-1: 0 2px 1px -1px rgba(0,0,0,.2), 0 1px 1px 0 rgba(0,0,0,.14), 0 1px 3px 0 rgba(0,0,0,.12);
+  --mat-elevation-2: 0 3px 1px -2px rgba(0,0,0,.2), 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12);
+  --mat-elevation-3: 0 3px 3px -2px rgba(0,0,0,.2), 0 3px 4px 0 rgba(0,0,0,.14), 0 1px 8px 0 rgba(0,0,0,.12);`;
+
+      default:
+        return `  /* Modern style - using default properties */`;
+    }
+  }
+
+  private generateCardStyleCSS(theme: ThemeConfig): string {
+    switch (theme.cardStyle) {
+      case 'elevated':
+        return `  box-shadow: var(--shadow-md);
+  border: none;`;
+
+      case 'flat':
+        return `  box-shadow: none;
+  border: 1px solid var(--border-default);`;
+
+      case 'bordered':
+        return `  box-shadow: none;
+  border: 2px solid var(--border-strong);`;
+
+      case 'glass':
+        return `  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(var(--blur-intensity));
+  border: 1px solid rgba(255, 255, 255, 0.2);`;
+
+      default:
+        return '';
+    }
+  }
+
+  private generateButtonStyleCSS(theme: ThemeConfig): string {
+    switch (theme.buttonStyle) {
+      case 'rounded':
+        return `  border-radius: var(--rounded-full);`;
+
+      case 'square':
+        return `  border-radius: 0;`;
+
+      case 'outlined':
+        return `  background: transparent;
+  border: var(--border-width) solid currentColor;`;
+
+      default:
+        return `  /* Primary button style - default */`;
+    }
+  }
+
+  private generateNavigationStyleCSS(theme: ThemeConfig): string {
+    switch (theme.navigationStyle) {
+      case 'elevated':
+        return `  box-shadow: var(--shadow-sm);
+  background: var(--surface-card);`;
+
+      case 'flat':
+        return `  box-shadow: none;
+  border-bottom: 1px solid var(--border-default);`;
+
+      case 'bordered':
+        return `  box-shadow: none;
+  border: 1px solid var(--border-default);`;
+
+      default:
+        return '';
+    }
+  }
+
+  // Preset management
   private getDefaultPresets(): ThemePreset[] {
     return [
       {
@@ -359,7 +782,9 @@ export class ThemeService {
           borderRadius: 8,
           shadowIntensity: 0.1,
           fontFamily: 'Inter, system-ui, sans-serif',
-          animationSpeed: 300
+          animationSpeed: 300,
+          cardStyle: 'elevated',
+          navigationStyle: 'elevated'
         }
       },
       {
@@ -376,7 +801,9 @@ export class ThemeService {
           fontFamily: 'system-ui, sans-serif',
           animationSpeed: 150,
           enableShadows: false,
-          borderWidth: 1
+          borderWidth: 1,
+          cardStyle: 'flat',
+          navigationStyle: 'flat'
         }
       },
       {
@@ -392,7 +819,9 @@ export class ThemeService {
           blurIntensity: 20,
           fontFamily: 'Inter, system-ui, sans-serif',
           animationSpeed: 400,
-          enableBlur: true
+          enableBlur: true,
+          cardStyle: 'glass',
+          navigationStyle: 'elevated'
         }
       },
       {
@@ -407,7 +836,9 @@ export class ThemeService {
           shadowIntensity: 0.15,
           fontFamily: 'system-ui, sans-serif',
           animationSpeed: 250,
-          borderWidth: 0
+          borderWidth: 0,
+          cardStyle: 'elevated',
+          navigationStyle: 'flat'
         }
       },
       {
@@ -422,7 +853,9 @@ export class ThemeService {
           fontFamily: 'system-ui, sans-serif',
           borderRadius: 4,
           spacingUnit: 20,
-          fontSizeBase: 15
+          fontSizeBase: 15,
+          cardStyle: 'bordered',
+          navigationStyle: 'flat'
         }
       },
       {
@@ -437,91 +870,79 @@ export class ThemeService {
           fontFamily: 'Inter, system-ui, sans-serif',
           borderRadius: 16,
           spacingUnit: 24,
-          shadowIntensity: 0.15
+          shadowIntensity: 0.15,
+          cardStyle: 'elevated',
+          navigationStyle: 'elevated'
+        }
+      },
+      {
+        id: 'dark-mode',
+        name: 'Dark Pro',
+        description: 'Professional dark theme',
+        config: {
+          mode: 'dark',
+          designStyle: 'modern',
+          primaryColor: '#60a5fa',
+          secondaryColor: '#94a3b8',
+          backgroundColor: '#0f172a',
+          textColor: '#f8fafc',
+          borderRadius: 8,
+          cardStyle: 'elevated',
+          navigationStyle: 'elevated'
+        }
+      },
+      {
+        id: 'material',
+        name: 'Material',
+        description: 'Google Material Design inspired',
+        config: {
+          designStyle: 'material',
+          primaryColor: '#1976d2',
+          secondaryColor: '#424242',
+          backgroundColor: '#fafafa',
+          borderRadius: 4,
+          shadowIntensity: 0.12,
+          fontFamily: 'Roboto, system-ui, sans-serif',
+          animationSpeed: 200,
+          cardStyle: 'elevated',
+          navigationStyle: 'elevated'
         }
       }
     ];
   }
 
-  exportTheme(): string {
-    const theme = this.getCurrentTheme();
-    return JSON.stringify(theme, null, 2);
+  // Color contrast calculation for accessibility
+  getContrastRatio(color1: string, color2: string): number {
+    const rgb1 = this.hexToRgb(color1);
+    const rgb2 = this.hexToRgb(color2);
+
+    if (!rgb1 || !rgb2) return 1;
+
+    const l1 = this.getRelativeLuminance(rgb1);
+    const l2 = this.getRelativeLuminance(rgb2);
+
+    const lighter = Math.max(l1, l2);
+    const darker = Math.min(l1, l2);
+
+    return (lighter + 0.05) / (darker + 0.05);
   }
 
-  importTheme(themeJson: string): void {
-    try {
-      const theme = JSON.parse(themeJson);
-      this.updateTheme(theme);
-    } catch (e) {
-      console.error('Failed to import theme', e);
-      throw new Error('Invalid theme JSON');
-    }
+  private getRelativeLuminance(rgb: { r: number; g: number; b: number }): number {
+    const sRGB = [rgb.r / 255, rgb.g / 255, rgb.b / 255];
+    const RGB = sRGB.map(val => {
+      if (val <= 0.03928) {
+        return val / 12.92;
+      }
+      return Math.pow((val + 0.055) / 1.055, 2.4);
+    });
+
+    return 0.2126 * RGB[0] + 0.7152 * RGB[1] + 0.0722 * RGB[2];
   }
 
-  generateCSS(): string {
-    const theme = this.getCurrentTheme();
-    return `/* Generated Theme CSS - ${new Date().toISOString()} */
-/* Theme: ${theme.brandName} */
-/* Design Style: ${theme.designStyle} */
-/* Mode: ${theme.mode} */
-
-:root {
-  /* Core Colors */
-  --color-primary-500: ${theme.primaryColor};
-  --color-secondary-500: ${theme.secondaryColor};
-  --surface-background: ${theme.backgroundColor};
-  --text-primary: ${theme.textColor};
-  --color-accent-500: ${theme.accentColor};
-
-  /* Semantic Colors */
-  --color-success-500: ${theme.successColor};
-  --color-warning-500: ${theme.warningColor};
-  --color-error-500: ${theme.errorColor};
-  --color-info-500: ${theme.infoColor};
-
-  /* Surface Colors */
-  --surface-card: ${theme.surfaceCard};
-  --surface-modal: ${theme.surfaceModal};
-  --surface-hover: ${theme.surfaceHover};
-
-  /* Typography */
-  --font-sans: ${theme.fontFamily};
-  --font-display: ${theme.headingFontFamily};
-  --text-base: ${theme.fontSizeBase}px;
-  --font-normal: ${theme.fontWeight};
-  --font-bold: ${theme.headingFontWeight};
-  --leading-normal: ${theme.lineHeight};
-  --tracking-normal: ${theme.letterSpacing}em;
-
-  /* Spacing */
-  --spacing-unit: ${theme.spacingUnit}px;
-  --spacing-4: ${theme.spacingUnit}px;
-
-  /* Layout */
-  --rounded-md: ${theme.borderRadius}px;
-  --border-1: ${theme.borderWidth}px;
-
-  /* Effects */
-  --shadow-intensity: ${theme.shadowIntensity};
-  --blur-intensity: ${theme.blurIntensity}px;
-
-  /* Animation */
-  --duration-normal: ${theme.animationSpeed}ms;
-  --ease-out: ${theme.animationEasing};
-
-  /* Accessibility */
-  --focus-outline-width: ${theme.focusOutlineWidth}px;
-}
-
-/* Design Style: ${theme.designStyle} */
-[data-design-style="${theme.designStyle}"] {
-  /* Custom styles for ${theme.designStyle} design */
-}
-
-/* Performance Settings */
-${!theme.enableAnimations ? '.no-animations * { animation: none !important; transition: none !important; }' : ''}
-${theme.reducedMotion ? '.motion-reduce * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }' : ''}
-${theme.highContrast ? '.high-contrast { filter: contrast(150%); }' : ''}
-    `.trim();
+  // Check if text color has sufficient contrast
+  isAccessibleContrast(backgroundColor: string, textColor: string, isLargeText = false): boolean {
+    const ratio = this.getContrastRatio(backgroundColor, textColor);
+    const threshold = isLargeText ? 3 : 4.5; // WCAG AA standards
+    return ratio >= threshold;
   }
 }
