@@ -1,39 +1,139 @@
 <!-- src/app/builder/components/canvas/canvas.component.html -->
 
-<div class="canvas-wrapper" cdkDropList [cdkDropListData]="droppedComponents" (cdkDropListDropped)="onDrop($event)">
-  <h3 class="title">Builder Canvas</h3>
-  <div class="canvas-toolbar">
-    <button mat-raised-button color="primary" (click)="saveSchema()">💾 Save</button>
-    <button mat-raised-button color="accent" (click)="loadSchema()">🔄 Load</button>
-    <button mat-raised-button color="warn" (click)="clearCanvas()">🧹 Clear</button>
+<div class="canvas-wrapper">
+  <div class="canvas-header">
+    <h3 class="title">Builder Canvas</h3>
+
+    <div class="canvas-toolbar">
+      <!-- History controls -->
+      <div class="toolbar-group">
+        <button mat-icon-button
+                [disabled]="!canUndo"
+                (click)="undo()"
+                matTooltip="Undo">
+          <mat-icon>undo</mat-icon>
+        </button>
+        <button mat-icon-button
+                [disabled]="!canRedo"
+                (click)="redo()"
+                matTooltip="Redo">
+          <mat-icon>redo</mat-icon>
+        </button>
+      </div>
+
+      <div class="toolbar-divider"></div>
+
+      <!-- File operations -->
+      <div class="toolbar-group">
+        <button mat-icon-button (click)="saveSchema()" matTooltip="Save">
+          <mat-icon>save</mat-icon>
+        </button>
+        <button mat-icon-button (click)="loadSchema()" matTooltip="Load">
+          <mat-icon>folder_open</mat-icon>
+        </button>
+        <button mat-icon-button (click)="exportSchema()" matTooltip="Export">
+          <mat-icon>download</mat-icon>
+        </button>
+        <input type="file"
+               #fileInput
+               style="display: none"
+               accept=".json"
+               (change)="importSchema($event)">
+        <button mat-icon-button (click)="fileInput.click()" matTooltip="Import">
+          <mat-icon>upload</mat-icon>
+        </button>
+      </div>
+
+      <div class="toolbar-divider"></div>
+
+      <!-- View controls -->
+      <div class="toolbar-group">
+        <button mat-icon-button
+                (click)="toggleCodePreview()"
+                [class.active]="showCodePreview"
+                matTooltip="Toggle Code Preview">
+          <mat-icon>code</mat-icon>
+        </button>
+        <button mat-icon-button
+                (click)="clearCanvas()"
+                [disabled]="droppedComponents.length === 0"
+                matTooltip="Clear Canvas">
+          <mat-icon>clear</mat-icon>
+        </button>
+      </div>
+    </div>
   </div>
 
-  <div class="drop-area">
-    <ng-container *ngIf="droppedComponents.length > 0; else emptyMessage">
-      <div class="canvas-section">
-        <div class="canvas-body">
-          <div
-            class="canvas-item"
-            *ngFor="let comp of droppedComponents"
-            (click)="selectComponent(comp)"
-          >
-            <app-dynamic-renderer [componentConfig]="comp"></app-dynamic-renderer>
+  <div class="canvas-content">
+    <div class="drop-area"
+         id="canvas-drop-area"
+         cdkDropList
+         [cdkDropListData]="droppedComponents"
+         [cdkDropListConnectedTo]="['component-palette']"
+         (cdkDropListDropped)="onDrop($event)"
+         [class.empty]="droppedComponents.length === 0">
+
+      <ng-container *ngIf="droppedComponents.length > 0; else emptyMessage">
+        <div class="components-container">
+          <div class="component-wrapper"
+               *ngFor="let comp of droppedComponents; let i = index"
+               [class.selected]="selectedComponentIndex === i"
+               (click)="selectComponent(comp, i)">
+
+            <!-- Component controls -->
+            <div class="component-controls">
+              <button mat-icon-button
+                      (click)="moveComponentUp(i); $event.stopPropagation()"
+                      [disabled]="i === 0"
+                      matTooltip="Move Up">
+                <mat-icon>arrow_upward</mat-icon>
+              </button>
+              <button mat-icon-button
+                      (click)="moveComponentDown(i); $event.stopPropagation()"
+                      [disabled]="i === droppedComponents.length - 1"
+                      matTooltip="Move Down">
+                <mat-icon>arrow_downward</mat-icon>
+              </button>
+              <button mat-icon-button
+                      (click)="duplicateComponent(i); $event.stopPropagation()"
+                      matTooltip="Duplicate">
+                <mat-icon>content_copy</mat-icon>
+              </button>
+              <button mat-icon-button
+                      (click)="deleteComponent(i); $event.stopPropagation()"
+                      matTooltip="Delete">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+
+            <!-- Component content -->
+            <div class="component-content">
+              <app-dynamic-renderer [componentConfig]="comp"></app-dynamic-renderer>
+            </div>
           </div>
         </div>
+      </ng-container>
 
-        <app-config-panel
-          *ngIf="selectedComponent"
-          [selectedComponent]="selectedComponent!">
-        </app-config-panel>
+      <ng-template #emptyMessage>
+        <div class="empty-state">
+          <mat-icon>widgets</mat-icon>
+          <h4>Drop components here to start building</h4>
+          <p>Drag components from the palette on the left</p>
+        </div>
+      </ng-template>
+    </div>
 
-      </div>
-      <app-code-preview [schema]="droppedComponents"></app-code-preview>
+    <!-- Config Panel -->
+    <div class="config-sidebar" *ngIf="selectedComponent">
+      <app-config-panel
+        [selectedComponent]="selectedComponent!"
+        (configUpdated)="saveToHistory()">
+      </app-config-panel>
+    </div>
+  </div>
 
-
-    </ng-container>
-
-    <ng-template #emptyMessage>
-      <p class="placeholder">Drag components here to start building...</p>
-    </ng-template>
+  <!-- Code Preview -->
+  <div class="code-preview-section" *ngIf="showCodePreview">
+    <app-code-preview [schema]="droppedComponents"></app-code-preview>
   </div>
 </div>

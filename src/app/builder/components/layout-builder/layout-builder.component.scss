@@ -1,62 +1,88 @@
 // src/app/builder/components/layout-builder/layout-builder.component.scss
 
 .layout-builder {
-  padding: 20px;
+  padding: 20px 32px;
   background: #f9fafb;
+  min-height: 90vh;
 
   h3 {
-    margin-bottom: 12px;
+    margin-bottom: 20px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .layout-toolbar,
+  .export-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+
+    button {
+      font-weight: 500;
+      text-transform: none;
+      min-width: 110px;
+    }
   }
 
   .layout-row {
     display: flex;
-    gap: 8px;
-    margin: 20px 0;
-    align-items: flex-start;
-
-    button {
-      height: 40px;
-    }
+    gap: 12px;
+    margin-bottom: 24px;
+    border: 1px solid #d1d5db;
+    padding: 16px;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   }
 
   .layout-column {
-    min-height: 80px;
-    padding: 10px;
-    background: white;
-    border: 1px dashed #d1d5db;
+    background: #f9fafb;
+    border: 2px dashed #cbd5e1;
+    min-height: 100px;
+    padding: 12px;
     border-radius: 6px;
-    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    position: relative;
+    transition: border-color 0.3s;
+
+    &:hover {
+      border-color: #3b82f6;
+    }
+
+    .placeholder-text {
+      color: #9ca3af;
+      font-style: italic;
+      font-size: 14px;
+      text-align: center;
+      margin-top: 20px;
+    }
   }
 
   .column-label {
-    font-size: 12px;
-    color: #6b7280;
-    margin-bottom: 6px;
-  }
-}
-.layout-toolbar {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-.column-controls {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 12px;
-  background: #f3f4f6;
-  padding: 4px 8px;
-  margin-bottom: 6px;
-
-  label {
+    font-size: 13px;
     font-weight: 500;
-    font-size: 11px;
-    margin-right: 4px;
+    color: #4b5563;
+    margin-bottom: 8px;
   }
 
-  select, input {
-    width: 60px;
+  .column-controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 8px;
+    align-items: center;
     font-size: 12px;
+
+    label {
+      font-weight: 500;
+    }
+
+    select, input {
+      font-size: 13px;
+      width: 80px;
+    }
   }
 }

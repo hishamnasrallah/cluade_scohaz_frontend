@@ -3,13 +3,63 @@
 <div class="palette">
   <h3 class="title">Component Palette</h3>
 
-  <div
-    class="component"
-    *ngFor="let comp of components"
-    cdkDrag
-    [cdkDragData]="getDragData(comp)"
-  >
-    <mat-icon>{{ comp.icon }}</mat-icon>
-    <span>{{ comp.name }}</span>
+  <!-- Search bar -->
+  <div class="search-section">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Search components</mat-label>
+      <input matInput
+             [(ngModel)]="searchTerm"
+             (ngModelChange)="onSearchChange()"
+             placeholder="Search by name or category">
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+  </div>
+
+  <!-- Category tabs -->
+  <div class="category-tabs">
+    <button
+      *ngFor="let category of categories"
+      class="category-tab"
+      [class.active]="selectedCategory === category"
+      (click)="onCategoryChange(category)">
+      {{ formatCategoryName(category) }}
+    </button>
+  </div>
+
+  <!-- Components list -->
+  <div class="components-list"
+       cdkDropList
+       id="component-palette"
+       [cdkDropListData]="filteredComponents"
+       [cdkDropListConnectedTo]="['canvas-drop-area']"
+       [cdkDropListSortingDisabled]="true">
+    <div class="no-results" *ngIf="filteredComponents.length === 0">
+      <mat-icon>search_off</mat-icon>
+      <p>No components found</p>
+    </div>
+
+    <div
+      class="component"
+      *ngFor="let comp of filteredComponents; let i = index"
+      cdkDrag
+      [cdkDragData]="comp"
+      [attr.data-category]="comp.category">
+      <div class="drag-preview" *cdkDragPreview>
+        <div class="preview-content">
+          <mat-icon>{{ comp.icon }}</mat-icon>
+          <span>{{ comp.name }}</span>
+        </div>
+      </div>
+      <div class="component-icon">
+        <mat-icon>{{ comp.icon }}</mat-icon>
+      </div>
+      <div class="component-info">
+        <span class="component-name">{{ comp.name }}</span>
+        <span class="component-category">{{ comp.category }}</span>
+      </div>
+      <div class="drag-indicator">
+        <mat-icon>drag_indicator</mat-icon>
+      </div>
+    </div>
   </div>
 </div>

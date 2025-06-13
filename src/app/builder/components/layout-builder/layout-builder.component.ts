@@ -56,12 +56,13 @@ export class LayoutBuilderComponent {
   loadLayout(): void {
     this.layout = this.layoutStorage.load();
   }
-  updateColumnWidth(col: LayoutColumn, width: number): void {
-    col.width = width;
+  updateColumnWidth(col: LayoutColumn, width: string | number): void {
+    col.width = Number(width);
   }
 
-  updateColumnPadding(col: LayoutColumn, padding: number): void {
-    col.padding = padding;
+
+  updateColumnPadding(col: LayoutColumn, padding: string | number): void {
+    col.padding = Number(padding);
   }
 
   clearLayout(): void {

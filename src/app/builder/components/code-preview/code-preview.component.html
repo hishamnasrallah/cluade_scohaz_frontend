@@ -1,8 +1,75 @@
 <!-- src/app/builder/components/code-preview/code-preview.component.html -->
 
-<div class="code-preview">
-  <h3>Generated Angular HTML</h3>
-  <button mat-stroked-button color="primary" (click)="copyToClipboard()">Copy Code</button>
+<div class="code-preview" [class.fullscreen]="isFullscreen">
+  <div class="preview-header">
+    <h3>Generated Code</h3>
+    <div class="preview-actions">
+      <button mat-icon-button
+              (click)="copyToClipboard(getCodeByTab(), getLanguageByTab())"
+              matTooltip="Copy current tab">
+        <mat-icon>content_copy</mat-icon>
+      </button>
+      <button mat-icon-button
+              (click)="downloadCode(getCodeByTab(), getFilenameByTab())"
+              matTooltip="Download current file">
+        <mat-icon>download</mat-icon>
+      </button>
+      <button mat-icon-button
+              (click)="downloadAllFiles()"
+              matTooltip="Download all files">
+        <mat-icon>archive</mat-icon>
+      </button>
+      <button mat-icon-button
+              (click)="toggleFullscreen()"
+              matTooltip="Toggle fullscreen">
+        <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+      </button>
+    </div>
+  </div>
 
-  <pre><code>{{ generatedCode }}</code></pre>
+  <mat-tab-group [(selectedIndex)]="selectedTabIndex" class="code-tabs">
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">code</mat-icon>
+        HTML
+      </ng-template>
+      <div class="code-container">
+        <pre><code [innerHTML]="generatedHTML"></code></pre>
+      </div>
+    </mat-tab>
+
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">javascript</mat-icon>
+        TypeScript
+      </ng-template>
+      <div class="code-container">
+        <pre><code [innerHTML]="generatedTypeScript"></code></pre>
+      </div>
+    </mat-tab>
+
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">style</mat-icon>
+        CSS
+      </ng-template>
+      <div class="code-container">
+        <pre><code [innerHTML]="generatedCSS"></code></pre>
+      </div>
+    </mat-tab>
+
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">source</mat-icon>
+        Module
+      </ng-template>
+      <div class="code-container">
+        <pre><code [innerHTML]="generatedModule"></code></pre>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+
+  <div class="preview-footer" *ngIf="schema.length > 0">
+    <small>Generated from {{ schema.length }} component{{ schema.length > 1 ? 's' : '' }}</small>
+  </div>
 </div>
