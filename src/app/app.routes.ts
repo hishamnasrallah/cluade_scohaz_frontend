@@ -94,6 +94,8 @@ export const routes: Routes = [
         redirectTo: 'overview',
         pathMatch: 'full'
       },
+      { path: 'builder', loadChildren: () => import('./builder/builder.routes').then(m => m.BUILDER_ROUTES) },
+
       {
         path: 'overview',
         loadComponent: () => import('./components/settings/settings-overview/settings-overview.component').then(m => m.SettingsOverviewComponent),

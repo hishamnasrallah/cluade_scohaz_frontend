@@ -1,0 +1,38 @@
+<!-- src/app/builder/components/dynamic-renderer/dynamic-renderer.component.html -->
+
+<ng-container [ngSwitch]="componentConfig.id">
+
+  <!-- Material Input -->
+  <ng-container *ngSwitchCase="'mat_input'">
+    <mat-form-field appearance="fill" class="full-width">
+      <mat-label>{{ label }}</mat-label>
+      <input matInput [placeholder]="placeholder" [formControl]="control" [required]="required" />
+    </mat-form-field>
+  </ng-container>
+
+  <!-- Material Select -->
+  <ng-container *ngSwitchCase="'mat_select'">
+    <mat-form-field appearance="fill" class="full-width">
+      <mat-label>{{ label }}</mat-label>
+      <mat-select [formControl]="control" [required]="required">
+        <mat-option *ngFor="let opt of options" [value]="opt">{{ opt }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </ng-container>
+
+  <!-- Material Button -->
+  <ng-container *ngSwitchCase="'mat_button'">
+    <button mat-raised-button color="primary">{{ label }}</button>
+  </ng-container>
+
+  <!-- Material Checkbox -->
+  <ng-container *ngSwitchCase="'mat_checkbox'">
+    <mat-checkbox [formControl]="control" [required]="required">{{ label }}</mat-checkbox>
+  </ng-container>
+
+  <!-- Default fallback -->
+  <ng-container *ngSwitchDefault>
+    <div style="color: red;">Unsupported component: {{ componentConfig.id }}</div>
+  </ng-container>
+
+</ng-container>

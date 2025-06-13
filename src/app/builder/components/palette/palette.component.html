@@ -1,0 +1,15 @@
+<!-- src/app/builder/components/palette/palette.component.html -->
+
+<div class="palette">
+  <h3 class="title">Component Palette</h3>
+
+  <div
+    class="component"
+    *ngFor="let comp of components"
+    cdkDrag
+    [cdkDragData]="getDragData(comp)"
+  >
+    <mat-icon>{{ comp.icon }}</mat-icon>
+    <span>{{ comp.name }}</span>
+  </div>
+</div>

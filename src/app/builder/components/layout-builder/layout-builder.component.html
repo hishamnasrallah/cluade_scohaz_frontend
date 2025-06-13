@@ -1,0 +1,62 @@
+<!-- src/app/builder/components/layout-builder/layout-builder.component.html -->
+
+<mat-tab-group>
+
+  <!-- 🧩 Tab 1: Freeform Canvas Builder -->
+  <mat-tab label="Canvas Builder">
+    <div class="layout-builder">
+      <h3>Canvas Builder</h3>
+      <app-canvas></app-canvas>
+    </div>
+  </mat-tab>
+
+  <!-- 🧱 Tab 2: Grid Layout Builder -->
+  <mat-tab label="Layout Grid Builder">
+    <div class="layout-builder">
+      <h3>Layout Builder</h3>
+
+      <!-- ✅ Layout Toolbar with all actions -->
+      <div class="layout-toolbar">
+        <button mat-raised-button color="primary" (click)="addRow()">➕ Add Row</button>
+        <button mat-stroked-button color="primary" (click)="saveLayout()">💾 Save</button>
+        <button mat-stroked-button color="accent" (click)="loadLayout()">🔄 Load</button>
+        <button mat-stroked-button color="warn" (click)="clearLayout()">🧹 Clear</button>
+      </div>
+      <button mat-stroked-button color="primary" (click)="exportAsJson()">⬇ Export</button>
+      <button mat-stroked-button color="accent" (click)="copyLayout()">📋 Copy</button>
+
+      <!-- ✅ Dynamic Layout Renderer -->
+      <div class="layout" *ngFor="let row of layout">
+        <div class="layout-row">
+          <div class="layout-column"
+               *ngFor="let col of row.columns"
+               [ngStyle]="{
+       flex: '0 0 ' + (col.width * 8.33) + '%',
+       padding: (col.padding || 0) + 'px'
+     }"
+               cdkDropList
+               [cdkDropListData]="col.components"
+               (cdkDropListDropped)="onDrop($event, col)"
+          >
+            <!-- Column Controls -->
+            <div class="column-controls">
+              <label>Width</label>
+              <select (change)="updateColumnWidth(col, $event.target.value)">
+                <option *ngFor="let w of [3, 6, 9, 12]" [value]="w" [selected]="w == col.width">{{ w }}/12</option>
+              </select>
+
+              <label>Padding</label>
+              <input type="number" [value]="col.padding || 0" min="0" max="32"
+                     (input)="updateColumnPadding(col, $event.target.value)"/>
+            </div>
+
+            <!-- Components -->
+            <p class="column-label">Col {{ col.width }}/12</p>
+            <app-dynamic-renderer *ngFor="let comp of col.components" [componentConfig]="comp"></app-dynamic-renderer>
+          </div>
+        </div>
+      </div>
+    </div>
+  </mat-tab>
+
+</mat-tab-group>

@@ -1,0 +1,42 @@
+<!-- src/app/builder/components/config-panel/config-panel.component.html -->
+
+<div class="config-panel" *ngIf="selectedComponent">
+  <h3 class="title">Edit {{ selectedComponent.name }}</h3>
+
+  <div class="input-group" *ngFor="let input of selectedComponent.inputs">
+    <label>{{ input.name }}</label>
+
+    <ng-container [ngSwitch]="input.type">
+      <!-- Text input -->
+      <input
+        *ngSwitchCase="'string'"
+        type="text"
+        [value]="input.defaultValue"
+        (input)="updateInputValue(input, $event)" />
+
+      <!-- Number input -->
+      <input
+        *ngSwitchCase="'number'"
+        type="number"
+        [value]="input.defaultValue"
+        (input)="updateInputValue(input, $event)" />
+
+      <!-- Boolean checkbox -->
+      <mat-checkbox
+        *ngSwitchCase="'boolean'"
+        [checked]="input.defaultValue"
+        (change)="updateInputValue(input, $event)">
+      </mat-checkbox>
+
+      <!-- Select dropdown -->
+      <select
+        *ngSwitchCase="'select'"
+        [value]="input.defaultValue"
+        (change)="updateInputValue(input, $event)">
+        <option *ngFor="let option of input.options" [value]="option">
+          {{ option }}
+        </option>
+      </select>
+    </ng-container>
+  </div>
+</div>

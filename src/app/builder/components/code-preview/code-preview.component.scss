@@ -1,0 +1,25 @@
+// src/app/builder/components/code-preview/code-preview.component.scss
+
+.code-preview {
+  padding: 16px;
+  background: #f3f4f6;
+  border-top: 1px solid #ccc;
+
+  h3 {
+    margin-bottom: 8px;
+  }
+
+  pre {
+    background: #111827;
+    color: #f9fafb;
+    padding: 16px;
+    overflow: auto;
+    font-family: monospace;
+    font-size: 13px;
+    border-radius: 6px;
+  }
+
+  button {
+    margin-bottom: 12px;
+  }
+}

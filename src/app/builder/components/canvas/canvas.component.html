@@ -1,0 +1,39 @@
+<!-- src/app/builder/components/canvas/canvas.component.html -->
+
+<div class="canvas-wrapper" cdkDropList [cdkDropListData]="droppedComponents" (cdkDropListDropped)="onDrop($event)">
+  <h3 class="title">Builder Canvas</h3>
+  <div class="canvas-toolbar">
+    <button mat-raised-button color="primary" (click)="saveSchema()">💾 Save</button>
+    <button mat-raised-button color="accent" (click)="loadSchema()">🔄 Load</button>
+    <button mat-raised-button color="warn" (click)="clearCanvas()">🧹 Clear</button>
+  </div>
+
+  <div class="drop-area">
+    <ng-container *ngIf="droppedComponents.length > 0; else emptyMessage">
+      <div class="canvas-section">
+        <div class="canvas-body">
+          <div
+            class="canvas-item"
+            *ngFor="let comp of droppedComponents"
+            (click)="selectComponent(comp)"
+          >
+            <app-dynamic-renderer [componentConfig]="comp"></app-dynamic-renderer>
+          </div>
+        </div>
+
+        <app-config-panel
+          *ngIf="selectedComponent"
+          [selectedComponent]="selectedComponent!">
+        </app-config-panel>
+
+      </div>
+      <app-code-preview [schema]="droppedComponents"></app-code-preview>
+
+
+    </ng-container>
+
+    <ng-template #emptyMessage>
+      <p class="placeholder">Drag components here to start building...</p>
+    </ng-template>
+  </div>
+</div>

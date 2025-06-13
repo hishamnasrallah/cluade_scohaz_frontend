@@ -83,6 +83,9 @@ export class ThemeService {
   private themeHistoryKey = 'app-theme-history';
   private maxHistoryItems = 10;
 
+  // Debounce timer for theme updates
+  private updateTimer: any;
+
   constructor() {
     this.initializeTheme();
     this.setupSystemPreferences();
@@ -144,11 +147,21 @@ export class ThemeService {
   }
 
   updateTheme(updates: Partial<ThemeConfig>): void {
+    // Clear any existing timer
+    if (this.updateTimer) {
+      clearTimeout(this.updateTimer);
+    }
+
+    // Update theme immediately for UI responsiveness
     const newTheme = { ...this.themeSubject.value, ...updates };
     this.themeSubject.next(newTheme);
-    this.applyTheme(newTheme);
-    this.saveTheme(newTheme);
-    this.addToHistory(newTheme);
+
+    // Debounce the expensive operations
+    this.updateTimer = setTimeout(() => {
+      this.applyTheme(newTheme);
+      this.saveTheme(newTheme);
+      this.addToHistory(newTheme);
+    }, 100);
   }
 
   updateThemeProperty(property: keyof ThemeConfig, value: any): void {
@@ -156,7 +169,7 @@ export class ThemeService {
   }
 
   applyPreset(presetId: string): void {
-    const allPresets = [...this.presetsSubject.value, ...this.getCustomPresets()];
+    const allPresets = [...this.getDefaultPresets(), ...this.getCustomPresets()];
     const preset = allPresets.find(p => p.id === presetId);
     if (preset) {
       this.updateTheme(preset.config);
@@ -185,6 +198,9 @@ export class ThemeService {
       root.style.setProperty('--text-placeholder', '#64748b');
       root.style.setProperty('--border-default', '#334155');
       root.style.setProperty('--border-strong', '#475569');
+      root.style.setProperty('--shadow-sm', '0 1px 3px 0 rgba(0, 0, 0, 0.3)');
+      root.style.setProperty('--shadow-md', '0 4px 6px -1px rgba(0, 0, 0, 0.3)');
+      root.style.setProperty('--shadow-lg', '0 10px 15px -3px rgba(0, 0, 0, 0.3)');
     } else {
       const theme = this.themeSubject.value;
       root.style.setProperty('--surface-background', theme.backgroundColor);
@@ -199,6 +215,9 @@ export class ThemeService {
       root.style.setProperty('--text-placeholder', '#9ca3af');
       root.style.setProperty('--border-default', '#e2e8f0');
       root.style.setProperty('--border-strong', '#cbd5e1');
+      root.style.setProperty('--shadow-sm', `0 1px 3px 0 rgba(0, 0, 0, ${theme.shadowIntensity})`);
+      root.style.setProperty('--shadow-md', `0 4px 6px -1px rgba(0, 0, 0, ${theme.shadowIntensity})`);
+      root.style.setProperty('--shadow-lg', `0 10px 15px -3px rgba(0, 0, 0, ${theme.shadowIntensity})`);
     }
   }
 
@@ -210,7 +229,7 @@ export class ThemeService {
       ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
       : theme.mode;
 
-    // Generate color variations
+    // Generate color variations with proper RGB values
     const colors = {
       primary: this.hexToRgb(theme.primaryColor),
       secondary: this.hexToRgb(theme.secondaryColor),
@@ -218,7 +237,11 @@ export class ThemeService {
       warning: this.hexToRgb(theme.warningColor),
       error: this.hexToRgb(theme.errorColor),
       info: this.hexToRgb(theme.infoColor),
-      accent: this.hexToRgb(theme.accentColor)
+      accent: this.hexToRgb(theme.accentColor),
+      tertiary: this.hexToRgb(theme.accentColor), // Using accent as tertiary
+      neutral: this.hexToRgb(theme.secondaryColor), // Using secondary as neutral
+      help: this.hexToRgb('#a855f7'), // Default help color
+      note: this.hexToRgb('#06b6d4') // Default note color
     };
 
     // Apply color variations
@@ -227,16 +250,25 @@ export class ThemeService {
         // Store RGB values for opacity utilities
         root.style.setProperty(`--color-${name}-500-rgb`, `${rgb.r}, ${rgb.g}, ${rgb.b}`);
 
-        // Generate color scale
-        for (let i = 50; i <= 950; i += (i < 100 ? 50 : 100)) {
-          const factor = i < 500 ? (500 - i) / 450 : (i - 500) / 450;
-          const shade = i < 500
-            ? this.lighten(rgb, factor)
-            : this.darken(rgb, factor);
-          root.style.setProperty(`--color-${name}-${i}`, shade);
-        }
-        // Set the main color
-        root.style.setProperty(`--color-${name}-500`, theme[`${name}Color` as keyof ThemeConfig] as string);
+        // Generate complete color scale
+        const scales = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+        scales.forEach(scale => {
+          let color: string;
+          if (scale === 500) {
+            // Use the exact color for 500
+            const colorKey = `${name}Color` as keyof ThemeConfig;
+            color = theme[colorKey] as string || this.rgbToHex(rgb);
+          } else if (scale < 500) {
+            // Lighter shades
+            const factor = (500 - scale) / 450;
+            color = this.lighten(rgb, factor * 0.9); // Adjusted for better contrast
+          } else {
+            // Darker shades
+            const factor = (scale - 500) / 450;
+            color = this.darken(rgb, factor * 0.9); // Adjusted for better contrast
+          }
+          root.style.setProperty(`--color-${name}-${scale}`, color);
+        });
       }
     });
 
@@ -246,6 +278,7 @@ export class ThemeService {
     // Apply typography
     root.style.setProperty('--font-sans', theme.fontFamily);
     root.style.setProperty('--font-display', theme.headingFontFamily);
+    root.style.setProperty('--font-mono', "'JetBrains Mono', 'SF Mono', Monaco, Consolas, monospace");
     root.style.setProperty('--text-base', `${theme.fontSizeBase}px`);
     root.style.setProperty('--text-xs', `${theme.fontSizeBase * 0.75}px`);
     root.style.setProperty('--text-sm', `${theme.fontSizeBase * 0.875}px`);
@@ -254,6 +287,8 @@ export class ThemeService {
     root.style.setProperty('--text-2xl', `${theme.fontSizeBase * 1.5}px`);
     root.style.setProperty('--text-3xl', `${theme.fontSizeBase * 1.875}px`);
     root.style.setProperty('--text-4xl', `${theme.fontSizeBase * 2.25}px`);
+    root.style.setProperty('--text-5xl', `${theme.fontSizeBase * 3}px`);
+    root.style.setProperty('--text-6xl', `${theme.fontSizeBase * 3.75}px`);
 
     root.style.setProperty('--font-normal', theme.fontWeight.toString());
     root.style.setProperty('--font-medium', '500');
@@ -271,17 +306,50 @@ export class ThemeService {
 
     // Apply spacing system
     const baseSpacing = theme.spacingUnit;
-    for (let i = 0; i <= 96; i++) {
-      const value = i <= 12 ? i : i <= 64 ? Math.floor(i / 4) * 4 : Math.floor(i / 8) * 8;
-      if (value === i) {
-        root.style.setProperty(`--spacing-${i}`, `${baseSpacing * (i / 4)}px`);
-      }
-    }
-    root.style.setProperty('--spacing-px', '1px');
-    root.style.setProperty('--spacing-0_5', `${baseSpacing * 0.125}px`);
-    root.style.setProperty('--spacing-1_5', `${baseSpacing * 0.375}px`);
-    root.style.setProperty('--spacing-2_5', `${baseSpacing * 0.625}px`);
-    root.style.setProperty('--spacing-3_5', `${baseSpacing * 0.875}px`);
+
+    // Define all spacing values
+    const spacingValues: { [key: string]: number } = {
+      '0': 0,
+      'px': 1 / baseSpacing,
+      '0_5': 0.125,
+      '1': 0.25,
+      '1_5': 0.375,
+      '2': 0.5,
+      '2_5': 0.625,
+      '3': 0.75,
+      '3_5': 0.875,
+      '4': 1,
+      '5': 1.25,
+      '6': 1.5,
+      '7': 1.75,
+      '8': 2,
+      '9': 2.25,
+      '10': 2.5,
+      '11': 2.75,
+      '12': 3,
+      '14': 3.5,
+      '16': 4,
+      '20': 5,
+      '24': 6,
+      '28': 7,
+      '32': 8,
+      '36': 9,
+      '40': 10,
+      '44': 11,
+      '48': 12,
+      '52': 13,
+      '56': 14,
+      '60': 15,
+      '64': 16,
+      '72': 18,
+      '80': 20,
+      '96': 24
+    };
+
+    Object.entries(spacingValues).forEach(([key, multiplier]) => {
+      const value = key === 'px' ? '1px' : `${baseSpacing * multiplier}px`;
+      root.style.setProperty(`--spacing-${key}`, value);
+    });
 
     // Apply border radius
     root.style.setProperty('--rounded-none', '0');
@@ -299,25 +367,36 @@ export class ThemeService {
     root.style.setProperty('--border-1', `${theme.borderWidth}px`);
     root.style.setProperty('--border-2', `${theme.borderWidth * 2}px`);
     root.style.setProperty('--border-4', `${theme.borderWidth * 4}px`);
+    root.style.setProperty('--border-8', `${theme.borderWidth * 8}px`);
 
-    // Apply shadows
+    // Apply shadows with proper dark mode support
     const shadowBase = theme.shadowIntensity;
+    const shadowColor = effectiveMode === 'dark' ? '0, 0, 0' : '0, 0, 0';
+
     root.style.setProperty('--shadow-none', 'none');
-    root.style.setProperty('--shadow-xs', `0 1px 2px 0 rgba(0, 0, 0, ${shadowBase * 0.5})`);
-    root.style.setProperty('--shadow-sm', `0 1px 3px 0 rgba(0, 0, 0, ${shadowBase}), 0 1px 2px -1px rgba(0, 0, 0, ${shadowBase})`);
-    root.style.setProperty('--shadow-md', `0 4px 6px -1px rgba(0, 0, 0, ${shadowBase}), 0 2px 4px -2px rgba(0, 0, 0, ${shadowBase})`);
-    root.style.setProperty('--shadow-lg', `0 10px 15px -3px rgba(0, 0, 0, ${shadowBase}), 0 4px 6px -4px rgba(0, 0, 0, ${shadowBase})`);
-    root.style.setProperty('--shadow-xl', `0 20px 25px -5px rgba(0, 0, 0, ${shadowBase}), 0 8px 10px -6px rgba(0, 0, 0, ${shadowBase})`);
-    root.style.setProperty('--shadow-2xl', `0 25px 50px -12px rgba(0, 0, 0, ${shadowBase * 2.5})`);
+    root.style.setProperty('--shadow-xs', `0 1px 2px 0 rgba(${shadowColor}, ${shadowBase * 0.5})`);
+    root.style.setProperty('--shadow-sm', `0 1px 3px 0 rgba(${shadowColor}, ${shadowBase}), 0 1px 2px -1px rgba(${shadowColor}, ${shadowBase})`);
+    root.style.setProperty('--shadow-md', `0 4px 6px -1px rgba(${shadowColor}, ${shadowBase}), 0 2px 4px -2px rgba(${shadowColor}, ${shadowBase})`);
+    root.style.setProperty('--shadow-lg', `0 10px 15px -3px rgba(${shadowColor}, ${shadowBase}), 0 4px 6px -4px rgba(${shadowColor}, ${shadowBase})`);
+    root.style.setProperty('--shadow-xl', `0 20px 25px -5px rgba(${shadowColor}, ${shadowBase}), 0 8px 10px -6px rgba(${shadowColor}, ${shadowBase})`);
+    root.style.setProperty('--shadow-2xl', `0 25px 50px -12px rgba(${shadowColor}, ${shadowBase * 2.5})`);
+    root.style.setProperty('--shadow-inner', `inset 0 2px 4px 0 rgba(${shadowColor}, ${shadowBase * 0.5})`);
 
     // Apply animation
     root.style.setProperty('--duration-instant', '0ms');
+    root.style.setProperty('--duration-fastest', '50ms');
+    root.style.setProperty('--duration-faster', '100ms');
     root.style.setProperty('--duration-fast', `${theme.animationSpeed * 0.5}ms`);
     root.style.setProperty('--duration-normal', `${theme.animationSpeed}ms`);
     root.style.setProperty('--duration-slow', `${theme.animationSpeed * 1.5}ms`);
-    root.style.setProperty('--ease-in', theme.animationEasing === 'ease' ? 'ease-in' : theme.animationEasing);
-    root.style.setProperty('--ease-out', theme.animationEasing);
-    root.style.setProperty('--ease-in-out', theme.animationEasing === 'ease' ? 'ease-in-out' : theme.animationEasing);
+    root.style.setProperty('--duration-slower', `${theme.animationSpeed * 2.5}ms`);
+    root.style.setProperty('--duration-slowest', `${theme.animationSpeed * 3.3}ms`);
+
+    // Enhanced easing functions
+    root.style.setProperty('--ease-linear', 'linear');
+    root.style.setProperty('--ease-in', 'cubic-bezier(0.4, 0, 1, 1)');
+    root.style.setProperty('--ease-out', 'cubic-bezier(0, 0, 0.2, 1)');
+    root.style.setProperty('--ease-in-out', 'cubic-bezier(0.4, 0, 0.2, 1)');
 
     // Apply blur
     root.style.setProperty('--blur-intensity', `${theme.blurIntensity}px`);
@@ -369,6 +448,10 @@ export class ThemeService {
     if (!theme.enableBlur) {
       root.style.setProperty('--blur-intensity', '0px');
     }
+
+    // Apply surface overlay with proper opacity
+    const overlayOpacity = effectiveMode === 'dark' ? 0.8 : 0.5;
+    root.style.setProperty('--surface-overlay', `rgba(0, 0, 0, ${overlayOpacity})`);
   }
 
   private applyDesignStyleEffects(theme: ThemeConfig): void {
@@ -411,12 +494,24 @@ export class ThemeService {
   }
 
   private hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+    // Handle 3-digit hex
+    if (hex.length === 4) {
+      hex = '#' + hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3];
+    }
+
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? {
       r: parseInt(result[1], 16),
       g: parseInt(result[2], 16),
       b: parseInt(result[3], 16)
     } : null;
+  }
+
+  private rgbToHex(rgb: { r: number; g: number; b: number }): string {
+    return '#' + [rgb.r, rgb.g, rgb.b].map(x => {
+      const hex = x.toString(16);
+      return hex.length === 1 ? '0' + hex : hex;
+    }).join('');
   }
 
   private lighten(rgb: { r: number; g: number; b: number }, factor: number): string {
@@ -434,45 +529,55 @@ export class ThemeService {
   }
 
   private saveTheme(theme: ThemeConfig): void {
-    localStorage.setItem('app-theme', JSON.stringify(theme));
+    try {
+      localStorage.setItem('app-theme', JSON.stringify(theme));
+    } catch (e) {
+      console.error('Failed to save theme to localStorage', e);
+    }
   }
 
   private loadSavedTheme(): void {
-    const savedTheme = localStorage.getItem('app-theme');
-    if (savedTheme) {
-      try {
+    try {
+      const savedTheme = localStorage.getItem('app-theme');
+      if (savedTheme) {
         const theme = JSON.parse(savedTheme);
-        this.themeSubject.next(theme);
-      } catch (e) {
-        console.error('Failed to load saved theme', e);
+        if (this.validateTheme(theme)) {
+          this.themeSubject.next(theme);
+        }
       }
+    } catch (e) {
+      console.error('Failed to load saved theme', e);
     }
   }
 
   // Theme History Management
   private addToHistory(theme: ThemeConfig): void {
-    const history = this.getThemeHistory();
-    history.unshift({
-      theme,
-      timestamp: new Date().toISOString()
-    });
+    try {
+      const history = this.getThemeHistory();
+      history.unshift({
+        theme,
+        timestamp: new Date().toISOString()
+      });
 
-    // Keep only the latest items
-    if (history.length > this.maxHistoryItems) {
-      history.pop();
+      // Keep only the latest items
+      if (history.length > this.maxHistoryItems) {
+        history.pop();
+      }
+
+      localStorage.setItem(this.themeHistoryKey, JSON.stringify(history));
+    } catch (e) {
+      console.error('Failed to save theme history', e);
     }
-
-    localStorage.setItem(this.themeHistoryKey, JSON.stringify(history));
   }
 
   getThemeHistory(): Array<{ theme: ThemeConfig; timestamp: string }> {
-    const historyJson = localStorage.getItem(this.themeHistoryKey);
-    if (historyJson) {
-      try {
+    try {
+      const historyJson = localStorage.getItem(this.themeHistoryKey);
+      if (historyJson) {
         return JSON.parse(historyJson);
-      } catch (e) {
-        console.error('Failed to load theme history', e);
       }
+    } catch (e) {
+      console.error('Failed to load theme history', e);
     }
     return [];
   }
@@ -486,33 +591,41 @@ export class ThemeService {
 
   // Custom Preset Management
   saveCustomPreset(name: string, description: string): void {
-    const customPresets = this.getCustomPresets();
-    const preset: ThemePreset = {
-      id: `custom-${Date.now()}`,
-      name,
-      description,
-      config: { ...this.getCurrentTheme() }
-    };
+    try {
+      const customPresets = this.getCustomPresets();
+      const preset: ThemePreset = {
+        id: `custom-${Date.now()}`,
+        name,
+        description,
+        config: { ...this.getCurrentTheme() }
+      };
 
-    customPresets.push(preset);
-    localStorage.setItem(this.customPresetsKey, JSON.stringify(customPresets));
-    this.loadCustomPresets();
+      customPresets.push(preset);
+      localStorage.setItem(this.customPresetsKey, JSON.stringify(customPresets));
+      this.loadCustomPresets();
+    } catch (e) {
+      console.error('Failed to save custom preset', e);
+    }
   }
 
   deleteCustomPreset(id: string): void {
-    const customPresets = this.getCustomPresets().filter(p => p.id !== id);
-    localStorage.setItem(this.customPresetsKey, JSON.stringify(customPresets));
-    this.loadCustomPresets();
+    try {
+      const customPresets = this.getCustomPresets().filter(p => p.id !== id);
+      localStorage.setItem(this.customPresetsKey, JSON.stringify(customPresets));
+      this.loadCustomPresets();
+    } catch (e) {
+      console.error('Failed to delete custom preset', e);
+    }
   }
 
   private getCustomPresets(): ThemePreset[] {
-    const presetsJson = localStorage.getItem(this.customPresetsKey);
-    if (presetsJson) {
-      try {
+    try {
+      const presetsJson = localStorage.getItem(this.customPresetsKey);
+      if (presetsJson) {
         return JSON.parse(presetsJson);
-      } catch (e) {
-        console.error('Failed to load custom presets', e);
       }
+    } catch (e) {
+      console.error('Failed to load custom presets', e);
     }
     return [];
   }
@@ -546,10 +659,29 @@ export class ThemeService {
   private validateTheme(theme: any): boolean {
     const requiredProperties = [
       'primaryColor', 'secondaryColor', 'backgroundColor', 'textColor',
-      'fontFamily', 'fontSizeBase', 'spacingUnit', 'borderRadius'
+      'fontFamily', 'fontSizeBase', 'spacingUnit', 'borderRadius',
+      'mode', 'designStyle', 'cardStyle', 'buttonStyle'
     ];
 
-    return requiredProperties.every(prop => prop in theme);
+    // Check if all required properties exist
+    const hasRequiredProps = requiredProperties.every(prop => prop in theme);
+
+    // Validate color format
+    const colorProps = ['primaryColor', 'secondaryColor', 'backgroundColor', 'textColor',
+      'accentColor', 'successColor', 'warningColor', 'errorColor', 'infoColor'];
+    const hasValidColors = colorProps.every(prop =>
+      !theme[prop] || /^#[0-9A-F]{6}$/i.test(theme[prop])
+    );
+
+    // Validate numeric properties
+    const numericProps = ['fontSizeBase', 'fontWeight', 'lineHeight', 'spacingUnit',
+      'borderRadius', 'borderWidth', 'shadowIntensity', 'blurIntensity',
+      'animationSpeed', 'focusOutlineWidth'];
+    const hasValidNumbers = numericProps.every(prop =>
+      !theme[prop] || typeof theme[prop] === 'number'
+    );
+
+    return hasRequiredProps && hasValidColors && hasValidNumbers;
   }
 
   // CSS Generation with better formatting

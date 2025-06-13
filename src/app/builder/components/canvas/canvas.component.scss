@@ -1,0 +1,79 @@
+// src/app/builder/components/canvas/canvas.component.scss
+
+.canvas-wrapper {
+  flex: 1;
+  padding: 20px;
+  background-color: #fafafa;
+  border-left: 1px solid #ddd;
+  height: 100vh;
+  overflow-y: auto;
+
+  .title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 16px;
+    color: #333;
+  }
+
+  .drop-area {
+    min-height: 400px;
+    padding: 10px;
+    background-color: white;
+    border: 2px dashed #d1d5db;
+    border-radius: 8px;
+  }
+
+  .component-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    background-color: #f1f5f9;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+    mat-icon.drag-handle {
+      margin-right: 8px;
+      cursor: grab;
+      color: #6b7280;
+    }
+  }
+
+  .placeholder {
+    color: #9ca3af;
+    font-style: italic;
+    text-align: center;
+    padding: 40px 0;
+  }
+}
+.canvas-section {
+  display: flex;
+
+  .canvas-body {
+    flex: 1;
+    padding-right: 8px;
+  }
+
+  .canvas-item {
+    cursor: pointer;
+    padding: 4px;
+    border: 1px dashed transparent;
+
+    &:hover {
+      border-color: #a5b4fc;
+      background: #f0f5ff;
+    }
+  }
+
+  .config-sidebar {
+    border-left: 1px solid #e5e7eb;
+  }
+}
+.canvas-toolbar {
+  margin-bottom: 16px;
+
+  button {
+    margin-right: 8px;
+  }
+}
+
