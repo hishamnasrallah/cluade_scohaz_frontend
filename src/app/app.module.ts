@@ -80,8 +80,8 @@ const routes: Routes = [
     MatExpansionModule,
     MatChipsModule,
 
-    // ✅ NEW: Required for drag-and-drop in builder
-    DragDropModule
+    // // ✅ NEW: Required for drag-and-drop in builder
+    // DragDropModule
   ],
   providers: [
     {
