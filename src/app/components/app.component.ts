@@ -96,7 +96,7 @@ export class AppComponent implements OnInit {
   isLoading = false;
   isHomePage = false;
   currentPageTitle = '';
-  title = 'PraXelo Pro';
+  title = 'PraXelo';
 
   // Add app initialization state
   isAppInitialized = true; // Simplified, always true now

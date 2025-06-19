@@ -49,8 +49,9 @@ import { MatRippleModule } from '@angular/material/core';
               <div class="logo-icon">
                 <mat-icon>dashboard</mat-icon>
               </div>
-              <h1 class="brand-name">PraXelo Pro</h1>
-              <p class="brand-tagline">Enterprise Platform</p>
+              <h1 class="brand-name">PraXelo</h1>
+              <p class="brand-cheer">Where code meets life, dreams come alive</p>
+<!--              <p class="brand-tagline">Enterprise Platform</p>-->
             </div>
 
             <div class="features-showcase">
@@ -93,7 +94,7 @@ import { MatRippleModule } from '@angular/material/core';
             </div>
 
             <div class="branding-footer">
-              <p>&copy; 2024 PraXelo Pro. All rights reserved.</p>
+              <p>&copy; 2025 PraXelo. All rights reserved.</p>
             </div>
           </div>
         </div>
@@ -387,6 +388,15 @@ import { MatRippleModule } from '@angular/material/core';
       font-weight: 500;
       text-transform: uppercase;
       letter-spacing: 2px;
+    }
+
+    .brand-cheer {
+      color: #C4F7EF;
+      margin: 4px 0 0 0;
+      font-size: 0.95rem;
+      font-weight: 500;
+      //text-transform: uppercase;
+      letter-spacing: 0.03rem;
     }
 
     .features-showcase {

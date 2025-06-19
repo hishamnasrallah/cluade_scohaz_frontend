@@ -1,4 +1,4 @@
-// components/config/config.component.ts - ENHANCED Professional Design
+// components/config/config.component.ts - Enhanced Ocean Mint Theme
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';

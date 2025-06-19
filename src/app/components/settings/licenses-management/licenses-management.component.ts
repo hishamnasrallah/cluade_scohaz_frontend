@@ -85,23 +85,35 @@ interface Subscription {
   ],
   template: `
     <div class="licenses-management">
-      <!-- Header -->
+      <!-- Compact Header -->
       <div class="page-header">
         <div class="header-content">
           <div class="header-text">
-            <h1>Licenses & Subscriptions</h1>
-            <p>Manage platform licenses, subscriptions, and billing information</p>
+            <div class="header-icon">
+              <mat-icon>verified</mat-icon>
+            </div>
+            <div>
+              <h1>Licenses & Subscriptions</h1>
+              <p>Manage platform licenses, subscriptions, and billing information</p>
+            </div>
           </div>
           <div class="header-actions">
-            <button mat-button (click)="refreshData()">
-              <mat-icon>refresh</mat-icon>
-              Refresh
+            <button mat-icon-button
+                    (click)="refreshData()"
+                    class="refresh-btn"
+                    matTooltip="Refresh"
+                    [disabled]="isLoading">
+              <mat-icon [class.spinning]="isLoading">refresh</mat-icon>
             </button>
-            <button mat-button (click)="downloadLicenseReport()">
+            <button mat-button
+                    (click)="downloadLicenseReport()"
+                    class="export-btn">
               <mat-icon>download</mat-icon>
-              Export Report
+              Export
             </button>
-            <button mat-raised-button color="primary" (click)="openAddLicenseDialog()">
+            <button mat-raised-button
+                    (click)="openAddLicenseDialog()"
+                    class="create-btn">
               <mat-icon>add</mat-icon>
               Add License
             </button>
@@ -218,7 +230,7 @@ interface Subscription {
           </div>
           <div class="stat-content">
             <h3>{{ getActiveLicenses().length }}</h3>
-            <p>Active Licenses</p>
+            <p>Active</p>
           </div>
         </div>
         <div class="stat-card">
@@ -494,56 +506,124 @@ interface Subscription {
   `,
   styles: [`
     .licenses-management {
-      padding: 24px;
+      padding: 16px;
       max-width: 1400px;
       margin: 0 auto;
+      background: #F4FDFD;
+      min-height: 100vh;
     }
 
+    /* Compact Header */
     .page-header {
-      margin-bottom: 32px;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(47, 72, 88, 0.05);
+      border: 1px solid rgba(196, 247, 239, 0.5);
     }
 
     .header-content {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 24px;
+    }
+
+    .header-text {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
     }
 
     .header-text h1 {
-      font-size: 2rem;
+      font-size: 1.5rem;
       font-weight: 700;
-      color: #334155;
-      margin: 0 0 8px 0;
+      color: #2F4858;
+      margin: 0;
+      line-height: 1.2;
     }
 
     .header-text p {
-      color: #64748b;
+      color: #6B7280;
       margin: 0;
+      font-size: 0.875rem;
     }
 
     .header-actions {
       display: flex;
-      gap: 12px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .refresh-btn {
+      color: #34C5AA;
+
+      &:hover {
+        background: rgba(196, 247, 239, 0.3);
+      }
+    }
+
+    .export-btn {
+      color: #6B7280;
+
+      &:hover {
+        background: rgba(196, 247, 239, 0.3);
+        color: #34C5AA;
+      }
+    }
+
+    .create-btn {
+      background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+      color: white;
+      border: none;
+      box-shadow: 0 2px 4px rgba(52, 197, 170, 0.2);
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .spinning {
+      animation: spin 1s linear infinite;
     }
 
     .current-plan-section {
-      margin-bottom: 32px;
+      margin-bottom: 20px;
     }
 
     .current-plan-card {
-      border-radius: 20px;
+      border-radius: 16px;
       overflow: hidden;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      position: relative;
+      background: white;
+      border: 1px solid rgba(196, 247, 239, 0.5);
+      box-shadow: 0 2px 4px rgba(47, 72, 88, 0.05);
     }
 
     .plan-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 24px;
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(196, 247, 239, 0.3) 0%, rgba(196, 247, 239, 0.1) 100%);
+      border-bottom: 1px solid rgba(196, 247, 239, 0.5);
     }
 
     .plan-info {
@@ -553,52 +633,57 @@ interface Subscription {
     }
 
     .plan-icon {
-      width: 64px;
-      height: 64px;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 16px;
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
+      color: white;
 
       mat-icon {
-        font-size: 32px;
-        width: 32px;
-        height: 32px;
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
       }
     }
 
     .plan-details h2 {
       margin: 0 0 4px 0;
-      font-size: 1.8rem;
+      font-size: 1.5rem;
       font-weight: 700;
+      color: #2F4858;
     }
 
     .plan-details p {
       margin: 0;
-      opacity: 0.9;
+      color: #6B7280;
+      font-size: 0.875rem;
     }
 
     .plan-status {
-      padding: 8px 16px;
+      padding: 6px 14px;
       border-radius: 20px;
       font-weight: 600;
       text-transform: uppercase;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
+      background: rgba(34, 197, 94, 0.1);
+      color: #16A34A;
 
-      &.status-active { background: rgba(34, 197, 94, 0.2); }
-      &.status-trial { background: rgba(245, 158, 11, 0.2); }
-      &.status-expired { background: rgba(239, 68, 68, 0.2); }
+      &.status-active { background: rgba(34, 197, 94, 0.1); color: #16A34A; }
+      &.status-trial { background: rgba(245, 158, 11, 0.1); color: #D97706; }
+      &.status-expired { background: rgba(239, 68, 68, 0.1); color: #DC2626; }
     }
 
     .plan-content {
-      padding: 0 24px 24px;
+      padding: 20px;
     }
 
     .plan-metrics {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 20px;
+      gap: 16px;
       margin-bottom: 24px;
     }
 
@@ -609,13 +694,14 @@ interface Subscription {
     }
 
     .metric-label {
-      opacity: 0.8;
-      font-size: 0.9rem;
+      color: #6B7280;
+      font-size: 0.875rem;
     }
 
     .metric-value {
       font-weight: 600;
-      font-size: 1.1rem;
+      font-size: 1rem;
+      color: #2F4858;
     }
 
     .usage-section {
@@ -624,7 +710,8 @@ interface Subscription {
 
     .usage-section h4 {
       margin: 0 0 16px 0;
-      opacity: 0.9;
+      color: #2F4858;
+      font-size: 1rem;
     }
 
     .usage-metrics {
@@ -642,7 +729,8 @@ interface Subscription {
     .usage-header {
       display: flex;
       justify-content: space-between;
-      font-size: 0.9rem;
+      font-size: 0.875rem;
+      color: #6B7280;
     }
 
     .plan-actions {
@@ -651,8 +739,14 @@ interface Subscription {
     }
 
     .plan-actions button {
-      color: white;
-      border-color: rgba(255, 255, 255, 0.3);
+      color: #6B7280;
+      border-color: #E5E7EB;
+
+      &:hover {
+        background: rgba(196, 247, 239, 0.3);
+        color: #34C5AA;
+        border-color: #34C5AA;
+      }
     }
 
     .no-plan-content {
@@ -670,64 +764,76 @@ interface Subscription {
         font-size: 48px;
         width: 48px;
         height: 48px;
-        opacity: 0.8;
+        color: #9CA3AF;
       }
 
       h3 {
         margin: 0;
-        font-size: 1.5rem;
+        font-size: 1.25rem;
+        color: #2F4858;
       }
 
       p {
         margin: 0;
-        opacity: 0.9;
+        color: #6B7280;
       }
     }
 
+    /* Compact Stats */
     .stats-section {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 20px;
-      margin-bottom: 32px;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
     }
 
     .stat-card {
       background: white;
-      border-radius: 16px;
-      padding: 20px;
+      border-radius: 10px;
+      padding: 16px;
       display: flex;
       align-items: center;
-      gap: 16px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      border: 1px solid #f1f5f9;
+      gap: 12px;
+      box-shadow: 0 1px 3px rgba(47, 72, 88, 0.05);
+      border: 1px solid rgba(196, 247, 239, 0.5);
     }
 
     .stat-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
+      flex-shrink: 0;
 
-      &.licenses-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-      &.active-icon { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); }
-      &.users-icon { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); }
-      &.expiring-icon { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+      &.licenses-icon { background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%); }
+      &.active-icon { background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%); }
+      &.users-icon { background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); }
+      &.expiring-icon { background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); }
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
     }
 
     .stat-content h3 {
-      font-size: 1.5rem;
+      font-size: 1.25rem;
       font-weight: 700;
-      color: #334155;
+      color: #2F4858;
       margin: 0;
+      line-height: 1;
     }
 
     .stat-content p {
-      color: #64748b;
-      margin: 4px 0 0 0;
-      font-size: 0.9rem;
+      color: #6B7280;
+      margin: 0;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .loading-section {
@@ -741,7 +847,7 @@ interface Subscription {
 
     .loading-section p {
       margin-top: 16px;
-      color: #64748b;
+      color: #6B7280;
     }
 
     .licenses-content {
@@ -756,25 +862,27 @@ interface Subscription {
     }
 
     .license-card {
-      border-radius: 16px;
+      border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      border: 1px solid #f1f5f9;
+      box-shadow: 0 2px 4px rgba(47, 72, 88, 0.05);
+      border: 1px solid rgba(196, 247, 239, 0.5);
+      background: white;
       transition: all 0.3s ease;
 
       &:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(47, 72, 88, 0.08);
+        border-color: rgba(52, 197, 170, 0.3);
       }
 
       &.expired {
-        border-color: #fecaca;
-        background: #fef2f2;
+        border-color: rgba(239, 68, 68, 0.3);
+        background: rgba(239, 68, 68, 0.03);
       }
 
       &.expiring {
-        border-color: #fed7aa;
-        background: #fffbeb;
+        border-color: rgba(245, 158, 11, 0.3);
+        background: rgba(245, 158, 11, 0.03);
       }
     }
 
@@ -803,39 +911,39 @@ interface Subscription {
 
     .license-details h3 {
       margin: 0 0 4px 0;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       font-weight: 600;
-      color: #334155;
+      color: #2F4858;
     }
 
     .license-details p {
       margin: 0 0 8px 0;
-      color: #64748b;
-      font-size: 0.9rem;
+      color: #6B7280;
+      font-size: 0.875rem;
     }
 
     .license-type {
-      background: #f1f5f9;
-      color: #475569;
+      background: rgba(196, 247, 239, 0.5);
+      color: #2F4858;
       padding: 4px 8px;
       border-radius: 6px;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       font-weight: 600;
       text-transform: uppercase;
       display: inline-block;
     }
 
     .license-status {
-      padding: 6px 12px;
+      padding: 4px 10px;
       border-radius: 12px;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       font-weight: 600;
       text-transform: uppercase;
 
-      &.status-active { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
-      &.status-expired { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
-      &.status-suspended { background: rgba(245, 158, 11, 0.1); color: #d97706; }
-      &.status-pending { background: rgba(59, 130, 246, 0.1); color: #2563eb; }
+      &.status-active { background: rgba(34, 197, 94, 0.1); color: #16A34A; }
+      &.status-expired { background: rgba(239, 68, 68, 0.1); color: #DC2626; }
+      &.status-suspended { background: rgba(245, 158, 11, 0.1); color: #D97706; }
+      &.status-pending { background: rgba(59, 130, 246, 0.1); color: #2563EB; }
     }
 
     .license-metrics {
@@ -847,21 +955,21 @@ interface Subscription {
       justify-content: space-between;
       align-items: center;
       padding: 8px 0;
-      border-bottom: 1px solid #f1f5f9;
+      border-bottom: 1px solid rgba(196, 247, 239, 0.3);
     }
 
     .metric-label {
       font-weight: 500;
-      color: #64748b;
-      font-size: 0.9rem;
+      color: #6B7280;
+      font-size: 0.875rem;
     }
 
     .metric-value {
-      color: #334155;
-      font-size: 0.9rem;
+      color: #2F4858;
+      font-size: 0.875rem;
 
       &.expired {
-        color: #dc2626;
+        color: #DC2626;
         font-weight: 600;
       }
     }
@@ -874,14 +982,14 @@ interface Subscription {
       display: flex;
       justify-content: space-between;
       margin-bottom: 8px;
-      font-size: 0.9rem;
-      color: #64748b;
+      font-size: 0.875rem;
+      color: #6B7280;
     }
 
     .license-features h5 {
-      font-size: 1rem;
+      font-size: 0.9rem;
       font-weight: 600;
-      color: #334155;
+      color: #2F4858;
       margin: 0 0 12px 0;
     }
 
@@ -892,15 +1000,15 @@ interface Subscription {
     }
 
     .feature-chip {
-      font-size: 0.75rem;
-      height: 24px;
-      background: rgba(102, 126, 234, 0.1);
-      color: #667eea;
+      font-size: 0.7rem;
+      height: 22px;
+      background: rgba(52, 197, 170, 0.1);
+      color: #34C5AA;
     }
 
     .add-license-card {
-      border: 2px dashed #e2e8f0;
-      border-radius: 16px;
+      border: 2px dashed #E5E7EB;
+      border-radius: 12px;
       padding: 60px 20px;
       display: flex;
       flex-direction: column;
@@ -909,13 +1017,13 @@ interface Subscription {
       gap: 12px;
       cursor: pointer;
       transition: all 0.3s ease;
-      color: #94a3b8;
-      background: #fafafa;
+      color: #9CA3AF;
+      background: rgba(196, 247, 239, 0.05);
 
       &:hover {
-        border-color: #667eea;
-        color: #667eea;
-        background: rgba(102, 126, 234, 0.05);
+        border-color: #34C5AA;
+        color: #34C5AA;
+        background: rgba(196, 247, 239, 0.1);
       }
 
       mat-icon {
@@ -926,7 +1034,7 @@ interface Subscription {
 
       span {
         font-weight: 500;
-        font-size: 1.1rem;
+        font-size: 1rem;
       }
     }
 
@@ -935,7 +1043,8 @@ interface Subscription {
     }
 
     .billing-card {
-      border-radius: 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(196, 247, 239, 0.5);
     }
 
     .transaction-list {
@@ -949,13 +1058,13 @@ interface Subscription {
       justify-content: space-between;
       align-items: center;
       padding: 16px;
-      border: 1px solid #f1f5f9;
-      border-radius: 12px;
+      border: 1px solid rgba(196, 247, 239, 0.5);
+      border-radius: 10px;
       transition: all 0.2s ease;
 
       &:hover {
-        background: #f8fafc;
-        border-color: #e2e8f0;
+        background: rgba(196, 247, 239, 0.1);
+        border-color: rgba(52, 197, 170, 0.3);
       }
     }
 
@@ -975,51 +1084,51 @@ interface Subscription {
 
     .transaction-description {
       font-weight: 500;
-      color: #334155;
+      color: #2F4858;
     }
 
     .transaction-date {
-      font-size: 0.9rem;
-      color: #64748b;
+      font-size: 0.85rem;
+      color: #6B7280;
     }
 
     .transaction-amount {
       font-weight: 600;
-      font-size: 1.1rem;
+      font-size: 1rem;
 
-      &.payment { color: #334155; }
-      &.refund { color: #dc2626; }
+      &.payment { color: #2F4858; }
+      &.refund { color: #DC2626; }
     }
 
     .transaction-status {
       padding: 4px 8px;
       border-radius: 8px;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       font-weight: 600;
       text-transform: uppercase;
 
-      &.status-completed { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
-      &.status-pending { background: rgba(245, 158, 11, 0.1); color: #d97706; }
-      &.status-failed { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+      &.status-completed { background: rgba(34, 197, 94, 0.1); color: #16A34A; }
+      &.status-pending { background: rgba(245, 158, 11, 0.1); color: #D97706; }
+      &.status-failed { background: rgba(239, 68, 68, 0.1); color: #DC2626; }
     }
 
     .empty-state {
       text-align: center;
       padding: 60px 20px;
-      color: #64748b;
+      color: #6B7280;
 
       mat-icon {
         font-size: 64px;
         width: 64px;
         height: 64px;
         margin-bottom: 16px;
-        color: #94a3b8;
+        color: #9CA3AF;
       }
 
       h3 {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
         margin: 0 0 8px 0;
-        color: #334155;
+        color: #2F4858;
       }
 
       p {
@@ -1047,7 +1156,7 @@ interface Subscription {
     .features-section h4 {
       font-size: 1rem;
       font-weight: 600;
-      color: #334155;
+      color: #2F4858;
       margin: 0 0 16px 0;
     }
 
@@ -1059,12 +1168,21 @@ interface Subscription {
 
     @media (max-width: 768px) {
       .licenses-management {
-        padding: 16px;
+        padding: 12px;
       }
 
       .header-content {
         flex-direction: column;
         align-items: stretch;
+        gap: 16px;
+      }
+
+      .header-text {
+        justify-content: center;
+      }
+
+      .header-actions {
+        justify-content: center;
       }
 
       .stats-section {
@@ -1427,12 +1545,12 @@ export class LicensesManagementComponent implements OnInit {
 
   getLicenseTypeColor(type: string): string {
     const colors = {
-      enterprise: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
-      professional: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      basic: 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)',
-      trial: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+      enterprise: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)',
+      professional: 'linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%)',
+      basic: 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)',
+      trial: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
     };
-    return colors[type as keyof typeof colors] || 'linear-gradient(135deg, #64748b 0%, #475569 100%)';
+    return colors[type as keyof typeof colors] || 'linear-gradient(135deg, #6B7280 0%, #4B5563 100%)';
   }
 
   formatLicenseType(type: string): string {

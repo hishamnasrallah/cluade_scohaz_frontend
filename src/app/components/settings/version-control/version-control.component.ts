@@ -1,4 +1,4 @@
-// components/settings/version-control/version-control.component.ts - BUTTONS FIXED
+// components/settings/version-control/version-control.component.ts
 import { Component, OnInit, ViewChild, TemplateRef, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -63,19 +63,29 @@ interface VersionResponse {
   ],
   template: `
     <div class="version-control">
-      <!-- Header -->
+      <!-- Compact Header -->
       <div class="page-header">
         <div class="header-content">
           <div class="header-text">
-            <h1>Version Control</h1>
-            <p>Manage application versions, environments, and deployment settings</p>
+            <div class="header-icon">
+              <mat-icon>layers</mat-icon>
+            </div>
+            <div>
+              <h1>Version Control</h1>
+              <p>Manage application versions, environments, and deployment settings</p>
+            </div>
           </div>
           <div class="header-actions">
-            <button mat-button (click)="handleRefresh($event)">
-              <mat-icon>refresh</mat-icon>
-              Refresh
+            <button mat-icon-button
+                    (click)="handleRefresh($event)"
+                    class="refresh-btn"
+                    matTooltip="Refresh"
+                    [disabled]="isProcessing">
+              <mat-icon [class.spinning]="isLoading">refresh</mat-icon>
             </button>
-            <button mat-raised-button color="primary" (click)="handleCreate($event)">
+            <button mat-raised-button
+                    (click)="handleCreate($event)"
+                    class="create-btn">
               <mat-icon>add</mat-icon>
               New Version
             </button>
@@ -83,7 +93,7 @@ interface VersionResponse {
         </div>
       </div>
 
-      <!-- Stats Cards -->
+      <!-- Compact Stats -->
       <div class="stats-section">
         <div class="stat-card">
           <div class="stat-icon total-icon">
@@ -100,7 +110,7 @@ interface VersionResponse {
           </div>
           <div class="stat-content">
             <h3>{{ getActiveVersions().length }}</h3>
-            <p>Active Versions</p>
+            <p>Active</p>
           </div>
         </div>
         <div class="stat-card">
@@ -183,7 +193,7 @@ interface VersionResponse {
                     </div>
                   </div>
 
-                  <!-- FIXED ACTION BUTTONS -->
+                  <!-- Action Buttons -->
                   <div class="version-actions">
                     <!-- Edit Button -->
                     <button type="button"
@@ -359,84 +369,152 @@ interface VersionResponse {
   `,
   styles: [`
     .version-control {
-      padding: 24px;
+      padding: 16px;
       max-width: 1400px;
       margin: 0 auto;
+      background: #F4FDFD;
+      min-height: 100vh;
       position: relative;
     }
 
+    /* Compact Header */
     .page-header {
-      margin-bottom: 32px;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(47, 72, 88, 0.05);
+      border: 1px solid rgba(196, 247, 239, 0.5);
     }
 
     .header-content {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 24px;
     }
 
-    .header-text h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #334155;
-      margin: 0 0 8px 0;
-    }
-
-    .header-text p {
-      color: #64748b;
-      margin: 0;
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 12px;
-    }
-
-    .stats-section {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 20px;
-      margin-bottom: 32px;
-    }
-
-    .stat-card {
-      background: white;
-      border-radius: 16px;
-      padding: 20px;
+    .header-text {
       display: flex;
       align-items: center;
       gap: 16px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      border: 1px solid #f1f5f9;
     }
 
-    .stat-icon {
+    .header-icon {
       width: 48px;
       height: 48px;
+      background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
 
-      &.total-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-      &.active-icon { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); }
-      &.environments-icon { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); }
-      &.platforms-icon { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
+    }
+
+    .header-text h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #2F4858;
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    .header-text p {
+      color: #6B7280;
+      margin: 0;
+      font-size: 0.875rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .refresh-btn {
+      color: #34C5AA;
+
+      &:hover {
+        background: rgba(196, 247, 239, 0.3);
+      }
+    }
+
+    .create-btn {
+      background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+      color: white;
+      border: none;
+      box-shadow: 0 2px 4px rgba(52, 197, 170, 0.2);
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .spinning {
+      animation: spin 1s linear infinite;
+    }
+
+    /* Compact Stats */
+    .stats-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 1px 3px rgba(47, 72, 88, 0.05);
+      border: 1px solid rgba(196, 247, 239, 0.5);
+    }
+
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      flex-shrink: 0;
+
+      &.total-icon { background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%); }
+      &.active-icon { background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%); }
+      &.environments-icon { background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); }
+      &.platforms-icon { background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); }
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
     }
 
     .stat-content h3 {
-      font-size: 1.5rem;
+      font-size: 1.25rem;
       font-weight: 700;
-      color: #334155;
+      color: #2F4858;
       margin: 0;
+      line-height: 1;
     }
 
     .stat-content p {
-      color: #64748b;
-      margin: 4px 0 0 0;
-      font-size: 0.9rem;
+      color: #6B7280;
+      margin: 0;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .loading-section, .error-section {
@@ -450,7 +528,7 @@ interface VersionResponse {
 
     .loading-section p {
       margin-top: 16px;
-      color: #64748b;
+      color: #6B7280;
     }
 
     .error-content {
@@ -462,89 +540,106 @@ interface VersionResponse {
       width: 64px;
       height: 64px;
       margin-bottom: 16px;
-      color: #ef4444;
+      color: #EF4444;
     }
 
     .error-content h3 {
-      font-size: 1.5rem;
+      font-size: 1.25rem;
       margin: 0 0 8px 0;
-      color: #334155;
+      color: #2F4858;
     }
 
     .error-content p {
       margin: 0 0 24px 0;
-      color: #64748b;
+      color: #6B7280;
     }
 
     .versions-content {
       display: flex;
       flex-direction: column;
-      gap: 32px;
+      gap: 20px;
     }
 
     .environment-section {
       background: white;
-      border-radius: 20px;
-      padding: 24px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      border: 1px solid #f1f5f9;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(47, 72, 88, 0.05);
+      border: 1px solid rgba(196, 247, 239, 0.5);
     }
 
     .environment-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 16px;
-      border-bottom: 2px solid #f1f5f9;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(196, 247, 239, 0.5);
     }
 
     .env-info {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
     }
 
     .env-icon {
-      width: 56px;
-      height: 56px;
-      border-radius: 14px;
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
+
+      mat-icon {
+        font-size: 22px;
+        width: 22px;
+        height: 22px;
+      }
     }
 
     .env-details h3 {
-      margin: 0 0 4px 0;
-      font-size: 1.3rem;
+      margin: 0 0 2px 0;
+      font-size: 1.1rem;
       font-weight: 600;
-      color: #334155;
+      color: #2F4858;
     }
 
     .env-details p {
       margin: 0;
-      color: #64748b;
-      font-size: 0.9rem;
+      color: #6B7280;
+      font-size: 0.8rem;
+    }
+
+    .env-actions button {
+      color: #6B7280;
+
+      &:hover {
+        background: rgba(196, 247, 239, 0.3);
+        color: #34C5AA;
+      }
     }
 
     .versions-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 20px;
+      gap: 16px;
     }
 
     .version-card {
-      border-radius: 16px;
+      border-radius: 10px;
       overflow: hidden;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      border: 1px solid #f1f5f9;
-      transition: all 0.3s ease;
+      box-shadow: 0 1px 3px rgba(47, 72, 88, 0.05);
+      border: 1px solid rgba(196, 247, 239, 0.5);
+      background: white;
+      transition: all 0.2s ease;
       position: relative;
 
       &:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 12px rgba(47, 72, 88, 0.08);
+        border-color: rgba(52, 197, 170, 0.3);
       }
 
       &.inactive {
@@ -552,8 +647,16 @@ interface VersionResponse {
       }
 
       &.expired {
-        border-color: #fecaca;
-        background: #fef2f2;
+        border-color: rgba(239, 68, 68, 0.3);
+        background: rgba(239, 68, 68, 0.03);
+      }
+
+      mat-card-header {
+        padding: 12px !important;
+      }
+
+      mat-card-content {
+        padding: 0 12px 12px !important;
       }
     }
 
@@ -565,47 +668,44 @@ interface VersionResponse {
     }
 
     .version-info h4 {
-      margin: 0 0 8px 0;
-      font-size: 1.1rem;
+      margin: 0 0 6px 0;
+      font-size: 1rem;
       font-weight: 600;
-      color: #334155;
+      color: #2F4858;
     }
 
     .version-meta {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       flex-wrap: wrap;
     }
 
     .platform-chip, .status-chip {
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-size: 0.7rem;
       font-weight: 600;
       text-transform: uppercase;
       color: white;
     }
 
     .status-chip {
-      &.active { background: #22c55e; }
-      &.inactive { background: #64748b; }
-      &.expired { background: #ef4444; }
+      &.active { background: #22C55E; }
+      &.inactive { background: #6B7280; }
+      &.expired { background: #EF4444; }
     }
 
-    /* FIXED ACTION BUTTONS STYLES */
+    /* Action Buttons */
     .version-actions {
       display: flex;
-      gap: 6px;
+      gap: 4px;
       flex-shrink: 0;
-      padding: 4px;
-      border-radius: 8px;
-      background: rgba(248, 250, 252, 0.8);
     }
 
     .action-btn {
-      width: 36px !important;
-      height: 36px !important;
-      min-width: 36px !important;
+      width: 32px !important;
+      height: 32px !important;
+      min-width: 32px !important;
       padding: 0 !important;
       border-radius: 8px !important;
       transition: all 0.2s ease !important;
@@ -614,7 +714,7 @@ interface VersionResponse {
 
       &:hover {
         transform: translateY(-1px) !important;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
       }
 
       &:active {
@@ -627,14 +727,20 @@ interface VersionResponse {
         transform: none !important;
       }
 
-      &.edit-btn:hover { background: rgba(59, 130, 246, 0.1) !important; color: #3b82f6 !important; }
-      &.toggle-btn:hover { background: rgba(245, 158, 11, 0.1) !important; color: #f59e0b !important; }
-      &.duplicate-btn:hover { background: rgba(34, 197, 94, 0.1) !important; color: #22c55e !important; }
-      &.delete-btn:hover { background: rgba(239, 68, 68, 0.1) !important; color: #ef4444 !important; }
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+
+      &.edit-btn:hover { background: rgba(59, 130, 246, 0.1) !important; color: #3B82F6 !important; }
+      &.toggle-btn:hover { background: rgba(245, 158, 11, 0.1) !important; color: #F59E0B !important; }
+      &.duplicate-btn:hover { background: rgba(34, 197, 94, 0.1) !important; color: #22C55E !important; }
+      &.delete-btn:hover { background: rgba(239, 68, 68, 0.1) !important; color: #EF4444 !important; }
     }
 
     .version-details {
-      margin-top: 16px;
+      margin-top: 12px;
     }
 
     .detail-row {
@@ -642,22 +748,26 @@ interface VersionResponse {
       justify-content: space-between;
       align-items: center;
       padding: 6px 0;
-      border-bottom: 1px solid #f1f5f9;
+      border-bottom: 1px solid rgba(196, 247, 239, 0.3);
+
+      &:last-child {
+        border-bottom: none;
+      }
     }
 
     .detail-label {
       font-weight: 500;
-      color: #64748b;
-      font-size: 0.9rem;
+      color: #6B7280;
+      font-size: 0.85rem;
     }
 
     .detail-value {
-      color: #334155;
-      font-size: 0.9rem;
+      color: #2F4858;
+      font-size: 0.85rem;
 
       &.endpoint {
         font-family: monospace;
-        background: #f8fafc;
+        background: rgba(196, 247, 239, 0.2);
         padding: 2px 6px;
         border-radius: 4px;
         max-width: 150px;
@@ -666,7 +776,7 @@ interface VersionResponse {
       }
 
       &.expired {
-        color: #ef4444;
+        color: #EF4444;
         font-weight: 600;
       }
     }
@@ -676,12 +786,12 @@ interface VersionResponse {
       bottom: 0;
       left: 0;
       right: 0;
-      height: 4px;
+      height: 3px;
     }
 
     .add-version-card {
-      border: 2px dashed #e2e8f0;
-      border-radius: 16px;
+      border: 2px dashed #E5E7EB;
+      border-radius: 10px;
       padding: 40px 20px;
       display: flex;
       flex-direction: column;
@@ -690,13 +800,13 @@ interface VersionResponse {
       gap: 8px;
       cursor: pointer;
       transition: all 0.3s ease;
-      color: #94a3b8;
-      background: #fafafa;
+      color: #9CA3AF;
+      background: rgba(196, 247, 239, 0.05);
 
       &:hover {
-        border-color: #667eea;
-        color: #667eea;
-        background: rgba(102, 126, 234, 0.05);
+        border-color: #34C5AA;
+        color: #34C5AA;
+        background: rgba(196, 247, 239, 0.1);
       }
 
       mat-icon {
@@ -707,26 +817,27 @@ interface VersionResponse {
 
       span {
         font-weight: 500;
+        font-size: 0.9rem;
       }
     }
 
     .empty-state {
       text-align: center;
       padding: 60px 20px;
-      color: #64748b;
+      color: #6B7280;
 
       mat-icon {
         font-size: 64px;
         width: 64px;
         height: 64px;
         margin-bottom: 16px;
-        color: #94a3b8;
+        color: #9CA3AF;
       }
 
       h3 {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
         margin: 0 0 8px 0;
-        color: #334155;
+        color: #2F4858;
       }
 
       p {
@@ -751,7 +862,7 @@ interface VersionResponse {
       margin-top: 8px;
     }
 
-    /* PROCESSING OVERLAY */
+    /* Processing Overlay */
     .processing-overlay {
       position: fixed;
       top: 0;
@@ -768,19 +879,28 @@ interface VersionResponse {
 
       p {
         margin-top: 16px;
-        font-size: 1.1rem;
+        font-size: 1rem;
         font-weight: 500;
       }
     }
 
     @media (max-width: 768px) {
       .version-control {
-        padding: 16px;
+        padding: 12px;
       }
 
       .header-content {
         flex-direction: column;
         align-items: stretch;
+        gap: 16px;
+      }
+
+      .header-text {
+        justify-content: center;
+      }
+
+      .header-actions {
+        justify-content: center;
       }
 
       .stats-section {
@@ -794,7 +914,7 @@ interface VersionResponse {
       .environment-header {
         flex-direction: column;
         align-items: stretch;
-        gap: 16px;
+        gap: 12px;
       }
 
       .form-row {
@@ -802,9 +922,7 @@ interface VersionResponse {
       }
 
       .version-actions {
-        flex-direction: column;
-        gap: 4px;
-        width: 44px;
+        gap: 2px;
       }
     }
   `]
@@ -823,14 +941,14 @@ export class VersionControlComponent implements OnInit {
   editingVersion: Version | null = null;
 
   private environmentConfig = {
-    '0': { name: 'Staging', icon: 'settings', color: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' },
-    '1': { name: 'Production', icon: 'public', color: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)' },
-    '2': { name: 'Development', icon: 'code', color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
-    '3': { name: 'Local', icon: 'computer', color: 'linear-gradient(135deg, #64748b 0%, #475569 100%)' }
+    '0': { name: 'Staging', icon: 'settings', color: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)' },
+    '1': { name: 'Production', icon: 'public', color: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)' },
+    '2': { name: 'Development', icon: 'code', color: 'linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%)' },
+    '3': { name: 'Local', icon: 'computer', color: 'linear-gradient(135deg, #6B7280 0%, #4B5563 100%)' }
   };
 
   private platformConfig = {
-    'Android': 'linear-gradient(135deg, #a4d037 0%, #8bc34a 100%)',
+    'Android': 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)',
     'IOS': 'linear-gradient(135deg, #000000 0%, #434343 100%)'
   };
 
@@ -864,7 +982,7 @@ export class VersionControlComponent implements OnInit {
     });
   }
 
-  // FIXED EVENT HANDLERS
+  // Event Handlers
   handleEdit(event: Event, version: Version): void {
     this.stopEvent(event);
     this.performAction('edit', version);
@@ -1006,7 +1124,7 @@ export class VersionControlComponent implements OnInit {
     this.snackBar.open(message, 'Close', { duration: 3000 });
   }
 
-  // CORE BUSINESS LOGIC (Async)
+  // Core Business Logic
   loadVersions(): Promise<void> {
     return new Promise((resolve, reject) => {
       this.isLoading = true;
@@ -1290,7 +1408,7 @@ export class VersionControlComponent implements OnInit {
     });
   }
 
-  // TRACKING FUNCTIONS FOR PERFORMANCE
+  // Tracking Functions
   trackByVersion(index: number, version: Version): any {
     return version.id || index;
   }
@@ -1299,7 +1417,7 @@ export class VersionControlComponent implements OnInit {
     return env.key;
   }
 
-  // UTILITY METHODS
+  // Utility Methods
   getActiveVersions(): Version[] {
     return this.versions.filter(v => v.active_ind);
   }
@@ -1343,12 +1461,12 @@ export class VersionControlComponent implements OnInit {
 
   getEnvironmentColor(env: string): string {
     const config = this.environmentConfig[env as keyof typeof this.environmentConfig];
-    return config ? config.color : 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)';
+    return config ? config.color : 'linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%)';
   }
 
   getPlatformColor(platform: string): string {
     return this.platformConfig[platform as keyof typeof this.platformConfig] ||
-      'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)';
+      'linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%)';
   }
 
   getVersionStatus(version: Version): string {
@@ -1364,9 +1482,9 @@ export class VersionControlComponent implements OnInit {
   }
 
   getVersionStatusColor(version: Version): string {
-    if (!version.active_ind) return '#64748b';
-    if (this.isExpired(version)) return '#ef4444';
-    return '#22c55e';
+    if (!version.active_ind) return '#6B7280';
+    if (this.isExpired(version)) return '#EF4444';
+    return '#22C55E';
   }
 
   isExpired(version: Version): boolean {

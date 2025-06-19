@@ -1,49 +1,47 @@
 <div class="config-layout">
-  <!-- Background Elements -->
-  <div class="background-pattern"></div>
-
   <!-- Main Container -->
   <div class="config-container">
-    <!-- Header Section -->
-    <div class="header-section">
-      <div class="logo-area">
-        <div class="logo-icon">
-          <mat-icon>settings</mat-icon>
-        </div>
-        <div class="logo-text">
-          <h1>System Configuration</h1>
-          <p>Set up your backend connection to get started</p>
-        </div>
-      </div>
-
-      <!-- Progress Indicator -->
-      <div class="progress-steps">
-        <div class="step" [class.active]="currentStep >= 1" [class.completed]="currentStep > 1">
-          <div class="step-circle">
-            <mat-icon *ngIf="currentStep > 1">check</mat-icon>
-            <span *ngIf="currentStep <= 1">1</span>
+    <!-- Compact Header -->
+    <div class="page-header">
+      <div class="header-content">
+        <div class="header-text">
+          <div class="header-icon">
+            <mat-icon>settings</mat-icon>
           </div>
-          <span class="step-label">Configuration</span>
-        </div>
-
-        <div class="step-connector" [class.active]="currentStep > 1"></div>
-
-        <div class="step" [class.active]="currentStep >= 2" [class.completed]="currentStep > 2">
-          <div class="step-circle">
-            <mat-icon *ngIf="currentStep > 2">check</mat-icon>
-            <span *ngIf="currentStep <= 2">2</span>
+          <div>
+            <h1>System Configuration</h1>
+            <p>Set up your backend connection to get started</p>
           </div>
-          <span class="step-label">Testing</span>
         </div>
-
-        <div class="step-connector" [class.active]="currentStep > 2"></div>
-
-        <div class="step" [class.active]="currentStep >= 3">
-          <div class="step-circle">
-            <mat-icon *ngIf="currentStep > 3">check</mat-icon>
-            <span *ngIf="currentStep <= 3">3</span>
+        <!-- Progress Indicator -->
+        <div class="progress-steps">
+          <div class="step" [class.active]="currentStep >= 1" [class.completed]="currentStep > 1">
+            <div class="step-circle">
+              <mat-icon *ngIf="currentStep > 1">check</mat-icon>
+              <span *ngIf="currentStep <= 1">1</span>
+            </div>
+            <span class="step-label">Configure</span>
           </div>
-          <span class="step-label">Complete</span>
+
+          <div class="step-connector" [class.active]="currentStep > 1"></div>
+
+          <div class="step" [class.active]="currentStep >= 2" [class.completed]="currentStep > 2">
+            <div class="step-circle">
+              <mat-icon *ngIf="currentStep > 2">check</mat-icon>
+              <span *ngIf="currentStep <= 2">2</span>
+            </div>
+            <span class="step-label">Test</span>
+          </div>
+
+          <div class="step-connector" [class.active]="currentStep > 2"></div>
+
+          <div class="step" [class.active]="currentStep >= 3">
+            <div class="step-circle">
+              <mat-icon *ngIf="currentStep > 3">check</mat-icon>
+              <span *ngIf="currentStep <= 3">3</span>
+            </div>
+            <span class="step-label">Ready</span>
+          </div>
         </div>
       </div>
     </div>
@@ -63,11 +61,6 @@
 
       <!-- Configuration Form -->
       <div class="form-section">
-        <div class="form-header">
-          <h2>Backend URL Configuration</h2>
-          <p>Enter the URL of your backend API server. This will be used for all API communications.</p>
-        </div>
-
         <form [formGroup]="configForm" (ngSubmit)="saveConfig()" class="config-form">
           <!-- URL Input -->
           <div class="url-input-section">
@@ -78,7 +71,7 @@
                      placeholder="https://api.yourcompany.com"
                      type="url"
                      autocomplete="url">
-              <mat-icon matSuffix class="url-icon">link</mat-icon>
+              <mat-icon matPrefix>link</mat-icon>
 
               <mat-error *ngIf="configForm.get('baseUrl')?.hasError('required')">
                 Backend URL is required
@@ -90,21 +83,20 @@
 
             <!-- URL Examples -->
             <div class="url-examples">
-              <span class="examples-label">Examples:</span>
-              <div class="example-urls">
-                <button type="button"
-                        mat-button
-                        class="example-btn"
-                        (click)="setExampleUrl('https://api.example.com')">
-                  https://api.example.com
-                </button>
-                <button type="button"
-                        mat-button
-                        class="example-btn"
-                        (click)="setExampleUrl('http://localhost:8000')">
-                  http://localhost:8000
-                </button>
-              </div>
+              <button type="button"
+                      mat-button
+                      class="example-btn"
+                      (click)="setExampleUrl('https://api.example.com')">
+                <mat-icon>language</mat-icon>
+                Production
+              </button>
+              <button type="button"
+                      mat-button
+                      class="example-btn"
+                      (click)="setExampleUrl('http://localhost:8000')">
+                <mat-icon>computer</mat-icon>
+                Local Dev
+              </button>
             </div>
           </div>
 
@@ -155,15 +147,14 @@
 
       <!-- Quick Actions -->
       <div class="quick-actions" *ngIf="configService.isConfigured()">
-        <h3>Quick Actions</h3>
         <div class="actions-grid">
           <button mat-button class="action-card" (click)="goToDashboard()">
             <div class="action-icon dashboard-icon">
               <mat-icon>dashboard</mat-icon>
             </div>
             <div class="action-text">
-              <span class="action-title">Go to Dashboard</span>
-              <span class="action-desc">Start using the platform</span>
+              <span class="action-title">Dashboard</span>
+              <span class="action-desc">View platform</span>
             </div>
           </button>
 
@@ -173,32 +164,9 @@
             </div>
             <div class="action-text">
               <span class="action-title">Sign In</span>
-              <span class="action-desc">Access your account</span>
+              <span class="action-desc">Access account</span>
             </div>
           </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Help Section -->
-    <div class="help-section">
-      <div class="help-card">
-        <div class="help-icon">
-          <mat-icon>help_outline</mat-icon>
-        </div>
-        <div class="help-content">
-          <h4>Need Help?</h4>
-          <p>Having trouble configuring your backend? Check out our documentation or contact support.</p>
-          <div class="help-links">
-            <a href="#" class="help-link" (click)="$event.preventDefault()">
-              <mat-icon>description</mat-icon>
-              Documentation
-            </a>
-            <a href="#" class="help-link" (click)="$event.preventDefault()">
-              <mat-icon>support</mat-icon>
-              Get Support
-            </a>
-          </div>
         </div>
       </div>
     </div>

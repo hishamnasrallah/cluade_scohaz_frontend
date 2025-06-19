@@ -57,22 +57,27 @@ interface PreferenceSectionConfig {
   ],
   template: `
     <div class="user-preferences">
-      <!-- Header -->
+      <!-- Compact Header -->
       <div class="page-header">
         <div class="header-content">
           <div class="header-text">
-            <h1>User Preferences</h1>
-            <p>Customize your application experience and settings</p>
+            <div class="header-icon">
+              <mat-icon>settings</mat-icon>
+            </div>
+            <div>
+              <h1>User Preferences</h1>
+              <p>Customize your application experience and settings</p>
+            </div>
           </div>
           <div class="header-actions">
-            <button mat-button (click)="resetToDefaults()">
+            <button mat-button (click)="resetToDefaults()" class="reset-btn">
               <mat-icon>restore</mat-icon>
-              Reset to Defaults
+              Reset
             </button>
-            <button mat-raised-button color="primary" (click)="saveAllPreferences()" [disabled]="isSaving">
+            <button mat-raised-button (click)="saveAllPreferences()" [disabled]="isSaving" class="save-btn">
               <mat-spinner diameter="20" *ngIf="isSaving"></mat-spinner>
               <mat-icon *ngIf="!isSaving">save</mat-icon>
-              <span>{{ isSaving ? 'Saving...' : 'Save Changes' }}</span>
+              <span>{{ isSaving ? 'Saving...' : 'Save' }}</span>
             </button>
           </div>
         </div>
@@ -327,74 +332,135 @@ interface PreferenceSectionConfig {
   `,
   styles: [`
     .user-preferences {
-      padding: 24px;
+      padding: 16px;
       max-width: 1400px;
       margin: 0 auto;
+      background: #F4FDFD;
+      min-height: 100vh;
     }
 
+    /* Compact Header */
     .page-header {
-      margin-bottom: 32px;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(47, 72, 88, 0.05);
+      border: 1px solid rgba(196, 247, 239, 0.5);
     }
 
     .header-content {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 24px;
     }
 
-    .header-text h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #334155;
-      margin: 0 0 8px 0;
-    }
-
-    .header-text p {
-      color: #64748b;
-      margin: 0;
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 12px;
-    }
-
-    .status-section {
-      margin-bottom: 24px;
-    }
-
-    .status-card {
-      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-      border: 1px solid rgba(34, 197, 94, 0.2);
-      border-radius: 12px;
-      padding: 16px 20px;
+    .header-text {
       display: flex;
       align-items: center;
       gap: 16px;
     }
 
-    .status-icon {
-      width: 40px;
-      height: 40px;
-      background: rgba(34, 197, 94, 0.1);
-      border-radius: 10px;
+    .header-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #22c55e;
+      color: white;
+
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
+    }
+
+    .header-text h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #2F4858;
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    .header-text p {
+      color: #6B7280;
+      margin: 0;
+      font-size: 0.875rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .reset-btn {
+      color: #6B7280;
+
+      &:hover {
+        background: rgba(196, 247, 239, 0.3);
+        color: #34C5AA;
+      }
+    }
+
+    .save-btn {
+      background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+      color: white;
+      border: none;
+      box-shadow: 0 2px 4px rgba(52, 197, 170, 0.2);
+
+      mat-spinner {
+        display: inline-block;
+        margin-right: 8px;
+      }
+    }
+
+    .status-section {
+      margin-bottom: 20px;
+    }
+
+    .status-card {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-icon {
+      width: 36px;
+      height: 36px;
+      background: rgba(34, 197, 94, 0.15);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #22C55E;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
     }
 
     .status-content h4 {
-      margin: 0 0 4px 0;
+      margin: 0 0 2px 0;
       color: #166534;
       font-weight: 600;
+      font-size: 0.95rem;
     }
 
     .status-content p {
       margin: 0;
-      color: #15803d;
-      font-size: 0.9rem;
+      color: #15803D;
+      font-size: 0.85rem;
     }
 
     .loading-section {
@@ -408,7 +474,7 @@ interface PreferenceSectionConfig {
 
     .loading-section p {
       margin-top: 16px;
-      color: #64748b;
+      color: #6B7280;
     }
 
     .preferences-content {
@@ -418,42 +484,53 @@ interface PreferenceSectionConfig {
     .preferences-grid {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 24px;
+      gap: 20px;
     }
 
     .preference-section {
-      border-radius: 16px;
+      border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      border: 1px solid #f1f5f9;
+      box-shadow: 0 2px 4px rgba(47, 72, 88, 0.05);
+      border: 1px solid rgba(196, 247, 239, 0.5);
+      background: white;
       transition: all 0.3s ease;
 
       &:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 12px rgba(47, 72, 88, 0.08);
+        border-color: rgba(52, 197, 170, 0.3);
       }
     }
 
     .section-header {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
       width: 100%;
+      padding: 16px 20px;
+      background: rgba(196, 247, 239, 0.1);
+      border-bottom: 1px solid rgba(196, 247, 239, 0.5);
     }
 
     .section-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
 
-      &.language-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-      &.theme-icon { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-      &.notifications-icon { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-      &.security-icon { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+      &.language-icon { background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%); }
+      &.theme-icon { background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); }
+      &.notifications-icon { background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); }
+      &.security-icon { background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%); }
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
     }
 
     .section-info {
@@ -461,16 +538,16 @@ interface PreferenceSectionConfig {
     }
 
     .section-info h3 {
-      margin: 0 0 4px 0;
-      font-size: 1.2rem;
+      margin: 0 0 2px 0;
+      font-size: 1.1rem;
       font-weight: 600;
-      color: #334155;
+      color: #2F4858;
     }
 
     .section-info p {
       margin: 0;
-      color: #64748b;
-      font-size: 0.9rem;
+      color: #6B7280;
+      font-size: 0.8rem;
     }
 
     .section-toggle {
@@ -486,14 +563,47 @@ interface PreferenceSectionConfig {
 
       h4 {
         margin: 0 0 12px 0;
-        color: #334155;
-        font-size: 1rem;
+        color: #2F4858;
+        font-size: 0.95rem;
         font-weight: 600;
       }
     }
 
     .full-width {
       width: 100%;
+    }
+
+    ::ng-deep .mat-mdc-form-field {
+      width: 100%;
+
+      .mat-mdc-text-field-wrapper {
+        background: white !important;
+      }
+
+      .mdc-text-field--outlined .mdc-notched-outline {
+        .mdc-notched-outline__leading,
+        .mdc-notched-outline__notch,
+        .mdc-notched-outline__trailing {
+          border-color: #E5E7EB;
+          border-width: 2px;
+        }
+      }
+
+      &:hover .mdc-text-field--outlined .mdc-notched-outline {
+        .mdc-notched-outline__leading,
+        .mdc-notched-outline__notch,
+        .mdc-notched-outline__trailing {
+          border-color: rgba(52, 197, 170, 0.3);
+        }
+      }
+
+      &.mat-focused .mdc-text-field--outlined .mdc-notched-outline {
+        .mdc-notched-outline__leading,
+        .mdc-notched-outline__notch,
+        .mdc-notched-outline__trailing {
+          border-color: #34C5AA;
+        }
+      }
     }
 
     .language-option {
@@ -507,11 +617,12 @@ interface PreferenceSectionConfig {
 
       .name {
         font-weight: 500;
+        color: #2F4858;
       }
 
       .native {
-        color: #64748b;
-        font-size: 0.9rem;
+        color: #6B7280;
+        font-size: 0.875rem;
       }
     }
 
@@ -525,7 +636,7 @@ interface PreferenceSectionConfig {
       display: flex;
       align-items: center;
       gap: 6px;
-      color: #64748b;
+      color: #6B7280;
       font-size: 0.8rem;
       margin: 0;
 
@@ -545,20 +656,20 @@ interface PreferenceSectionConfig {
     .coming-soon {
       text-align: center;
       padding: 40px 20px;
-      color: #64748b;
+      color: #6B7280;
 
       mat-icon {
         font-size: 48px;
         width: 48px;
         height: 48px;
         margin-bottom: 16px;
-        color: #94a3b8;
+        color: #9CA3AF;
       }
 
       h4 {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         margin: 0 0 8px 0;
-        color: #334155;
+        color: #2F4858;
       }
 
       p {
@@ -576,9 +687,9 @@ interface PreferenceSectionConfig {
       }
 
       mat-chip {
-        background: rgba(102, 126, 234, 0.1) !important;
-        color: #667eea !important;
-        font-size: 0.8rem;
+        background: rgba(52, 197, 170, 0.1) !important;
+        color: #34C5AA !important;
+        font-size: 0.75rem;
         margin: 2px;
       }
     }
@@ -587,7 +698,7 @@ interface PreferenceSectionConfig {
       display: flex;
       align-items: center;
       gap: 8px;
-      color: #f59e0b;
+      color: #F59E0B;
       font-weight: 500;
       margin: 16px 0 0 0;
 
@@ -606,12 +717,21 @@ interface PreferenceSectionConfig {
 
     @media (max-width: 768px) {
       .user-preferences {
-        padding: 16px;
+        padding: 12px;
       }
 
       .header-content {
         flex-direction: column;
         align-items: stretch;
+        gap: 16px;
+      }
+
+      .header-text {
+        justify-content: center;
+      }
+
+      .header-actions {
+        justify-content: center;
       }
 
       .format-options {
