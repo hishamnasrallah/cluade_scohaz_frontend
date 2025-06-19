@@ -1159,7 +1159,7 @@ export class SystemSettingsComponent implements OnInit {
 
   private initializeForms(): void {
     this.generalForm = this.fb.group({
-      platform_name: ['LowCode Pro'],
+      platform_name: ['PraXelo Pro'],
       platform_version: ['1.0.0'],
       platform_description: ['Enterprise low-code platform for rapid application development'],
       default_language: ['en'],

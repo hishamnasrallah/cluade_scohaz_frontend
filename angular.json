@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "cluade-lowcode": {
+    "cluade-PraXelo": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -17,7 +17,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/cluade-lowcode",
+            "outputPath": "dist/cluade-PraXelo",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": [
@@ -66,10 +66,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "cluade-lowcode:build:production"
+              "buildTarget": "cluade-PraXelo:build:production"
             },
             "development": {
-              "buildTarget": "cluade-lowcode:build:development"
+              "buildTarget": "cluade-PraXelo:build:development"
             }
           },
           "defaultConfiguration": "development"

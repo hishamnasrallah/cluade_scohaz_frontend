@@ -49,7 +49,7 @@ import { MatRippleModule } from '@angular/material/core';
               <div class="logo-icon">
                 <mat-icon>dashboard</mat-icon>
               </div>
-              <h1 class="brand-name">LowCode Pro</h1>
+              <h1 class="brand-name">PraXelo Pro</h1>
               <p class="brand-tagline">Enterprise Platform</p>
             </div>
 
@@ -93,7 +93,7 @@ import { MatRippleModule } from '@angular/material/core';
             </div>
 
             <div class="branding-footer">
-              <p>&copy; 2024 LowCode Pro. All rights reserved.</p>
+              <p>&copy; 2024 PraXelo Pro. All rights reserved.</p>
             </div>
           </div>
         </div>

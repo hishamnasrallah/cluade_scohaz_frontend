@@ -14,16 +14,16 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
-  it(`should have the 'cluade-lowcode' title`, () => {
+  it(`should have the 'cluade-PraXelo' title`, () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
-    expect(app.title).toEqual('cluade-lowcode');
+    expect(app.title).toEqual('cluade-PraXelo');
   });
 
   it('should render title', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, cluade-lowcode');
+    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, cluade-PraXelo');
   });
 });
