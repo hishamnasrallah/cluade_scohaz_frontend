@@ -1,4 +1,4 @@
-// components/settings/translation-management/translation-management.component.ts - ENHANCED
+// components/settings/translation-management/translation-management.component.ts - ENHANCED THEME
 import { Component, OnInit, ViewChild, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
@@ -74,99 +74,119 @@ interface UserPreferences {
   ],
   template: `
     <div class="translation-management">
-      <!-- Header -->
+      <!-- Enhanced Header with Ocean Mint Theme -->
       <div class="page-header">
+        <div class="header-gradient-bg"></div>
         <div class="header-content">
           <div class="header-text">
-            <h1>Translation Management</h1>
-            <p>Manage multilingual content and localization</p>
+            <h1 class="page-title">Translation Management</h1>
+            <p class="page-subtitle">Manage multilingual content and localization</p>
           </div>
           <div class="header-actions">
-            <button mat-button (click)="refreshData()">
+            <button mat-button class="action-button secondary" (click)="refreshData()">
               <mat-icon>refresh</mat-icon>
-              Refresh
+              <span>Refresh</span>
             </button>
-            <button mat-button (click)="openAddLanguageDialog()">
+            <button mat-button class="action-button secondary" (click)="openAddLanguageDialog()">
               <mat-icon>language</mat-icon>
-              Add Language
+              <span>Add Language</span>
             </button>
-            <button mat-raised-button color="primary" (click)="openAddKeyDialog()">
+            <button mat-raised-button class="action-button primary" (click)="openAddKeyDialog()">
               <mat-icon>add</mat-icon>
-              Add Translation Key
+              <span>Add Translation Key</span>
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Stats Cards -->
+      <!-- Enhanced Stats Cards with Ocean Mint Theme -->
       <div class="stats-section">
-        <div class="stat-card">
-          <div class="stat-icon languages-icon">
-            <mat-icon>language</mat-icon>
+        <div class="stat-card professional-card">
+          <div class="stat-icon-wrapper">
+            <div class="stat-icon languages-icon">
+              <mat-icon>language</mat-icon>
+            </div>
           </div>
           <div class="stat-content">
-            <h3>{{ translationFiles.length }}</h3>
-            <p>Languages</p>
+            <h3 class="stat-value">{{ translationFiles.length }}</h3>
+            <p class="stat-label">Languages</p>
           </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon keys-icon">
-            <mat-icon>translate</mat-icon>
+        <div class="stat-card professional-card">
+          <div class="stat-icon-wrapper">
+            <div class="stat-icon keys-icon">
+              <mat-icon>translate</mat-icon>
+            </div>
           </div>
           <div class="stat-content">
-            <h3>{{ getTotalKeys() }}</h3>
-            <p>Translation Keys</p>
+            <h3 class="stat-value">{{ getTotalKeys() }}</h3>
+            <p class="stat-label">Translation Keys</p>
           </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon coverage-icon">
-            <mat-icon>check_circle</mat-icon>
+        <div class="stat-card professional-card">
+          <div class="stat-icon-wrapper">
+            <div class="stat-icon coverage-icon">
+              <mat-icon>check_circle</mat-icon>
+            </div>
           </div>
           <div class="stat-content">
-            <h3>{{ getTranslationCoverage() }}%</h3>
-            <p>Coverage</p>
+            <h3 class="stat-value">{{ getTranslationCoverage() }}%</h3>
+            <p class="stat-label">Coverage</p>
           </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon version-icon">
-            <mat-icon>history</mat-icon>
+        <div class="stat-card professional-card">
+          <div class="stat-icon-wrapper">
+            <div class="stat-icon version-icon">
+              <mat-icon>history</mat-icon>
+            </div>
           </div>
           <div class="stat-content">
-            <h3>{{ getCurrentUserLanguageVersion() }}</h3>
-            <p>Latest Version</p>
+            <h3 class="stat-value">{{ getCurrentUserLanguageVersion() }}</h3>
+            <p class="stat-label">Latest Version</p>
           </div>
         </div>
       </div>
 
       <!-- Loading State -->
       <div class="loading-section" *ngIf="isLoading">
-        <mat-spinner diameter="40"></mat-spinner>
-        <p>Loading translation data...</p>
+        <div class="loading-content">
+          <mat-spinner diameter="48"></mat-spinner>
+          <p class="loading-text">Loading translation data...</p>
+        </div>
       </div>
 
-      <!-- Translation Management Tabs -->
-      <div class="translation-content" *ngIf="!isLoading">
+      <!-- Enhanced Translation Management Tabs -->
+      <div class="translation-content professional-card" *ngIf="!isLoading">
         <mat-tab-group class="translation-tabs" animationDuration="300ms">
           <!-- Languages Overview Tab -->
-          <mat-tab label="Languages">
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon class="tab-icon">language</mat-icon>
+              <span class="tab-label">Languages</span>
+            </ng-template>
+
             <div class="tab-content">
               <div class="languages-grid">
-                <mat-card *ngFor="let file of translationFiles" class="language-card" (click)="editLanguageTranslations(file)">
+                <mat-card *ngFor="let file of translationFiles"
+                          class="language-card glass-card"
+                          (click)="editLanguageTranslations(file)">
                   <mat-card-header>
                     <div class="language-header">
-                      <div class="language-flag">{{ getLanguageFlag(file.language) }}</div>
+                      <div class="language-flag-wrapper">
+                        <span class="language-flag">{{ getLanguageFlag(file.language) }}</span>
+                      </div>
                       <div class="language-info">
-                        <h3>{{ getLanguageName(file.language) }}</h3>
-                        <p>{{ file.language.toUpperCase() }} • {{ file.keyCount }} keys</p>
+                        <h3 class="language-name">{{ getLanguageName(file.language) }}</h3>
+                        <p class="language-code">{{ file.language.toUpperCase() }} • {{ file.keyCount }} keys</p>
                       </div>
                       <div class="language-actions" (click)="$event.stopPropagation()">
-                        <button mat-icon-button (click)="editLanguageTranslations(file)" matTooltip="Edit Translations">
+                        <button mat-icon-button class="icon-button" (click)="editLanguageTranslations(file)" matTooltip="Edit Translations">
                           <mat-icon>edit</mat-icon>
                         </button>
-                        <button mat-icon-button (click)="viewVersionHistory(file)" matTooltip="Version History">
+                        <button mat-icon-button class="icon-button" (click)="viewVersionHistory(file)" matTooltip="Version History">
                           <mat-icon>history</mat-icon>
                         </button>
-                        <button mat-icon-button (click)="exportLanguage(file)" matTooltip="Export">
+                        <button mat-icon-button class="icon-button" (click)="exportLanguage(file)" matTooltip="Export">
                           <mat-icon>download</mat-icon>
                         </button>
                       </div>
@@ -184,41 +204,49 @@ interface UserPreferences {
                       </div>
                       <div class="stat-item">
                         <span class="stat-label">Status</span>
-                        <span class="stat-value" [class]="file.isActive ? 'status-active' : 'status-inactive'">
+                        <span class="stat-value status-badge" [class]="file.isActive ? 'status-active' : 'status-inactive'">
                           {{ file.isActive ? 'Active' : 'Inactive' }}
                         </span>
                       </div>
                     </div>
                   </mat-card-content>
+                  <div class="card-hover-effect"></div>
                 </mat-card>
               </div>
 
               <!-- Empty State -->
               <div class="empty-state" *ngIf="translationFiles.length === 0">
-                <mat-icon>language</mat-icon>
-                <h3>No languages found</h3>
-                <p>Start by adding your first language</p>
-                <button mat-raised-button color="primary" (click)="openAddLanguageDialog()">
+                <div class="empty-icon">
+                  <mat-icon>language</mat-icon>
+                </div>
+                <h3 class="empty-title">No languages found</h3>
+                <p class="empty-subtitle">Start by adding your first language</p>
+                <button mat-raised-button class="action-button primary" (click)="openAddLanguageDialog()">
                   <mat-icon>add</mat-icon>
-                  Add Language
+                  <span>Add Language</span>
                 </button>
               </div>
             </div>
           </mat-tab>
 
-          <!-- Translation Keys Tab - ENHANCED MASTER-DETAIL LAYOUT -->
-          <mat-tab label="Translation Keys">
+          <!-- Enhanced Translation Keys Tab -->
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon class="tab-icon">translate</mat-icon>
+              <span class="tab-label">Translation Keys</span>
+            </ng-template>
+
             <div class="tab-content master-detail-layout">
               <!-- Header Controls -->
-              <div class="header-controls">
+              <div class="controls-section professional-card">
                 <div class="search-section">
-                  <mat-form-field appearance="outline" class="search-field">
+                  <mat-form-field appearance="outline" class="search-field ocean-mint-field">
                     <mat-label>Search translations</mat-label>
                     <input matInput [(ngModel)]="searchQuery" (input)="filterTranslations()" placeholder="Search by key or value">
                     <mat-icon matSuffix>search</mat-icon>
                   </mat-form-field>
 
-                  <mat-form-field appearance="outline" class="language-selector">
+                  <mat-form-field appearance="outline" class="language-selector ocean-mint-field">
                     <mat-label>Show Languages (max 3)</mat-label>
                     <mat-select multiple [(value)]="selectedTableLanguages" (selectionChange)="onTableLanguageChange()">
                       <mat-option *ngFor="let file of translationFiles" [value]="file.language">
@@ -234,13 +262,13 @@ interface UserPreferences {
                 </div>
 
                 <div class="action-buttons-header">
-                  <button mat-button (click)="openAddKeyDialog()" color="primary">
+                  <button mat-button class="action-button secondary" (click)="openAddKeyDialog()">
                     <mat-icon>add</mat-icon>
-                    Add Key
+                    <span>Add Key</span>
                   </button>
-                  <button mat-button (click)="openBulkEditDialog()">
+                  <button mat-button class="action-button secondary" (click)="openBulkEditDialog()">
                     <mat-icon>edit_note</mat-icon>
-                    Bulk Edit
+                    <span>Bulk Edit</span>
                   </button>
                 </div>
               </div>
@@ -248,82 +276,82 @@ interface UserPreferences {
               <!-- Master-Detail Container -->
               <div class="master-detail-container">
                 <!-- LEFT: Translation Keys List (Master) -->
-                <div class="master-panel">
+                <div class="master-panel professional-card">
                   <div class="panel-header">
-                    <h3>Translation Keys ({{ filteredTranslationKeys.length }})</h3>
-                    <span class="panel-subtitle">Select a key to edit all languages</span>
+                    <h3 class="panel-title">Translation Keys</h3>
+                    <span class="panel-count">{{ filteredTranslationKeys.length }} items</span>
                   </div>
 
                   <div class="keys-table-container">
                     <table class="keys-table">
                       <thead>
-                        <tr>
-                          <th class="key-column">Key</th>
-                          <th *ngFor="let lang of displayTableLanguages" class="language-column">
-                            {{ lang.toUpperCase() }}
-                          </th>
-                          <th class="status-column">Status</th>
-                        </tr>
+                      <tr>
+                        <th class="key-column">Key</th>
+                        <th *ngFor="let lang of displayTableLanguages" class="language-column">
+                          {{ lang.toUpperCase() }}
+                        </th>
+                        <th class="status-column">Status</th>
+                      </tr>
                       </thead>
                       <tbody>
-                        <tr *ngFor="let translationKey of filteredTranslationKeys"
-                            class="key-row"
-                            [class.selected]="selectedTranslationKey?.key === translationKey.key"
-                            (click)="selectTranslationKey(translationKey)">
-                          <td class="key-cell">
-                            <div class="key-content">
-                              <span class="translation-key">{{ translationKey.key }}</span>
-                              <mat-chip-set *ngIf="translationKey.isNew || translationKey.isModified" class="key-badges">
-                                <mat-chip class="new-chip" *ngIf="translationKey.isNew">NEW</mat-chip>
-                                <mat-chip class="modified-chip" *ngIf="translationKey.isModified">MOD</mat-chip>
-                              </mat-chip-set>
+                      <tr *ngFor="let translationKey of filteredTranslationKeys"
+                          class="key-row"
+                          [class.selected]="selectedTranslationKey?.key === translationKey.key"
+                          (click)="selectTranslationKey(translationKey)">
+                        <td class="key-cell">
+                          <div class="key-content">
+                            <span class="translation-key">{{ translationKey.key }}</span>
+                            <div class="key-badges" *ngIf="translationKey.isNew || translationKey.isModified">
+                              <span class="badge new" *ngIf="translationKey.isNew">NEW</span>
+                              <span class="badge modified" *ngIf="translationKey.isModified">MODIFIED</span>
                             </div>
-                          </td>
-                          <td *ngFor="let lang of displayTableLanguages" class="value-cell-compact">
-                            <div class="translation-preview" [class.missing]="!translationKey.values[lang]">
-                              <span class="preview-text">{{ getPreviewText(translationKey.values[lang]) }}</span>
-                            </div>
-                          </td>
-                          <td class="status-cell">
-                            <div class="completion-indicator">
-                              <mat-icon class="status-icon" [class]="getKeyCompletionStatus(translationKey).class">
-                                {{ getKeyCompletionStatus(translationKey).icon }}
-                              </mat-icon>
-                              <span class="completion-text">{{ getKeyCompletionStatus(translationKey).text }}</span>
-                            </div>
-                          </td>
-                        </tr>
+                          </div>
+                        </td>
+                        <td *ngFor="let lang of displayTableLanguages" class="value-cell-compact">
+                          <div class="translation-preview" [class.missing]="!translationKey.values[lang]">
+                            <span class="preview-text">{{ getPreviewText(translationKey.values[lang]) }}</span>
+                          </div>
+                        </td>
+                        <td class="status-cell">
+                          <div class="completion-indicator">
+                            <mat-icon class="status-icon" [class]="getKeyCompletionStatus(translationKey).class">
+                              {{ getKeyCompletionStatus(translationKey).icon }}
+                            </mat-icon>
+                            <span class="completion-text">{{ getKeyCompletionStatus(translationKey).text }}</span>
+                          </div>
+                        </td>
+                      </tr>
                       </tbody>
                     </table>
 
                     <!-- Empty State for Keys -->
-                    <div class="empty-search" *ngIf="filteredTranslationKeys.length === 0">
+                    <div class="table-empty-state" *ngIf="filteredTranslationKeys.length === 0">
                       <mat-icon>{{ searchQuery ? 'search_off' : 'translate' }}</mat-icon>
                       <h3>{{ searchQuery ? 'No translations found' : 'No translation keys' }}</h3>
                       <p>{{ searchQuery ? 'Try adjusting your search criteria' : 'Add your first translation key to get started' }}</p>
-                      <button mat-raised-button color="primary" (click)="openAddKeyDialog()" *ngIf="!searchQuery">
+                      <button mat-raised-button class="action-button primary" (click)="openAddKeyDialog()" *ngIf="!searchQuery">
                         <mat-icon>add</mat-icon>
-                        Add Translation Key
+                        <span>Add Translation Key</span>
                       </button>
                     </div>
                   </div>
                 </div>
 
                 <!-- RIGHT: Selected Key Details (Detail) -->
-                <div class="detail-panel" [class.show]="selectedTranslationKey">
+                <div class="detail-panel professional-card" [class.show]="selectedTranslationKey">
                   <div class="panel-header" *ngIf="selectedTranslationKey">
                     <div class="selected-key-info">
-                      <h3>{{ selectedTranslationKey.key }}</h3>
+                      <h3 class="panel-title">{{ selectedTranslationKey.key }}</h3>
                       <span class="panel-subtitle">Edit translations for all languages</span>
                     </div>
                     <div class="detail-actions">
-                      <button mat-icon-button (click)="editTranslationKey(selectedTranslationKey)" matTooltip="Edit Key Name">
+                      <button mat-icon-button class="icon-button" (click)="editTranslationKey(selectedTranslationKey)" matTooltip="Edit Key Name">
                         <mat-icon>edit</mat-icon>
                       </button>
-                      <button mat-icon-button (click)="deleteTranslationKey(selectedTranslationKey)" matTooltip="Delete Key" class="delete-btn">
+                      <button mat-icon-button class="icon-button delete" (click)="deleteTranslationKey(selectedTranslationKey)" matTooltip="Delete Key">
                         <mat-icon>delete</mat-icon>
                       </button>
-                      <button mat-icon-button (click)="clearSelection()" matTooltip="Close">
+                      <button mat-icon-button class="icon-button" (click)="clearSelection()" matTooltip="Close">
                         <mat-icon>close</mat-icon>
                       </button>
                     </div>
@@ -333,14 +361,15 @@ interface UserPreferences {
                     <div class="quick-save-notice" *ngIf="hasUnsavedChanges">
                       <mat-icon>info</mat-icon>
                       <span>You have unsaved changes</span>
-                      <button mat-button color="primary" (click)="saveSelectedKeyTranslations()">
+                      <button mat-button class="save-button" (click)="saveSelectedKeyTranslations()">
                         <mat-icon>save</mat-icon>
                         Save Changes
                       </button>
                     </div>
 
                     <div class="languages-list">
-                      <div *ngFor="let file of translationFiles; trackBy: trackByLanguage" class="language-translation-item">
+                      <div *ngFor="let file of translationFiles; trackBy: trackByLanguage"
+                           class="language-translation-item">
                         <div class="language-header">
                           <div class="language-info">
                             <span class="language-flag">{{ getLanguageFlag(file.language) }}</span>
@@ -350,31 +379,35 @@ interface UserPreferences {
                             </div>
                           </div>
                           <div class="translation-status">
-                            <mat-icon *ngIf="selectedTranslationKey.values[file.language]?.trim()" class="status-complete">check_circle</mat-icon>
-                            <mat-icon *ngIf="!selectedTranslationKey.values[file.language]?.trim()" class="status-missing">radio_button_unchecked</mat-icon>
+                            <mat-icon *ngIf="selectedTranslationKey.values[file.language]?.trim()"
+                                      class="status-icon complete">check_circle</mat-icon>
+                            <mat-icon *ngIf="!selectedTranslationKey.values[file.language]?.trim()"
+                                      class="status-icon missing">radio_button_unchecked</mat-icon>
                           </div>
                         </div>
 
-                        <mat-form-field appearance="outline" class="translation-field-detail">
+                        <mat-form-field appearance="outline" class="translation-field ocean-mint-field">
                           <mat-label>Translation for {{ getLanguageName(file.language) }}</mat-label>
                           <textarea matInput
-                                   [(ngModel)]="selectedTranslationKey.values[file.language]"
-                                   (ngModelChange)="markAsChanged()"
-                                   rows="2"
-                                   placeholder="Enter translation for {{ getLanguageName(file.language) }}"></textarea>
+                                    [(ngModel)]="selectedTranslationKey.values[file.language]"
+                                    (ngModelChange)="markAsChanged()"
+                                    rows="2"
+                                    placeholder="Enter translation for {{ getLanguageName(file.language) }}"></textarea>
                         </mat-form-field>
                       </div>
                     </div>
 
                     <div class="detail-footer">
-                      <button mat-raised-button color="primary" (click)="saveSelectedKeyTranslations()" [disabled]="isSaving">
+                      <button mat-raised-button class="action-button primary"
+                              (click)="saveSelectedKeyTranslations()"
+                              [disabled]="isSaving">
                         <mat-spinner diameter="20" *ngIf="isSaving"></mat-spinner>
                         <mat-icon *ngIf="!isSaving">save</mat-icon>
-                        <span *ngIf="!isSaving">Save All Translations</span>
+                        <span>Save All Translations</span>
                       </button>
-                      <button mat-button (click)="resetSelectedKey()">
+                      <button mat-button class="action-button secondary" (click)="resetSelectedKey()">
                         <mat-icon>refresh</mat-icon>
-                        Reset Changes
+                        <span>Reset Changes</span>
                       </button>
                     </div>
                   </div>
@@ -391,18 +424,23 @@ interface UserPreferences {
           </mat-tab>
 
           <!-- Import/Export Tab -->
-          <mat-tab label="Import/Export">
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon class="tab-icon">import_export</mat-icon>
+              <span class="tab-label">Import/Export</span>
+            </ng-template>
+
             <div class="tab-content">
               <div class="import-export-section">
-                <mat-card class="action-card">
+                <mat-card class="action-card professional-card">
                   <mat-card-header>
-                    <mat-card-title>Export Translations</mat-card-title>
-                    <mat-card-subtitle>Download translation files</mat-card-subtitle>
+                    <mat-card-title class="card-title">Export Translations</mat-card-title>
+                    <mat-card-subtitle class="card-subtitle">Download translation files</mat-card-subtitle>
                   </mat-card-header>
                   <mat-card-content>
-                    <p>Export all or selected languages as JSON files</p>
+                    <p class="card-description">Export all or selected languages as JSON files</p>
                     <div class="export-options">
-                      <mat-form-field appearance="outline">
+                      <mat-form-field appearance="outline" class="ocean-mint-field">
                         <mat-label>Select Languages</mat-label>
                         <mat-select multiple [(value)]="selectedLanguagesForExport">
                           <mat-option *ngFor="let file of translationFiles" [value]="file.language">
@@ -412,40 +450,42 @@ interface UserPreferences {
                       </mat-form-field>
                     </div>
                   </mat-card-content>
-                  <mat-card-actions>
-                    <button mat-raised-button color="primary" (click)="exportSelected()">
+                  <mat-card-actions class="card-actions">
+                    <button mat-raised-button class="action-button primary" (click)="exportSelected()">
                       <mat-icon>download</mat-icon>
-                      Export Selected
+                      <span>Export Selected</span>
                     </button>
-                    <button mat-button (click)="exportAll()">
+                    <button mat-button class="action-button secondary" (click)="exportAll()">
                       <mat-icon>file_download</mat-icon>
-                      Export All
+                      <span>Export All</span>
                     </button>
                   </mat-card-actions>
                 </mat-card>
 
-                <mat-card class="action-card">
+                <mat-card class="action-card professional-card">
                   <mat-card-header>
-                    <mat-card-title>Import Translations</mat-card-title>
-                    <mat-card-subtitle>Upload translation files</mat-card-subtitle>
+                    <mat-card-title class="card-title">Import Translations</mat-card-title>
+                    <mat-card-subtitle class="card-subtitle">Upload translation files</mat-card-subtitle>
                   </mat-card-header>
                   <mat-card-content>
-                    <p>Import JSON translation files to update or add new translations</p>
+                    <p class="card-description">Import JSON translation files to update or add new translations</p>
                     <div class="import-options">
                       <input type="file" #fileInput (change)="onFileSelected($event)" accept=".json" multiple style="display: none;">
-                      <button mat-stroked-button (click)="fileInput.click()">
+                      <button mat-stroked-button class="upload-button" (click)="fileInput.click()">
                         <mat-icon>upload_file</mat-icon>
-                        Select Files
+                        <span>Select Files</span>
                       </button>
                       <span *ngIf="selectedFiles.length > 0" class="file-count">
                         {{ selectedFiles.length }} file(s) selected
                       </span>
                     </div>
                   </mat-card-content>
-                  <mat-card-actions>
-                    <button mat-raised-button color="accent" (click)="importFiles()" [disabled]="selectedFiles.length === 0">
+                  <mat-card-actions class="card-actions">
+                    <button mat-raised-button class="action-button accent"
+                            (click)="importFiles()"
+                            [disabled]="selectedFiles.length === 0">
                       <mat-icon>upload</mat-icon>
-                      Import Files
+                      <span>Import Files</span>
                     </button>
                   </mat-card-actions>
                 </mat-card>
@@ -456,21 +496,24 @@ interface UserPreferences {
       </div>
     </div>
 
-    <!-- Add Language Dialog - ENHANCED -->
+    <!-- Enhanced Add Language Dialog -->
     <ng-template #addLanguageDialog>
-      <div mat-dialog-title>Add New Language</div>
-      <mat-dialog-content>
+      <div class="dialog-header" mat-dialog-title>
+        <mat-icon class="dialog-icon">language</mat-icon>
+        <span>Add New Language</span>
+      </div>
+      <mat-dialog-content class="dialog-content">
         <form [formGroup]="languageForm" class="language-form">
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" class="ocean-mint-field">
             <mat-label>Select Language</mat-label>
             <mat-select formControlName="selectedLanguage" (selectionChange)="onLanguageSelection()">
               <mat-option *ngFor="let lang of availableLanguages" [value]="lang">
                 <div class="language-option">
                   <span class="language-flag">{{ lang.flag || '🌐' }}</span>
-                  <span class="language-details">
+                  <div class="language-details">
                     <span class="language-name">{{ lang.name }}</span>
                     <span class="language-code">({{ lang.code }})</span>
-                  </span>
+                  </div>
                 </div>
               </mat-option>
             </mat-select>
@@ -479,34 +522,37 @@ interface UserPreferences {
             </mat-error>
           </mat-form-field>
 
-          <div *ngIf="languageForm.get('selectedLanguage')?.value" class="selected-language-info">
-            <p class="info-text">
-              <mat-icon>info</mat-icon>
-              Selected: {{ languageForm.get('selectedLanguage')?.value?.name }} ({{ languageForm.get('selectedLanguage')?.value?.code }})
-            </p>
+          <div *ngIf="languageForm.get('selectedLanguage')?.value" class="selected-language-info info-card">
+            <mat-icon>info</mat-icon>
+            <span>Selected: {{ languageForm.get('selectedLanguage')?.value?.name }} ({{ languageForm.get('selectedLanguage')?.value?.code }})</span>
           </div>
 
-          <p class="info-text">
+          <div class="info-text">
             <mat-icon>info</mat-icon>
-            A new translation file will be created with an empty set of translations.
-          </p>
+            <span>A new translation file will be created with an empty set of translations.</span>
+          </div>
         </form>
       </mat-dialog-content>
-      <mat-dialog-actions align="end">
-        <button mat-button mat-dialog-close>Cancel</button>
-        <button mat-raised-button color="primary" (click)="addLanguage()" [disabled]="!languageForm.valid || isSaving">
+      <mat-dialog-actions class="dialog-actions" align="end">
+        <button mat-button class="dialog-button cancel" mat-dialog-close>Cancel</button>
+        <button mat-raised-button class="dialog-button primary"
+                (click)="addLanguage()"
+                [disabled]="!languageForm.valid || isSaving">
           <mat-spinner diameter="20" *ngIf="isSaving"></mat-spinner>
           <span *ngIf="!isSaving">Add Language</span>
         </button>
       </mat-dialog-actions>
     </ng-template>
 
-    <!-- Add/Edit Translation Key Dialog - ENHANCED -->
+    <!-- Enhanced Add/Edit Translation Key Dialog -->
     <ng-template #editKeyDialog>
-      <div mat-dialog-title>{{ editingKey ? 'Edit' : 'Add' }} Translation Key</div>
-      <mat-dialog-content>
+      <div class="dialog-header" mat-dialog-title>
+        <mat-icon class="dialog-icon">{{ editingKey ? 'edit' : 'add' }}</mat-icon>
+        <span>{{ editingKey ? 'Edit' : 'Add' }} Translation Key</span>
+      </div>
+      <mat-dialog-content class="dialog-content">
         <form [formGroup]="keyForm" class="key-form">
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" class="ocean-mint-field">
             <mat-label>Translation Key</mat-label>
             <input matInput formControlName="key" placeholder="e.g., login_button, welcome_message"
                    (input)="validateKey()">
@@ -520,35 +566,41 @@ interface UserPreferences {
           </mat-form-field>
 
           <div class="translations-section">
-            <h4>Translations</h4>
+            <h4 class="section-title">Translations</h4>
             <div *ngFor="let file of translationFiles" class="translation-input">
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" class="ocean-mint-field">
                 <mat-label>{{ getLanguageName(file.language) }} ({{ file.language.toUpperCase() }})</mat-label>
                 <textarea matInput [formControlName]="'translation_' + file.language"
-                         rows="2" placeholder="Enter translation"></textarea>
+                          rows="2" placeholder="Enter translation"></textarea>
               </mat-form-field>
             </div>
           </div>
         </form>
       </mat-dialog-content>
-      <mat-dialog-actions align="end">
-        <button mat-button mat-dialog-close>Cancel</button>
-        <button mat-raised-button color="primary" (click)="saveTranslationKey()" [disabled]="!keyForm.valid || isSaving">
+      <mat-dialog-actions class="dialog-actions" align="end">
+        <button mat-button class="dialog-button cancel" mat-dialog-close>Cancel</button>
+        <button mat-raised-button class="dialog-button primary"
+                (click)="saveTranslationKey()"
+                [disabled]="!keyForm.valid || isSaving">
           <mat-spinner diameter="20" *ngIf="isSaving"></mat-spinner>
           <span *ngIf="!isSaving">{{ editingKey ? 'Update' : 'Add' }}</span>
         </button>
       </mat-dialog-actions>
     </ng-template>
 
-    <!-- Edit Language Translations Dialog -->
+    <!-- Enhanced Edit Language Translations Dialog -->
     <ng-template #editLanguageDialog>
-      <div mat-dialog-title>Edit {{ selectedLanguageForEdit?.languageName }} Translations</div>
-      <mat-dialog-content>
+      <div class="dialog-header" mat-dialog-title>
+        <mat-icon class="dialog-icon">edit</mat-icon>
+        <span>Edit {{ selectedLanguageForEdit?.languageName }} Translations</span>
+      </div>
+      <mat-dialog-content class="dialog-content">
         <div class="language-edit-content">
           <div class="search-box">
-            <mat-form-field appearance="outline" class="search-field">
+            <mat-form-field appearance="outline" class="search-field ocean-mint-field">
               <mat-label>Search keys</mat-label>
-              <input matInput [(ngModel)]="languageEditSearchQuery" (input)="filterLanguageKeys()" placeholder="Search translation keys">
+              <input matInput [(ngModel)]="languageEditSearchQuery" (input)="filterLanguageKeys()"
+                     placeholder="Search translation keys">
               <mat-icon matSuffix>search</mat-icon>
             </mat-form-field>
           </div>
@@ -558,20 +610,22 @@ interface UserPreferences {
               <div class="key-info">
                 <span class="key-name">{{ key }}</span>
               </div>
-              <mat-form-field appearance="outline" class="translation-field">
+              <mat-form-field appearance="outline" class="translation-field ocean-mint-field">
                 <mat-label>Translation</mat-label>
                 <textarea matInput
-                         [(ngModel)]="languageEditTranslations[key]"
-                         rows="2"
-                         placeholder="Enter translation"></textarea>
+                          [(ngModel)]="languageEditTranslations[key]"
+                          rows="2"
+                          placeholder="Enter translation"></textarea>
               </mat-form-field>
             </div>
           </div>
         </div>
       </mat-dialog-content>
-      <mat-dialog-actions align="end">
-        <button mat-button mat-dialog-close>Cancel</button>
-        <button mat-raised-button color="primary" (click)="saveLanguageTranslations()" [disabled]="isSaving">
+      <mat-dialog-actions class="dialog-actions" align="end">
+        <button mat-button class="dialog-button cancel" mat-dialog-close>Cancel</button>
+        <button mat-raised-button class="dialog-button primary"
+                (click)="saveLanguageTranslations()"
+                [disabled]="isSaving">
           <mat-spinner diameter="20" *ngIf="isSaving"></mat-spinner>
           <span *ngIf="!isSaving">Save Translations</span>
         </button>
@@ -579,233 +633,600 @@ interface UserPreferences {
     </ng-template>
   `,
   styles: [`
+    /* Enhanced Translation Management Styles with Ocean Mint Theme */
     .translation-management {
       padding: 24px;
       max-width: 1400px;
       margin: 0 auto;
+      background: #F4FDFD;
+      min-height: 100vh;
     }
 
+    /* Enhanced Page Header */
     .page-header {
+      position: relative;
       margin-bottom: 32px;
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(47, 72, 88, 0.08);
+      border: 1px solid rgba(196, 247, 239, 0.5);
+    }
+
+    .header-gradient-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 120px;
+      background: linear-gradient(135deg, #C4F7EF 0%, #B3F0E5 100%);
+      opacity: 0.4;
     }
 
     .header-content {
+      position: relative;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 24px;
+      padding: 32px;
     }
 
-    .header-text h1 {
-      font-size: 2rem;
+    .page-title {
+      font-size: 2.5rem;
       font-weight: 700;
-      color: #334155;
+      color: #2F4858;
       margin: 0 0 8px 0;
+      font-family: 'Poppins', sans-serif;
     }
 
-    .header-text p {
-      color: #64748b;
+    .page-subtitle {
+      color: #64748B;
       margin: 0;
+      font-size: 1.1rem;
     }
 
     .header-actions {
       display: flex;
       gap: 12px;
+      flex-wrap: wrap;
     }
 
+    /* Enhanced Action Buttons */
+    .action-button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: none;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+
+      &.primary {
+        background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(52, 197, 170, 0.25);
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(52, 197, 170, 0.35);
+        }
+      }
+
+      &.secondary {
+        background: white;
+        color: #34C5AA;
+        border: 2px solid #C4F7EF;
+
+        &:hover {
+          background: rgba(196, 247, 239, 0.3);
+          border-color: #34C5AA;
+          transform: translateY(-1px);
+        }
+      }
+
+      &.accent {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.25);
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
+        }
+      }
+    }
+
+    /* Enhanced Stats Section */
     .stats-section {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
       margin-bottom: 32px;
     }
 
     .stat-card {
-      background: white;
-      border-radius: 16px;
-      padding: 24px;
       display: flex;
       align-items: center;
-      gap: 16px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      border: 1px solid #f1f5f9;
+      gap: 20px;
+      padding: 28px;
+      background: white;
+      border-radius: 20px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+      &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(47, 72, 88, 0.12);
+
+        .stat-icon {
+          transform: scale(1.1);
+        }
+      }
+    }
+
+    .stat-icon-wrapper {
+      flex-shrink: 0;
     }
 
     .stat-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
+      transition: transform 0.3s ease;
 
-      &.languages-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-      &.keys-icon { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-      &.coverage-icon { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); }
-      &.version-icon { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+      mat-icon {
+        font-size: 32px;
+        width: 32px;
+        height: 32px;
+      }
+
+      &.languages-icon {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+      }
+      &.keys-icon {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        box-shadow: 0 4px 12px rgba(79, 172, 254, 0.25);
+      }
+      &.coverage-icon {
+        background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+        box-shadow: 0 4px 12px rgba(74, 222, 128, 0.25);
+      }
+      &.version-icon {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        box-shadow: 0 4px 12px rgba(250, 112, 154, 0.25);
+      }
     }
 
-    .stat-content h3 {
-      font-size: 1.5rem;
+    .stat-content {
+      flex: 1;
+    }
+
+    .stat-value {
+      font-size: 2rem;
       font-weight: 700;
-      color: #334155;
+      color: #2F4858;
       margin: 0;
+      font-family: 'Poppins', sans-serif;
     }
 
-    .stat-content p {
-      color: #64748b;
+    .stat-label {
+      color: #64748B;
       margin: 4px 0 0 0;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
+      font-weight: 500;
     }
 
+    /* Professional Cards */
+    .professional-card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 4px 6px -1px rgba(47, 72, 88, 0.08);
+      border: 1px solid rgba(196, 247, 239, 0.5);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(196, 247, 239, 0.6);
+      box-shadow: 0 4px 12px rgba(47, 72, 88, 0.06);
+    }
+
+    /* Loading State */
     .loading-section {
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 60px 20px;
+      min-height: 400px;
+    }
+
+    .loading-content {
       text-align: center;
+
+      .loading-text {
+        margin-top: 24px;
+        color: #64748B;
+        font-size: 1.1rem;
+      }
     }
 
-    .loading-section p {
-      margin-top: 16px;
-      color: #64748b;
-    }
-
+    /* Enhanced Translation Tabs */
     .translation-content {
-      background: white;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-
-    .translation-tabs {
-      min-height: 500px;
-    }
-
-    .tab-content {
-      padding: 24px;
-    }
-
-    /* MASTER-DETAIL LAYOUT STYLES */
-    .master-detail-layout {
-      display: flex;
-      flex-direction: column;
-      height: calc(100vh - 300px);
       min-height: 600px;
     }
 
-    .header-controls {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
+    .translation-tabs {
+      background: transparent;
+
+      ::ng-deep {
+        .mat-mdc-tab-list {
+          background: rgba(196, 247, 239, 0.2);
+          border-radius: 16px 16px 0 0;
+          padding: 8px;
+        }
+
+        .mat-mdc-tab {
+          min-width: 140px;
+          border-radius: 12px;
+          margin-right: 8px;
+          transition: all 0.3s ease;
+
+          &:hover {
+            background: rgba(196, 247, 239, 0.3);
+          }
+
+          &.mat-mdc-tab-active {
+            background: white;
+            box-shadow: 0 2px 8px rgba(47, 72, 88, 0.08);
+          }
+        }
+
+        .mat-mdc-tab-label {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-weight: 600;
+          color: #2F4858;
+        }
+      }
+    }
+
+    .tab-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    .tab-label {
+      font-size: 14px;
+    }
+
+    .tab-content {
+      padding: 32px;
+      animation: fadeInUp 0.3s ease;
+    }
+
+    /* Languages Grid */
+    .languages-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
       gap: 24px;
-      margin-bottom: 24px;
-      padding: 16px;
-      background: #f8fafc;
-      border-radius: 12px;
-      border: 1px solid #e2e8f0;
+    }
+
+    .language-card {
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+      &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(47, 72, 88, 0.12);
+        border-color: #34C5AA;
+
+        .card-hover-effect {
+          opacity: 1;
+        }
+
+        .language-flag-wrapper {
+          transform: scale(1.1);
+        }
+      }
+
+      .card-hover-effect {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(196, 247, 239, 0.1) 0%, rgba(196, 247, 239, 0.05) 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+      }
+    }
+
+    .language-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
+      padding: 8px;
+    }
+
+    .language-flag-wrapper {
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(196, 247, 239, 0.3) 0%, rgba(196, 247, 239, 0.1) 100%);
+      border-radius: 16px;
+      transition: transform 0.3s ease;
+    }
+
+    .language-flag {
+      font-size: 2rem;
+    }
+
+    .language-info {
+      flex: 1;
+    }
+
+    .language-name {
+      margin: 0 0 4px 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #2F4858;
+    }
+
+    .language-code {
+      margin: 0;
+      color: #64748B;
+      font-size: 0.9rem;
+    }
+
+    .language-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .icon-button {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+      color: #64748B;
+
+      &:hover {
+        background: rgba(196, 247, 239, 0.5);
+        color: #34C5AA;
+        transform: translateY(-1px);
+      }
+
+      &.delete:hover {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+      }
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+
+    .language-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(196, 247, 239, 0.5);
+    }
+
+    .stat-item {
+      text-align: center;
+
+      .stat-label {
+        display: block;
+        font-size: 0.8rem;
+        color: #64748B;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .stat-value {
+        font-weight: 600;
+        color: #2F4858;
+        font-size: 0.95rem;
+      }
+    }
+
+    /* Status Badges */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+
+      &.status-active {
+        background: rgba(34, 197, 94, 0.12);
+        color: #16A34A;
+        border: 1px solid rgba(34, 197, 94, 0.2);
+      }
+
+      &.status-inactive {
+        background: rgba(107, 114, 128, 0.08);
+        color: #6B7280;
+        border: 1px solid rgba(107, 114, 128, 0.15);
+      }
+    }
+
+    /* Master-Detail Layout */
+    .master-detail-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .controls-section {
+      padding: 24px;
+      background: white;
+      border-radius: 16px;
+      border: 1px solid rgba(196, 247, 239, 0.3);
     }
 
     .search-section {
       display: flex;
       gap: 16px;
-      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .search-field {
+      flex: 1;
+      max-width: 500px;
     }
 
     .language-selector {
-      min-width: 300px;
+      min-width: 320px;
+    }
+
+    /* Ocean Mint Form Fields */
+    .ocean-mint-field {
+      ::ng-deep {
+        .mat-mdc-text-field-wrapper {
+          background: rgba(196, 247, 239, 0.1);
+          border-radius: 12px;
+        }
+
+        .mat-mdc-form-field-focus-overlay {
+          background: transparent;
+        }
+
+        &.mat-focused {
+          .mat-mdc-text-field-wrapper {
+            background: white;
+            box-shadow: 0 0 0 3px rgba(52, 197, 170, 0.1);
+          }
+        }
+      }
     }
 
     .language-option-compact {
       display: flex;
       align-items: center;
       gap: 8px;
-    }
 
-    .language-option-compact .flag {
-      font-size: 1rem;
-    }
+      .flag {
+        font-size: 1.2rem;
+      }
 
-    .language-option-compact .lang-name {
-      font-weight: 500;
-    }
+      .lang-name {
+        font-weight: 500;
+        color: #2F4858;
+      }
 
-    .language-option-compact .lang-code {
-      color: #64748b;
-      font-size: 0.8rem;
+      .lang-code {
+        color: #64748B;
+        font-size: 0.85rem;
+      }
     }
 
     .action-buttons-header {
       display: flex;
       gap: 12px;
+      flex-wrap: wrap;
     }
 
     .master-detail-container {
       display: flex;
       gap: 24px;
-      flex: 1;
-      overflow: hidden;
+      min-height: 600px;
     }
 
-    /* MASTER PANEL (LEFT) */
+    /* Master Panel */
     .master-panel {
       flex: 1;
       display: flex;
       flex-direction: column;
-      background: white;
-      border-radius: 12px;
-      border: 1px solid #e2e8f0;
       overflow: hidden;
     }
 
     .panel-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid #e2e8f0;
-      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      padding: 20px 24px;
+      border-bottom: 1px solid rgba(196, 247, 239, 0.5);
+      background: linear-gradient(135deg, rgba(196, 247, 239, 0.2) 0%, rgba(196, 247, 239, 0.05) 100%);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    .panel-header h3 {
-      margin: 0 0 4px 0;
-      font-size: 1.1rem;
+    .panel-title {
+      margin: 0;
+      font-size: 1.2rem;
       font-weight: 600;
-      color: #334155;
+      color: #2F4858;
     }
 
     .panel-subtitle {
-      color: #64748b;
+      color: #64748B;
       font-size: 0.9rem;
+    }
+
+    .panel-count {
+      color: #64748B;
+      font-size: 0.9rem;
+      font-weight: 500;
     }
 
     .keys-table-container {
       flex: 1;
       overflow-y: auto;
+      background: white;
     }
 
     .keys-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.9rem;
-    }
+      font-size: 0.95rem;
 
-    .keys-table th {
-      background: #f8fafc;
-      padding: 12px 8px;
-      text-align: left;
-      font-weight: 600;
-      color: #334155;
-      border-bottom: 1px solid #e2e8f0;
-      font-size: 0.85rem;
-      position: sticky;
-      top: 0;
-      z-index: 1;
-    }
+      th {
+        background: rgba(196, 247, 239, 0.15);
+        padding: 16px 12px;
+        text-align: left;
+        font-weight: 600;
+        color: #2F4858;
+        border-bottom: 2px solid rgba(196, 247, 239, 0.5);
+        position: sticky;
+        top: 0;
+        z-index: 1;
+      }
 
-    .keys-table td {
-      padding: 8px;
-      border-bottom: 1px solid #f1f5f9;
-      vertical-align: middle;
+      td {
+        padding: 12px;
+        border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+        vertical-align: middle;
+      }
     }
 
     .key-row {
@@ -813,100 +1234,99 @@ interface UserPreferences {
       transition: all 0.2s ease;
 
       &:hover {
-        background: rgba(102, 126, 234, 0.04);
+        background: rgba(196, 247, 239, 0.1);
       }
 
       &.selected {
-        background: rgba(102, 126, 234, 0.08);
-        border-left: 4px solid #667eea;
+        background: rgba(52, 197, 170, 0.08);
+        border-left: 4px solid #34C5AA;
       }
     }
 
-    .key-column {
-      width: 40%;
-      min-width: 200px;
+    .key-content {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    .language-column {
-      width: auto;
-      min-width: 120px;
+    .translation-key {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 0.9rem;
+      color: #667eea;
+      font-weight: 500;
     }
 
-    .status-column {
-      width: 100px;
+    .key-badges {
+      display: flex;
+      gap: 4px;
     }
 
-    .value-cell-compact {
-      max-width: 120px;
+    .badge {
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+
+      &.new {
+        background: rgba(34, 197, 94, 0.15);
+        color: #16A34A;
+      }
+
+      &.modified {
+        background: rgba(59, 130, 246, 0.15);
+        color: #2563eb;
+      }
     }
 
     .translation-preview {
-      font-size: 0.85rem;
-    }
+      font-size: 0.9rem;
 
-    .preview-text {
-      color: #334155;
-
-      &.missing {
-        color: #94a3b8;
+      &.missing .preview-text {
+        color: #94A3B8;
         font-style: italic;
       }
     }
 
-    .translation-preview.missing .preview-text {
-      color: #94a3b8;
-      font-style: italic;
-    }
-
-    .status-cell {
-      text-align: center;
+    .preview-text {
+      color: #2F4858;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
 
     .completion-indicator {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
       justify-content: center;
     }
 
     .status-icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
 
-      &.status-complete {
-        color: #22c55e;
-      }
-
-      &.status-partial {
-        color: #f59e0b;
-      }
-
-      &.status-empty {
-        color: #94a3b8;
-      }
+      &.status-complete { color: #22C55E; }
+      &.status-partial { color: #F59E0B; }
+      &.status-empty { color: #94A3B8; }
     }
 
     .completion-text {
       font-size: 0.8rem;
       font-weight: 500;
-      color: #64748b;
+      color: #64748B;
     }
 
-    /* DETAIL PANEL (RIGHT) */
+    /* Detail Panel */
     .detail-panel {
-      width: 400px;
+      width: 420px;
       display: flex;
       flex-direction: column;
-      background: white;
-      border-radius: 12px;
-      border: 1px solid #e2e8f0;
       transition: all 0.3s ease;
-      overflow: hidden;
-
-      &:not(.show) {
-        opacity: 0.6;
-      }
+      opacity: 0.7;
 
       &.show {
         opacity: 1;
@@ -917,22 +1337,9 @@ interface UserPreferences {
       flex: 1;
     }
 
-    .selected-key-info h3 {
-      margin: 0 0 4px 0;
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: #334155;
-      font-family: 'JetBrains Mono', 'Fira Code', monospace;
-    }
-
     .detail-actions {
       display: flex;
-      gap: 4px;
-    }
-
-    .detail-actions .delete-btn:hover {
-      color: #ef4444;
-      background: rgba(239, 68, 68, 0.1);
+      gap: 8px;
     }
 
     .translations-detail {
@@ -945,41 +1352,51 @@ interface UserPreferences {
     .quick-save-notice {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 12px 16px;
-      background: rgba(102, 126, 234, 0.08);
-      border-bottom: 1px solid #e2e8f0;
+      gap: 12px;
+      padding: 16px 20px;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(102, 126, 234, 0.05) 100%);
+      border-bottom: 1px solid rgba(102, 126, 234, 0.2);
       color: #667eea;
       font-size: 0.9rem;
       font-weight: 500;
 
       mat-icon {
-        font-size: 16px;
-        width: 16px;
-        height: 16px;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
       }
 
-      button {
+      .save-button {
         margin-left: auto;
+        background: #667eea;
+        color: white;
+        border-radius: 8px;
+        padding: 6px 16px;
+        font-size: 0.85rem;
+
+        &:hover {
+          background: #5a67d8;
+        }
       }
     }
 
     .languages-list {
       flex: 1;
       overflow-y: auto;
-      padding: 16px;
+      padding: 20px;
     }
 
     .language-translation-item {
-      margin-bottom: 20px;
-      padding: 16px;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
+      margin-bottom: 24px;
+      padding: 20px;
+      border: 1px solid rgba(196, 247, 239, 0.5);
+      border-radius: 16px;
+      background: rgba(196, 247, 239, 0.05);
       transition: all 0.2s ease;
 
       &:hover {
-        border-color: #cbd5e1;
-        background: #f8fafc;
+        border-color: #C4F7EF;
+        background: rgba(196, 247, 239, 0.1);
       }
     }
 
@@ -987,17 +1404,17 @@ interface UserPreferences {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
 
     .language-info {
       display: flex;
       align-items: center;
       gap: 12px;
-    }
 
-    .language-flag {
-      font-size: 1.2rem;
+      .language-flag {
+        font-size: 1.5rem;
+      }
     }
 
     .language-details {
@@ -1006,487 +1423,390 @@ interface UserPreferences {
     }
 
     .language-name {
-      font-weight: 500;
-      color: #334155;
-      font-size: 0.9rem;
+      font-weight: 600;
+      color: #2F4858;
+      font-size: 0.95rem;
     }
 
     .language-code {
-      color: #64748b;
-      font-size: 0.8rem;
+      color: #64748B;
+      font-size: 0.85rem;
     }
 
-    .translation-status .status-complete {
-      color: #22c55e;
+    .translation-status {
+      .status-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+
+        &.complete { color: #22C55E; }
+        &.missing { color: #CBD5E1; }
+      }
     }
 
-    .translation-status .status-missing {
-      color: #94a3b8;
-    }
-
-    .translation-field-detail {
+    .translation-field {
       width: 100%;
     }
 
     .detail-footer {
-      padding: 16px;
-      border-top: 1px solid #e2e8f0;
-      background: #f8fafc;
+      padding: 20px;
+      border-top: 1px solid rgba(196, 247, 239, 0.5);
+      background: rgba(196, 247, 239, 0.1);
       display: flex;
       gap: 12px;
+      flex-wrap: wrap;
     }
 
-    .empty-detail {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      color: #64748b;
-
-      mat-icon {
-        font-size: 64px;
-        width: 64px;
-        height: 64px;
-        margin-bottom: 16px;
-        color: #94a3b8;
-      }
-
-      h3 {
-        font-size: 1.2rem;
-        margin: 0 0 8px 0;
-        color: #334155;
-      }
-
-      p {
-        margin: 0;
-        max-width: 250px;
-      }
-    }
-
-    .languages-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 20px;
-    }
-
-    .language-card {
-      border-radius: 12px;
-      transition: all 0.3s ease;
-      cursor: pointer;
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-      }
-    }
-
-    .language-header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      width: 100%;
-    }
-
-    .language-flag {
-      font-size: 2rem;
-      width: 48px;
-      height: 48px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-      border-radius: 12px;
-    }
-
-    .language-info {
-      flex: 1;
-    }
-
-    .language-info h3 {
-      margin: 0 0 4px 0;
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: #334155;
-    }
-
-    .language-info p {
-      margin: 0;
-      color: #64748b;
-      font-size: 0.9rem;
-    }
-
-    .language-actions {
-      display: flex;
-      gap: 4px;
-    }
-
-    .language-stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-top: 16px;
-    }
-
-    .stat-item {
-      text-align: center;
-    }
-
-    .stat-label {
-      display: block;
-      font-size: 0.8rem;
-      color: #64748b;
-      margin-bottom: 4px;
-    }
-
-    .stat-value {
-      font-weight: 600;
-      color: #334155;
-      font-size: 0.9rem;
-
-      &.status-active {
-        color: #22c55e;
-      }
-
-      &.status-inactive {
-        color: #64748b;
-      }
-    }
-
-    .search-section {
-      display: flex;
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .search-field {
-      flex: 1;
-      max-width: 400px;
-    }
-
-    .translations-table-container {
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid #e2e8f0;
-    }
-
-    /* ENHANCED COMPACT TABLE STYLES */
-    .compact-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.9rem;
-    }
-
-    .compact-table th {
-      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-      padding: 12px 8px;
-      text-align: left;
-      font-weight: 600;
-      color: #334155;
-      border-bottom: 2px solid #e2e8f0;
-      font-size: 0.85rem;
-      white-space: nowrap;
-    }
-
-    .compact-table td {
-      padding: 8px;
-      border-bottom: 1px solid #f1f5f9;
-      vertical-align: middle;
-      max-width: 0;
-    }
-
-    .compact-table .key-column {
-      width: 25%;
-      min-width: 150px;
-    }
-
-    .compact-table .language-column {
-      width: auto;
-      min-width: 120px;
-    }
-
-    .compact-table .actions-column {
-      width: 80px;
-    }
-
-    .translation-row {
-      height: 48px;
-      transition: all 0.2s ease;
-
-      &:hover {
-        background: rgba(102, 126, 234, 0.04);
-      }
-    }
-
-    .key-cell {
-      font-weight: 500;
-      color: #334155;
-    }
-
-    .key-content {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .translation-key {
-      font-family: 'JetBrains Mono', 'Fira Code', monospace;
-      font-size: 0.8rem;
-      color: #667eea;
-      font-weight: 500;
-    }
-
-    .key-badges {
-      display: flex;
-      gap: 4px;
-    }
-
-    .key-badges mat-chip {
-      height: 18px;
-      font-size: 0.65rem;
-      font-weight: 600;
-    }
-
-    .value-cell {
-      font-size: 0.85rem;
-      line-height: 1.3;
-    }
-
-    .translation-value {
-      display: flex;
-      align-items: center;
-      min-height: 32px;
-    }
-
-    .value-text {
-      word-break: break-word;
-      line-height: 1.3;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-
-      &.missing {
-        color: #94a3b8;
-        font-style: italic;
-      }
-    }
-
-    .translation-value.missing .value-text {
-      color: #94a3b8;
-      font-style: italic;
-    }
-
-    .actions-cell {
-      width: 80px;
-    }
-
-    .action-buttons {
-      display: flex;
-      gap: 2px;
-      justify-content: center;
-    }
-
-    .action-buttons button {
-      width: 32px;
-      height: 32px;
-      min-width: 32px;
-    }
-
-    .action-buttons .mat-mdc-icon-button mat-icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
-    }
-
-    .edit-btn:hover {
-      color: #667eea;
-      background: rgba(102, 126, 234, 0.1);
-    }
-
-    .delete-btn:hover {
-      color: #ef4444;
-      background: rgba(239, 68, 68, 0.1);
-    }
-
-    .new-chip {
-      background: rgba(34, 197, 94, 0.1) !important;
-      color: #16a34a !important;
-    }
-
-    .modified-chip {
-      background: rgba(59, 130, 246, 0.1) !important;
-      color: #2563eb !important;
-    }
-
-    .import-export-section {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-      gap: 24px;
-    }
-
-    .action-card {
-      border-radius: 12px;
-    }
-
-    .export-options,
-    .import-options {
-      margin: 16px 0;
-    }
-
-    .file-count {
-      margin-left: 12px;
-      color: #64748b;
-      font-size: 0.9rem;
-    }
-
+    /* Empty States */
     .empty-state,
-    .empty-search {
+    .table-empty-state,
+    .empty-detail {
       text-align: center;
       padding: 60px 20px;
-      color: #64748b;
+      color: #64748B;
 
       mat-icon {
         font-size: 64px;
         width: 64px;
         height: 64px;
-        margin-bottom: 16px;
-        color: #94a3b8;
+        margin-bottom: 20px;
+        color: #CBD5E1;
       }
 
       h3 {
         font-size: 1.5rem;
         margin: 0 0 8px 0;
-        color: #334155;
+        color: #2F4858;
+        font-weight: 600;
       }
 
       p {
         margin: 0 0 24px 0;
+        font-size: 1rem;
       }
     }
 
-    /* ENHANCED DIALOG STYLES */
+    .empty-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 20px;
+      background: linear-gradient(135deg, rgba(196, 247, 239, 0.3) 0%, rgba(196, 247, 239, 0.1) 100%);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      mat-icon {
+        margin: 0;
+      }
+    }
+
+    .empty-title {
+      font-size: 1.5rem;
+      margin: 0 0 8px 0;
+      color: #2F4858;
+      font-weight: 600;
+    }
+
+    .empty-subtitle {
+      margin: 0 0 24px 0;
+      color: #64748B;
+      font-size: 1rem;
+    }
+
+    /* Import/Export Section */
+    .import-export-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+      gap: 24px;
+    }
+
+    .action-card {
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(47, 72, 88, 0.1);
+      }
+    }
+
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #2F4858;
+      margin-bottom: 4px;
+    }
+
+    .card-subtitle {
+      color: #64748B;
+      font-size: 0.95rem;
+    }
+
+    .card-description {
+      color: #64748B;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .card-actions {
+      padding: 16px 24px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .export-options,
+    .import-options {
+      margin: 20px 0;
+    }
+
+    .upload-button {
+      border: 2px dashed #C4F7EF;
+      background: rgba(196, 247, 239, 0.1);
+      color: #34C5AA;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: rgba(196, 247, 239, 0.2);
+        border-color: #34C5AA;
+        transform: translateY(-1px);
+      }
+
+      mat-icon {
+        margin-right: 8px;
+      }
+    }
+
+    .file-count {
+      margin-left: 16px;
+      color: #64748B;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    /* Enhanced Dialogs */
+    .dialog-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #2F4858;
+      margin-bottom: 8px;
+    }
+
+    .dialog-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #C4F7EF 0%, #B3F0E5 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #34C5AA;
+    }
+
+    .dialog-content {
+      padding: 20px 0;
+      min-width: 500px;
+    }
+
+    .dialog-actions {
+      padding: 16px 24px;
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      background: rgba(196, 247, 239, 0.1);
+      margin: 0 -24px -24px;
+    }
+
+    .dialog-button {
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+
+      &.cancel {
+        color: #64748B;
+
+        &:hover {
+          background: rgba(196, 247, 239, 0.2);
+          color: #2F4858;
+        }
+      }
+
+      &.primary {
+        background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+        color: white;
+
+        &:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(52, 197, 170, 0.25);
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          transform: none;
+        }
+      }
+    }
+
     .language-form,
     .key-form {
       display: flex;
       flex-direction: column;
-      gap: 16px;
-      min-width: 450px;
+      gap: 20px;
     }
 
     .language-option {
       display: flex;
       align-items: center;
       gap: 12px;
-    }
 
-    .language-flag {
-      font-size: 1.2rem;
-    }
+      .language-flag {
+        font-size: 1.5rem;
+      }
 
-    .language-details {
-      display: flex;
-      flex-direction: column;
-    }
+      .language-details {
+        display: flex;
+        flex-direction: column;
 
-    .language-name {
-      font-weight: 500;
-    }
+        .language-name {
+          font-weight: 500;
+          color: #2F4858;
+        }
 
-    .language-code {
-      font-size: 0.8rem;
-      color: #64748b;
-    }
-
-    .selected-language-info {
-      margin: 8px 0;
-    }
-
-    .translations-section {
-      margin-top: 16px;
-
-      h4 {
-        margin: 0 0 16px 0;
-        color: #334155;
-        font-size: 1.1rem;
+        .language-code {
+          font-size: 0.85rem;
+          color: #64748B;
+        }
       }
     }
 
-    .translation-input {
-      margin-bottom: 12px;
+    .selected-language-info,
+    .info-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: rgba(102, 126, 234, 0.08);
+      border-radius: 12px;
+      color: #667eea;
+      font-weight: 500;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
     }
 
     .info-text {
       display: flex;
       align-items: center;
       gap: 8px;
-      color: #64748b;
+      color: #64748B;
       font-size: 0.9rem;
-      margin: 0;
       padding: 12px;
-      background: rgba(102, 126, 234, 0.08);
-      border-radius: 8px;
+      background: rgba(196, 247, 239, 0.2);
+      border-radius: 10px;
 
       mat-icon {
-        font-size: 16px;
-        width: 16px;
-        height: 16px;
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #34C5AA;
       }
     }
 
-    /* Language Edit Dialog Styles */
+    .translations-section {
+      margin-top: 24px;
+
+      .section-title {
+        margin: 0 0 16px 0;
+        color: #2F4858;
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
+    }
+
+    .translation-input {
+      margin-bottom: 16px;
+    }
+
+    /* Language Edit Dialog */
     .language-edit-content {
-      min-width: 500px;
       max-height: 60vh;
       overflow-y: auto;
     }
 
     .search-box {
-      margin-bottom: 16px;
+      margin-bottom: 20px;
       position: sticky;
       top: 0;
       background: white;
       z-index: 1;
-      padding-bottom: 8px;
+      padding-bottom: 12px;
     }
 
     .language-translations-list {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 16px;
     }
 
     .key-edit-item {
       display: flex;
-      align-items: flex-start;
-      gap: 16px;
-      padding: 12px;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px;
+      border: 1px solid rgba(196, 247, 239, 0.5);
+      border-radius: 12px;
+      background: rgba(196, 247, 239, 0.05);
       transition: all 0.2s ease;
 
       &:hover {
-        border-color: #cbd5e1;
-        background: #f8fafc;
+        border-color: #C4F7EF;
+        background: rgba(196, 247, 239, 0.1);
       }
     }
 
     .key-info {
-      min-width: 150px;
-      padding-top: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(196, 247, 239, 0.3);
     }
 
     .key-name {
       font-family: 'JetBrains Mono', 'Fira Code', monospace;
-      font-size: 0.85rem;
+      font-size: 0.95rem;
       color: #667eea;
       font-weight: 500;
     }
 
-    .translation-field {
-      flex: 1;
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+      .master-detail-container {
+        flex-direction: column;
+      }
+
+      .detail-panel {
+        width: 100%;
+      }
     }
 
     @media (max-width: 768px) {
@@ -1497,10 +1817,20 @@ interface UserPreferences {
       .header-content {
         flex-direction: column;
         align-items: stretch;
+        padding: 24px 20px;
+      }
+
+      .page-title {
+        font-size: 2rem;
       }
 
       .stats-section {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+      }
+
+      .stat-card {
+        padding: 20px;
       }
 
       .languages-grid {
@@ -1511,78 +1841,32 @@ interface UserPreferences {
         flex-direction: column;
       }
 
-      .import-export-section {
-        grid-template-columns: 1fr;
-      }
-
-      .language-stats {
-        grid-template-columns: 1fr;
-        text-align: left;
-      }
-
-      .translations-table-container {
-        overflow-x: auto;
-      }
-
-      .compact-table {
-        min-width: 700px;
-      }
-
-      .key-edit-item {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .key-info {
-        min-width: auto;
-        padding-top: 0;
-      }
-
-      /* Master-Detail Mobile Responsive */
-      .master-detail-layout {
-        height: auto;
-        min-height: 500px;
-      }
-
-      .header-controls {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .search-section {
-        flex-direction: column;
-      }
-
       .language-selector {
         min-width: auto;
       }
 
-      .master-detail-container {
+      .import-export-section {
+        grid-template-columns: 1fr;
+      }
+
+      .dialog-content {
+        min-width: auto;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .stats-section {
+        grid-template-columns: 1fr;
+      }
+
+      .action-button {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .header-actions {
         flex-direction: column;
-        height: auto;
-      }
-
-      .detail-panel {
-        width: auto;
-        max-height: 400px;
-      }
-
-      .languages-list {
-        max-height: 300px;
-      }
-
-      .language-translation-item {
-        padding: 12px;
-      }
-
-      .language-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-      }
-
-      .detail-footer {
-        flex-direction: column;
+        width: 100%;
       }
     }
   `]
