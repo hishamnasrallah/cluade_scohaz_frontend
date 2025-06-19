@@ -1,4 +1,4 @@
-// components/login/login.component.ts - ENHANCED Professional Design
+// components/login/login.component.ts - ENHANCED with Ocean Mint Theme
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -6,20 +6,13 @@ import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AuthService } from '../../services/auth.service';
 
-import {
-  MatCard,
-  MatCardActions,
-  MatCardContent,
-  MatCardHeader,
-  MatCardSubtitle,
-  MatCardTitle
-} from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatRippleModule } from '@angular/material/core';
 
 @Component({
   selector: 'app-login',
@@ -27,27 +20,24 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    // MatCard,
-    // MatCardHeader,
-    // MatCardTitle,
-    // MatCardSubtitle,
-    // MatCardContent,
-    // MatCardActions,
     MatButtonModule,
     MatInputModule,
     MatFormFieldModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatCheckboxModule
+    MatCheckboxModule,
+    MatRippleModule
   ],
   template: `
     <div class="login-layout">
-      <!-- Background Elements -->
-      <div class="background-elements">
+      <!-- Ocean Mint Background -->
+      <div class="ocean-mint-bg">
+        <div class="wave wave-1"></div>
+        <div class="wave wave-2"></div>
+        <div class="wave wave-3"></div>
         <div class="floating-shape shape-1"></div>
         <div class="floating-shape shape-2"></div>
         <div class="floating-shape shape-3"></div>
-        <div class="floating-shape shape-4"></div>
       </div>
 
       <!-- Login Container -->
@@ -55,111 +45,118 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
         <!-- Left Side - Branding -->
         <div class="branding-section">
           <div class="branding-content">
-            <div class="logo-section">
+            <div class="logo-wrapper">
               <div class="logo-icon">
                 <mat-icon>dashboard</mat-icon>
               </div>
-              <h1 class="logo-text">LowCode Pro</h1>
+              <h1 class="brand-name">LowCode Pro</h1>
+              <p class="brand-tagline">Enterprise Platform</p>
             </div>
 
-            <div class="welcome-content">
-              <h2 class="welcome-title">Welcome Back</h2>
-              <p class="welcome-subtitle">
-                Sign in to access your enterprise low-code platform and continue building amazing applications.
+            <div class="features-showcase">
+              <h2 class="showcase-title">Build Faster, Deploy Smarter</h2>
+              <p class="showcase-subtitle">
+                Transform your ideas into powerful applications with our enterprise-grade low-code platform.
               </p>
 
-              <div class="features-list">
-                <div class="feature-item">
+              <div class="feature-cards">
+                <div class="feature-card" matRipple>
                   <div class="feature-icon">
                     <mat-icon>speed</mat-icon>
                   </div>
-                  <div class="feature-text">
-                    <h4>Rapid Development</h4>
-                    <p>Build applications 10x faster</p>
+                  <div class="feature-content">
+                    <h4>10x Faster</h4>
+                    <p>Rapid development</p>
                   </div>
                 </div>
 
-                <div class="feature-item">
+                <div class="feature-card" matRipple>
                   <div class="feature-icon">
                     <mat-icon>api</mat-icon>
                   </div>
-                  <div class="feature-text">
-                    <h4>API Management</h4>
-                    <p>Comprehensive API toolkit</p>
+                  <div class="feature-content">
+                    <h4>API First</h4>
+                    <p>RESTful architecture</p>
                   </div>
                 </div>
 
-                <div class="feature-item">
+                <div class="feature-card" matRipple>
                   <div class="feature-icon">
                     <mat-icon>security</mat-icon>
                   </div>
-                  <div class="feature-text">
-                    <h4>Enterprise Security</h4>
-                    <p>Bank-grade security standards</p>
+                  <div class="feature-content">
+                    <h4>Enterprise Secure</h4>
+                    <p>Bank-grade security</p>
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div class="branding-footer">
+              <p>&copy; 2024 LowCode Pro. All rights reserved.</p>
             </div>
           </div>
         </div>
 
         <!-- Right Side - Login Form -->
         <div class="form-section">
-          <div class="form-container">
-            <!-- Header -->
+          <div class="form-wrapper">
+            <!-- Compact Header -->
             <div class="form-header">
-              <h2 class="form-title">Sign In</h2>
-              <p class="form-subtitle">Enter your credentials to access your account</p>
+              <div class="header-icon">
+                <mat-icon>login</mat-icon>
+              </div>
+              <div class="header-text">
+                <h2>Welcome Back</h2>
+                <p>Sign in to continue to your account</p>
+              </div>
             </div>
 
             <!-- Login Form -->
             <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="login-form">
               <!-- Username Field -->
-              <div class="form-field">
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Username</mat-label>
-                  <input matInput
-                         formControlName="username"
-                         placeholder="Enter your username"
-                         autocomplete="username">
-                  <mat-icon matSuffix class="field-icon">person</mat-icon>
-                  <mat-error *ngIf="loginForm.get('username')?.hasError('required') && loginForm.get('username')?.touched">
-                    Username is required
-                  </mat-error>
-                </mat-form-field>
-              </div>
+              <mat-form-field appearance="outline" class="form-field-ocean">
+                <mat-label>Username</mat-label>
+                <input matInput
+                       formControlName="username"
+                       placeholder="Enter your username"
+                       autocomplete="username">
+                <mat-icon matPrefix>person</mat-icon>
+                <mat-error *ngIf="loginForm.get('username')?.hasError('required')">
+                  Username is required
+                </mat-error>
+              </mat-form-field>
 
               <!-- Password Field -->
-              <div class="form-field">
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Password</mat-label>
-                  <input matInput
-                         [type]="hidePassword ? 'password' : 'text'"
-                         formControlName="password"
-                         placeholder="Enter your password"
-                         autocomplete="current-password">
-                  <button mat-icon-button
-                          matSuffix
-                          (click)="togglePasswordVisibility()"
-                          type="button"
-                          class="password-toggle">
-                    <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
-                  </button>
-                  <mat-error *ngIf="loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched">
-                    Password is required
-                  </mat-error>
-                  <mat-error *ngIf="loginForm.get('password')?.hasError('minlength') && loginForm.get('password')?.touched">
-                    Password must be at least 6 characters
-                  </mat-error>
-                </mat-form-field>
-              </div>
+              <mat-form-field appearance="outline" class="form-field-ocean">
+                <mat-label>Password</mat-label>
+                <input matInput
+                       [type]="hidePassword ? 'password' : 'text'"
+                       formControlName="password"
+                       placeholder="Enter your password"
+                       autocomplete="current-password">
+                <mat-icon matPrefix>lock</mat-icon>
+                <button mat-icon-button
+                        matSuffix
+                        (click)="togglePasswordVisibility()"
+                        type="button"
+                        class="toggle-btn">
+                  <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
+                <mat-error *ngIf="loginForm.get('password')?.hasError('required')">
+                  Password is required
+                </mat-error>
+                <mat-error *ngIf="loginForm.get('password')?.hasError('minlength')">
+                  Password must be at least 6 characters
+                </mat-error>
+              </mat-form-field>
 
-              <!-- Remember Me -->
+              <!-- Options Row -->
               <div class="form-options">
-                <mat-checkbox class="remember-me" formControlName="rememberMe">
+                <mat-checkbox formControlName="rememberMe" class="remember-checkbox">
                   Remember me
                 </mat-checkbox>
-                <a href="#" class="forgot-password" (click)="$event.preventDefault()">
+                <a href="#" class="forgot-link" (click)="$event.preventDefault()">
                   Forgot password?
                 </a>
               </div>
@@ -169,41 +166,28 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
                       mat-raised-button
                       class="login-button"
                       [disabled]="!loginForm.valid || isLoading">
-                <span class="button-content" *ngIf="!isLoading">
+                <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+                <span *ngIf="!isLoading">
                   <mat-icon>login</mat-icon>
                   Sign In
-                </span>
-                <span class="button-content loading" *ngIf="isLoading">
-                  <mat-spinner diameter="20"></mat-spinner>
-                  Signing In...
                 </span>
               </button>
 
               <!-- Error Message -->
-              <div class="error-message" *ngIf="errorMessage">
-                <mat-icon>error</mat-icon>
+              <div class="error-card" *ngIf="errorMessage">
+                <mat-icon>error_outline</mat-icon>
                 <span>{{ errorMessage }}</span>
               </div>
             </form>
 
             <!-- Footer -->
             <div class="form-footer">
-              <p class="footer-text">
-                Don't have an account?
-                <a href="#" class="footer-link" (click)="$event.preventDefault()">
-                  Contact administrator
-                </a>
-              </p>
+              <p>Don't have an account?</p>
+              <a href="#" class="contact-link" (click)="$event.preventDefault()">
+                Contact your administrator
+              </a>
             </div>
           </div>
-        </div>
-      </div>
-
-      <!-- Loading Overlay -->
-      <div class="loading-overlay" *ngIf="isLoading">
-        <div class="loading-content">
-          <mat-spinner diameter="60"></mat-spinner>
-          <p>Authenticating...</p>
         </div>
       </div>
     </div>
@@ -211,63 +195,87 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
   styles: [`
     .login-layout {
       min-height: 100vh;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      position: relative;
-      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      background: #F4FDFD;
     }
 
-    /* Background Elements */
-    .background-elements {
+    /* Ocean Mint Background */
+    .ocean-mint-bg {
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
       overflow: hidden;
-      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wave {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 300px;
+      background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+      opacity: 0.1;
+      border-radius: 1000px 1000px 0 0;
+      animation: wave 10s ease-in-out infinite;
+    }
+
+    .wave-1 {
+      animation-delay: 0s;
+      height: 280px;
+    }
+
+    .wave-2 {
+      animation-delay: 3s;
+      height: 320px;
+      opacity: 0.08;
+    }
+
+    .wave-3 {
+      animation-delay: 6s;
+      height: 300px;
+      opacity: 0.05;
+    }
+
+    @keyframes wave {
+      0%, 100% { transform: translateX(0) translateY(0); }
+      50% { transform: translateX(-50px) translateY(-20px); }
     }
 
     .floating-shape {
       position: absolute;
-      background: rgba(255, 255, 255, 0.1);
+      background: linear-gradient(135deg, #C4F7EF 0%, #B3F0E5 100%);
       border-radius: 50%;
       animation: float 6s ease-in-out infinite;
+    }
 
-      &.shape-1 {
-        width: 100px;
-        height: 100px;
-        top: 10%;
-        left: 10%;
-        animation-delay: 0s;
-      }
+    .shape-1 {
+      width: 80px;
+      height: 80px;
+      top: 15%;
+      left: 10%;
+    }
 
-      &.shape-2 {
-        width: 150px;
-        height: 150px;
-        top: 20%;
-        right: 15%;
-        animation-delay: 2s;
-      }
+    .shape-2 {
+      width: 120px;
+      height: 120px;
+      top: 20%;
+      right: 15%;
+      animation-delay: 2s;
+    }
 
-      &.shape-3 {
-        width: 80px;
-        height: 80px;
-        bottom: 20%;
-        left: 20%;
-        animation-delay: 4s;
-      }
-
-      &.shape-4 {
-        width: 120px;
-        height: 120px;
-        bottom: 15%;
-        right: 10%;
-        animation-delay: 1s;
-      }
+    .shape-3 {
+      width: 60px;
+      height: 60px;
+      bottom: 25%;
+      left: 20%;
+      animation-delay: 4s;
     }
 
     @keyframes float {
@@ -277,62 +285,84 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 
     /* Login Container */
     .login-container {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      border-radius: 24px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-      overflow: hidden;
+      position: relative;
+      z-index: 1;
       display: grid;
       grid-template-columns: 1fr 1fr;
       max-width: 1000px;
       width: 100%;
       min-height: 600px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      margin: 20px;
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(47, 72, 88, 0.15);
+      border: 1px solid rgba(196, 247, 239, 0.5);
+      overflow: hidden;
+      animation: slideInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     /* Branding Section */
     .branding-section {
-      background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
-      color: white;
+      background: linear-gradient(135deg, #2F4858 0%, #3A5A6C 100%);
       padding: 48px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      justify-content: space-between;
       position: relative;
       overflow: hidden;
+    }
 
-      &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="white" opacity="0.1"/><circle cx="50" cy="30" r="1.5" fill="white" opacity="0.1"/><circle cx="80" cy="40" r="1" fill="white" opacity="0.1"/><circle cx="30" cy="60" r="1.5" fill="white" opacity="0.1"/><circle cx="70" cy="70" r="2" fill="white" opacity="0.1"/></svg>');
-        opacity: 0.3;
-      }
+    .branding-section::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(196, 247, 239, 0.1) 0%, transparent 70%);
+      animation: rotate 20s linear infinite;
+    }
+
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
 
     .branding-content {
       position: relative;
       z-index: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
 
-    .logo-section {
-      margin-bottom: 48px;
+    .logo-wrapper {
       text-align: center;
+      margin-bottom: 40px;
     }
 
     .logo-icon {
-      width: 80px;
-      height: 80px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
       border-radius: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
       margin: 0 auto 16px;
-      box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 8px 24px rgba(52, 197, 170, 0.3);
 
       mat-icon {
         font-size: 36px;
@@ -342,46 +372,71 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
       }
     }
 
-    .logo-text {
+    .brand-name {
       font-size: 2rem;
       font-weight: 800;
+      color: white;
       margin: 0;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      font-family: 'Poppins', sans-serif;
     }
 
-    .welcome-title {
-      font-size: 2.5rem;
-      font-weight: 700;
-      margin: 0 0 16px 0;
-      line-height: 1.2;
+    .brand-tagline {
+      color: #C4F7EF;
+      margin: 4px 0 0 0;
+      font-size: 0.95rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 2px;
     }
 
-    .welcome-subtitle {
-      font-size: 1.1rem;
-      opacity: 0.9;
-      line-height: 1.6;
-      margin: 0 0 40px 0;
-    }
-
-    .features-list {
+    .features-showcase {
+      flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      justify-content: center;
     }
 
-    .feature-item {
+    .showcase-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: white;
+      margin: 0 0 12px 0;
+      line-height: 1.3;
+    }
+
+    .showcase-subtitle {
+      color: rgba(255, 255, 255, 0.85);
+      margin: 0 0 32px 0;
+      line-height: 1.6;
+    }
+
+    .feature-cards {
       display: flex;
-      align-items: flex-start;
+      flex-direction: column;
       gap: 16px;
+    }
+
+    .feature-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+      cursor: pointer;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.12);
+        transform: translateX(4px);
+      }
     }
 
     .feature-icon {
       width: 48px;
       height: 48px;
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(52, 197, 170, 0.2);
       border-radius: 12px;
       display: flex;
       align-items: center;
@@ -389,23 +444,34 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
       flex-shrink: 0;
 
       mat-icon {
-        font-size: 20px;
-        width: 20px;
-        height: 20px;
-        color: #667eea;
+        color: #34C5AA;
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
       }
     }
 
-    .feature-text {
-      h4 {
-        font-size: 1rem;
-        font-weight: 600;
-        margin: 0 0 4px 0;
-      }
+    .feature-content h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: white;
+      margin: 0 0 4px 0;
+    }
+
+    .feature-content p {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.7);
+      margin: 0;
+    }
+
+    .branding-footer {
+      text-align: center;
+      padding-top: 24px;
+      margin-top: auto;
 
       p {
-        font-size: 0.9rem;
-        opacity: 0.8;
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.8rem;
         margin: 0;
       }
     }
@@ -416,102 +482,127 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
       display: flex;
       align-items: center;
       justify-content: center;
+      background: #FAFBFC;
     }
 
-    .form-container {
+    .form-wrapper {
       width: 100%;
-      max-width: 400px;
+      max-width: 380px;
     }
 
     .form-header {
-      text-align: center;
-      margin-bottom: 40px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
     }
 
-    .form-title {
-      font-size: 2rem;
+    .header-icon {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      box-shadow: 0 4px 12px rgba(52, 197, 170, 0.25);
+
+      mat-icon {
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+      }
+    }
+
+    .header-text h2 {
+      font-size: 1.5rem;
       font-weight: 700;
-      color: #334155;
-      margin: 0 0 8px 0;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .form-subtitle {
-      color: #64748b;
+      color: #2F4858;
       margin: 0;
-      font-size: 1rem;
+      font-family: 'Poppins', sans-serif;
     }
 
-    /* Form Styling */
+    .header-text p {
+      color: #6B7280;
+      margin: 4px 0 0 0;
+      font-size: 0.9rem;
+    }
+
+    /* Login Form */
     .login-form {
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 20px;
     }
 
-    .form-field {
-      position: relative;
+    .form-field-ocean {
+      width: 100%;
 
-      .mat-mdc-form-field {
-        width: 100%;
+      ::ng-deep {
+        .mat-mdc-text-field-wrapper {
+          background: white;
+          border-radius: 12px;
+          transition: all 0.3s ease;
+          overflow: hidden;
+        }
 
-        ::ng-deep {
-          .mat-mdc-text-field-wrapper {
-            background: rgba(248, 250, 252, 0.8);
-            border-radius: 12px;
-            transition: all 0.3s ease;
+        .mdc-text-field--outlined .mdc-notched-outline {
+          .mdc-notched-outline__leading,
+          .mdc-notched-outline__notch,
+          .mdc-notched-outline__trailing {
+            border-color: #E5E7EB;
+            border-width: 2px;
           }
+        }
 
-          .mdc-text-field--outlined .mdc-notched-outline {
-            .mdc-notched-outline__leading,
-            .mdc-notched-outline__notch,
-            .mdc-notched-outline__trailing {
-              border-color: #e2e8f0;
-              border-width: 2px;
-            }
+        &:hover .mdc-text-field--outlined .mdc-notched-outline {
+          .mdc-notched-outline__leading,
+          .mdc-notched-outline__notch,
+          .mdc-notched-outline__trailing {
+            border-color: #C4F7EF;
           }
+        }
 
-          &:hover .mdc-text-field--outlined .mdc-notched-outline {
-            .mdc-notched-outline__leading,
-            .mdc-notched-outline__notch,
-            .mdc-notched-outline__trailing {
-              border-color: #667eea;
-            }
+        &.mat-focused .mdc-text-field--outlined .mdc-notched-outline {
+          .mdc-notched-outline__leading,
+          .mdc-notched-outline__notch,
+          .mdc-notched-outline__trailing {
+            border-color: #34C5AA;
+            border-width: 2px;
           }
+        }
 
-          &.mat-focused .mdc-text-field--outlined .mdc-notched-outline {
-            .mdc-notched-outline__leading,
-            .mdc-notched-outline__notch,
-            .mdc-notched-outline__trailing {
-              border-color: #667eea;
-              border-width: 2px;
-            }
-          }
+        .mat-mdc-form-field-label {
+          color: #6B7280;
+        }
 
-          .mat-mdc-form-field-label {
-            color: #64748b;
-            font-weight: 500;
-          }
+        &.mat-focused .mat-mdc-form-field-label {
+          color: #34C5AA;
+        }
 
-          .mat-mdc-input-element {
-            color: #334155;
-            font-size: 1rem;
-          }
+        .mat-mdc-form-field-icon-prefix {
+          color: #9CA3AF;
+          margin-right: 12px;
+        }
+
+        &.mat-focused .mat-mdc-form-field-icon-prefix {
+          color: #34C5AA;
+        }
+
+        .mat-mdc-input-element {
+          color: #2F4858;
+          font-size: 1rem;
         }
       }
     }
 
-    .field-icon,
-    .password-toggle {
-      color: #94a3b8;
-      transition: color 0.3s ease;
-    }
+    .toggle-btn {
+      color: #9CA3AF;
 
-    .password-toggle:hover {
-      color: #667eea;
+      &:hover {
+        color: #34C5AA;
+      }
     }
 
     .form-options {
@@ -521,41 +612,56 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
       margin: 8px 0;
     }
 
-    .remember-me {
-      ::ng-deep .mat-mdc-checkbox-label {
-        color: #64748b;
-        font-size: 0.9rem;
+    .remember-checkbox {
+      ::ng-deep {
+        .mdc-checkbox__background {
+          border-color: #D1D5DB !important;
+        }
+
+        &.mat-mdc-checkbox-checked .mdc-checkbox__background {
+          background-color: #34C5AA !important;
+          border-color: #34C5AA !important;
+        }
+
+        .mat-mdc-checkbox-label {
+          color: #6B7280;
+          font-size: 0.9rem;
+        }
       }
     }
 
-    .forgot-password {
-      color: #667eea;
+    .forgot-link {
+      color: #34C5AA;
       text-decoration: none;
       font-size: 0.9rem;
       font-weight: 500;
-      transition: color 0.3s ease;
+      transition: all 0.2s ease;
 
       &:hover {
-        color: #5a67d8;
+        color: #2BA99B;
         text-decoration: underline;
       }
     }
 
     .login-button {
       width: 100%;
-      height: 56px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      height: 48px;
+      background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
       color: white;
       border: none;
       border-radius: 12px;
       font-size: 1rem;
       font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 4px 14px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 4px 12px rgba(52, 197, 170, 0.25);
 
       &:hover:not(:disabled) {
         transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        box-shadow: 0 6px 20px rgba(52, 197, 170, 0.35);
       }
 
       &:active {
@@ -565,98 +671,71 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
       &:disabled {
         opacity: 0.7;
         cursor: not-allowed;
-        transform: none;
       }
 
-      .button-content {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
 
-        &.loading {
-          gap: 12px;
-        }
-
-        mat-icon {
-          font-size: 20px;
-          width: 20px;
-          height: 20px;
-        }
+      mat-spinner {
+        margin-right: 8px;
       }
     }
 
-    .error-message {
+    .error-card {
       display: flex;
       align-items: center;
-      gap: 8px;
-      color: #ef4444;
-      background: rgba(239, 68, 68, 0.1);
+      gap: 12px;
       padding: 12px 16px;
-      border-radius: 8px;
-      font-size: 0.9rem;
+      background: rgba(239, 68, 68, 0.08);
       border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 10px;
+      color: #DC2626;
+      font-size: 0.9rem;
+      animation: shake 0.5s ease-in-out;
 
       mat-icon {
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
       }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
     }
 
     .form-footer {
       text-align: center;
       margin-top: 32px;
       padding-top: 24px;
-      border-top: 1px solid #e2e8f0;
-    }
-
-    .footer-text {
-      color: #64748b;
-      font-size: 0.9rem;
-      margin: 0;
-    }
-
-    .footer-link {
-      color: #667eea;
-      text-decoration: none;
-      font-weight: 500;
-      transition: color 0.3s ease;
-
-      &:hover {
-        color: #5a67d8;
-        text-decoration: underline;
-      }
-    }
-
-    /* Loading Overlay */
-    .loading-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(15, 23, 42, 0.8);
-      backdrop-filter: blur(8px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-
-    .loading-content {
-      text-align: center;
-      color: white;
+      border-top: 1px solid #E5E7EB;
 
       p {
-        margin-top: 24px;
-        font-size: 1.1rem;
-        font-weight: 500;
+        color: #6B7280;
+        margin: 0 0 8px 0;
+        font-size: 0.9rem;
+      }
+
+      .contact-link {
+        color: #34C5AA;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.2s ease;
+
+        &:hover {
+          color: #2BA99B;
+          text-decoration: underline;
+        }
       }
     }
 
     /* Responsive Design */
-    @media (max-width: 1024px) {
+    @media (max-width: 968px) {
       .login-container {
         grid-template-columns: 1fr;
         max-width: 500px;
@@ -671,51 +750,26 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
       }
     }
 
-    @media (max-width: 768px) {
-      .login-layout {
-        padding: 16px;
-      }
-
+    @media (max-width: 480px) {
       .login-container {
-        border-radius: 16px;
-        min-height: auto;
+        margin: 16px;
+        border-radius: 20px;
       }
 
       .form-section {
         padding: 32px 24px;
       }
 
-      .form-title {
-        font-size: 1.75rem;
-      }
-
-      .login-button {
-        height: 52px;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .login-container {
-        border-radius: 12px;
-      }
-
-      .form-section {
-        padding: 24px 20px;
-      }
-
-      .form-title {
-        font-size: 1.5rem;
-      }
-
-      .login-button {
-        height: 48px;
-        font-size: 0.9rem;
+      .form-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
       }
 
       .form-options {
         flex-direction: column;
         gap: 12px;
-        align-items: flex-start;
+        align-items: center;
       }
     }
   `]
