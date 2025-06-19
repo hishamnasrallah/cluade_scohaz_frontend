@@ -46,6 +46,7 @@ export interface Category {
 }
 
 export interface Field {
+  expanded?: number | undefined;
   id?: number;
   _field_name: string;
   _sequence?: number;

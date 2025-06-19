@@ -43,19 +43,30 @@ import { CrudPermissionsService, CRUDPermission, Group, ContentTypeApp, ContentT
   ],
   template: `
     <div class="crud-permissions-management">
-      <!-- Header -->
+      <!-- Compact Ocean Mint Header -->
       <div class="page-header">
         <div class="header-content">
           <div class="header-text">
-            <h1>CRUD Permissions Management</h1>
-            <p>Manage create, read, update, and delete permissions for groups and content types</p>
+            <div class="header-icon">
+              <mat-icon>security</mat-icon>
+            </div>
+            <div>
+              <h1>CRUD Permissions</h1>
+              <p>Manage access control for groups and content types</p>
+            </div>
           </div>
           <div class="header-actions">
-            <button mat-button (click)="refreshData()">
-              <mat-icon>refresh</mat-icon>
-              Refresh
+            <button mat-icon-button
+                    (click)="refreshData()"
+                    class="refresh-btn"
+                    matTooltip="Refresh"
+                    [disabled]="isLoading">
+              <mat-icon [class.spinning]="isLoading">refresh</mat-icon>
             </button>
-            <button mat-raised-button color="primary" (click)="openCreateDialog()">
+            <button mat-raised-button
+                    color="primary"
+                    (click)="openCreateDialog()"
+                    class="create-btn">
               <mat-icon>add</mat-icon>
               Add Permission
             </button>
@@ -63,7 +74,7 @@ import { CrudPermissionsService, CRUDPermission, Group, ContentTypeApp, ContentT
         </div>
       </div>
 
-      <!-- Stats Cards -->
+      <!-- Compact Stats Cards -->
       <div class="stats-section">
         <div class="stat-card">
           <div class="stat-icon total-icon">
@@ -71,7 +82,7 @@ import { CrudPermissionsService, CRUDPermission, Group, ContentTypeApp, ContentT
           </div>
           <div class="stat-content">
             <h3>{{ permissions.length }}</h3>
-            <p>Total Permissions</p>
+            <p>Permissions</p>
           </div>
         </div>
         <div class="stat-card">
@@ -105,43 +116,57 @@ import { CrudPermissionsService, CRUDPermission, Group, ContentTypeApp, ContentT
 
       <!-- Loading State -->
       <div class="loading-section" *ngIf="isLoading">
-        <mat-spinner diameter="40"></mat-spinner>
+        <mat-spinner diameter="40" color="primary"></mat-spinner>
         <p>Loading permissions...</p>
       </div>
 
       <!-- Permissions List -->
-      <div class="permissions-content" *ngIf="!isLoading">
-        <mat-card *ngFor="let permission of permissions" class="permission-card">
-          <mat-card-header>
+      <div class="permissions-container" *ngIf="!isLoading">
+        <div class="permissions-list">
+          <div *ngFor="let permission of permissions"
+               class="permission-item">
+
+            <!-- Permission Header -->
             <div class="permission-header">
-              <div class="permission-icon">
-                <mat-icon>{{ getModelIcon(permission.content_type_name) }}</mat-icon>
-              </div>
-              <div class="permission-info">
-                <h3>{{ permission.group_name }}</h3>
-                <p class="model-name">{{ formatModelName(permission.content_type_name) }}</p>
-                <div class="permission-badges">
-                  <span class="context-badge">{{ permission.context }}</span>
-                  <span class="permissions-summary">{{ getPermissionsSummary(permission) }}</span>
+              <div class="header-left">
+                <div class="permission-icon" [style.background]="getPermissionGradient(permission)">
+                  <mat-icon>{{ getModelIcon(permission.content_type_name) }}</mat-icon>
+                </div>
+                <div class="permission-info">
+                  <h3>{{ permission.group_name }}</h3>
+                  <span class="model-name">{{ formatModelName(permission.content_type_name) }}</span>
                 </div>
               </div>
-              <div class="permission-actions">
-                <button mat-icon-button (click)="editPermission(permission)" matTooltip="Edit">
-                  <mat-icon>edit</mat-icon>
-                </button>
-                <button mat-icon-button (click)="duplicatePermission(permission)" matTooltip="Duplicate">
-                  <mat-icon>content_copy</mat-icon>
-                </button>
-                <button mat-icon-button (click)="deletePermission(permission)" matTooltip="Delete">
-                  <mat-icon>delete</mat-icon>
-                </button>
+              <div class="header-right">
+                <div class="permission-badges">
+                  <mat-chip class="context-chip">{{ permission.context }}</mat-chip>
+                  <mat-chip class="crud-chip">{{ getPermissionsSummary(permission) }}</mat-chip>
+                </div>
+                <div class="permission-actions">
+                  <button mat-icon-button
+                          (click)="editPermission(permission)"
+                          class="action-btn"
+                          matTooltip="Edit">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button
+                          (click)="duplicatePermission(permission)"
+                          class="action-btn"
+                          matTooltip="Duplicate">
+                    <mat-icon>content_copy</mat-icon>
+                  </button>
+                  <button mat-icon-button
+                          (click)="deletePermission(permission)"
+                          class="action-btn delete"
+                          matTooltip="Delete">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
               </div>
             </div>
-          </mat-card-header>
 
-          <mat-card-content>
-            <!-- CRUD Permissions Grid -->
-            <div class="crud-permissions-grid">
+            <!-- CRUD Indicators -->
+            <div class="crud-indicators">
               <div class="crud-item" [class.enabled]="permission.can_create">
                 <mat-icon>add_circle</mat-icon>
                 <span>Create</span>
@@ -160,42 +185,42 @@ import { CrudPermissionsService, CRUDPermission, Group, ContentTypeApp, ContentT
               </div>
             </div>
 
-            <!-- Model Details -->
-            <div class="model-details" *ngIf="permission.content_type_name">
-              <div class="detail-row">
+            <!-- Additional Details -->
+            <div class="permission-details">
+              <div class="detail-item">
                 <span class="detail-label">Application:</span>
                 <span class="detail-value">{{ getAppFromContentType(permission.content_type_name) }}</span>
               </div>
-              <div class="detail-row">
+              <div class="detail-item">
                 <span class="detail-label">Model:</span>
                 <span class="detail-value">{{ getModelFromContentType(permission.content_type_name) }}</span>
               </div>
-              <div class="detail-row">
-                <span class="detail-label">Context:</span>
-                <span class="detail-value">{{ permission.context }}</span>
-              </div>
             </div>
-          </mat-card-content>
-        </mat-card>
+          </div>
 
-        <!-- Empty State -->
-        <div class="empty-state" *ngIf="permissions.length === 0">
-          <mat-icon>security</mat-icon>
-          <h3>No permissions found</h3>
-          <p>Start by creating your first CRUD permission</p>
-          <button mat-raised-button color="primary" (click)="openCreateDialog()">
-            <mat-icon>add</mat-icon>
-            Create First Permission
-          </button>
+          <!-- Empty State -->
+          <div class="empty-state" *ngIf="permissions.length === 0">
+            <mat-icon>security</mat-icon>
+            <h3>No permissions found</h3>
+            <p>Create your first CRUD permission</p>
+            <button mat-raised-button color="primary" (click)="openCreateDialog()">
+              <mat-icon>add</mat-icon>
+              Create Permission
+            </button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Create/Edit Dialog -->
+    <!-- Compact Dialog -->
     <ng-template #editDialog>
-      <div mat-dialog-title>{{ editingPermission?.id ? 'Edit' : 'Create' }} CRUD Permission</div>
+      <h2 mat-dialog-title>
+        <mat-icon>{{ editingPermission?.id ? 'edit' : 'add' }}</mat-icon>
+        {{ editingPermission?.id ? 'Edit' : 'Create' }} Permission
+      </h2>
+
       <mat-dialog-content class="dialog-content">
-        <form [formGroup]="permissionForm" class="permission-form">
+        <form [formGroup]="permissionForm" class="compact-form">
 
           <!-- Group Selection -->
           <mat-form-field appearance="outline">
@@ -205,10 +230,8 @@ import { CrudPermissionsService, CRUDPermission, Group, ContentTypeApp, ContentT
                 {{ group.name }}
               </mat-option>
             </mat-select>
+            <mat-icon matPrefix>group</mat-icon>
             <mat-hint *ngIf="groups.length === 0">No groups available</mat-hint>
-            <mat-error *ngIf="permissionForm.get('group')?.hasError('required')">
-              Group is required
-            </mat-error>
           </mat-form-field>
 
           <!-- Application Selection -->
@@ -219,11 +242,8 @@ import { CrudPermissionsService, CRUDPermission, Group, ContentTypeApp, ContentT
                 {{ getAppDisplayName(app) }}
               </mat-option>
             </mat-select>
-            <mat-hint *ngIf="contentTypeApps.length === 0">No applications available</mat-hint>
-            <mat-hint *ngIf="contentTypeApps.length > 0">{{ contentTypeApps.length }} applications available</mat-hint>
-            <mat-error *ngIf="permissionForm.get('selectedApp')?.hasError('required')">
-              Application is required
-            </mat-error>
+            <mat-icon matPrefix>apps</mat-icon>
+            <mat-hint>{{ contentTypeApps.length }} applications available</mat-hint>
           </mat-form-field>
 
           <!-- Model Selection -->
@@ -234,21 +254,16 @@ import { CrudPermissionsService, CRUDPermission, Group, ContentTypeApp, ContentT
                 {{ formatSingleModelName(model.model) }}
               </mat-option>
             </mat-select>
+            <mat-icon matPrefix>api</mat-icon>
             <mat-hint *ngIf="selectedAppModels.length === 0 && permissionForm.get('selectedApp')?.value">
               No models available for selected application
             </mat-hint>
             <mat-hint *ngIf="!permissionForm.get('selectedApp')?.value">
               Please select an application first
             </mat-hint>
-            <mat-hint *ngIf="selectedAppModels.length > 0">
-              {{ selectedAppModels.length }} models available
-            </mat-hint>
-            <mat-error *ngIf="permissionForm.get('content_type')?.hasError('required')">
-              Model is required
-            </mat-error>
           </mat-form-field>
 
-          <!-- Context Multi-Selection -->
+          <!-- Context Selection -->
           <mat-form-field appearance="outline">
             <mat-label>Context</mat-label>
             <mat-select formControlName="contextArray" multiple>
@@ -257,422 +272,594 @@ import { CrudPermissionsService, CRUDPermission, Group, ContentTypeApp, ContentT
               <mat-option value="form">Form</mat-option>
               <mat-option value="view">View</mat-option>
             </mat-select>
-            <mat-error *ngIf="permissionForm.get('contextArray')?.hasError('required')">
-              At least one context is required
-            </mat-error>
+            <mat-icon matPrefix>layers</mat-icon>
           </mat-form-field>
 
           <!-- CRUD Permissions -->
-          <div class="crud-permissions-section">
-            <h4>Permissions</h4>
-            <div class="crud-checkboxes">
-              <mat-checkbox formControlName="can_create" class="crud-checkbox">
-                <div class="checkbox-content">
-                  <mat-icon>add_circle</mat-icon>
-                  <span>Create</span>
-                </div>
+          <div class="crud-section">
+            <h4>
+              <mat-icon>lock</mat-icon>
+              Permissions
+            </h4>
+            <div class="crud-grid">
+              <mat-checkbox formControlName="can_create" class="crud-checkbox create">
+                <mat-icon>add_circle</mat-icon>
+                Create
               </mat-checkbox>
-
-              <mat-checkbox formControlName="can_read" class="crud-checkbox">
-                <div class="checkbox-content">
-                  <mat-icon>visibility</mat-icon>
-                  <span>Read</span>
-                </div>
+              <mat-checkbox formControlName="can_read" class="crud-checkbox read">
+                <mat-icon>visibility</mat-icon>
+                Read
               </mat-checkbox>
-
-              <mat-checkbox formControlName="can_update" class="crud-checkbox">
-                <div class="checkbox-content">
-                  <mat-icon>edit</mat-icon>
-                  <span>Update</span>
-                </div>
+              <mat-checkbox formControlName="can_update" class="crud-checkbox update">
+                <mat-icon>edit</mat-icon>
+                Update
               </mat-checkbox>
-
-              <mat-checkbox formControlName="can_delete" class="crud-checkbox">
-                <div class="checkbox-content">
-                  <mat-icon>delete</mat-icon>
-                  <span>Delete</span>
-                </div>
+              <mat-checkbox formControlName="can_delete" class="crud-checkbox delete">
+                <mat-icon>delete</mat-icon>
+                Delete
               </mat-checkbox>
             </div>
           </div>
 
           <!-- Quick Actions -->
           <div class="quick-actions">
-            <button type="button" mat-button (click)="selectAllPermissions()">
+            <button mat-button (click)="selectAllPermissions()">
               <mat-icon>select_all</mat-icon>
-              Select All
+              All
             </button>
-            <button type="button" mat-button (click)="clearAllPermissions()">
+            <button mat-button (click)="clearAllPermissions()">
               <mat-icon>clear_all</mat-icon>
-              Clear All
+              None
             </button>
-            <button type="button" mat-button (click)="selectReadOnlyPermissions()">
+            <button mat-button (click)="selectReadOnlyPermissions()">
               <mat-icon>visibility</mat-icon>
               Read Only
             </button>
           </div>
-
         </form>
       </mat-dialog-content>
+
       <mat-dialog-actions align="end">
         <button mat-button mat-dialog-close>Cancel</button>
         <button mat-raised-button
                 color="primary"
                 (click)="savePermission()"
                 [disabled]="!permissionForm.valid || isSaving">
-          <mat-spinner diameter="20" *ngIf="isSaving"></mat-spinner>
-          <span *ngIf="!isSaving">{{ editingPermission?.id ? 'Update' : 'Create' }}</span>
+          <mat-spinner diameter="16" *ngIf="isSaving"></mat-spinner>
+          {{ editingPermission?.id ? 'Update' : 'Create' }}
         </button>
       </mat-dialog-actions>
     </ng-template>
   `,
   styles: [`
     .crud-permissions-management {
-      padding: 24px;
-      max-width: 1400px;
+      padding: 16px;
+      max-width: 1200px;
       margin: 0 auto;
+      background: #F4FDFD;
+      min-height: 100vh;
     }
 
+    /* Compact Ocean Mint Header */
     .page-header {
-      margin-bottom: 32px;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(47, 72, 88, 0.05);
+      border: 1px solid rgba(196, 247, 239, 0.5);
     }
 
     .header-content {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 24px;
     }
 
-    .header-text h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #334155;
-      margin: 0 0 8px 0;
-    }
-
-    .header-text p {
-      color: #64748b;
-      margin: 0;
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 12px;
-    }
-
-    .stats-section {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 20px;
-      margin-bottom: 32px;
-    }
-
-    .stat-card {
-      background: white;
-      border-radius: 16px;
-      padding: 20px;
+    .header-text {
       display: flex;
       align-items: center;
       gap: 16px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      border: 1px solid #f1f5f9;
     }
 
-    .stat-icon {
+    .header-icon {
       width: 48px;
       height: 48px;
+      background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
-
-      &.total-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-      &.groups-icon { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); }
-      &.models-icon { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
-      &.contexts-icon { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
-    }
-
-    .stat-content h3 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #334155;
-      margin: 0;
-    }
-
-    .stat-content p {
-      color: #64748b;
-      margin: 4px 0 0 0;
-      font-size: 0.9rem;
-    }
-
-    .loading-section {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 60px 20px;
-      text-align: center;
-    }
-
-    .loading-section p {
-      margin-top: 16px;
-      color: #64748b;
-    }
-
-    .loading-details {
-      margin-top: 16px;
-      font-size: 0.9rem;
-      color: #64748b;
-
-      p {
-        margin: 4px 0;
-      }
-    }
-
-    .permissions-content {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .permission-card {
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      border: 1px solid #f1f5f9;
-      transition: all 0.3s ease;
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-      }
-    }
-
-    .permission-header {
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-      width: 100%;
-    }
-
-    .permission-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      flex-shrink: 0;
-    }
-
-    .permission-info {
-      flex: 1;
-    }
-
-    .permission-info h3 {
-      margin: 0 0 4px 0;
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: #334155;
-    }
-
-    .model-name {
-      margin: 0 0 8px 0;
-      color: #64748b;
-      font-size: 0.9rem;
-      font-family: monospace;
-    }
-
-    .permission-badges {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .context-badge {
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      background: rgba(102, 126, 234, 0.1);
-      color: #667eea;
-    }
-
-    .permissions-summary {
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      background: rgba(34, 197, 94, 0.1);
-      color: #16a34a;
-    }
-
-    .permission-actions {
-      display: flex;
-      gap: 4px;
-      flex-shrink: 0;
-    }
-
-    .crud-permissions-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-
-    .crud-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      padding: 16px;
-      border-radius: 12px;
-      border: 2px solid #e2e8f0;
-      background: #f8fafc;
-      transition: all 0.3s ease;
-      opacity: 0.5;
-
-      &.enabled {
-        opacity: 1;
-        border-color: #22c55e;
-        background: rgba(34, 197, 94, 0.1);
-        color: #16a34a;
-
-        mat-icon {
-          color: #16a34a;
-        }
-      }
 
       mat-icon {
         font-size: 24px;
         width: 24px;
         height: 24px;
-        color: #94a3b8;
+      }
+    }
+
+    .header-text h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #2F4858;
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    .header-text p {
+      color: #6B7280;
+      margin: 0;
+      font-size: 0.875rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .refresh-btn {
+      color: #34C5AA;
+
+      &:hover {
+        background: rgba(196, 247, 239, 0.3);
+      }
+    }
+
+    .create-btn {
+      background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+      color: white;
+      border: none;
+      box-shadow: 0 2px 4px rgba(52, 197, 170, 0.2);
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .spinning {
+      animation: spin 1s linear infinite;
+    }
+
+    /* Compact Stats */
+    .stats-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 1px 3px rgba(47, 72, 88, 0.05);
+      border: 1px solid rgba(196, 247, 239, 0.5);
+    }
+
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      flex-shrink: 0;
+
+      &.total-icon { background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%); }
+      &.groups-icon { background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%); }
+      &.models-icon { background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); }
+      &.contexts-icon { background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%); }
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+
+    .stat-content h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #2F4858;
+      margin: 0;
+      line-height: 1;
+    }
+
+    .stat-content p {
+      color: #6B7280;
+      margin: 0;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Loading */
+    .loading-section {
+      text-align: center;
+      padding: 40px;
+
+      p {
+        margin-top: 12px;
+        color: #6B7280;
+      }
+    }
+
+    /* Permissions Container */
+    .permissions-container {
+      background: white;
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 2px 4px rgba(47, 72, 88, 0.05);
+      border: 1px solid rgba(196, 247, 239, 0.5);
+      max-height: calc(100vh - 300px);
+      overflow-y: auto;
+
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: #F3F4F6;
+        border-radius: 3px;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: rgba(52, 197, 170, 0.3);
+        border-radius: 3px;
+
+        &:hover {
+          background: rgba(52, 197, 170, 0.5);
+        }
+      }
+    }
+
+    .permissions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* Permission Item */
+    .permission-item {
+      border: 1px solid #E5E7EB;
+      border-radius: 10px;
+      background: #FAFBFC;
+      overflow: hidden;
+      transition: all 0.2s ease;
+
+      &:hover {
+        border-color: rgba(52, 197, 170, 0.3);
+        background: rgba(196, 247, 239, 0.05);
+        transform: translateY(-1px);
+      }
+    }
+
+    .permission-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .permission-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      flex-shrink: 0;
+
+      mat-icon {
+        font-size: 22px;
+        width: 22px;
+        height: 22px;
+      }
+    }
+
+    .permission-info h3 {
+      margin: 0 0 4px 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #2F4858;
+    }
+
+    .model-name {
+      font-size: 0.8rem;
+      color: #6B7280;
+      font-family: monospace;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .permission-badges {
+      display: flex;
+      gap: 6px;
+    }
+
+    .context-chip, .crud-chip {
+      height: 22px;
+      font-size: 0.7rem;
+      padding: 0 10px;
+    }
+
+    .context-chip {
+      background: rgba(102, 126, 234, 0.1);
+      color: #667EEA;
+    }
+
+    .crud-chip {
+      background: rgba(34, 197, 94, 0.1);
+      color: #16A34A;
+    }
+
+    .permission-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .action-btn {
+      width: 32px;
+      height: 32px;
+      color: #6B7280;
+
+      &:hover {
+        color: #34C5AA;
+      }
+
+      &.delete:hover {
+        color: #EF4444;
+      }
+    }
+
+    /* CRUD Indicators */
+    .crud-indicators {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      padding: 0 16px 16px;
+    }
+
+    .crud-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #E5E7EB;
+      background: white;
+      font-size: 0.8rem;
+      color: #9CA3AF;
+      transition: all 0.2s ease;
+      opacity: 0.6;
+
+      &.enabled {
+        opacity: 1;
+        border-color: rgba(34, 197, 94, 0.3);
+        background: rgba(34, 197, 94, 0.05);
+        color: #16A34A;
+
+        mat-icon {
+          color: #16A34A;
+        }
+      }
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
       }
 
       span {
-        font-size: 0.9rem;
         font-weight: 500;
       }
     }
 
-    .model-details {
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid #f1f5f9;
+    /* Permission Details */
+    .permission-details {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      padding: 0 16px 16px;
     }
 
-    .detail-row {
+    .detail-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 0;
+      padding: 8px 12px;
+      background: white;
+      border-radius: 6px;
+      border: 1px solid #F3F4F6;
     }
 
     .detail-label {
+      font-size: 0.75rem;
+      color: #6B7280;
       font-weight: 500;
-      color: #64748b;
-      font-size: 0.9rem;
     }
 
     .detail-value {
-      color: #334155;
-      font-size: 0.9rem;
+      font-size: 0.8rem;
+      color: #2F4858;
+      font-weight: 500;
     }
 
+    /* Empty State */
     .empty-state {
       text-align: center;
       padding: 60px 20px;
-      color: #64748b;
 
       mat-icon {
-        font-size: 64px;
-        width: 64px;
-        height: 64px;
-        margin-bottom: 16px;
-        color: #94a3b8;
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+        color: #9CA3AF;
       }
 
       h3 {
-        font-size: 1.5rem;
-        margin: 0 0 8px 0;
-        color: #334155;
+        font-size: 1.25rem;
+        margin: 12px 0 8px;
+        color: #2F4858;
       }
 
       p {
-        margin: 0 0 24px 0;
+        margin: 0 0 20px;
+        color: #6B7280;
       }
     }
 
+    /* Compact Dialog */
     .dialog-content {
-      max-height: 70vh;
-      overflow: auto;
+      padding: 20px 24px !important;
+      overflow-y: auto !important;
+      max-height: 60vh !important;
     }
 
-    .permission-form {
-      padding: 20px 0;
+    .compact-form {
       display: flex;
       flex-direction: column;
       gap: 16px;
-      min-width: 500px;
     }
 
-    .crud-permissions-section {
-      margin: 24px 0;
+    .compact-form mat-form-field {
+      width: 100%;
+
+      ::ng-deep .mat-mdc-text-field-wrapper {
+        background: white !important;
+      }
     }
 
-    .crud-permissions-section h4 {
-      font-size: 1rem;
+    .crud-section {
+      margin-top: 8px;
+      padding: 16px;
+      background: #F9FAFB;
+      border-radius: 8px;
+      border: 1px solid #E5E7EB;
+    }
+
+    .crud-section h4 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 12px 0;
+      font-size: 0.9rem;
       font-weight: 600;
-      color: #334155;
-      margin: 0 0 16px 0;
-      padding-bottom: 8px;
-      border-bottom: 2px solid #f1f5f9;
+      color: #2F4858;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #34C5AA;
+      }
     }
 
-    .crud-checkboxes {
+    .crud-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
+      gap: 12px;
     }
 
     .crud-checkbox {
-      .checkbox-content {
-        display: flex;
-        align-items: center;
-        gap: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+      font-size: 0.875rem;
 
-        mat-icon {
-          font-size: 18px;
-          width: 18px;
-          height: 18px;
-        }
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
       }
+
+      &.create mat-icon { color: #3B82F6; }
+      &.read mat-icon { color: #10B981; }
+      &.update mat-icon { color: #F59E0B; }
+      &.delete mat-icon { color: #EF4444; }
     }
 
     .quick-actions {
       display: flex;
       gap: 8px;
-      flex-wrap: wrap;
-      padding: 16px;
-      background: #f8fafc;
-      border-radius: 12px;
-      border: 1px dashed #e2e8f0;
+      padding: 12px;
+      background: rgba(196, 247, 239, 0.15);
+      border-radius: 8px;
+      border: 1px dashed rgba(52, 197, 170, 0.3);
+
+      button {
+        font-size: 0.8rem;
+        color: #34C5AA;
+
+        mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
+      }
     }
 
+    /* Dialog */
+    h2[mat-dialog-title] {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.125rem;
+      color: #2F4858;
+      margin: 0;
+      padding: 16px 24px;
+      border-bottom: 1px solid #E5E7EB;
+
+      mat-icon {
+        color: #34C5AA;
+      }
+    }
+
+    mat-dialog-actions {
+      padding: 12px 24px !important;
+      border-top: 1px solid #E5E7EB;
+      gap: 8px;
+
+      button {
+        min-width: 80px;
+      }
+
+      mat-spinner {
+        display: inline-block;
+        margin-right: 8px;
+      }
+    }
+
+    /* Responsive */
     @media (max-width: 768px) {
       .crud-permissions-management {
-        padding: 16px;
+        padding: 12px;
       }
 
       .header-content {
         flex-direction: column;
         align-items: stretch;
+        gap: 12px;
       }
 
       .stats-section {
@@ -683,16 +870,22 @@ import { CrudPermissionsService, CRUDPermission, Group, ContentTypeApp, ContentT
         flex-wrap: wrap;
       }
 
-      .crud-permissions-grid {
+      .header-right {
+        width: 100%;
+        justify-content: space-between;
+        margin-top: 8px;
+      }
+
+      .crud-indicators {
         grid-template-columns: repeat(2, 1fr);
       }
 
-      .crud-checkboxes {
+      .permission-details {
         grid-template-columns: 1fr;
       }
 
-      .permission-form {
-        min-width: auto;
+      .crud-grid {
+        grid-template-columns: 1fr;
       }
     }
   `]
@@ -716,6 +909,16 @@ export class CrudPermissionsManagementComponent implements OnInit {
 
   permissionForm!: FormGroup;
   editingPermission: CRUDPermission | null = null;
+
+  // Ocean Mint gradients
+  private gradients = [
+    'linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%)',
+    'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+    'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+    'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+    'linear-gradient(135deg, #EC4899 0%, #DB2777 100%)',
+    'linear-gradient(135deg, #10B981 0%, #059669 100%)'
+  ];
 
   constructor(
     private fb: FormBuilder,
@@ -777,7 +980,10 @@ export class CrudPermissionsManagementComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error loading permissions:', err);
-        this.snackBar.open('Error loading permissions', 'Close', { duration: 3000 });
+        this.snackBar.open('Error loading permissions', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
         this.loadingStates.permissions = true; // Mark as complete even on error
         this.checkLoadingComplete();
       }
@@ -796,7 +1002,10 @@ export class CrudPermissionsManagementComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error loading groups:', err);
-        this.snackBar.open('Error loading groups', 'Close', { duration: 3000 });
+        this.snackBar.open('Error loading groups', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
         this.loadingStates.groups = true; // Mark as complete even on error
         this.checkLoadingComplete();
       }
@@ -823,7 +1032,10 @@ export class CrudPermissionsManagementComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error loading content type apps:', err);
-        this.snackBar.open('Error loading content type apps', 'Close', { duration: 3000 });
+        this.snackBar.open('Error loading content type apps', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
         this.loadingStates.contentTypeApps = true; // Mark as complete even on error
         this.checkLoadingComplete();
       }
@@ -855,14 +1067,20 @@ export class CrudPermissionsManagementComponent implements OnInit {
         this.permissionForm.patchValue({ content_type: null });
 
         if (this.selectedAppModels.length === 0) {
-          this.snackBar.open(`No models found for application "${appLabel}"`, 'Close', { duration: 3000 });
+          this.snackBar.open(`No models found for application "${appLabel}"`, 'Close', {
+            duration: 3000,
+            panelClass: ['info-snackbar']
+          });
         }
       },
       error: (err) => {
         console.error('Error loading models for app:', appLabel, err);
         this.selectedAppModels = [];
         this.permissionForm.patchValue({ content_type: null });
-        this.snackBar.open('Error loading models', 'Close', { duration: 3000 });
+        this.snackBar.open('Error loading models', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
       }
     });
   }
@@ -920,7 +1138,10 @@ export class CrudPermissionsManagementComponent implements OnInit {
         error: (err) => {
           console.error('Error loading models for editing:', err);
           this.selectedAppModels = [];
-          this.snackBar.open('Error loading models for this application', 'Close', { duration: 3000 });
+          this.snackBar.open('Error loading models for this application', 'Close', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
           this.openDialog(); // Still open dialog even if models fail to load
         }
       });
@@ -965,7 +1186,10 @@ export class CrudPermissionsManagementComponent implements OnInit {
         error: (err) => {
           console.error('Error loading models for duplicate:', err);
           this.selectedAppModels = [];
-          this.snackBar.open('Error loading models for this application', 'Close', { duration: 3000 });
+          this.snackBar.open('Error loading models for this application', 'Close', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
           this.openDialog();
         }
       });
@@ -979,7 +1203,9 @@ export class CrudPermissionsManagementComponent implements OnInit {
   private openDialog(): void {
     this.dialog.open(this.editDialog, {
       width: '600px',
-      maxHeight: '90vh'
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      panelClass: 'compact-dialog'
     });
   }
 
@@ -1009,7 +1235,10 @@ export class CrudPermissionsManagementComponent implements OnInit {
         this.snackBar.open(
           `Permission ${this.editingPermission?.id ? 'updated' : 'created'} successfully`,
           'Close',
-          { duration: 3000 }
+          {
+            duration: 3000,
+            panelClass: ['success-snackbar']
+          }
         );
         this.loadPermissions();
         this.dialog.closeAll();
@@ -1017,7 +1246,10 @@ export class CrudPermissionsManagementComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error saving permission:', err);
-        this.snackBar.open('Error saving permission', 'Close', { duration: 3000 });
+        this.snackBar.open('Error saving permission', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
         this.isSaving = false;
       }
     });
@@ -1029,12 +1261,18 @@ export class CrudPermissionsManagementComponent implements OnInit {
 
       this.crudPermissionsService.deletePermission(permission.id).subscribe({
         next: () => {
-          this.snackBar.open('Permission deleted successfully', 'Close', { duration: 3000 });
+          this.snackBar.open('Permission deleted successfully', 'Close', {
+            duration: 3000,
+            panelClass: ['success-snackbar']
+          });
           this.loadPermissions();
         },
         error: (err) => {
           console.error('Error deleting permission:', err);
-          this.snackBar.open('Error deleting permission', 'Close', { duration: 3000 });
+          this.snackBar.open('Error deleting permission', 'Close', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
         }
       });
     }
@@ -1201,34 +1439,10 @@ export class CrudPermissionsManagementComponent implements OnInit {
     return this.crudPermissionsService.getCRUDAbbreviation(permission);
   }
 
-  // formatModelName(contentTypeName?: string): string {
-  //   if (!contentTypeName) return 'Unknown Model';
-  //
-  //   if (typeof contentTypeName === 'string' && contentTypeName.includes('.')) {
-  //     // Handle content_type_name format like "auth.group"
-  //     return contentTypeName.replace('.', ' › ').replace(/_/g, ' ').toUpperCase();
-  //   }
-  //
-  //   // Handle individual model names
-  //   return contentTypeName
-  //     .split('_')
-  //     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-  //     .join(' ');
-  // }
-  //
-  // // Utility method to format individual model names (for dropdown)
-  // formatSingleModelName(modelName: string): string {
-  //   if (!modelName) return 'Unknown Model';
-  //
-  //   // Convert snake_case to Title Case
-  //   return modelName
-  //     .split('_')
-  //     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-  //     .join(' ');
-  // }
-  //
-  // // Utility method to get a friendly app name
-  // getAppDisplayName(app: ContentTypeApp): string {
-  //   return app.app_name || this.formatSingleModelName(app.app_label);
-  // }
+  getPermissionGradient(permission: CRUDPermission): string {
+    // Generate consistent gradient based on app name
+    const appName = permission.content_type_name?.split('.')[0] || '';
+    const hashCode = appName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return this.gradients[hashCode % this.gradients.length];
+  }
 }

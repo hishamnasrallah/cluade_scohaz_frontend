@@ -39,19 +39,30 @@ import { ApiService, FieldType } from '../../../services/api.service';
   ],
   template: `
     <div class="field-types-management">
-      <!-- Header -->
+      <!-- Compact Ocean Mint Header -->
       <div class="page-header">
         <div class="header-content">
           <div class="header-text">
-            <h1>Field Types Management</h1>
-            <p>Configure available field types for dynamic form generation</p>
+            <div class="header-icon">
+              <mat-icon>input</mat-icon>
+            </div>
+            <div>
+              <h1>Field Types</h1>
+              <p>Configure field types for dynamic forms</p>
+            </div>
           </div>
           <div class="header-actions">
-            <button mat-button (click)="refreshData()">
-              <mat-icon>refresh</mat-icon>
-              Refresh
+            <button mat-icon-button
+                    (click)="refreshData()"
+                    class="refresh-btn"
+                    matTooltip="Refresh"
+                    [disabled]="isLoading">
+              <mat-icon [class.spinning]="isLoading">refresh</mat-icon>
             </button>
-            <button mat-raised-button color="primary" (click)="openCreateDialog()">
+            <button mat-raised-button
+                    color="primary"
+                    (click)="openCreateDialog()"
+                    class="create-btn">
               <mat-icon>add</mat-icon>
               Add Field Type
             </button>
@@ -59,7 +70,7 @@ import { ApiService, FieldType } from '../../../services/api.service';
         </div>
       </div>
 
-      <!-- Stats Cards -->
+      <!-- Compact Stats Cards -->
       <div class="stats-section">
         <div class="stat-card">
           <div class="stat-icon total-icon">
@@ -67,7 +78,7 @@ import { ApiService, FieldType } from '../../../services/api.service';
           </div>
           <div class="stat-content">
             <h3>{{ fieldTypes.length }}</h3>
-            <p>Total Field Types</p>
+            <p>Total Types</p>
           </div>
         </div>
         <div class="stat-card">
@@ -76,7 +87,7 @@ import { ApiService, FieldType } from '../../../services/api.service';
           </div>
           <div class="stat-content">
             <h3>{{ getActiveCount() }}</h3>
-            <p>Active Types</p>
+            <p>Active</p>
           </div>
         </div>
         <div class="stat-card">
@@ -92,85 +103,101 @@ import { ApiService, FieldType } from '../../../services/api.service';
 
       <!-- Loading State -->
       <div class="loading-section" *ngIf="isLoading">
-        <mat-spinner diameter="40"></mat-spinner>
+        <mat-spinner diameter="40" color="primary"></mat-spinner>
         <p>Loading field types...</p>
       </div>
 
-      <!-- Field Types Grid -->
-      <div class="field-types-grid" *ngIf="!isLoading">
-        <mat-card *ngFor="let fieldType of fieldTypes" class="field-type-card"
-                  [class.inactive]="!fieldType.active_ind">
-          <mat-card-header>
-            <div class="card-header-content">
+      <!-- Field Types Container -->
+      <div class="field-types-container" *ngIf="!isLoading">
+        <div class="field-types-grid">
+          <div *ngFor="let fieldType of fieldTypes"
+               class="field-type-card"
+               [class.inactive]="!fieldType.active_ind">
+
+            <!-- Card Header -->
+            <div class="card-header">
               <div class="field-type-icon" [style.background]="getFieldTypeColor(fieldType.code)">
                 <mat-icon>{{ getFieldTypeIcon(fieldType.code) }}</mat-icon>
               </div>
               <div class="field-type-info">
                 <h3>{{ fieldType.name }}</h3>
-                <p>{{ fieldType.name_ara }}</p>
-                <div class="field-type-code">{{ fieldType.code }}</div>
+                <p>{{ fieldType.name_ara || 'No Arabic name' }}</p>
               </div>
-              <div class="card-actions">
-                <button mat-icon-button (click)="editFieldType(fieldType)" matTooltip="Edit">
-                  <mat-icon>edit</mat-icon>
-                </button>
-                <button mat-icon-button
-                        (click)="toggleStatus(fieldType)"
-                        [matTooltip]="fieldType.active_ind ? 'Deactivate' : 'Activate'">
-                  <mat-icon>{{ fieldType.active_ind ? 'visibility_off' : 'visibility' }}</mat-icon>
-                </button>
-                <button mat-icon-button (click)="deleteFieldType(fieldType)" matTooltip="Delete">
-                  <mat-icon>delete</mat-icon>
-                </button>
+              <div class="status-badge" [class.active]="fieldType.active_ind">
+                {{ fieldType.active_ind ? 'Active' : 'Inactive' }}
               </div>
             </div>
-          </mat-card-header>
 
-          <mat-card-content>
-            <div class="field-type-description">
-              {{ getFieldTypeDescription(fieldType.code) }}
-            </div>
-            <div class="field-type-category">
-              <mat-chip [style.background]="getCategoryColor(getFieldTypeCategory(fieldType.code))">
+            <!-- Card Content -->
+            <div class="card-content">
+              <div class="field-type-code">
+                <mat-icon>code</mat-icon>
+                <span>{{ fieldType.code }}</span>
+              </div>
+              <p class="field-type-description">
+                {{ getFieldTypeDescription(fieldType.code) }}
+              </p>
+              <mat-chip class="category-chip" [style.background]="getCategoryColor(getFieldTypeCategory(fieldType.code))">
                 {{ getFieldTypeCategory(fieldType.code) }}
               </mat-chip>
             </div>
-          </mat-card-content>
 
-          <div class="status-indicator" [class]="fieldType.active_ind ? 'active' : 'inactive'">
-            <span>{{ fieldType.active_ind ? 'Active' : 'Inactive' }}</span>
+            <!-- Card Actions -->
+            <div class="card-actions">
+              <button mat-icon-button
+                      (click)="editFieldType(fieldType)"
+                      class="action-btn"
+                      matTooltip="Edit">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button
+                      (click)="toggleStatus(fieldType)"
+                      class="action-btn"
+                      [matTooltip]="fieldType.active_ind ? 'Deactivate' : 'Activate'">
+                <mat-icon>{{ fieldType.active_ind ? 'toggle_on' : 'toggle_off' }}</mat-icon>
+              </button>
+              <button mat-icon-button
+                      (click)="deleteFieldType(fieldType)"
+                      class="action-btn delete"
+                      matTooltip="Delete">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
           </div>
-        </mat-card>
 
-        <!-- Empty State -->
-        <div class="empty-state" *ngIf="fieldTypes.length === 0">
-          <mat-icon>input</mat-icon>
-          <h3>No field types found</h3>
-          <p>Start by creating your first field type</p>
-          <button mat-raised-button color="primary" (click)="openCreateDialog()">
-            <mat-icon>add</mat-icon>
-            Create First Field Type
-          </button>
+          <!-- Empty State -->
+          <div class="empty-state" *ngIf="fieldTypes.length === 0">
+            <mat-icon>input</mat-icon>
+            <h3>No field types found</h3>
+            <p>Create your first field type</p>
+            <button mat-raised-button color="primary" (click)="openCreateDialog()">
+              <mat-icon>add</mat-icon>
+              Create Field Type
+            </button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Create/Edit Dialog -->
+    <!-- Compact Dialog -->
     <ng-template #editDialog>
-      <div mat-dialog-title>{{ editingFieldType?.id ? 'Edit' : 'Create' }} Field Type</div>
-      <mat-dialog-content>
-        <form [formGroup]="fieldTypeForm" class="field-type-form">
+      <h2 mat-dialog-title>
+        <mat-icon>{{ editingFieldType?.id ? 'edit' : 'add' }}</mat-icon>
+        {{ editingFieldType?.id ? 'Edit' : 'Create' }} Field Type
+      </h2>
+
+      <mat-dialog-content class="dialog-content">
+        <form [formGroup]="fieldTypeForm" class="compact-form">
           <mat-form-field appearance="outline">
             <mat-label>Name (English)</mat-label>
-            <input matInput formControlName="name" placeholder="Enter field type name">
-            <mat-error *ngIf="fieldTypeForm.get('name')?.hasError('required')">
-              Name is required
-            </mat-error>
+            <input matInput formControlName="name" placeholder="Field type name">
+            <mat-icon matPrefix>label</mat-icon>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>Name (Arabic)</mat-label>
-            <input matInput formControlName="name_ara" placeholder="Enter Arabic name">
+            <input matInput formControlName="name_ara" placeholder="Arabic name" dir="rtl">
+            <mat-icon matPrefix>translate</mat-icon>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
@@ -179,148 +206,224 @@ import { ApiService, FieldType } from '../../../services/api.service';
                    formControlName="code"
                    placeholder="FIELD_TYPE_CODE"
                    style="text-transform: uppercase;">
+            <mat-icon matPrefix>code</mat-icon>
             <mat-hint>Use uppercase letters and underscores only</mat-hint>
-            <mat-error *ngIf="fieldTypeForm.get('code')?.hasError('required')">
-              Code is required
-            </mat-error>
-            <mat-error *ngIf="fieldTypeForm.get('code')?.hasError('pattern')">
-              Code must contain only uppercase letters and underscores
-            </mat-error>
           </mat-form-field>
 
-          <mat-checkbox formControlName="active_ind" class="active-checkbox">
-            Active
+          <mat-checkbox formControlName="active_ind" class="status-checkbox">
+            <mat-icon>{{ fieldTypeForm.get('active_ind')?.value ? 'check_circle' : 'cancel' }}</mat-icon>
+            Active Status
           </mat-checkbox>
         </form>
       </mat-dialog-content>
+
       <mat-dialog-actions align="end">
         <button mat-button mat-dialog-close>Cancel</button>
         <button mat-raised-button
                 color="primary"
                 (click)="saveFieldType()"
                 [disabled]="!fieldTypeForm.valid || isSaving">
-          <mat-spinner diameter="20" *ngIf="isSaving"></mat-spinner>
-          <span *ngIf="!isSaving">{{ editingFieldType?.id ? 'Update' : 'Create' }}</span>
+          <mat-spinner diameter="16" *ngIf="isSaving"></mat-spinner>
+          {{ editingFieldType?.id ? 'Update' : 'Create' }}
         </button>
       </mat-dialog-actions>
     </ng-template>
   `,
   styles: [`
     .field-types-management {
-      padding: 24px;
-      max-width: 1400px;
+      padding: 16px;
+      max-width: 1200px;
       margin: 0 auto;
+      background: #F4FDFD;
+      min-height: 100vh;
     }
 
+    /* Compact Ocean Mint Header */
     .page-header {
-      margin-bottom: 32px;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(47, 72, 88, 0.05);
+      border: 1px solid rgba(196, 247, 239, 0.5);
     }
 
     .header-content {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 24px;
     }
 
-    .header-text h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #334155;
-      margin: 0 0 8px 0;
-    }
-
-    .header-text p {
-      color: #64748b;
-      margin: 0;
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 12px;
-    }
-
-    .stats-section {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      margin-bottom: 32px;
-    }
-
-    .stat-card {
-      background: white;
-      border-radius: 16px;
-      padding: 24px;
+    .header-text {
       display: flex;
       align-items: center;
       gap: 16px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      border: 1px solid #f1f5f9;
     }
 
-    .stat-icon {
+    .header-icon {
       width: 48px;
       height: 48px;
+      background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
 
-      &.total-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-      &.active-icon { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); }
-      &.categories-icon { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
+    }
+
+    .header-text h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #2F4858;
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    .header-text p {
+      color: #6B7280;
+      margin: 0;
+      font-size: 0.875rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .refresh-btn {
+      color: #34C5AA;
+
+      &:hover {
+        background: rgba(196, 247, 239, 0.3);
+      }
+    }
+
+    .create-btn {
+      background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+      color: white;
+      border: none;
+      box-shadow: 0 2px 4px rgba(52, 197, 170, 0.2);
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .spinning {
+      animation: spin 1s linear infinite;
+    }
+
+    /* Compact Stats */
+    .stats-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 1px 3px rgba(47, 72, 88, 0.05);
+      border: 1px solid rgba(196, 247, 239, 0.5);
+    }
+
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      flex-shrink: 0;
+
+      &.total-icon { background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%); }
+      &.active-icon { background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%); }
+      &.categories-icon { background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); }
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
     }
 
     .stat-content h3 {
-      font-size: 1.5rem;
+      font-size: 1.25rem;
       font-weight: 700;
-      color: #334155;
+      color: #2F4858;
       margin: 0;
+      line-height: 1;
     }
 
     .stat-content p {
-      color: #64748b;
-      margin: 4px 0 0 0;
-      font-size: 0.9rem;
+      color: #6B7280;
+      margin: 0;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
+    /* Loading */
     .loading-section {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 60px 20px;
       text-align: center;
+      padding: 40px;
+
+      p {
+        margin-top: 12px;
+        color: #6B7280;
+      }
     }
 
-    .loading-section p {
-      margin-top: 16px;
-      color: #64748b;
+    /* Field Types Container */
+    .field-types-container {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 4px rgba(47, 72, 88, 0.05);
+      border: 1px solid rgba(196, 247, 239, 0.5);
     }
 
     .field-types-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-      gap: 24px;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
     }
 
+    /* Field Type Card */
     .field-type-card {
-      border-radius: 16px;
+      border: 1px solid #E5E7EB;
+      border-radius: 10px;
+      background: #FAFBFC;
       overflow: hidden;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      border: 1px solid #f1f5f9;
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
       position: relative;
 
       &:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        border-color: rgba(52, 197, 170, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(47, 72, 88, 0.08);
       }
 
       &.inactive {
-        opacity: 0.6;
-        border-color: #e2e8f0;
+        opacity: 0.7;
+
+        .field-type-icon {
+          filter: grayscale(50%);
+        }
       }
 
       &::before {
@@ -329,27 +432,33 @@ import { ApiService, FieldType } from '../../../services/api.service';
         top: 0;
         left: 0;
         right: 0;
-        height: 4px;
-        background: var(--field-type-color, linear-gradient(90deg, #667eea, #764ba2));
+        height: 3px;
+        background: var(--field-type-color);
       }
     }
 
-    .card-header-content {
+    .card-header {
       display: flex;
-      align-items: flex-start;
-      gap: 16px;
-      width: 100%;
+      align-items: center;
+      padding: 16px;
+      gap: 12px;
     }
 
     .field-type-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
       flex-shrink: 0;
+
+      mat-icon {
+        font-size: 22px;
+        width: 22px;
+        height: 22px;
+      }
     }
 
     .field-type-info {
@@ -357,117 +466,195 @@ import { ApiService, FieldType } from '../../../services/api.service';
     }
 
     .field-type-info h3 {
-      margin: 0 0 4px 0;
-      font-size: 1.1rem;
+      margin: 0 0 2px 0;
+      font-size: 1rem;
       font-weight: 600;
-      color: #334155;
+      color: #2F4858;
     }
 
     .field-type-info p {
-      margin: 0 0 8px 0;
-      color: #64748b;
-      font-size: 0.9rem;
+      margin: 0;
+      color: #6B7280;
+      font-size: 0.8rem;
+    }
+
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      background: rgba(107, 114, 128, 0.1);
+      color: #6B7280;
+
+      &.active {
+        background: rgba(34, 197, 94, 0.1);
+        color: #16A34A;
+      }
+    }
+
+    .card-content {
+      padding: 0 16px 16px;
     }
 
     .field-type-code {
-      background: #f1f5f9;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #F3F4F6;
       color: #475569;
-      padding: 4px 8px;
+      padding: 6px 12px;
       border-radius: 6px;
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       font-family: monospace;
       font-weight: 600;
-      display: inline-block;
+      margin-bottom: 8px;
+
+      mat-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+      }
+    }
+
+    .field-type-description {
+      color: #6B7280;
+      font-size: 0.85rem;
+      line-height: 1.4;
+      margin: 8px 0;
+    }
+
+    .category-chip {
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 500;
+      height: 24px;
+      padding: 0 12px;
     }
 
     .card-actions {
       display: flex;
       gap: 4px;
-      flex-shrink: 0;
+      padding: 8px 12px;
+      background: #F9FAFB;
+      border-top: 1px solid #E5E7EB;
     }
 
-    .field-type-description {
-      color: #64748b;
-      font-size: 0.9rem;
-      margin-bottom: 12px;
-      line-height: 1.5;
-    }
+    .action-btn {
+      width: 32px;
+      height: 32px;
+      color: #6B7280;
 
-    .field-type-category {
-      margin-bottom: 16px;
-    }
-
-    .field-type-category mat-chip {
-      color: white;
-      font-size: 0.8rem;
-      font-weight: 500;
-    }
-
-    .status-indicator {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-
-      &.active {
-        background: rgba(34, 197, 94, 0.1);
-        color: #16a34a;
+      &:hover {
+        color: #34C5AA;
       }
 
-      &.inactive {
-        background: rgba(148, 163, 184, 0.1);
-        color: #64748b;
+      &.delete:hover {
+        color: #EF4444;
       }
     }
 
+    /* Empty State */
     .empty-state {
       grid-column: 1 / -1;
       text-align: center;
       padding: 60px 20px;
-      color: #64748b;
 
       mat-icon {
-        font-size: 64px;
-        width: 64px;
-        height: 64px;
-        margin-bottom: 16px;
-        color: #94a3b8;
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+        color: #9CA3AF;
       }
 
       h3 {
-        font-size: 1.5rem;
-        margin: 0 0 8px 0;
-        color: #334155;
+        font-size: 1.25rem;
+        margin: 12px 0 8px;
+        color: #2F4858;
       }
 
       p {
-        margin: 0 0 24px 0;
+        margin: 0 0 20px;
+        color: #6B7280;
       }
     }
 
-    .field-type-form {
+    /* Compact Dialog */
+    .dialog-content {
+      padding: 20px 24px !important;
+      overflow-y: auto !important;
+      max-height: 60vh !important;
+    }
+
+    .compact-form {
       display: flex;
       flex-direction: column;
       gap: 16px;
-      min-width: 400px;
     }
 
-    .active-checkbox {
+    .compact-form mat-form-field {
+      width: 100%;
+
+      ::ng-deep .mat-mdc-text-field-wrapper {
+        background: white !important;
+      }
+    }
+
+    .status-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       margin-top: 8px;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #34C5AA;
+      }
     }
 
+    /* Dialog */
+    h2[mat-dialog-title] {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.125rem;
+      color: #2F4858;
+      margin: 0;
+      padding: 16px 24px;
+      border-bottom: 1px solid #E5E7EB;
+
+      mat-icon {
+        color: #34C5AA;
+      }
+    }
+
+    mat-dialog-actions {
+      padding: 12px 24px !important;
+      border-top: 1px solid #E5E7EB;
+      gap: 8px;
+
+      button {
+        min-width: 80px;
+      }
+
+      mat-spinner {
+        display: inline-block;
+        margin-right: 8px;
+      }
+    }
+
+    /* Responsive */
     @media (max-width: 768px) {
       .field-types-management {
-        padding: 16px;
+        padding: 12px;
       }
 
       .header-content {
         flex-direction: column;
         align-items: stretch;
+        gap: 12px;
       }
 
       .stats-section {
@@ -476,10 +663,6 @@ import { ApiService, FieldType } from '../../../services/api.service';
 
       .field-types-grid {
         grid-template-columns: 1fr;
-      }
-
-      .card-header-content {
-        flex-wrap: wrap;
       }
     }
   `]
@@ -498,7 +681,7 @@ export class FieldTypesManagementComponent implements OnInit {
   private fieldTypeMetadata: { [key: string]: { icon: string, color: string, category: string, description: string } } = {
     'TEXT': {
       icon: 'text_fields',
-      color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      color: 'linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%)',
       category: 'Basic Input',
       description: 'Single line text input field for short text content'
     },
@@ -621,7 +804,10 @@ export class FieldTypesManagementComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error loading field types:', err);
-        this.snackBar.open('Error loading field types', 'Close', { duration: 3000 });
+        this.snackBar.open('Error loading field types', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
         this.isLoading = false;
       }
     });
@@ -642,7 +828,9 @@ export class FieldTypesManagementComponent implements OnInit {
   private openDialog(): void {
     this.dialog.open(this.editDialog, {
       width: '500px',
-      maxHeight: '90vh'
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      panelClass: 'compact-dialog'
     });
   }
 
@@ -664,7 +852,10 @@ export class FieldTypesManagementComponent implements OnInit {
         this.snackBar.open(
           `Field type ${this.editingFieldType?.id ? 'updated' : 'created'} successfully`,
           'Close',
-          { duration: 3000 }
+          {
+            duration: 3000,
+            panelClass: ['success-snackbar']
+          }
         );
         this.loadFieldTypes();
         this.dialog.closeAll();
@@ -672,7 +863,10 @@ export class FieldTypesManagementComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error saving field type:', err);
-        this.snackBar.open('Error saving field type', 'Close', { duration: 3000 });
+        this.snackBar.open('Error saving field type', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
         this.isSaving = false;
       }
     });
@@ -687,13 +881,19 @@ export class FieldTypesManagementComponent implements OnInit {
           this.snackBar.open(
             `Field type ${updatedFieldType.active_ind ? 'activated' : 'deactivated'}`,
             'Close',
-            { duration: 2000 }
+            {
+              duration: 2000,
+              panelClass: ['info-snackbar']
+            }
           );
           this.loadFieldTypes();
         },
         error: (err) => {
           console.error('Error updating field type status:', err);
-          this.snackBar.open('Error updating status', 'Close', { duration: 3000 });
+          this.snackBar.open('Error updating status', 'Close', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
         }
       });
   }
@@ -703,12 +903,18 @@ export class FieldTypesManagementComponent implements OnInit {
       this.apiService.executeApiCall(`define/api/field-types/${fieldType.id}/`, 'DELETE')
         .subscribe({
           next: () => {
-            this.snackBar.open('Field type deleted successfully', 'Close', { duration: 3000 });
+            this.snackBar.open('Field type deleted successfully', 'Close', {
+              duration: 3000,
+              panelClass: ['success-snackbar']
+            });
             this.loadFieldTypes();
           },
           error: (err) => {
             console.error('Error deleting field type:', err);
-            this.snackBar.open('Error deleting field type', 'Close', { duration: 3000 });
+            this.snackBar.open('Error deleting field type', 'Close', {
+              duration: 3000,
+              panelClass: ['error-snackbar']
+            });
           }
         });
     }
@@ -734,7 +940,7 @@ export class FieldTypesManagementComponent implements OnInit {
   }
 
   getFieldTypeColor(code: string): string {
-    return this.fieldTypeMetadata[code]?.color || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+    return this.fieldTypeMetadata[code]?.color || 'linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%)';
   }
 
   getFieldTypeCategory(code: string): string {
@@ -747,7 +953,7 @@ export class FieldTypesManagementComponent implements OnInit {
 
   getCategoryColor(category: string): string {
     const colors: { [key: string]: string } = {
-      'Basic Input': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      'Basic Input': 'linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%)',
       'Numeric': 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
       'Selection': 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
       'Date & Time': 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
