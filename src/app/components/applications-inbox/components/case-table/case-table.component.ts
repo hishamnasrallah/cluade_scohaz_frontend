@@ -176,7 +176,7 @@ import { CaseDetailComponent } from '../case-detail/case-detail.component';
                           *ngIf="showAssignButton"
                           color="primary"
                           (click)="assignCase(case)"
-                          class="assign-btn">
+                          class="header-actions">
                     <mat-icon>assignment_ind</mat-icon>
                     Assign to Me
                   </button>

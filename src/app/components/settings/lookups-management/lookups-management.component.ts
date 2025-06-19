@@ -1,4 +1,4 @@
-// components/settings/lookups-management/lookups-management.component.ts - FIXED
+// components/settings/lookups-management/lookups-management.component.ts - RESTRUCTURED
 import { Component, OnInit, ViewChild, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -15,6 +15,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatCardModule } from '@angular/material/card';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { MatRippleModule } from '@angular/material/core';
+import { MatChipsModule } from '@angular/material/chips';
 import { ApiService } from '../../../services/api.service';
 import { HttpClient } from '@angular/common/http';
 import { ConfigService } from '../../../services/config.service';
@@ -54,23 +56,36 @@ interface LookupTree extends LookupItem {
     MatProgressSpinnerModule,
     MatTooltipModule,
     MatCardModule,
-    MatExpansionModule
+    MatExpansionModule,
+    MatRippleModule,
+    MatChipsModule
   ],
   template: `
     <div class="lookups-management">
-      <!-- Header -->
+      <!-- Compact Header -->
       <div class="page-header">
         <div class="header-content">
           <div class="header-text">
-            <h1>Lookups Management</h1>
-            <p>Manage dropdown values, categories, and reference data</p>
+            <div class="header-icon">
+              <mat-icon>list_alt</mat-icon>
+            </div>
+            <div>
+              <h1>Lookups Management</h1>
+              <p>Manage dropdown values and reference data</p>
+            </div>
           </div>
           <div class="header-actions">
-            <button mat-button (click)="refreshData()">
-              <mat-icon>refresh</mat-icon>
-              Refresh
+            <button mat-icon-button
+                    (click)="refreshData()"
+                    class="refresh-btn"
+                    matTooltip="Refresh"
+                    [disabled]="isLoading">
+              <mat-icon [class.spinning]="isLoading">refresh</mat-icon>
             </button>
-            <button mat-raised-button color="primary" (click)="openCreateDialog()">
+            <button mat-raised-button
+                    color="primary"
+                    (click)="openCreateDialog()"
+                    class="create-btn">
               <mat-icon>add</mat-icon>
               Add Lookup
             </button>
@@ -78,7 +93,7 @@ interface LookupTree extends LookupItem {
         </div>
       </div>
 
-      <!-- Stats Cards -->
+      <!-- Compact Stats Cards -->
       <div class="stats-section">
         <div class="stat-card">
           <div class="stat-icon categories-icon">
@@ -95,7 +110,7 @@ interface LookupTree extends LookupItem {
           </div>
           <div class="stat-content">
             <h3>{{ getTotalValues() }}</h3>
-            <p>Total Values</p>
+            <p>Values</p>
           </div>
         </div>
         <div class="stat-card">
@@ -104,442 +119,740 @@ interface LookupTree extends LookupItem {
           </div>
           <div class="stat-content">
             <h3>{{ getActiveCount() }}</h3>
-            <p>Active Items</p>
+            <p>Active</p>
           </div>
         </div>
       </div>
 
       <!-- Loading State -->
       <div class="loading-section" *ngIf="isLoading">
-        <mat-spinner diameter="40"></mat-spinner>
-        <p>Loading lookups data...</p>
+        <mat-spinner diameter="40" color="primary"></mat-spinner>
+        <p>Loading lookups...</p>
       </div>
 
-      <!-- Lookup Trees -->
-      <div class="lookups-content" *ngIf="!isLoading">
-        <mat-card *ngFor="let lookup of lookupTrees" class="lookup-tree-card">
-          <mat-card-header>
-            <div class="tree-header">
-              <div class="tree-icon" [style.background]="getRandomGradient()">
-                <mat-icon>{{ lookup.icon || 'folder' }}</mat-icon>
-              </div>
-              <div class="tree-info">
-                <h3>{{ lookup.name }}</h3>
-                <p>{{ lookup.name_ara || 'No Arabic name' }} • {{ lookup.children.length }} items</p>
-              </div>
-              <div class="tree-actions">
-                <button mat-icon-button (click)="toggleExpansion(lookup)"
-                        [matTooltip]="lookup.expanded ? 'Collapse' : 'Expand'">
-                  <mat-icon>{{ lookup.expanded ? 'expand_less' : 'expand_more' }}</mat-icon>
-                </button>
-                <button mat-icon-button (click)="editLookup(lookup)" matTooltip="Edit Category">
-                  <mat-icon>edit</mat-icon>
-                </button>
-                <button mat-icon-button (click)="addChildLookup(lookup)" matTooltip="Add Item">
-                  <mat-icon>add</mat-icon>
-                </button>
-              </div>
-            </div>
-          </mat-card-header>
+      <!-- Compact Lookup List -->
+      <div class="lookups-container" *ngIf="!isLoading">
+        <div class="lookups-list">
+          <div *ngFor="let lookup of lookupTrees; let i = index"
+               class="lookup-item"
+               [class.expanded]="lookup.expanded">
 
-          <mat-card-content *ngIf="lookup.expanded">
-            <div class="children-list">
-              <div *ngFor="let child of lookup.children" class="child-item">
-                <div class="child-content">
-                  <div class="child-info">
-                    <span class="child-name">{{ child.name }}</span>
-                    <span class="child-code" *ngIf="child.code">{{ child.code }}</span>
-                    <span class="child-status" [class]="child.active_ind ? 'status-active' : 'status-inactive'">
-                      {{ child.active_ind ? 'Active' : 'Inactive' }}
-                    </span>
-                  </div>
-                  <div class="child-actions">
-                    <button mat-icon-button (click)="editLookup(child)" matTooltip="Edit">
-                      <mat-icon>edit</mat-icon>
-                    </button>
-                    <button mat-icon-button
-                            (click)="toggleStatus(child)"
-                            [matTooltip]="child.active_ind ? 'Deactivate' : 'Activate'">
-                      <mat-icon>{{ child.active_ind ? 'visibility_off' : 'visibility' }}</mat-icon>
-                    </button>
-                    <button mat-icon-button (click)="deleteLookup(child)" matTooltip="Delete">
-                      <mat-icon>delete</mat-icon>
-                    </button>
-                  </div>
+            <!-- Parent Header -->
+            <div class="lookup-header" (click)="toggleExpansion(lookup)">
+              <div class="header-left">
+                <div class="lookup-icon" [style.background]="getGradient(i)">
+                  <mat-icon>{{ lookup.icon || 'folder' }}</mat-icon>
+                </div>
+                <div class="lookup-info">
+                  <h3>{{ lookup.name }}</h3>
+                  <span class="lookup-meta">
+                    {{ lookup.name_ara || 'No Arabic' }} • {{ lookup.children.length }} items
+                  </span>
                 </div>
               </div>
-
-              <div class="add-child-button" *ngIf="lookup.children.length === 0">
-                <button mat-button (click)="addChildLookup(lookup)" class="add-first-item">
+              <div class="header-actions">
+                <mat-icon class="expand-icon">
+                  {{ lookup.expanded ? 'expand_less' : 'expand_more' }}
+                </mat-icon>
+                <button mat-icon-button
+                        (click)="editLookup(lookup, $event)"
+                        class="action-btn"
+                        matTooltip="Edit">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button
+                        (click)="addChildLookup(lookup, $event)"
+                        class="action-btn"
+                        matTooltip="Add Item">
                   <mat-icon>add</mat-icon>
-                  Add First Item
                 </button>
               </div>
             </div>
-          </mat-card-content>
-        </mat-card>
+
+            <!-- Children List -->
+            <div class="children-container" *ngIf="lookup.expanded">
+              <div class="children-list">
+                <div *ngFor="let child of lookup.children"
+                     class="child-item">
+                  <div class="child-left">
+                    <mat-icon class="child-icon">{{ child.icon || 'label' }}</mat-icon>
+                    <span class="child-name">{{ child.name }}</span>
+                    <span class="child-code" *ngIf="child.code">[{{ child.code }}]</span>
+                  </div>
+                  <div class="child-right">
+                    <mat-chip class="status-chip"
+                              [class.active]="child.active_ind">
+                      {{ child.active_ind ? 'Active' : 'Inactive' }}
+                    </mat-chip>
+                    <div class="child-actions">
+                      <button mat-icon-button
+                              (click)="editLookup(child)"
+                              matTooltip="Edit"
+                              class="mini-btn">
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                      <button mat-icon-button
+                              (click)="toggleStatus(child)"
+                              [matTooltip]="child.active_ind ? 'Deactivate' : 'Activate'"
+                              class="mini-btn">
+                        <mat-icon>{{ child.active_ind ? 'toggle_on' : 'toggle_off' }}</mat-icon>
+                      </button>
+                      <button mat-icon-button
+                              (click)="deleteLookup(child)"
+                              matTooltip="Delete"
+                              class="mini-btn delete">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="empty-children" *ngIf="lookup.children.length === 0">
+                  <button mat-button (click)="addChildLookup(lookup)">
+                    <mat-icon>add</mat-icon>
+                    Add First Item
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- Empty State -->
         <div class="empty-state" *ngIf="lookupTrees.length === 0">
           <mat-icon>folder_open</mat-icon>
           <h3>No lookups found</h3>
-          <p>Start by creating your first lookup category</p>
+          <p>Create your first category</p>
           <button mat-raised-button color="primary" (click)="openCreateDialog()">
             <mat-icon>add</mat-icon>
-            Create First Lookup
+            Create Lookup
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Create/Edit Dialog - FIXED -->
+    <!-- Compact Dialog -->
     <ng-template #editDialog>
-      <div mat-dialog-title>{{ editingLookup?.id ? 'Edit' : 'Create' }} Lookup</div>
-      <mat-dialog-content>
-        <form [formGroup]="lookupForm" class="lookup-form">
-          <mat-form-field appearance="outline">
-            <mat-label>Name (English)</mat-label>
-            <input matInput formControlName="name" placeholder="Enter lookup name">
-            <mat-error *ngIf="lookupForm.get('name')?.hasError('required')">
-              Name is required
-            </mat-error>
-          </mat-form-field>
+      <h2 mat-dialog-title>
+        <mat-icon>{{ editingLookup?.id ? 'edit' : 'add' }}</mat-icon>
+        {{ editingLookup?.id ? 'Edit' : 'Create' }} Lookup
+      </h2>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Name (Arabic)</mat-label>
-            <input matInput formControlName="name_ara" placeholder="Enter Arabic name">
-          </mat-form-field>
+      <mat-dialog-content class="dialog-content">
+        <form [formGroup]="lookupForm" class="compact-form">
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Name (English)</mat-label>
+              <input matInput formControlName="name" required>
+              <mat-icon matPrefix>label</mat-icon>
+            </mat-form-field>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Code</mat-label>
-            <input matInput formControlName="code" placeholder="Enter code">
-          </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Name (Arabic)</mat-label>
+              <input matInput formControlName="name_ara" dir="rtl">
+              <mat-icon matPrefix>translate</mat-icon>
+            </mat-form-field>
+          </div>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Type</mat-label>
-            <mat-select formControlName="type">
-              <mat-option [value]="1">Category (Parent)</mat-option>
-              <mat-option [value]="2">Value (Child)</mat-option>
-            </mat-select>
-          </mat-form-field>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Code</mat-label>
+              <input matInput formControlName="code">
+              <mat-icon matPrefix>code</mat-icon>
+            </mat-form-field>
 
-          <mat-form-field appearance="outline" *ngIf="lookupForm.get('type')?.value === 2">
-            <mat-label>Parent Category</mat-label>
-            <mat-select formControlName="parent_lookup">
-              <mat-option *ngFor="let parent of parentLookups" [value]="parent.id">
-                {{ parent.name }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Icon</mat-label>
+              <input matInput formControlName="icon" placeholder="Icon name">
+              <mat-icon matPrefix>palette</mat-icon>
+              <mat-icon matSuffix *ngIf="lookupForm.get('icon')?.value">
+                {{ lookupForm.get('icon')?.value }}
+              </mat-icon>
+            </mat-form-field>
+          </div>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Icon</mat-label>
-            <input matInput formControlName="icon" placeholder="Material icon name">
-          </mat-form-field>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Type</mat-label>
+              <mat-select formControlName="type">
+                <mat-option [value]="1">Category (Parent)</mat-option>
+                <mat-option [value]="2">Value (Child)</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>category</mat-icon>
+            </mat-form-field>
 
-          <mat-checkbox formControlName="active_ind" class="active-checkbox">
-            Active
+            <mat-form-field appearance="outline"
+                            *ngIf="lookupForm.get('type')?.value === 2">
+              <mat-label>Parent Category</mat-label>
+              <mat-select formControlName="parent_lookup">
+                <mat-option *ngFor="let parent of parentLookups" [value]="parent.id">
+                  {{ parent.name }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>folder</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <mat-checkbox formControlName="active_ind" class="status-checkbox">
+            <mat-icon>{{ lookupForm.get('active_ind')?.value ? 'check_circle' : 'cancel' }}</mat-icon>
+            Active Status
           </mat-checkbox>
         </form>
       </mat-dialog-content>
+
       <mat-dialog-actions align="end">
         <button mat-button mat-dialog-close>Cancel</button>
         <button mat-raised-button
                 color="primary"
                 (click)="saveLookup()"
                 [disabled]="!lookupForm.valid || isSaving">
-          <mat-spinner diameter="20" *ngIf="isSaving"></mat-spinner>
-          <span *ngIf="!isSaving">{{ editingLookup?.id ? 'Update' : 'Create' }}</span>
+          <mat-spinner diameter="16" *ngIf="isSaving"></mat-spinner>
+          {{ editingLookup?.id ? 'Update' : 'Create' }}
         </button>
       </mat-dialog-actions>
     </ng-template>
   `,
   styles: [`
     .lookups-management {
-      padding: 24px;
-      max-width: 1400px;
+      padding: 16px;
+      max-width: 1200px;
       margin: 0 auto;
+      background: #F4FDFD;
+      min-height: 100vh;
     }
 
+    /* Compact Header */
     .page-header {
-      margin-bottom: 32px;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(47, 72, 88, 0.05);
+      border: 1px solid rgba(196, 247, 239, 0.5);
     }
 
     .header-content {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 24px;
+    }
+
+    .header-text {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
     }
 
     .header-text h1 {
-      font-size: 2rem;
+      font-size: 1.5rem;
       font-weight: 700;
-      color: #334155;
-      margin: 0 0 8px 0;
+      color: #2F4858;
+      margin: 0;
+      line-height: 1.2;
     }
 
     .header-text p {
-      color: #64748b;
+      color: #6B7280;
       margin: 0;
+      font-size: 0.875rem;
     }
 
     .header-actions {
       display: flex;
-      gap: 12px;
+      gap: 8px;
+      align-items: center;
     }
 
+    .refresh-btn {
+      color: #34C5AA;
+
+      &:hover {
+        background: rgba(196, 247, 239, 0.3);
+      }
+    }
+
+    .create-btn {
+      background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+      color: white;
+      border: none;
+      box-shadow: 0 2px 4px rgba(52, 197, 170, 0.2);
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .spinning {
+      animation: spin 1s linear infinite;
+    }
+
+    /* Compact Stats */
     .stats-section {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      margin-bottom: 32px;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
     }
 
     .stat-card {
       background: white;
-      border-radius: 16px;
-      padding: 24px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      border: 1px solid #f1f5f9;
-    }
-
-    .stat-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-
-      &.categories-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-      &.values-icon { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-      &.active-icon { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); }
-    }
-
-    .stat-content h3 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #334155;
-      margin: 0;
-    }
-
-    .stat-content p {
-      color: #64748b;
-      margin: 4px 0 0 0;
-      font-size: 0.9rem;
-    }
-
-    .loading-section {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 60px 20px;
-      text-align: center;
-    }
-
-    .loading-section p {
-      margin-top: 16px;
-      color: #64748b;
-    }
-
-    .lookups-content {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .lookup-tree-card {
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-
-    .tree-header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      width: 100%;
-    }
-
-    .tree-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-    }
-
-    .tree-info {
-      flex: 1;
-    }
-
-    .tree-info h3 {
-      margin: 0 0 4px 0;
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: #334155;
-    }
-
-    .tree-info p {
-      margin: 0;
-      color: #64748b;
-      font-size: 0.9rem;
-    }
-
-    .tree-actions {
-      display: flex;
-      gap: 4px;
-    }
-
-    .children-list {
-      padding: 16px 0;
-    }
-
-    .child-item {
-      border: 1px solid #f1f5f9;
-      border-radius: 12px;
-      margin-bottom: 8px;
-      transition: all 0.2s ease;
-    }
-
-    .child-item:hover {
-      border-color: #e2e8f0;
-      background: #f8fafc;
-    }
-
-    .child-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 16px;
-    }
-
-    .child-info {
+      border-radius: 10px;
+      padding: 16px;
       display: flex;
       align-items: center;
       gap: 12px;
+      box-shadow: 0 1px 3px rgba(47, 72, 88, 0.05);
+      border: 1px solid rgba(196, 247, 239, 0.5);
+    }
+
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      flex-shrink: 0;
+
+      &.categories-icon { background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%); }
+      &.values-icon { background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); }
+      &.active-icon { background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%); }
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+
+    .stat-content h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #2F4858;
+      margin: 0;
+      line-height: 1;
+    }
+
+    .stat-content p {
+      color: #6B7280;
+      margin: 0;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Loading */
+    .loading-section {
+      text-align: center;
+      padding: 40px;
+
+      p {
+        margin-top: 12px;
+        color: #6B7280;
+      }
+    }
+
+    /* Compact Lookups Container */
+    .lookups-container {
+      background: white;
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 2px 4px rgba(47, 72, 88, 0.05);
+      border: 1px solid rgba(196, 247, 239, 0.5);
+      max-height: calc(100vh - 300px);
+      overflow-y: auto;
+
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: #F3F4F6;
+        border-radius: 3px;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: rgba(52, 197, 170, 0.3);
+        border-radius: 3px;
+
+        &:hover {
+          background: rgba(52, 197, 170, 0.5);
+        }
+      }
+    }
+
+    .lookups-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* Compact Lookup Item */
+    .lookup-item {
+      border: 1px solid #E5E7EB;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: all 0.2s ease;
+
+      &.expanded {
+        border-color: rgba(52, 197, 170, 0.3);
+        box-shadow: 0 2px 4px rgba(52, 197, 170, 0.1);
+      }
+    }
+
+    .lookup-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      cursor: pointer;
+      background: #FAFBFC;
+      transition: background 0.2s ease;
+
+      &:hover {
+        background: #F3F4F6;
+      }
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .lookup-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      flex-shrink: 0;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+
+    .lookup-info h3 {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #2F4858;
+    }
+
+    .lookup-meta {
+      font-size: 0.75rem;
+      color: #6B7280;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .expand-icon {
+      color: #6B7280;
+      margin-right: 8px;
+    }
+
+    .action-btn {
+      width: 32px;
+      height: 32px;
+      color: #6B7280;
+
+      &:hover {
+        color: #34C5AA;
+      }
+    }
+
+    /* Compact Children */
+    .children-container {
+      background: #F9FAFB;
+      border-top: 1px solid #E5E7EB;
+    }
+
+    .children-list {
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .child-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: white;
+      border-radius: 6px;
+      border: 1px solid #E5E7EB;
+      transition: all 0.2s ease;
+
+      &:hover {
+        border-color: rgba(52, 197, 170, 0.3);
+        background: rgba(196, 247, 239, 0.1);
+      }
+    }
+
+    .child-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .child-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #34C5AA;
     }
 
     .child-name {
       font-weight: 500;
-      color: #334155;
+      color: #2F4858;
+      font-size: 0.875rem;
     }
 
     .child-code {
-      background: #f1f5f9;
-      color: #64748b;
-      padding: 2px 8px;
-      border-radius: 6px;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
+      color: #6B7280;
       font-family: monospace;
     }
 
-    .child-status {
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
+    .child-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-      &.status-active {
+    .status-chip {
+      height: 20px;
+      font-size: 0.7rem;
+      padding: 0 8px;
+      background: rgba(107, 114, 128, 0.1);
+      color: #6B7280;
+
+      &.active {
         background: rgba(34, 197, 94, 0.1);
-        color: #16a34a;
-      }
-
-      &.status-inactive {
-        background: rgba(148, 163, 184, 0.1);
-        color: #64748b;
+        color: #16A34A;
       }
     }
 
     .child-actions {
       display: flex;
-      gap: 4px;
+      gap: 2px;
     }
 
-    .add-child-button {
+    .mini-btn {
+      width: 28px;
+      height: 28px;
+      color: #6B7280;
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+
+      &:hover {
+        color: #34C5AA;
+      }
+
+      &.delete:hover {
+        color: #EF4444;
+      }
+    }
+
+    .empty-children {
       text-align: center;
-      padding: 20px;
+      padding: 12px;
+
+      button {
+        color: #34C5AA;
+      }
     }
 
-    .add-first-item {
-      color: #667eea;
-      border: 2px dashed #e2e8f0;
-      border-radius: 12px;
-      padding: 12px 24px;
-    }
-
+    /* Empty State */
     .empty-state {
       text-align: center;
       padding: 60px 20px;
-      color: #64748b;
 
       mat-icon {
-        font-size: 64px;
-        width: 64px;
-        height: 64px;
-        margin-bottom: 16px;
-        color: #94a3b8;
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+        color: #9CA3AF;
       }
 
       h3 {
-        font-size: 1.5rem;
-        margin: 0 0 8px 0;
-        color: #334155;
+        font-size: 1.25rem;
+        margin: 12px 0 8px;
+        color: #2F4858;
       }
 
       p {
-        margin: 0 0 24px 0;
+        margin: 0 0 20px;
+        color: #6B7280;
       }
     }
 
-    .lookup-form {
+    /* Compact Dialog */
+    .dialog-content {
+      padding: 20px 24px !important;
+      overflow-y: auto !important;
+      max-height: 60vh !important;
+
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: #F3F4F6;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: #D1D5DB;
+        border-radius: 3px;
+      }
+    }
+
+    .compact-form {
       display: flex;
       flex-direction: column;
       gap: 16px;
-      min-width: 400px;
     }
 
-    .active-checkbox {
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+
+      @media (max-width: 600px) {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-row mat-form-field {
+      width: 100%;
+
+      ::ng-deep .mat-mdc-text-field-wrapper {
+        background: white !important;
+      }
+
+      ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+        margin-top: 4px;
+      }
+    }
+
+    .status-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       margin-top: 8px;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #34C5AA;
+      }
     }
 
+    /* Dialog Title */
+    h2[mat-dialog-title] {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.125rem;
+      color: #2F4858;
+      margin: 0;
+      padding: 16px 24px;
+      border-bottom: 1px solid #E5E7EB;
+
+      mat-icon {
+        color: #34C5AA;
+      }
+    }
+
+    mat-dialog-actions {
+      padding: 12px 24px !important;
+      border-top: 1px solid #E5E7EB;
+      gap: 8px;
+
+      button {
+        min-width: 80px;
+      }
+
+      mat-spinner {
+        display: inline-block;
+        margin-right: 8px;
+      }
+    }
+
+    /* Responsive */
     @media (max-width: 768px) {
       .lookups-management {
-        padding: 16px;
+        padding: 12px;
       }
 
       .header-content {
         flex-direction: column;
         align-items: stretch;
+        gap: 12px;
+      }
+
+      .header-text {
+        justify-content: center;
+      }
+
+      .header-actions {
+        justify-content: center;
       }
 
       .stats-section {
         grid-template-columns: 1fr;
       }
 
-      .tree-header {
+      .child-item {
         flex-wrap: wrap;
       }
 
-      .child-content {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
+      .child-right {
+        width: 100%;
+        justify-content: space-between;
+        margin-top: 8px;
       }
     }
   `]
 })
 export class LookupsManagementComponent implements OnInit {
-  @ViewChild('editDialog') editDialog!: TemplateRef<any>; // FIXED: Added ViewChild reference
+  @ViewChild('editDialog') editDialog!: TemplateRef<any>;
 
   isLoading = false;
   isSaving = false;
@@ -550,13 +863,14 @@ export class LookupsManagementComponent implements OnInit {
   lookupForm: FormGroup;
   editingLookup: LookupItem | null = null;
 
+  // Ocean Mint inspired gradients
   private gradients = [
-    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-    'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-    'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
-    'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
-    'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)'
+    'linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%)',
+    'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+    'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+    'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+    'linear-gradient(135deg, #EC4899 0%, #DB2777 100%)',
+    'linear-gradient(135deg, #10B981 0%, #059669 100%)'
   ];
 
   constructor(
@@ -594,17 +908,18 @@ export class LookupsManagementComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error loading lookups:', err);
-          this.snackBar.open('Error loading lookups', 'Close', { duration: 3000 });
+          this.snackBar.open('Error loading lookups', 'Close', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
           this.isLoading = false;
         }
       });
   }
 
   private processLookups(): void {
-    // Separate parent and child lookups
     this.parentLookups = this.allLookups.filter(lookup => lookup.type === 1);
 
-    // Build tree structure
     this.lookupTrees = this.parentLookups.map(parent => ({
       ...parent,
       children: this.allLookups.filter(child => child.parent_lookup === parent.id),
@@ -621,13 +936,19 @@ export class LookupsManagementComponent implements OnInit {
     this.openDialog();
   }
 
-  editLookup(lookup: LookupItem): void {
+  editLookup(lookup: LookupItem, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
     this.editingLookup = lookup;
     this.lookupForm.patchValue(lookup);
     this.openDialog();
   }
 
-  addChildLookup(parent: LookupTree): void {
+  addChildLookup(parent: LookupTree, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
     this.editingLookup = null;
     this.lookupForm.reset({
       type: 2,
@@ -638,10 +959,11 @@ export class LookupsManagementComponent implements OnInit {
   }
 
   private openDialog(): void {
-    // FIXED: Proper dialog opening
     this.dialog.open(this.editDialog, {
-      width: '500px',
-      maxHeight: '90vh'
+      width: '600px',
+      maxWidth: '90vw',
+      disableClose: false,
+      panelClass: 'compact-dialog'
     });
   }
 
@@ -661,7 +983,10 @@ export class LookupsManagementComponent implements OnInit {
         this.snackBar.open(
           `Lookup ${this.editingLookup?.id ? 'updated' : 'created'} successfully`,
           'Close',
-          { duration: 3000 }
+          {
+            duration: 3000,
+            panelClass: ['success-snackbar']
+          }
         );
         this.loadLookups();
         this.dialog.closeAll();
@@ -669,7 +994,10 @@ export class LookupsManagementComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error saving lookup:', err);
-        this.snackBar.open('Error saving lookup', 'Close', { duration: 3000 });
+        this.snackBar.open('Error saving lookup', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
         this.isSaving = false;
       }
     });
@@ -689,13 +1017,19 @@ export class LookupsManagementComponent implements OnInit {
           this.snackBar.open(
             `Lookup ${updatedLookup.active_ind ? 'activated' : 'deactivated'}`,
             'Close',
-            { duration: 2000 }
+            {
+              duration: 2000,
+              panelClass: ['info-snackbar']
+            }
           );
           this.loadLookups();
         },
         error: (err) => {
           console.error('Error updating lookup status:', err);
-          this.snackBar.open('Error updating status', 'Close', { duration: 3000 });
+          this.snackBar.open('Error updating status', 'Close', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
         }
       });
   }
@@ -707,12 +1041,18 @@ export class LookupsManagementComponent implements OnInit {
       this.http.delete(`${baseUrl}/lookups/management/${lookup.id}/`)
         .subscribe({
           next: () => {
-            this.snackBar.open('Lookup deleted successfully', 'Close', { duration: 3000 });
+            this.snackBar.open('Lookup deleted successfully', 'Close', {
+              duration: 3000,
+              panelClass: ['success-snackbar']
+            });
             this.loadLookups();
           },
           error: (err) => {
             console.error('Error deleting lookup:', err);
-            this.snackBar.open('Error deleting lookup', 'Close', { duration: 3000 });
+            this.snackBar.open('Error deleting lookup', 'Close', {
+              duration: 3000,
+              panelClass: ['error-snackbar']
+            });
           }
         });
     }
@@ -729,6 +1069,17 @@ export class LookupsManagementComponent implements OnInit {
   getActiveCount(): number {
     return this.allLookups.filter(lookup => lookup.active_ind).length;
   }
+
+  getActivePercentage(): string {
+    if (this.allLookups.length === 0) return '0';
+    const percentage = (this.getActiveCount() / this.allLookups.length) * 100;
+    return percentage.toFixed(0);
+  }
+
+  getGradient(index: number): string {
+    return this.gradients[index % this.gradients.length];
+  }
+
 
   getRandomGradient(): string {
     return this.gradients[Math.floor(Math.random() * this.gradients.length)];

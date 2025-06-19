@@ -1,5 +1,5 @@
 <div class="dashboard-layout">
-  <!-- Hero Section -->
+  <!-- Hero Section with Better Structure -->
   <section class="hero-section">
     <div class="hero-content">
       <div class="hero-text">
@@ -7,11 +7,14 @@
           Welcome to <span class="brand-gradient">LowCode Pro</span>
         </h1>
         <p class="hero-subtitle">
-          Enterprise-grade platform for rapid application development and API management
+          Build powerful applications faster with our enterprise-grade low-code platform
         </p>
-        <div class="hero-stats">
+
+        <!-- Better Organized Stats -->
+        <div class="hero-stats" *ngIf="apiData?.applications">
           <div class="stat-item">
             <span class="stat-number">{{ apiData?.applications?.total_applications || 0 }}</span>
+
             <span class="stat-label">Applications</span>
           </div>
           <div class="stat-item">
@@ -20,10 +23,12 @@
           </div>
           <div class="stat-item">
             <span class="stat-number">{{ getTotalMethods() }}</span>
-            <span class="stat-label">HTTP Methods</span>
+            <span class="stat-label">Methods</span>
           </div>
         </div>
       </div>
+
+      <!-- Enhanced Visual Element -->
       <div class="hero-visual">
         <div class="floating-card card-1">
           <mat-icon>api</mat-icon>
@@ -38,147 +43,201 @@
     </div>
   </section>
 
-  <!-- Platform Overview -->
-  <section class="overview-section">
-    <div class="container">
-      <div class="section-header">
-        <h2 class="section-title">Platform Overview</h2>
-        <p class="section-subtitle">Real-time insights into your development ecosystem</p>
+  <!-- Main Content Area -->
+  <ng-container *ngIf="!isLoading && !error">
+    <!-- Platform Overview with Better Information Architecture -->
+    <section class="overview-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Platform Overview</h2>
+          <p class="section-subtitle">Monitor your applications and API performance at a glance</p>
+        </div>
+
+        <div class="metrics-grid">
+          <!-- API Version Card -->
+          <div class="metric-card">
+            <div class="metric-icon api-icon">
+              <mat-icon>api</mat-icon>
+            </div>
+            <div class="metric-content">
+              <h3 class="metric-number">{{ apiData?.applications?.api_version || 'v1.0' }}</h3>
+              <p class="metric-label">API Version</p>
+              <span class="metric-status status-active">Active</span>
+            </div>
+          </div>
+
+          <!-- Total Endpoints Card -->
+          <div class="metric-card">
+            <div class="metric-icon endpoints-icon">
+              <mat-icon>hub</mat-icon>
+            </div>
+            <div class="metric-content">
+              <h3 class="metric-number">{{ apiData?.applications?.total_urls || 0 }}</h3>
+              <p class="metric-label">Total Endpoints</p>
+              <span class="metric-trend positive"
+                    *ngIf="apiData?.applications && apiData?.applications?.total_urls || 0">
+                <mat-icon>trending_up</mat-icon>
+                Active
+              </span>
+            </div>
+          </div>
+
+          <!-- Applications Card -->
+          <div class="metric-card">
+            <div class="metric-icon apps-icon">
+              <mat-icon>apps</mat-icon>
+            </div>
+            <div class="metric-content">
+              <h3 class="metric-number">{{ apiData?.applications?.total_applications || 0 }}</h3>
+              <p class="metric-label">Applications</p>
+              <span class="metric-trend positive">All systems operational</span>
+            </div>
+          </div>
+
+          <!-- Last Updated Card -->
+          <div class="metric-card">
+            <div class="metric-icon time-icon">
+              <mat-icon>schedule</mat-icon>
+            </div>
+            <div class="metric-content">
+<!--              <h3 class="metric-number">{{ getFormattedTime() }}</h3>-->
+              <p class="metric-label">Last Sync</p>
+<!--              <span class="metric-status status-recent">{{ getRelativeTime() }}</span>-->
+            </div>
+          </div>
+        </div>
       </div>
+    </section>
 
-      <div class="metrics-grid">
-        <div class="metric-card">
-          <div class="metric-icon api-icon">
-            <mat-icon>api</mat-icon>
-          </div>
-          <div class="metric-content">
-            <h3 class="metric-number">{{ apiData?.applications?.api_version || 'N/A' }}</h3>
-            <p class="metric-label">API Version</p>
-            <span class="metric-status status-active">Active</span>
-          </div>
+    <!-- Quick Actions Section with Enhanced Buttons -->
+    <section class="quick-actions-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Quick Actions</h2>
+          <p class="section-subtitle">Access frequently used features and manage your platform</p>
         </div>
 
-        <div class="metric-card">
-          <div class="metric-icon endpoints-icon">
-            <mat-icon>hub</mat-icon>
-          </div>
-          <div class="metric-content">
-            <h3 class="metric-number">{{ apiData?.applications?.total_urls || 0 }}</h3>
-            <p class="metric-label">Total Endpoints</p>
-            <span class="metric-trend positive">+12% this month</span>
-          </div>
-        </div>
+        <div class="actions-grid">
+          <!-- Primary Actions -->
+          <button class="action-card"
+                  (click)="goToApplications()"
+                  matRipple
+                  [matRippleColor]="'rgba(52, 197, 170, 0.1)'"
+                  tabindex="0"
+                  role="button"
+                  aria-label="View all applications">
+            <div class="action-icon apps-action-icon">
+              <mat-icon>apps</mat-icon>
+            </div>
+            <h4>Applications</h4>
+            <p>Browse and manage all your applications</p>
+          </button>
 
-        <div class="metric-card">
-          <div class="metric-icon apps-icon">
-            <mat-icon>apps</mat-icon>
-          </div>
-          <div class="metric-content">
-            <h3 class="metric-number">{{ apiData?.applications?.total_applications || 0 }}</h3>
-            <p class="metric-label">Applications</p>
-            <span class="metric-trend positive">All operational</span>
-          </div>
-        </div>
+          <button class="action-card"
+                  (click)="goToInbox()"
+                  matRipple
+                  [matRippleColor]="'rgba(236, 72, 153, 0.1)'"
+                  tabindex="0"
+                  role="button"
+                  aria-label="Check inbox">
+            <div class="action-icon inbox-icon">
+              <mat-icon>inbox</mat-icon>
+            </div>
+            <h4>Inbox</h4>
+            <p>View pending tasks and notifications</p>
+          </button>
 
-        <div class="metric-card">
-          <div class="metric-icon time-icon">
-            <mat-icon>schedule</mat-icon>
-          </div>
-          <div class="metric-content">
-            <h3 class="metric-number">{{ getFormattedDate(apiData?.applications?.schema_generated_on) }}</h3>
-            <p class="metric-label">Last Updated</p>
-            <span class="metric-status status-recent">Recent</span>
-          </div>
+          <button class="action-card"
+                  (click)="goToConfig()"
+                  matRipple
+                  [matRippleColor]="'rgba(139, 92, 246, 0.1)'"
+                  tabindex="0"
+                  role="button"
+                  aria-label="Platform configuration">
+            <div class="action-icon config-icon">
+              <mat-icon>settings</mat-icon>
+            </div>
+            <h4>Configuration</h4>
+            <p>Manage platform settings and preferences</p>
+          </button>
+
+          <!-- Secondary Actions -->
+          <button class="action-card"
+                  (click)="loadDashboardData()"
+                  matRipple
+                  [matRippleColor]="'rgba(59, 130, 246, 0.1)'"
+                  tabindex="0"
+                  role="button"
+                  aria-label="Refresh dashboard data"
+                  [disabled]="isLoading">
+            <div class="action-icon refresh-icon">
+              <mat-icon [class.spinning]="isLoading">refresh</mat-icon>
+            </div>
+            <h4>Refresh Data</h4>
+            <p>Update metrics and application info</p>
+          </button>
+
+          <button class="action-card"
+                  matRipple
+                  [matRippleColor]="'rgba(245, 158, 11, 0.1)'"
+                  tabindex="0"
+                  role="button"
+                  aria-label="View API documentation">
+            <div class="action-icon docs-icon">
+              <mat-icon>description</mat-icon>
+            </div>
+            <h4>Documentation</h4>
+            <p>Access API guides and tutorials</p>
+          </button>
+
+          <button class="action-card"
+                  matRipple
+                  [matRippleColor]="'rgba(16, 185, 129, 0.1)'"
+                  tabindex="0"
+                  role="button"
+                  aria-label="View analytics dashboard">
+            <div class="action-icon analytics-icon">
+              <mat-icon>analytics</mat-icon>
+            </div>
+            <h4>Analytics</h4>
+            <p>Monitor usage and performance metrics</p>
+          </button>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
+  </ng-container>
 
-  <!-- Loading State -->
+  <!-- Loading State with Better Structure -->
   <section class="loading-section" *ngIf="isLoading">
     <div class="container">
       <div class="loading-state">
         <div class="loading-content">
-          <mat-spinner diameter="48"></mat-spinner>
-          <h3>Loading dashboard data...</h3>
-          <p>Please wait while we fetch your platform information</p>
+          <mat-spinner diameter="48" color="primary"></mat-spinner>
+          <h3>Loading Dashboard</h3>
+          <p>Fetching your platform data...</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Error State -->
+  <!-- Error State with Action Button -->
   <section class="error-section" *ngIf="error && !isLoading">
     <div class="container">
       <div class="error-state">
         <div class="error-content">
-          <mat-icon class="error-icon">error_outline</mat-icon>
-          <h3>Unable to Load Dashboard Data</h3>
+          <div class="error-icon">
+            <mat-icon>error_outline</mat-icon>
+          </div>
+          <h3>Unable to Load Dashboard</h3>
           <p>{{ error }}</p>
-          <button mat-raised-button color="primary" (click)="loadDashboardData()" class="retry-btn">
+          <button mat-raised-button
+                  (click)="loadDashboardData()"
+                  class="retry-btn"
+                  tabindex="0"
+                  aria-label="Retry loading dashboard">
             <mat-icon>refresh</mat-icon>
             Try Again
           </button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Quick Actions Section -->
-  <section class="quick-actions-section" *ngIf="!isLoading">
-    <div class="container">
-      <div class="section-header">
-        <h2 class="section-title">Quick Actions</h2>
-        <p class="section-subtitle">Common tasks and platform utilities</p>
-      </div>
-
-      <div class="actions-grid">
-        <div class="action-card" (click)="goToApplications()" matRipple>
-          <div class="action-icon apps-action-icon">
-            <mat-icon>apps</mat-icon>
-          </div>
-          <h4>View Applications</h4>
-          <p>Explore all available applications</p>
-        </div>
-
-        <div class="action-card" (click)="loadDashboardData()" matRipple>
-          <div class="action-icon refresh-icon">
-            <mat-icon>refresh</mat-icon>
-          </div>
-          <h4>Refresh Data</h4>
-          <p>Update application data and metrics</p>
-        </div>
-
-        <div class="action-card" (click)="goToConfig()" matRipple>
-          <div class="action-icon config-icon">
-            <mat-icon>settings</mat-icon>
-          </div>
-          <h4>Configuration</h4>
-          <p>Manage platform settings</p>
-        </div>
-
-        <div class="action-card" (click)="goToInbox()" matRipple>
-          <div class="action-icon inbox-icon">
-            <mat-icon>inbox</mat-icon>
-          </div>
-          <h4>Inbox</h4>
-          <p>Check your messages and notifications</p>
-        </div>
-
-        <div class="action-card" matRipple>
-          <div class="action-icon docs-icon">
-            <mat-icon>description</mat-icon>
-          </div>
-          <h4>API Documentation</h4>
-          <p>View API reference guides</p>
-        </div>
-
-        <div class="action-card" matRipple>
-          <div class="action-icon analytics-icon">
-            <mat-icon>analytics</mat-icon>
-          </div>
-          <h4>Analytics</h4>
-          <p>View usage statistics</p>
         </div>
       </div>
     </div>

@@ -153,7 +153,7 @@ export interface CasesResponse {
                   <mat-icon>add_task</mat-icon>
                   <span>New Cases</span>
                   <mat-chip *ngIf="availableCasesCount > 0"
-                            class="count-chip available"
+                            class="count-chip"
                             [matBadge]="availableCasesCount">
                     {{ availableCasesCount }}
                   </mat-chip>
