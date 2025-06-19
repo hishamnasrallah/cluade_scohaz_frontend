@@ -28,40 +28,75 @@
           <mat-icon class="dropdown-icon">keyboard_arrow_down</mat-icon>
         </button>
 
-        <mat-menu #applicationsMenuRef="matMenu" class="applications-dropdown">
-          <div class="menu-header">
-            <mat-icon>apps</mat-icon>
-            <span>Applications ({{ applications.length }})</span>
-          </div>
-          <mat-divider></mat-divider>
+        <mat-menu #applicationsMenuRef="matMenu" class="applications-dropdown ocean-mint-menu">
+          <!-- Enhanced Menu Header -->
+<!--          <div class="menu-header gradient-header">-->
+<!--            <div class="header-icon-wrapper">-->
+<!--              <mat-icon>apps</mat-icon>-->
+<!--            </div>-->
+<!--            <div class="header-content">-->
+<!--              <h3 class="header-title">Applications</h3>-->
+<!--              <span class="header-subtitle">{{ applications.length }} available</span>-->
+<!--            </div>-->
+<!--          </div>-->
 
-          <!-- Dynamic Applications List -->
-          <div class="applications-list" *ngIf="applications.length > 0">
-            <button mat-menu-item
-                    *ngFor="let app of applications; trackBy: trackByApp"
-                    (click)="viewApplication(app.name)"
-                    class="application-menu-item">
-              <div class="app-icon-small" [style.background]="app.color">
-                <mat-icon>{{ app.icon }}</mat-icon>
+          <!-- Menu Body Container -->
+          <div class="menu-body">
+            <!-- Dynamic Applications List -->
+            <div class="applications-list custom-scrollbar" *ngIf="applications.length > 0 && !isLoadingApplications">
+              <button mat-menu-item
+                      *ngFor="let app of applications; trackBy: trackByApp"
+                      (click)="viewApplication(app.name)"
+                      class="application-menu-item hover-lift">
+                <div class="app-item-content">
+                  <div class="app-icon-wrapper">
+                    <div class="app-icon-small gradient-icon" [style.background]="app.color || 'linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%)'">
+                      <mat-icon>{{ app.icon }}</mat-icon>
+                    </div>
+                  </div>
+                  <div class="app-details">
+                    <span class="app-name">{{ app.name | titlecase }}</span>
+                    <span class="app-meta">
+                      <mat-icon class="meta-icon">api</mat-icon>
+                      {{ app.endpointCount }} endpoints
+                    </span>
+                  </div>
+                  <div class="app-action">
+                    <mat-icon class="arrow-icon">arrow_forward_ios</mat-icon>
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            <!-- Loading State -->
+            <div class="menu-state-container" *ngIf="isLoadingApplications">
+              <div class="loading-state">
+                <div class="loading-spinner">
+                  <mat-icon class="loading-icon spinning">refresh</mat-icon>
+                </div>
+                <span class="state-message">Discovering applications...</span>
+                <div class="loading-dots">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
               </div>
-              <div class="app-info">
-                <span class="app-name">{{ app.name | titlecase }}</span>
-                <span class="app-endpoints">{{ app.endpointCount }} endpoints</span>
+            </div>
+
+            <!-- Empty State -->
+            <div class="menu-state-container" *ngIf="!isLoadingApplications && applications.length === 0">
+              <div class="empty-state">
+                <div class="empty-icon-wrapper">
+                  <mat-icon>folder_open</mat-icon>
+                </div>
+                <span class="state-message">No applications found</span>
+                <p class="state-description">Create your first application to get started</p>
+                <button mat-button class="create-app-btn">
+                  <mat-icon>add_circle_outline</mat-icon>
+                  Create Application
+                </button>
               </div>
-              <mat-icon class="arrow-icon">arrow_forward_ios</mat-icon>
-            </button>
-          </div>
-
-          <!-- Loading State -->
-          <div class="menu-loading" *ngIf="isLoadingApplications">
-            <mat-icon class="loading-icon">refresh</mat-icon>
-            <span>Loading applications...</span>
-          </div>
-
-          <!-- Empty State -->
-          <div class="menu-empty" *ngIf="!isLoadingApplications && applications.length === 0">
-            <mat-icon>folder_open</mat-icon>
-            <span>No applications found</span>
+            </div>
           </div>
         </mat-menu>
 
@@ -124,7 +159,19 @@
             </div>
           </button>
 
-          <mat-menu #userMenuRef="matMenu" class="user-dropdown">
+          <mat-menu #userMenuRef="matMenu" class="user-dropdown ocean-mint-menu">
+            <div class="user-profile-section">
+              <div class="user-avatar-large">
+                <mat-icon>account_circle</mat-icon>
+              </div>
+              <div class="user-info">
+                <span class="user-name">John Doe</span>
+                <span class="user-email">john.doe&#64;company.com</span>
+              </div>
+            </div>
+
+            <mat-divider></mat-divider>
+
             <!-- Settings Menu with Submenu -->
             <button mat-menu-item [matMenuTriggerFor]="settingsSubmenu" class="settings-menu-item">
               <mat-icon>settings</mat-icon>
@@ -132,75 +179,91 @@
               <mat-icon class="submenu-arrow">chevron_right</mat-icon>
             </button>
 
-            <mat-menu #settingsSubmenu="matMenu" class="settings-submenu">
-              <div class="submenu-header">
+            <mat-menu #settingsSubmenu="matMenu" class="settings-submenu ocean-mint-menu">
+              <div class="submenu-header gradient-header">
                 <mat-icon>settings</mat-icon>
                 <span>Platform Settings</span>
               </div>
-              <mat-divider></mat-divider>
 
-              <button mat-menu-item (click)="goToSettings('overview')">
-                <mat-icon>dashboard</mat-icon>
-                <span>Overview</span>
-              </button>
+              <div class="settings-sections">
+                <div class="settings-section">
+                  <span class="section-title">General</span>
+                  <button mat-menu-item (click)="goToSettings('overview')">
+                    <mat-icon>dashboard</mat-icon>
+                    <span>Overview</span>
+                  </button>
+                  <button mat-menu-item (click)="goToSettings('preferences')">
+                    <mat-icon>person</mat-icon>
+                    <span>User Preferences</span>
+                  </button>
+                </div>
 
-              <button mat-menu-item (click)="goToSettings('lookups')">
-                <mat-icon>list</mat-icon>
-                <span>Lookups</span>
-              </button>
+                <div class="settings-section">
+                  <span class="section-title">Configuration</span>
+                  <button mat-menu-item (click)="goToSettings('lookups')">
+                    <mat-icon>list</mat-icon>
+                    <span>Lookups</span>
+                  </button>
+                  <button mat-menu-item (click)="goToSettings('field-types')">
+                    <mat-icon>input</mat-icon>
+                    <span>Field Types</span>
+                  </button>
+                  <button mat-menu-item (click)="goToSettings('fields')">
+                    <mat-icon>dynamic_form</mat-icon>
+                    <span>Fields</span>
+                  </button>
+                  <button mat-menu-item (click)="goToSettings('builder')">
+                    <mat-icon>palette</mat-icon>
+                    <span>Theme Builder</span>
+                  </button>
+                </div>
 
-              <button mat-menu-item (click)="goToSettings('field-types')">
-                <mat-icon>input</mat-icon>
-                <span>Field Types</span>
-              </button>
+                <div class="settings-section">
+                  <span class="section-title">Management</span>
+                  <button mat-menu-item (click)="goToSettings('permissions')">
+                    <mat-icon>security</mat-icon>
+                    <span>Access Control</span>
+                  </button>
+                  <button mat-menu-item (click)="goToSettings('users')">
+                    <mat-icon>people</mat-icon>
+                    <span>User Management</span>
+                  </button>
+                  <button mat-menu-item (click)="goToSettings('versions')">
+                    <mat-icon>history</mat-icon>
+                    <span>Version Control</span>
+                  </button>
+                  <button mat-menu-item (click)="goToSettings('translations')">
+                    <mat-icon>translate</mat-icon>
+                    <span>Translations</span>
+                  </button>
+                </div>
 
-              <button mat-menu-item (click)="goToSettings('builder')">
-                <mat-icon>theme</mat-icon>
-                <span>Theme Builder</span>
-              </button>
-
-              <button mat-menu-item (click)="goToSettings('fields')">
-                <mat-icon>dynamic_form</mat-icon>
-                <span>Fields</span>
-              </button>
-
-              <button mat-menu-item (click)="goToSettings('permissions')">
-                <mat-icon>security</mat-icon>
-                <span>Access Control</span>
-              </button>
-
-              <button mat-menu-item (click)="goToSettings('versions')">
-                <mat-icon>history</mat-icon>
-                <span>Version Control</span>
-              </button>
-
-              <button mat-menu-item (click)="goToSettings('translations')">
-                <mat-icon>translate</mat-icon>
-                <span>Translations</span>
-              </button>
-
-              <button mat-menu-item (click)="goToSettings('preferences')">
-                <mat-icon>person</mat-icon>
-                <span>User Preferences</span>
-              </button>
-
-              <button mat-menu-item (click)="goToSettings('users')">
-                <mat-icon>people</mat-icon>
-                <span>User Management</span>
-              </button>
-
-              <button mat-menu-item (click)="goToSettings('licenses')">
-                <mat-icon>receipt</mat-icon>
-                <span>Licenses</span>
-              </button>
-
-              <button mat-menu-item (click)="goToSettings('system')">
-                <mat-icon>tune</mat-icon>
-                <span>System Settings</span>
-              </button>
+                <div class="settings-section">
+                  <span class="section-title">System</span>
+                  <button mat-menu-item (click)="goToSettings('licenses')">
+                    <mat-icon>receipt</mat-icon>
+                    <span>Licenses</span>
+                  </button>
+                  <button mat-menu-item (click)="goToSettings('system')">
+                    <mat-icon>tune</mat-icon>
+                    <span>System Settings</span>
+                  </button>
+                </div>
+              </div>
             </mat-menu>
 
+            <button mat-menu-item class="profile-item">
+              <mat-icon>person_outline</mat-icon>
+              <span>My Profile</span>
+            </button>
+
+            <button mat-menu-item class="help-item">
+              <mat-icon>help_outline</mat-icon>
+              <span>Help & Support</span>
+            </button>
+
             <mat-divider></mat-divider>
+
             <button mat-menu-item (click)="logout()" class="logout-item">
               <mat-icon>logout</mat-icon>
               <span>Sign Out</span>
@@ -212,7 +275,7 @@
         <button mat-button
                 *ngIf="!isAuthenticated && showConfigButton"
                 (click)="goToLogin()"
-                class="login-btn">
+                class="login-btn gradient-btn">
           <mat-icon>login</mat-icon>
           Sign In
         </button>
@@ -220,7 +283,9 @@
     </div>
 
     <!-- Progress Bar for Loading States -->
-    <div class="progress-bar" [ngClass]="{'active': isLoading}"></div>
+    <div class="progress-bar" [ngClass]="{'active': isLoading}">
+      <div class="progress-indicator"></div>
+    </div>
   </header>
 
   <!-- Main Content Area -->
@@ -232,30 +297,81 @@
 
   <!-- Professional Footer -->
   <footer class="app-footer" *ngIf="isHomePage">
+    <div class="footer-wave">
+      <svg viewBox="0 0 1440 120" preserveAspectRatio="none">
+        <path d="M0,60 C240,120 480,0 720,60 C960,120 1200,0 1440,60 L1440,120 L0,120 Z" fill="url(#wave-gradient)"/>
+        <defs>
+          <linearGradient id="wave-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#34C5AA;stop-opacity:0.1" />
+            <stop offset="100%" style="stop-color:#2BA99B;stop-opacity:0.1" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+
     <div class="footer-content">
-      <div class="footer-section">
-        <h3>PraXelo</h3>
-        <p>Enterprise-grade low-code platform for rapid application development.</p>
-      </div>
-      <div class="footer-section">
-        <h4>Platform</h4>
-        <ul>
-          <li><a href="#" (click)="$event.preventDefault()">Applications</a></li>
-          <li><a href="#" (click)="$event.preventDefault()">Resources</a></li>
-          <li><a href="#" (click)="$event.preventDefault()">API Management</a></li>
-        </ul>
-      </div>
-      <div class="footer-section">
-        <h4>Support</h4>
-        <ul>
-          <li><a href="#" (click)="$event.preventDefault()">Documentation</a></li>
-          <li><a href="#" (click)="$event.preventDefault()">Help Center</a></li>
-          <li><a href="#" (click)="$event.preventDefault()">Contact</a></li>
-        </ul>
+      <div class="footer-grid">
+        <div class="footer-section brand-section">
+          <div class="footer-logo">
+            <div class="logo-icon-small">
+              <mat-icon>dashboard</mat-icon>
+            </div>
+            <h3>PraXelo</h3>
+          </div>
+          <p>Enterprise-grade low-code platform for rapid application development and digital transformation.</p>
+          <div class="social-links">
+            <a href="#" class="social-link">
+              <mat-icon>language</mat-icon>
+            </a>
+            <a href="#" class="social-link">
+              <mat-icon>email</mat-icon>
+            </a>
+          </div>
+        </div>
+
+        <div class="footer-section">
+          <h4>Platform</h4>
+          <ul>
+            <li><a href="#" (click)="$event.preventDefault()">Applications</a></li>
+            <li><a href="#" (click)="$event.preventDefault()">Resources</a></li>
+            <li><a href="#" (click)="$event.preventDefault()">API Management</a></li>
+            <li><a href="#" (click)="$event.preventDefault()">Integrations</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h4>Support</h4>
+          <ul>
+            <li><a href="#" (click)="$event.preventDefault()">Documentation</a></li>
+            <li><a href="#" (click)="$event.preventDefault()">Help Center</a></li>
+            <li><a href="#" (click)="$event.preventDefault()">Community</a></li>
+            <li><a href="#" (click)="$event.preventDefault()">Contact Us</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="#" (click)="$event.preventDefault()">About Us</a></li>
+            <li><a href="#" (click)="$event.preventDefault()">Careers</a></li>
+            <li><a href="#" (click)="$event.preventDefault()">Partners</a></li>
+            <li><a href="#" (click)="$event.preventDefault()">Blog</a></li>
+          </ul>
+        </div>
       </div>
     </div>
+
     <div class="footer-bottom">
-      <p>&copy; 2025 PraXelo. All rights reserved.</p>
+      <div class="footer-bottom-content">
+        <p>&copy; 2025 PraXelo. All rights reserved.</p>
+        <div class="footer-links">
+          <a href="#" (click)="$event.preventDefault()">Privacy Policy</a>
+          <span class="separator">•</span>
+          <a href="#" (click)="$event.preventDefault()">Terms of Service</a>
+          <span class="separator">•</span>
+          <a href="#" (click)="$event.preventDefault()">Cookie Policy</a>
+        </div>
+      </div>
     </div>
   </footer>
 </div>
