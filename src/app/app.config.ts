@@ -13,6 +13,7 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { routes } from './app.routes';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { ThemeService } from './services/theme.service';
+import { JwtService } from './services/jwt.service';
 
 // 💡 Angular Material & CDK modules needed by the builder
 import { MatIconModule } from '@angular/material/icon';
@@ -25,6 +26,7 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     ThemeService,
+    JwtService, // ✅ Added JWT Service
 
     // ✅ HttpClient + Interceptors
     provideHttpClient(withInterceptorsFromDi()),

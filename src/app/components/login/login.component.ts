@@ -245,43 +245,51 @@ import { MatRippleModule } from '@angular/material/core';
     }
 
     @keyframes wave {
-      0%, 100% { transform: translateX(0) translateY(0); }
-      50% { transform: translateX(-50px) translateY(-20px); }
+      0%, 100% {
+        transform: translateX(0) translateY(0);
+      }
+      50% {
+        transform: translateX(-50px) translateY(-20px);
+      }
     }
 
     .floating-shape {
       position: absolute;
-      background: linear-gradient(135deg, #C4F7EF 0%, #B3F0E5 100%);
+      background: linear-gradient(135deg, #48f1d4 0%, #B3F0E5 100%);
       border-radius: 50%;
-      animation: float 6s ease-in-out infinite;
+      animation: float 2.5s ease-in-out infinite;
     }
 
     .shape-1 {
-      width: 80px;
-      height: 80px;
+      width: 150px;
+      height: 150px;
       top: 15%;
       left: 10%;
     }
 
     .shape-2 {
-      width: 120px;
-      height: 120px;
+      width: 190px;
+      height: 190px;
       top: 20%;
       right: 15%;
-      animation-delay: 2s;
+      animation-delay: 1.5s;
     }
 
     .shape-3 {
-      width: 60px;
-      height: 60px;
+      width: 250px;
+      height: 250px;
       bottom: 25%;
-      left: 20%;
-      animation-delay: 4s;
+      left: 17%;
+      animation-delay: 2s;
     }
 
     @keyframes float {
-      0%, 100% { transform: translateY(0px) rotate(0deg); }
-      50% { transform: translateY(-20px) rotate(10deg); }
+      0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+      }
+      50% {
+        transform: translateY(-20px) rotate(10deg);
+      }
     }
 
     /* Login Container */
@@ -336,8 +344,12 @@ import { MatRippleModule } from '@angular/material/core';
     }
 
     @keyframes rotate {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     .branding-content {
@@ -714,9 +726,15 @@ import { MatRippleModule } from '@angular/material/core';
     }
 
     @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-5px); }
-      75% { transform: translateX(5px); }
+      0%, 100% {
+        transform: translateX(0);
+      }
+      25% {
+        transform: translateX(-5px);
+      }
+      75% {
+        transform: translateX(5px);
+      }
     }
 
     .form-footer {

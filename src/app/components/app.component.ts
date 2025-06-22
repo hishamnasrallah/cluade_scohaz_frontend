@@ -1,9 +1,9 @@
-// components/app.component.ts - UPDATED with proper initialization
+// components/app.component.ts - UPDATED with user profile fetching
 import { Component, OnInit } from '@angular/core';
 import {Router, RouterOutlet, NavigationEnd} from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { ConfigService } from '../services/config.service';
-import { TranslationService } from '../services/translation.service'; // Add this import
+import { TranslationService } from '../services/translation.service';
 import {MatToolbar} from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import {MatButton, MatIconButton} from "@angular/material/button";
@@ -71,6 +71,31 @@ interface ApplicationSummary {
   category: string;
 }
 
+// User profile interface
+interface UserProfile {
+  id: number;
+  username: string;
+  first_name: string;
+  second_name: string;
+  third_name: string;
+  last_name: string;
+  email: string;
+  is_active: boolean;
+  is_staff: boolean;
+  is_superuser: boolean;
+  is_developer: boolean;
+  user_type: {
+    id: number;
+    name: string;
+    code: string;
+    name_ara: string;
+  };
+  preference: {
+    id: number;
+    lang: string;
+  };
+}
+
 @Component({
   selector: 'app-root',
   templateUrl: 'app.component.html',
@@ -102,6 +127,11 @@ export class AppComponent implements OnInit {
   isAppInitialized = true; // Simplified, always true now
   initializationError = false;
 
+  // User profile data
+  userProfile: UserProfile | null = null;
+  userDisplayName = '';
+  userEmail = '';
+
   // Applications data for dynamic menu
   applications: ApplicationSummary[] = [];
   isLoadingApplications = false;
@@ -121,7 +151,7 @@ export class AppComponent implements OnInit {
     private configService: ConfigService,
     private router: Router,
     private http: HttpClient,
-    private translationService: TranslationService // Add this
+    private translationService: TranslationService
   ) {}
 
   ngOnInit(): void {
@@ -144,8 +174,9 @@ export class AppComponent implements OnInit {
         this.isAuthenticated = isAuth;
         this.showConfigButton = isAuth || this.configService.isConfigured();
 
-        // Load applications when authenticated
+        // Load user profile and applications when authenticated
         if (isAuth) {
+          this.loadUserProfile();
           this.loadApplicationsForMenu();
         }
       }
@@ -163,6 +194,40 @@ export class AppComponent implements OnInit {
       console.log('AppComponent: User not authenticated, redirecting to login');
       this.router.navigate(['/login']);
     }
+  }
+
+  // Load user profile from API
+  private loadUserProfile(): void {
+    const baseUrl = this.configService.getBaseUrl();
+
+    this.http.get<UserProfile>(`${baseUrl}/auth/me/`)
+      .subscribe({
+        next: (profile) => {
+          this.userProfile = profile;
+
+          // Construct display name from available name parts
+          const nameParts = [
+            profile.first_name,
+            profile.second_name,
+            profile.third_name,
+            profile.last_name
+          ].filter(part => part && part.trim());
+
+          this.userDisplayName = nameParts.length > 0
+            ? nameParts.join(' ')
+            : profile.username;
+
+          this.userEmail = profile.email || `${profile.username}@praxelo.com`;
+
+          console.log('AppComponent: User profile loaded:', profile);
+        },
+        error: (err) => {
+          console.error('AppComponent: Error loading user profile:', err);
+          // Fallback to username if profile fails to load
+          this.userDisplayName = 'User';
+          this.userEmail = 'user@praxelo.com';
+        }
+      });
   }
 
   private updateCurrentPage(url: string): void {
@@ -247,6 +312,9 @@ export class AppComponent implements OnInit {
       this.router.navigate(['/login']);
       this.isLoading = false;
       this.applications = []; // Clear applications on logout
+      this.userProfile = null; // Clear user profile on logout
+      this.userDisplayName = '';
+      this.userEmail = '';
     }, 500);
   }
 

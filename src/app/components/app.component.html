@@ -30,15 +30,15 @@
 
         <mat-menu #applicationsMenuRef="matMenu" class="applications-dropdown ocean-mint-menu">
           <!-- Enhanced Menu Header -->
-<!--          <div class="menu-header gradient-header">-->
-<!--            <div class="header-icon-wrapper">-->
-<!--              <mat-icon>apps</mat-icon>-->
-<!--            </div>-->
-<!--            <div class="header-content">-->
-<!--              <h3 class="header-title">Applications</h3>-->
-<!--              <span class="header-subtitle">{{ applications.length }} available</span>-->
-<!--            </div>-->
-<!--          </div>-->
+          <!--          <div class="menu-header gradient-header">-->
+          <!--            <div class="header-icon-wrapper">-->
+          <!--              <mat-icon>apps</mat-icon>-->
+          <!--            </div>-->
+          <!--            <div class="header-content">-->
+          <!--              <h3 class="header-title">Applications</h3>-->
+          <!--              <span class="header-subtitle">{{ applications.length }} available</span>-->
+          <!--            </div>-->
+          <!--          </div>-->
 
           <!-- Menu Body Container -->
           <div class="menu-body">
@@ -165,8 +165,8 @@
                 <mat-icon>account_circle</mat-icon>
               </div>
               <div class="user-info">
-                <span class="user-name">John Doe</span>
-                <span class="user-email">john.doe&#64;company.com</span>
+                <span class="user-name">{{ userDisplayName || 'User' }}</span>
+                <span class="user-email">{{ userEmail || 'user@praxelo.com' }}</span>
               </div>
             </div>
 
