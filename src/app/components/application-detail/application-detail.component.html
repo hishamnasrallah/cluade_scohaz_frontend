@@ -1,136 +1,336 @@
-<!-- application-detail.component.html -->
-<div class="app-detail-container">
-    <!-- Header -->
-    <header class="app-header">
-        <button mat-icon-button (click)="goBack()" class="back-btn">
-            <mat-icon>arrow_back</mat-icon>
-        </button>
-        <div class="header-content">
-            <h1 class="app-title">{{ appName | titlecase }}</h1>
-            <p class="app-subtitle">Application Management Dashboard</p>
-        </div>
-        <div class="header-actions">
-            <button mat-icon-button
-                    class="refresh-btn"
-                    (click)="loadApplicationData()"
-                    [disabled]="loading"
-                    matTooltip="Refresh application data">
-                <mat-icon [class.spinning]="loading">refresh</mat-icon>
-            </button>
-        </div>
-    </header>
+<div class="app-detail-layout">
+  <!-- Ocean Mint Background Elements -->
+  <div class="ocean-mint-bg">
+    <div class="wave wave-1"></div>
+    <div class="wave wave-2"></div>
+    <div class="wave wave-3"></div>
+    <div class="floating-bubble bubble-1"></div>
+    <div class="floating-bubble bubble-2"></div>
+    <div class="floating-bubble bubble-3"></div>
+  </div>
 
-    <!-- Loading State -->
-    <div *ngIf="loading" class="loading-container">
-        <div class="loading-content">
-            <mat-spinner diameter="50"></mat-spinner>
-            <p class="loading-text">Loading application data...</p>
-            <div class="loading-progress">
-                <div class="progress-bar"></div>
-            </div>
+  <!-- Enhanced Header Section with Ocean Mint Theme -->
+  <header class="app-header ocean-mint-header">
+    <div class="header-backdrop"></div>
+    <div class="header-container">
+      <!-- Navigation Area -->
+      <div class="nav-area">
+        <button mat-icon-button
+                (click)="goBack()"
+                class="back-btn ocean-mint-btn"
+                matTooltip="Back to Dashboard"
+                matTooltipPosition="below">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+
+        <div class="breadcrumb ocean-mint-breadcrumb">
+              <span class="breadcrumb-item" (click)="goBack()">
+                <mat-icon>home</mat-icon>
+                Dashboard
+              </span>
+          <mat-icon class="breadcrumb-separator">chevron_right</mat-icon>
+          <span class="breadcrumb-current">{{ appName | titlecase }}</span>
         </div>
+      </div>
+
+      <!-- App Info Area -->
+<!--      <div class="app-info">-->
+<!--        <div class="app-icon ocean-mint-icon">-->
+<!--          <mat-icon>{{ getAppIcon() }}</mat-icon>-->
+<!--          <div class="icon-glow"></div>-->
+<!--        </div>-->
+<!--&lt;!&ndash;        <div class="app-details">&ndash;&gt;-->
+<!--&lt;!&ndash;          <h1 class="app-title ocean-mint-title">{{ appName | titlecase }}</h1>&ndash;&gt;-->
+<!--&lt;!&ndash;          <p class="app-subtitle">Application Resource Management</p>&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;          <div class="app-stats" *ngIf="!loading && resources.length > 0">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;            <div class="stat-item ocean-mint-stat">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;              <span class="stat-value">{{ resources.length }}</span>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;              <span class="stat-label">Resources</span>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;            </div>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;            <div class="stat-separator"></div>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;            <div class="stat-item ocean-mint-stat">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;              <span class="stat-value">{{ getTotalEndpoints() }}</span>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;              <span class="stat-label">Endpoints</span>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;            </div>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;            <div class="stat-separator"></div>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;            <div class="stat-item ocean-mint-stat">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;              <span class="stat-value">{{ getActiveResources() }}</span>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;              <span class="stat-label">Active</span>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;            </div>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;          </div>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;        </div>&ndash;&gt;-->
+<!--      </div>-->
+
+      <!-- Action Area -->
+      <div class="action-area">
+        <button mat-icon-button
+                (click)="loadApplicationData()"
+                [disabled]="loading"
+                class="refresh-btn ocean-mint-refresh"
+                matTooltip="Refresh Data"
+                matTooltipPosition="below">
+          <mat-icon [class.spinning]="loading">refresh</mat-icon>
+        </button>
+
+        <button mat-button
+                [matMenuTriggerFor]="actionsMenu"
+                class="actions-btn ocean-mint-actions">
+          <mat-icon>more_vert</mat-icon>
+          <span>Actions</span>
+        </button>
+
+        <mat-menu #actionsMenu="matMenu" class="ocean-mint-menu">
+          <button mat-menu-item (click)="exportData()">
+            <mat-icon>download</mat-icon>
+            <span>Export Data</span>
+          </button>
+          <button mat-menu-item (click)="refreshAll()">
+            <mat-icon>refresh</mat-icon>
+            <span>Refresh All</span>
+          </button>
+          <mat-divider></mat-divider>
+          <button mat-menu-item (click)="viewApiDocs()">
+            <mat-icon>description</mat-icon>
+            <span>API Documentation</span>
+          </button>
+        </mat-menu>
+      </div>
     </div>
 
-    <!-- Main Content -->
-    <div *ngIf="!loading && resources.length > 0" class="main-content">
-        <div class="content-header">
-            <h2 class="section-title">Resources</h2>
-            <p class="section-subtitle">Manage your application resources with enhanced editing capabilities</p>
-        </div>
+    <!-- Ocean Mint Progress Indicator -->
+    <div class="progress-indicator ocean-mint-progress" [class.active]="loading">
+      <div class="progress-wave"></div>
+    </div>
+  </header>
 
+  <!-- Main Content Area -->
+  <main class="main-content">
+    <!-- Loading State with Ocean Mint Theme -->
+    <div class="loading-state ocean-mint-loading" *ngIf="loading">
+      <div class="loading-container">
+        <div class="loading-animation">
+          <div class="wave-loader">
+            <div class="wave-circle"></div>
+            <div class="wave-circle"></div>
+            <div class="wave-circle"></div>
+          </div>
+          <mat-icon class="loading-icon">cloud_sync</mat-icon>
+        </div>
+        <h3 class="loading-title">Loading {{ appName | titlecase }}</h3>
+        <p class="loading-subtitle">Fetching application resources and data...</p>
+        <div class="loading-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area" *ngIf="!loading && resources.length > 0">
+      <!-- Resource Tabs with Ocean Mint Style -->
+      <div class="resource-tabs-container ocean-mint-tabs">
         <mat-tab-group class="resource-tabs"
-                       animationDuration="300ms"
+                       animationDuration="400ms"
                        [selectedIndex]="selectedTabIndex"
                        (selectedTabChange)="onTabChange($event)">
-            <mat-tab *ngFor="let resource of resources; let i = index"
-                     [label]="resource.name | titlecase">
-                <ng-template matTabContent>
-                    <div class="tab-content">
-                        <app-resource-table
-                                *ngIf="resource.hasListView"
-                                [resource]="resource"
-                                [data]="resourceData[resource.name] || []"
-                                [loading]="loadingData[resource.name] || false"
-                                (onCreate)="openCreateDialog(resource)"
-                                (onRefresh)="refreshResourceData(resource)"
-                                (onView)="viewResourceDetails(resource, $event)"
-                                (onEdit)="editResource(resource, $event)"
-                                (onDelete)="deleteResource(resource, $event)">
-                        </app-resource-table>
 
-                        <!-- No List View Available -->
-                        <div *ngIf="!resource.hasListView" class="no-list-view">
-                            <mat-icon class="info-icon">info</mat-icon>
-                            <h3>No List View Available</h3>
-                            <p>This resource doesn't support list operations.</p>
-                            <div class="resource-actions">
-                                <button mat-raised-button
-                                        color="primary"
-                                        *ngIf="resource.canCreate"
-                                        (click)="openCreateDialog(resource)">
-                                    <mat-icon>add</mat-icon>
-                                    Create New {{ resource.name | titlecase }}
-                                </button>
-                            </div>
-                        </div>
+          <mat-tab *ngFor="let resource of resources; let i = index">
+            <ng-template mat-tab-label>
+              <div class="tab-label-content">
+                <mat-icon class="tab-icon">{{ getResourceIcon(resource) }}</mat-icon>
+                <span class="tab-text">{{ resource.name | titlecase }}</span>
+                <span class="tab-badge" *ngIf="resourceData[resource.name]?.length || 0">
+                      {{ resourceData[resource.name].length }}
+                    </span>
+              </div>
+            </ng-template>
+
+            <!-- Tab Content -->
+            <ng-template matTabContent>
+              <div class="tab-content-wrapper">
+                <!-- Resource Header -->
+                <div class="resource-header ocean-mint-resource-header">
+                  <div class="resource-pattern"></div>
+                  <div class="resource-content-inner">
+                    <div class="resource-info">
+                      <div class="resource-icon ocean-mint-resource-icon">
+                        <mat-icon>{{ getResourceIcon(resource) }}</mat-icon>
+                      </div>
+                      <div class="resource-details">
+                        <h2 class="resource-title">{{ resource.name | titlecase }}</h2>
+                        <p class="resource-description">{{ getResourceDescription(resource) }}</p>
+                      </div>
                     </div>
-                </ng-template>
-            </mat-tab>
+
+<!--                    <div class="resource-capabilities">-->
+<!--                      <div class="capability ocean-mint-capability"-->
+<!--                           [class.enabled]="resource.canCreate"-->
+<!--                           matTooltip="{{ resource.canCreate ? 'Can Create' : 'Cannot Create' }}">-->
+<!--                        <mat-icon>add_circle</mat-icon>-->
+<!--                        <span>Create</span>-->
+<!--                      </div>-->
+<!--                      <div class="capability ocean-mint-capability"-->
+<!--                           [class.enabled]="resource.canRead"-->
+<!--                           matTooltip="{{ resource.canRead ? 'Can Read' : 'Cannot Read' }}">-->
+<!--                        <mat-icon>visibility</mat-icon>-->
+<!--                        <span>Read</span>-->
+<!--                      </div>-->
+<!--                      <div class="capability ocean-mint-capability"-->
+<!--                           [class.enabled]="resource.canUpdate"-->
+<!--                           matTooltip="{{ resource.canUpdate ? 'Can Update' : 'Cannot Update' }}">-->
+<!--                        <mat-icon>edit</mat-icon>-->
+<!--                        <span>Update</span>-->
+<!--                      </div>-->
+<!--                      <div class="capability ocean-mint-capability"-->
+<!--                           [class.enabled]="resource.canDelete"-->
+<!--                           matTooltip="{{ resource.canDelete ? 'Can Delete' : 'Cannot Delete' }}">-->
+<!--                        <mat-icon>delete</mat-icon>-->
+<!--                        <span>Delete</span>-->
+<!--                      </div>-->
+<!--                    </div>-->
+                  </div>
+                </div>
+
+                <!-- Resource Content -->
+                <div class="resource-content">
+                  <!-- Table View -->
+                  <app-resource-table
+                    *ngIf="resource.hasListView"
+                    [resource]="resource"
+                    [data]="resourceData[resource.name] || []"
+                    [loading]="loadingData[resource.name] || false"
+                    (onCreate)="openCreateDialog(resource)"
+                    (onRefresh)="refreshResourceData(resource)"
+                    (onView)="viewResourceDetails(resource, $event)"
+                    (onEdit)="editResource(resource, $event)"
+                    (onDelete)="deleteResource(resource, $event)">
+                  </app-resource-table>
+
+                  <!-- No List View -->
+                  <div class="no-list-view ocean-mint-empty" *ngIf="!resource.hasListView">
+                    <div class="empty-illustration">
+                      <div class="empty-waves">
+                        <div class="empty-wave"></div>
+                        <div class="empty-wave"></div>
+                      </div>
+                      <div class="empty-icon-wrapper">
+                        <mat-icon>view_list</mat-icon>
+                      </div>
+                    </div>
+                    <div class="empty-content">
+                      <h3>List View Not Available</h3>
+                      <p>This resource doesn't support list operations, but you can still create new records.</p>
+
+                      <button mat-raised-button
+                              color="primary"
+                              *ngIf="resource.canCreate"
+                              (click)="openCreateDialog(resource)"
+                              class="create-new-btn ocean-mint-create">
+                        <mat-icon>add_circle</mat-icon>
+                        Create New {{ resource.name | titlecase }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ng-template>
+          </mat-tab>
         </mat-tab-group>
+      </div>
     </div>
 
-    <!-- Empty State -->
-    <div *ngIf="!loading && resources.length === 0" class="empty-state">
-        <div class="empty-content">
-            <mat-icon class="empty-icon">folder_open</mat-icon>
-            <h2 class="empty-title">No Resources Found</h2>
-            <p class="empty-subtitle">
-                This application doesn't have any accessible resources.
-                <br>Please check your API configuration or contact your administrator.
-            </p>
-            <div class="empty-actions">
-                <button mat-raised-button color="primary" (click)="goBack()" class="back-to-dashboard">
-                    <mat-icon>dashboard</mat-icon>
-                    Back to Dashboard
-                </button>
-                <button mat-stroked-button (click)="loadApplicationData()" class="retry-btn">
-                    <mat-icon>refresh</mat-icon>
-                    Retry
-                </button>
-            </div>
+    <!-- Empty State with Ocean Mint Theme -->
+    <div class="empty-state ocean-mint-empty-state" *ngIf="!loading && resources.length === 0">
+      <div class="empty-container">
+        <div class="empty-animation">
+          <div class="ocean-waves">
+            <svg viewBox="0 0 200 100" preserveAspectRatio="none">
+              <path d="M0,50 Q50,20 100,50 T200,50 L200,100 L0,100 Z"
+                    fill="url(#wave-gradient)" opacity="0.3"/>
+              <path d="M0,60 Q50,30 100,60 T200,60 L200,100 L0,100 Z"
+                    fill="url(#wave-gradient)" opacity="0.5"/>
+              <path d="M0,70 Q50,40 100,70 T200,70 L200,100 L0,100 Z"
+                    fill="url(#wave-gradient)" opacity="0.7"/>
+              <defs>
+                <linearGradient id="wave-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" style="stop-color:#34C5AA;stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:#2BA99B;stop-opacity:1" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div class="empty-icon-container">
+            <mat-icon>folder_open</mat-icon>
+          </div>
         </div>
+
+        <h2 class="empty-title">No Resources Found</h2>
+        <p class="empty-subtitle">
+          This application doesn't have any accessible resources.
+          <br>Please check your API configuration or contact your administrator.
+        </p>
+
+        <div class="empty-actions">
+          <button mat-raised-button
+                  color="primary"
+                  (click)="goBack()"
+                  class="back-to-dashboard ocean-mint-btn-primary">
+            <mat-icon>dashboard</mat-icon>
+            Back to Dashboard
+          </button>
+          <button mat-button
+                  (click)="loadApplicationData()"
+                  class="retry-btn ocean-mint-btn-secondary">
+            <mat-icon>refresh</mat-icon>
+            Try Again
+          </button>
+        </div>
+      </div>
     </div>
+  </main>
 
-    <!-- Enhanced Form Modal -->
-    <app-resource-form
-            *ngIf="showForm"
-            [resource]="selectedResource!"
-            [editingRecord]="editingRecord"
-            [submitting]="submitting"
-            [relationOptions]="relationOptions"
-            [validationErrors]="formValidationErrors"
-            (onSubmit)="handleFormSubmit($event)"
-            (onCancel)="closeForm()">
-    </app-resource-form>
+  <!-- Enhanced Form Modal -->
+  <app-resource-form
+    *ngIf="showForm"
+    [resource]="selectedResource!"
+    [editingRecord]="editingRecord"
+    [submitting]="submitting"
+    [relationOptions]="relationOptions"
+    [validationErrors]="formValidationErrors"
+    (onSubmit)="handleFormSubmit($event)"
+    (onCancel)="closeForm()">
+  </app-resource-form>
 
-    <!-- Detail Modal -->
-    <app-resource-detail
-            *ngIf="showDetail"
-            [resource]="selectedResource!"
-            [record]="detailRecord"
-            (onEdit)="editFromDetail($event)"
-            (onClose)="closeDetail()">
-    </app-resource-detail>
+  <!-- Enhanced Detail Modal -->
+  <app-resource-detail
+    *ngIf="showDetail"
+    [resource]="selectedResource!"
+    [record]="detailRecord"
+    (onEdit)="editFromDetail($event)"
+    (onClose)="closeDetail()">
+  </app-resource-detail>
 
-    <!-- Success/Error Messages -->
-    <div class="notification-container"
-         [class.show]="showNotification"
-         [class.success]="notificationType === 'success'"
-         [class.error]="notificationType === 'error'">
+  <!-- Ocean Mint Notification Toast -->
+  <div class="notification-toast ocean-mint-toast"
+       [class.show]="showNotification"
+       [class.success]="notificationType === 'success'"
+       [class.error]="notificationType === 'error'">
+    <div class="toast-wave"></div>
+    <div class="notification-content">
+      <div class="notification-icon">
         <mat-icon>{{ notificationType === 'success' ? 'check_circle' : 'error' }}</mat-icon>
-        <span>{{ notificationMessage }}</span>
-        <button mat-icon-button (click)="hideNotification()">
-            <mat-icon>close</mat-icon>
-        </button>
+      </div>
+      <div class="notification-text">
+        <span class="notification-title">{{ getNotificationTitle() }}</span>
+        <span class="notification-message">{{ notificationMessage }}</span>
+      </div>
+      <button mat-icon-button
+              (click)="hideNotification()"
+              class="notification-close">
+        <mat-icon>close</mat-icon>
+      </button>
     </div>
+    <div class="notification-progress" [class.active]="showNotification"></div>
+  </div>
 </div>
