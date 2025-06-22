@@ -691,27 +691,44 @@ export class ApplicationDetailComponent implements OnInit {
   private addRequiredFieldsToChanges(changedData: any, resource: Resource, allFields: any): any {
     const result = { ...changedData };
 
-    // Add all required fields to ensure they're not null
+    // Add ALL fields that have values in the original record to avoid data loss
     resource.fields.forEach(field => {
-      if (field.required && !field.read_only) {
-        // If the field is not in changed data but has a value in all fields
-        if (!(field.name in result) && allFields && field.name in allFields) {
-          // Don't include file fields unless they were actually changed
-          if (!FieldTypeUtils.isFileField(field)) {
-            result[field.name] = allFields[field.name];
+      if (!field.read_only) {
+        const fieldName = field.name;
+
+        // Skip if field was already changed
+        if (fieldName in result) {
+          return;
+        }
+
+        // Include field if it has a value in the original data
+        if (allFields && fieldName in allFields) {
+          const value = allFields[fieldName];
+
+          // Include all non-null, non-undefined, non-empty values
+          if (value !== null && value !== undefined && value !== '') {
+            // Don't include file fields unless they were actually changed
+            if (!FieldTypeUtils.isFileField(field)) {
+              result[fieldName] = value;
+            }
+          } else if (field.required) {
+            // For required fields, include even if null/empty to let server validate
+            result[fieldName] = value;
           }
         }
-      }
 
-      // FIXED: Include all relational fields with their original values
-      if (FieldTypeUtils.isRelationField(field) && !field.read_only) {
-        if (!(field.name in result) && allFields && field.name in allFields && allFields[field.name] !== null) {
-          result[field.name] = allFields[field.name];
+        // Special handling for relational fields - always include if they have a value
+        if (FieldTypeUtils.isRelationField(field) && allFields && fieldName in allFields) {
+          const value = allFields[fieldName];
+          if (value !== null && value !== undefined) {
+            result[fieldName] = value;
+          }
         }
       }
     });
 
-    console.log('🔍 DEBUG: Changed data with required and relation fields:', result);
+    console.log('🔍 DEBUG: Data to send with all necessary fields:', result);
+    console.log('🔍 DEBUG: Total fields being sent:', Object.keys(result).length);
     return result;
   }
   private getAllFormData(resource: Resource): any {

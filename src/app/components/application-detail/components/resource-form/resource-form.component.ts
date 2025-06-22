@@ -622,6 +622,7 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
       this.form.updateValueAndValidity();
     }
   }
+
   // Cancel handling
   handleCancel(): void {
     if (this.editState.hasChanges) {
@@ -824,9 +825,26 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
 
   getCompleteFileUrl(fieldName: string): string {
     const fileInfo = this.getFileInfo(fieldName);
-    return fileInfo?.existingFileUrl || '';
-  }
+    if (!fileInfo?.existingFileUrl) return '';
 
+    // Ensure the URL is complete and properly formatted
+    let url = fileInfo.existingFileUrl;
+
+    // If it's already a complete URL, return as is
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+
+    // Otherwise, prepend the base URL
+    const baseUrl = this.configService.getBaseUrl();
+    if (baseUrl.endsWith('/') && url.startsWith('/')) {
+      url = url.substring(1);
+    } else if (!baseUrl.endsWith('/') && !url.startsWith('/')) {
+      url = '/' + url;
+    }
+
+    return baseUrl + url;
+  }
 }
 
 // Confirm Cancel Dialog Component
