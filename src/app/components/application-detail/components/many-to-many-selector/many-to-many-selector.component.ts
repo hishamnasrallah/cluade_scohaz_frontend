@@ -14,6 +14,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatExpansionModule } from '@angular/material/expansion';
 
 import { RelationOption } from '../../models/resource.model';
 import {MatExpansionPanel, MatExpansionPanelDescription, MatExpansionPanelTitle} from '@angular/material/expansion';
@@ -46,7 +47,8 @@ export interface ManyToManyData {
     MatDividerModule,
     MatExpansionPanelTitle,
     MatExpansionPanel,
-    MatExpansionPanelDescription
+    MatExpansionPanelDescription,
+    MatExpansionModule
   ],
   templateUrl:'many-to-many-selector.component.html',
   styleUrl: './many-to-many-selector.component.scss'
