@@ -9,9 +9,8 @@
   background: #FFFFFF;
   border-radius: 28px;
   overflow: hidden;
-  box-shadow:
-    0 25px 50px -12px rgba(47, 72, 88, 0.25),
-    0 0 0 1px rgba(196, 247, 239, 0.5);
+  box-shadow: 0 25px 50px -12px rgba(47, 72, 88, 0.25),
+  0 0 0 1px rgba(196, 247, 239, 0.5);
   position: relative;
 
   @media (max-width: 768px) {
@@ -19,9 +18,27 @@
     height: 100vh;
     max-height: 100vh;
     border-radius: 0;
+    // Add smooth count animations
+    @keyframes countChange {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.2);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    .stat-value,
+    .selection-badge,
+    .action-count {
+      animation: countChange 0.3s ease-out;
+    }
   }
 }
-// Enhanced Header with Ocean Mint Theme
+  // Enhanced Header with Ocean Mint Theme
 .m2m-header {
   position: relative;
   background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);

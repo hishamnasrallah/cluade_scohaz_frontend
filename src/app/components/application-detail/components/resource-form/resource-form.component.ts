@@ -406,9 +406,9 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
     console.log(`🔍 DEBUG: Dialog data for ${field.name}:`, dialogData);
 
     const dialogRef = this.dialog.open(ManyToManySelectorComponent, {
-      width: '600px',
-      maxWidth: '90vw',
-      maxHeight: '80vh',
+      width: '47%',
+      maxWidth: '100vw',
+      maxHeight: '100vh',
       data: dialogData, // FIXED: Pass data correctly
       disableClose: false,
       panelClass: 'many-to-many-dialog-panel'
