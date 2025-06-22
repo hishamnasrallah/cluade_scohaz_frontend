@@ -56,13 +56,14 @@
                   <mat-icon class="file-icon">attachment</mat-icon>
                   <div class="file-details">
                     <span class="file-name">{{ getFileInfo(field.name).existingFileName }}</span>
-                    <a [href]="getFileInfo(field.name).existingFileUrl"
+                    <a [href]="getCompleteFileUrl(field.name)"
                        target="_blank"
                        rel="noopener noreferrer"
                        class="file-link">
                       <mat-icon>open_in_new</mat-icon>
                       View current file
                     </a>
+
                   </div>
                 </div>
                 <button type="button"

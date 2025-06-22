@@ -702,12 +702,18 @@ export class ApplicationDetailComponent implements OnInit {
           }
         }
       }
+
+      // FIXED: Include all relational fields with their original values
+      if (FieldTypeUtils.isRelationField(field) && !field.read_only) {
+        if (!(field.name in result) && allFields && field.name in allFields && allFields[field.name] !== null) {
+          result[field.name] = allFields[field.name];
+        }
+      }
     });
 
-    console.log('🔍 DEBUG: Changed data with required fields:', result);
+    console.log('🔍 DEBUG: Changed data with required and relation fields:', result);
     return result;
   }
-
   private getAllFormData(resource: Resource): any {
     // Get all data from edit mode service (original + changes)
     const allData = this.editModeService.getAllData();

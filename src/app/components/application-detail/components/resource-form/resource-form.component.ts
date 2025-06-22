@@ -36,6 +36,7 @@ import {
   ManyToManySelectorComponent,
   ManyToManyData
 } from '../many-to-many-selector/many-to-many-selector.component';
+import {ConfigService} from '../../../../services/config.service';
 
 export interface FileFieldInfo {
   hasExistingFile: boolean;
@@ -104,7 +105,10 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
       private formBuilder: FormBuilderService,
       private editModeService: EditModeService,
       private dialog: MatDialog,
-      private snackBar: MatSnackBar
+      private snackBar: MatSnackBar,
+      private configService: ConfigService
+
+
   ) {}
 
   ngOnInit(): void {
@@ -199,16 +203,57 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
     this.formFields.forEach(field => {
       if (this.isFileField(field) && this.editingRecord) {
         const existingValue = this.editingRecord[field.name];
+
+        // FIXED: Ensure the file URL is properly extracted
+        let fileUrl = existingValue;
+        let fileName = this.extractFileName(existingValue);
+
+        // Handle case where value might be an object with url property
+        if (existingValue && typeof existingValue === 'object') {
+          fileUrl = existingValue.url || existingValue.file || existingValue.path || existingValue;
+          if (existingValue.name) {
+            fileName = existingValue.name;
+          }
+        }
+
+        // FIXED: Ensure URL is complete
+        if (fileUrl && typeof fileUrl === 'string') {
+          fileUrl = this.ensureCompleteUrl(fileUrl);
+        }
+
         this.fileFields[field.name] = {
-          hasExistingFile: !!existingValue,
-          existingFileUrl: existingValue,
-          existingFileName: this.extractFileName(existingValue),
+          hasExistingFile: !!fileUrl && fileUrl !== null && fileUrl !== '',
+          existingFileUrl: fileUrl || '',
+          existingFileName: fileName,
           replaceFile: false
         };
+
+        console.log(`🔍 DEBUG: Initialized file field ${field.name}:`, this.fileFields[field.name]);
       }
     });
   }
 
+  private ensureCompleteUrl(url: string): string {
+    if (!url) return '';
+
+    // If it's already a complete URL, return as is
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+
+    // If it's a relative URL, prepend the base URL
+    const baseUrl = this.configService.getBaseUrl();
+
+    // Remove leading slash from URL if base URL has trailing slash
+    if (baseUrl.endsWith('/') && url.startsWith('/')) {
+      url = url.substring(1);
+    } else if (!baseUrl.endsWith('/') && !url.startsWith('/')) {
+      // Add slash between base URL and relative URL if neither has it
+      url = '/' + url;
+    }
+
+    return baseUrl + url;
+  }
   private resetFileFields(): void {
     this.fileFields = {};
     this.initializeFileFields();
@@ -776,6 +821,12 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
 
     return hasServerErrors || isInteracted;
   }
+
+  getCompleteFileUrl(fieldName: string): string {
+    const fileInfo = this.getFileInfo(fieldName);
+    return fileInfo?.existingFileUrl || '';
+  }
+
 }
 
 // Confirm Cancel Dialog Component
@@ -878,7 +929,8 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
 export class ConfirmCancelDialogComponent {
   constructor(
       public dialogRef: MatDialogRef<ConfirmCancelDialogComponent>,
-      @Inject(MAT_DIALOG_DATA) public data: any
+      @Inject(MAT_DIALOG_DATA) public data: any,
+
   ) {}
 
   onCancel(): void {
