@@ -273,4 +273,31 @@ export class EditModeService {
     cleanedPath = cleanedPath.replace(/\?\?$/, '');
     return cleanedPath;
   }
+
+  // getCurrentData(): any {
+  //   return this.currentState.currentData || {};
+  // }
+
+  // Get all data including unchanged fields (for PUT requests)
+  getAllData(): any {
+    const state = this.currentState;
+    if (!state.isEditing || !state.originalData) return {};
+
+    // Start with original data
+    const allData: any = { ...state.originalData };
+
+    // Override with current changes
+    if (state.currentData) {
+      Object.keys(state.currentData).forEach(key => {
+        allData[key] = state.currentData[key];
+      });
+    }
+
+    return allData;
+  }
+
+  // Get original data
+  getOriginalData(): any {
+    return this.currentState.originalData || {};
+  }
 }

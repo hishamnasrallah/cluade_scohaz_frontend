@@ -587,21 +587,73 @@ export class ApplicationDetailComponent implements OnInit {
     const isAutoSave = formData._autoSave;
     delete formData._autoSave;
 
-    const preparedData = this.dataFormatter.prepareFormData(formData, resource.fields);
+    // Extract metadata from form data
+    const changedFields = formData._changedFields;
+    const allFields = formData._allFields;
+    const changedCount = formData._changedCount;
+    const totalCount = formData._totalCount;
+
+    // Remove metadata fields from formData
+    delete formData._changedFields;
+    delete formData._allFields;
+    delete formData._changedCount;
+    delete formData._totalCount;
 
     let path: string;
     let method: string;
+    let dataToSend: any;
 
     if (this.editingRecord) {
       const recordId = this.editingRecord['id'] || this.editingRecord['pk'];
       path = this.cleanPath(resource.detailEndpoint?.path || '', recordId);
-      method = 'PUT';
+
+      // Check if the endpoint supports PATCH method
+      const supportsPatch = resource.detailEndpoint?.methods?.includes('PATCH') || false;
+      const supportsPut = resource.detailEndpoint?.methods?.includes('PUT') || false;
+
+      // Determine which method to use
+      if (isAutoSave && supportsPatch) {
+        // Auto-save uses PATCH with changed fields + required fields
+        method = 'PATCH';
+        dataToSend = this.addRequiredFieldsToChanges(changedFields || formData, resource, allFields);
+      } else if (supportsPatch && !supportsPut) {
+        // If only PATCH is supported, use it with required fields
+        method = 'PATCH';
+        dataToSend = this.addRequiredFieldsToChanges(changedFields || formData, resource, allFields);
+      } else if (supportsPut && !supportsPatch) {
+        // If only PUT is supported, use it with all data
+        method = 'PUT';
+        dataToSend = allFields || this.getAllFormData(resource);
+      } else if (supportsPatch && supportsPut) {
+        // If both are supported, decide based on number of changed fields
+        if (changedCount && totalCount && changedCount < totalCount / 2) {
+          // If less than half the fields changed, use PATCH with required fields
+          method = 'PATCH';
+          dataToSend = this.addRequiredFieldsToChanges(changedFields || formData, resource, allFields);
+        } else {
+          // Otherwise use PUT with all data
+          method = 'PUT';
+          dataToSend = allFields || this.getAllFormData(resource);
+        }
+      } else {
+        // Fallback to PUT if nothing else works
+        method = 'PUT';
+        dataToSend = allFields || this.getAllFormData(resource);
+      }
     } else {
+      // Creating new record
       path = this.cleanPath(resource.listEndpoint?.path || '');
       method = 'POST';
+      dataToSend = formData;
     }
 
-    console.log('🔍 DEBUG: Submitting data:', preparedData);
+    // Prepare the data (handles file uploads, etc.)
+    const preparedData = this.dataFormatter.prepareFormData(dataToSend, resource.fields);
+
+    console.log('🔍 DEBUG: HTTP Method:', method);
+    console.log('🔍 DEBUG: Endpoint Path:', path);
+    console.log('🔍 DEBUG: Data to send:', dataToSend);
+    console.log('🔍 DEBUG: Prepared data:', preparedData);
 
     this.apiService.executeApiCall(path, method, preparedData).subscribe({
       next: (response) => {
@@ -634,6 +686,50 @@ export class ApplicationDetailComponent implements OnInit {
         }
       }
     });
+  }
+
+  private addRequiredFieldsToChanges(changedData: any, resource: Resource, allFields: any): any {
+    const result = { ...changedData };
+
+    // Add all required fields to ensure they're not null
+    resource.fields.forEach(field => {
+      if (field.required && !field.read_only) {
+        // If the field is not in changed data but has a value in all fields
+        if (!(field.name in result) && allFields && field.name in allFields) {
+          // Don't include file fields unless they were actually changed
+          if (!FieldTypeUtils.isFileField(field)) {
+            result[field.name] = allFields[field.name];
+          }
+        }
+      }
+    });
+
+    console.log('🔍 DEBUG: Changed data with required fields:', result);
+    return result;
+  }
+
+  private getAllFormData(resource: Resource): any {
+    // Get all data from edit mode service (original + changes)
+    const allData = this.editModeService.getAllData();
+
+    // Remove read-only fields and system fields
+    const fieldsToRemove = ['id', 'pk', 'created_at', 'updated_at', 'created_by', 'updated_by'];
+    resource.fields.forEach(field => {
+      if (field.read_only) {
+        fieldsToRemove.push(field.name);
+      }
+    });
+
+    // Create a clean copy without system fields
+    const cleanData: any = {};
+    Object.keys(allData).forEach(key => {
+      if (!fieldsToRemove.includes(key)) {
+        cleanData[key] = allData[key];
+      }
+    });
+
+    console.log('🔍 DEBUG: All form data for PUT request:', cleanData);
+    return cleanData;
   }
 
   private handleValidationErrors(errors: any): void {

@@ -1,274 +1,328 @@
-<!-- resource-form.component.html - FIXED RELATIONSHIP HANDLING -->
+<!-- resource-form.component.html - FIXED FILE FIELD DISPLAY -->
 <div class="form-overlay" (click)="onOverlayClick($event)">
-    <mat-card class="form-card" (click)="$event.stopPropagation()">
+  <mat-card class="form-card" (click)="$event.stopPropagation()">
 
-        <!-- Header -->
-        <mat-card-header class="form-header">
-            <div class="header-content">
-                <mat-card-title class="form-title">
-                    <mat-icon class="mode-icon">{{ editingRecord ? 'edit' : 'add' }}</mat-icon>
-                    {{ editingRecord ? 'Edit' : 'Create' }} {{ formatColumnName(resource.name) }}
-                </mat-card-title>
+    <!-- Header -->
+    <mat-card-header class="form-header">
+      <div class="header-content">
+        <mat-card-title class="form-title">
+          <mat-icon class="mode-icon">{{ editingRecord ? 'edit' : 'add' }}</mat-icon>
+          {{ editingRecord ? 'Edit' : 'Create' }} {{ formatColumnName(resource.name) }}
+        </mat-card-title>
 
-                <button mat-icon-button (click)="handleCancel()" class="close-button">
-                    <mat-icon>close</mat-icon>
-                </button>
+        <button mat-icon-button (click)="handleCancel()" class="close-button">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </mat-card-header>
+
+    <mat-card-content class="form-content">
+      <!-- Main Form -->
+      <form [formGroup]="form" (ngSubmit)="submitForm()" class="dynamic-form">
+        <div class="form-grid">
+          <div *ngFor="let field of formFields" class="form-field-container">
+
+            <!-- Boolean checkbox -->
+            <div *ngIf="isBooleanField(field)"
+                 class="checkbox-container"
+                 [class.field-error]="hasFieldError(field.name)">
+              <mat-checkbox [formControlName]="field.name" class="custom-checkbox">
+                {{ formatColumnName(field.name) }}
+                <span *ngIf="field.required" class="required-indicator">*</span>
+              </mat-checkbox>
+
+              <!-- Inline error messages for checkbox -->
+              <div class="field-errors" *ngIf="hasFieldError(field.name)">
+                <div *ngFor="let error of getFieldErrors(field.name)" class="field-error-message">
+                  <mat-icon class="error-icon-small">error</mat-icon>
+                  {{ error }}
+                </div>
+              </div>
             </div>
-        </mat-card-header>
 
-        <mat-card-content class="form-content">
-            <!-- Main Form -->
-            <form [formGroup]="form" (ngSubmit)="submitForm()" class="dynamic-form">
-                <div class="form-grid">
-                    <div *ngFor="let field of formFields" class="form-field-container">
+            <!-- File field - ENHANCED -->
+            <div *ngIf="isFileField(field)"
+                 class="file-container"
+                 [class.field-error]="hasFieldError(field.name)">
+              <label class="file-label">
+                {{ formatColumnName(field.name) }}
+                <span *ngIf="field.required && !getFileInfo(field.name).hasExistingFile" class="required-indicator">*</span>
+              </label>
 
-                        <!-- Boolean checkbox -->
-                        <div *ngIf="isBooleanField(field)"
-                             class="checkbox-container"
-                             [class.field-error]="hasFieldError(field.name)">
-                            <mat-checkbox [formControlName]="field.name" class="custom-checkbox">
-                                {{ formatColumnName(field.name) }}
-                                <span *ngIf="field.required" class="required-indicator">*</span>
-                            </mat-checkbox>
+              <!-- Show existing file info if in edit mode -->
+              <div *ngIf="editingRecord && getFileInfo(field.name).hasExistingFile && !getFileInfo(field.name).replaceFile"
+                   class="existing-file-info">
+                <div class="file-preview">
+                  <mat-icon class="file-icon">attachment</mat-icon>
+                  <div class="file-details">
+                    <span class="file-name">{{ getFileInfo(field.name).existingFileName }}</span>
+                    <a [href]="getFileInfo(field.name).existingFileUrl"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="file-link">
+                      <mat-icon>open_in_new</mat-icon>
+                      View current file
+                    </a>
+                  </div>
+                </div>
+                <button type="button"
+                        mat-stroked-button
+                        color="warn"
+                        (click)="toggleFileReplace(field.name)"
+                        class="replace-file-btn">
+                  <mat-icon>swap_horiz</mat-icon>
+                  Replace file
+                </button>
+              </div>
 
-                            <!-- Inline error messages for checkbox -->
-                            <div class="field-errors" *ngIf="hasFieldError(field.name)">
-                                <div *ngFor="let error of getFieldErrors(field.name)" class="field-error-message">
-                                    <mat-icon class="error-icon-small">error</mat-icon>
-                                    {{ error }}
-                                </div>
-                            </div>
-                        </div>
+              <!-- Show file input if new record or replacing -->
+              <div *ngIf="!editingRecord || !getFileInfo(field.name).hasExistingFile || getFileInfo(field.name).replaceFile">
+                <input type="file"
+                       [required]="field.required && (!editingRecord || !getFileInfo(field.name).hasExistingFile)"
+                       [accept]="getFileAcceptTypes(field)"
+                       (change)="onFileChange($event, field.name)"
+                       class="file-input"
+                       #fileInput>
 
-                        <!-- File field -->
-                        <div *ngIf="isFileField(field)"
-                             class="file-container"
-                             [class.field-error]="hasFieldError(field.name)">
-                            <label class="file-label">
-                                {{ formatColumnName(field.name) }}
-                                <span *ngIf="field.required" class="required-indicator">*</span>
-                            </label>
+                <!-- Show cancel replace button if in replace mode -->
+                <div *ngIf="editingRecord && getFileInfo(field.name).hasExistingFile && getFileInfo(field.name).replaceFile"
+                     class="file-actions">
+                  <button type="button"
+                          mat-button
+                          (click)="toggleFileReplace(field.name)"
+                          class="cancel-replace-btn">
+                    <mat-icon>undo</mat-icon>
+                    Keep existing file
+                  </button>
+                </div>
 
-                            <input type="file"
-                                   [required]="field.required"
-                                   [accept]="getFileAcceptTypes(field)"
-                                   (change)="onFileChange($event, field.name)"
-                                   class="file-input"
-                                   #fileInput>
+                <!-- Show selected new file info -->
+                <div *ngIf="getFileInfo(field.name).newFile" class="new-file-info">
+                  <mat-icon class="file-icon">insert_drive_file</mat-icon>
+                  <span class="new-file-name">{{ getFileInfo(field.name).newFile?.name }}</span>
+                  <button type="button"
+                          mat-icon-button
+                          (click)="clearFile(field.name, fileInput)"
+                          matTooltip="Remove file"
+                          class="clear-file-btn">
+                    <mat-icon>clear</mat-icon>
+                  </button>
+                </div>
+              </div>
 
-                            <!-- Inline error messages for file -->
-                            <div class="field-errors" *ngIf="hasFieldError(field.name)">
-                                <div *ngFor="let error of getFieldErrors(field.name)" class="field-error-message">
-                                    <mat-icon class="error-icon-small">error</mat-icon>
-                                    {{ error }}
-                                </div>
-                            </div>
-                        </div>
+              <!-- Inline error messages for file -->
+              <div class="field-errors" *ngIf="hasFieldError(field.name)">
+                <div *ngFor="let error of getFieldErrors(field.name)" class="field-error-message">
+                  <mat-icon class="error-icon-small">error</mat-icon>
+                  {{ error }}
+                </div>
+              </div>
+            </div>
 
-                        <!-- Many-to-Many field -->
-                        <div *ngIf="isManyToManyField(field)"
-                             class="many-to-many-container"
-                             [class.field-error]="hasFieldError(field.name)">
-                            <label class="field-label">
-                                {{ formatColumnName(field.name) }}
-                                <span *ngIf="field.required" class="required-indicator">*</span>
-                                <span class="relation-badge">Many-to-Many</span>
-                            </label>
+            <!-- Many-to-Many field -->
+            <div *ngIf="isManyToManyField(field)"
+                 class="many-to-many-container"
+                 [class.field-error]="hasFieldError(field.name)">
+              <label class="field-label">
+                {{ formatColumnName(field.name) }}
+                <span *ngIf="field.required" class="required-indicator">*</span>
+                <span class="relation-badge">Many-to-Many</span>
+              </label>
 
-                            <!-- Loading indicator for relation options -->
-                            <div class="loading-relations" *ngIf="!relationOptions || !relationOptions[field.name] || relationOptions[field.name].length === 0">
-                                <mat-icon class="loading-spinner">refresh</mat-icon>
-                                <span>Loading options...</span>
-                            </div>
+              <!-- Loading indicator for relation options -->
+              <div class="loading-relations" *ngIf="!relationOptions || !relationOptions[field.name] || relationOptions[field.name].length === 0">
+                <mat-icon class="loading-spinner">refresh</mat-icon>
+                <span>Loading options...</span>
+              </div>
 
-                            <div class="selected-items" *ngIf="getManyToManySelectedItems(field.name).length > 0">
-                                <mat-chip-set class="selected-chips">
-                                    <mat-chip *ngFor="let item of getManyToManySelectedItems(field.name)"
-                                              (removed)="removeManyToManyItem(field.name, item.id)"
-                                              removable="true">
-                                        {{ item.display }}
-                                        <mat-icon matChipRemove>cancel</mat-icon>
-                                    </mat-chip>
-                                </mat-chip-set>
-                            </div>
+              <div class="selected-items" *ngIf="getManyToManySelectedItems(field.name).length > 0">
+                <mat-chip-set class="selected-chips">
+                  <mat-chip *ngFor="let item of getManyToManySelectedItems(field.name)"
+                            (removed)="removeManyToManyItem(field.name, item.id)"
+                            removable="true">
+                    {{ item.display }}
+                    <mat-icon matChipRemove>cancel</mat-icon>
+                  </mat-chip>
+                </mat-chip-set>
+              </div>
 
-                            <button type="button"
-                                    mat-stroked-button
-                                    (click)="openManyToManySelector(field)"
-                                    [disabled]="!relationOptions || !relationOptions[field.name] || relationOptions[field.name].length === 0">
-                                <mat-icon>{{ getManyToManySelectedItems(field.name).length > 0 ? 'edit' : 'add' }}</mat-icon>
-                                {{ getManyToManySelectedItems(field.name).length > 0 ? 'Edit Selection' : 'Select Items' }}
-                                <span class="option-count" *ngIf="relationOptions && relationOptions[field.name] && relationOptions[field.name].length > 0">
+              <button type="button"
+                      mat-stroked-button
+                      (click)="openManyToManySelector(field)"
+                      [disabled]="!relationOptions || !relationOptions[field.name] || relationOptions[field.name].length === 0">
+                <mat-icon>{{ getManyToManySelectedItems(field.name).length > 0 ? 'edit' : 'add' }}</mat-icon>
+                {{ getManyToManySelectedItems(field.name).length > 0 ? 'Edit Selection' : 'Select Items' }}
+                <span class="option-count" *ngIf="relationOptions && relationOptions[field.name] && relationOptions[field.name].length > 0">
                                     ({{ relationOptions[field.name].length }} available)
                                 </span>
-                            </button>
+              </button>
 
-                            <!-- Inline error messages for many-to-many -->
-                            <div class="field-errors" *ngIf="hasFieldError(field.name)">
-                                <div *ngFor="let error of getFieldErrors(field.name)" class="field-error-message">
-                                    <mat-icon class="error-icon-small">error</mat-icon>
-                                    {{ error }}
-                                </div>
-                            </div>
-                        </div>
+              <!-- Inline error messages for many-to-many -->
+              <div class="field-errors" *ngIf="hasFieldError(field.name)">
+                <div *ngFor="let error of getFieldErrors(field.name)" class="field-error-message">
+                  <mat-icon class="error-icon-small">error</mat-icon>
+                  {{ error }}
+                </div>
+              </div>
+            </div>
 
-                        <!-- Regular form fields -->
-                        <mat-form-field *ngIf="shouldShowFormField(field)"
-                                        appearance="outline"
-                                        class="form-field"
-                                        [class.field-error]="hasFieldError(field.name)">
+            <!-- Regular form fields -->
+            <mat-form-field *ngIf="shouldShowFormField(field)"
+                            appearance="outline"
+                            class="form-field"
+                            [class.field-error]="hasFieldError(field.name)">
 
-                            <mat-label>
-                                {{ formatColumnName(field.name) }}
-                                <span *ngIf="field.required" class="required-indicator">*</span>
-                                <!-- Relation type indicator -->
-                                <span *ngIf="isRelationField(field)" class="relation-badge">
+              <mat-label>
+                {{ formatColumnName(field.name) }}
+                <span *ngIf="field.required" class="required-indicator">*</span>
+                <!-- Relation type indicator -->
+                <span *ngIf="isRelationField(field)" class="relation-badge">
                                     {{ getRelationTypeDisplayName(field) }}
                                 </span>
-                            </mat-label>
+              </mat-label>
 
-                            <!-- Text inputs -->
-                            <input *ngIf="isTextInput(field)"
-                                   matInput
-                                   [type]="getInputType(field.type)"
-                                   [formControlName]="field.name"
-                                   [required]="field.required"
-                                   [placeholder]="getFieldPlaceholder(field)">
+              <!-- Text inputs -->
+              <input *ngIf="isTextInput(field)"
+                     matInput
+                     [type]="getInputType(field.type)"
+                     [formControlName]="field.name"
+                     [required]="field.required"
+                     [placeholder]="getFieldPlaceholder(field)">
 
-                            <!-- Number inputs -->
-                            <input *ngIf="isNumberInput(field)"
-                                   matInput
-                                   type="number"
-                                   [step]="getNumberStep(field.type)"
-                                   [formControlName]="field.name"
-                                   [required]="field.required"
-                                   [placeholder]="getFieldPlaceholder(field)">
+              <!-- Number inputs -->
+              <input *ngIf="isNumberInput(field)"
+                     matInput
+                     type="number"
+                     [step]="getNumberStep(field.type)"
+                     [formControlName]="field.name"
+                     [required]="field.required"
+                     [placeholder]="getFieldPlaceholder(field)">
 
-                            <!-- Date input -->
-                            <ng-container *ngIf="isDateField(field)">
-                                <input matInput
-                                       [matDatepicker]="datePicker"
-                                       [formControlName]="field.name"
-                                       [required]="field.required"
-                                       [placeholder]="getFieldPlaceholder(field)">
-                                <mat-datepicker-toggle matSuffix [for]="datePicker"></mat-datepicker-toggle>
-                                <mat-datepicker #datePicker></mat-datepicker>
-                            </ng-container>
+              <!-- Date input -->
+              <ng-container *ngIf="isDateField(field)">
+                <input matInput
+                       [matDatepicker]="datePicker"
+                       [formControlName]="field.name"
+                       [required]="field.required"
+                       [placeholder]="getFieldPlaceholder(field)">
+                <mat-datepicker-toggle matSuffix [for]="datePicker"></mat-datepicker-toggle>
+                <mat-datepicker #datePicker></mat-datepicker>
+              </ng-container>
 
-                            <!-- DateTime input -->
-                            <input *ngIf="isDateTimeField(field)"
-                                   matInput
-                                   type="datetime-local"
-                                   [formControlName]="field.name"
-                                   [required]="field.required"
-                                   [placeholder]="getFieldPlaceholder(field)">
+              <!-- DateTime input -->
+              <input *ngIf="isDateTimeField(field)"
+                     matInput
+                     type="datetime-local"
+                     [formControlName]="field.name"
+                     [required]="field.required"
+                     [placeholder]="getFieldPlaceholder(field)">
 
-                            <!-- Time input -->
-                            <input *ngIf="isTimeField(field)"
-                                   matInput
-                                   type="time"
-                                   [formControlName]="field.name"
-                                   [required]="field.required"
-                                   [placeholder]="getFieldPlaceholder(field)">
+              <!-- Time input -->
+              <input *ngIf="isTimeField(field)"
+                     matInput
+                     type="time"
+                     [formControlName]="field.name"
+                     [required]="field.required"
+                     [placeholder]="getFieldPlaceholder(field)">
 
-                            <!-- Select for static choices -->
-                            <mat-select *ngIf="hasChoices(field) && !isRelationField(field)"
-                                        [formControlName]="field.name"
-                                        [required]="field.required"
-                                        [placeholder]="getFieldPlaceholder(field)">
-                                <mat-option [value]="null">-- Select {{ formatColumnName(field.name) }} --</mat-option>
-                                <mat-option *ngFor="let choice of field.choices" [value]="choice.value">
-                                    {{ choice.label }}
-                                </mat-option>
-                            </mat-select>
+              <!-- Select for static choices -->
+              <mat-select *ngIf="hasChoices(field) && !isRelationField(field)"
+                          [formControlName]="field.name"
+                          [required]="field.required"
+                          [placeholder]="getFieldPlaceholder(field)">
+                <mat-option [value]="null">-- Select {{ formatColumnName(field.name) }} --</mat-option>
+                <mat-option *ngFor="let choice of field.choices" [value]="choice.value">
+                  {{ choice.label }}
+                </mat-option>
+              </mat-select>
 
-                            <!-- Single Relation Fields (ForeignKey, OneToOne, Lookup) -->
-                            <mat-select *ngIf="isSingleRelationField(field)"
-                                        [formControlName]="field.name"
-                                        [required]="field.required"
-                                        [placeholder]="getFieldPlaceholder(field)">
+              <!-- Single Relation Fields (ForeignKey, OneToOne, Lookup) -->
+              <mat-select *ngIf="isSingleRelationField(field)"
+                          [formControlName]="field.name"
+                          [required]="field.required"
+                          [placeholder]="getFieldPlaceholder(field)">
 
-                                <mat-option [value]="null">
-                                    -- Select {{ formatColumnName(field.name) }} --
-                                </mat-option>
+                <mat-option [value]="null">
+                  -- Select {{ formatColumnName(field.name) }} --
+                </mat-option>
 
-                                <!-- Show loading option if no data loaded yet -->
-                                <mat-option *ngIf="!relationOptions || !relationOptions[field.name] || relationOptions[field.name].length === 0"
-                                            [value]="null" disabled>
-                                    <mat-icon class="loading-spinner">refresh</mat-icon>
-                                    Loading options...
-                                </mat-option>
+                <!-- Show loading option if no data loaded yet -->
+                <mat-option *ngIf="!relationOptions || !relationOptions[field.name] || relationOptions[field.name].length === 0"
+                            [value]="null" disabled>
+                  <mat-icon class="loading-spinner">refresh</mat-icon>
+                  Loading options...
+                </mat-option>
 
-                                <!-- Show actual options -->
-                                <mat-option *ngFor="let option of (relationOptions && relationOptions[field.name] ? relationOptions[field.name] : [])"
-                                            [value]="option.id">
-                                    {{ option.display }}
-                                </mat-option>
+                <!-- Show actual options -->
+                <mat-option *ngFor="let option of (relationOptions && relationOptions[field.name] ? relationOptions[field.name] : [])"
+                            [value]="option.id">
+                  {{ option.display }}
+                </mat-option>
 
-                                <!-- Show message if no options available -->
-                                <mat-option *ngIf="relationOptions && relationOptions[field.name] && relationOptions[field.name].length === 0"
-                                            [value]="null" disabled>
-                                    No options available
-                                </mat-option>
-                            </mat-select>
+                <!-- Show message if no options available -->
+                <mat-option *ngIf="relationOptions && relationOptions[field.name] && relationOptions[field.name].length === 0"
+                            [value]="null" disabled>
+                  No options available
+                </mat-option>
+              </mat-select>
 
-                            <!-- Enhanced inline error messages -->
-                            <mat-error *ngIf="hasFieldError(field.name)">
-                                <mat-icon class="error-icon">error</mat-icon>
-                                {{ getFieldErrorMessage(field.name) }}
-                            </mat-error>
+              <!-- Enhanced inline error messages -->
+              <mat-error *ngIf="hasFieldError(field.name)">
+                <mat-icon class="error-icon">error</mat-icon>
+                {{ getFieldErrorMessage(field.name) }}
+              </mat-error>
 
-                            <!-- Additional error messages -->
-                            <div *ngIf="getFieldErrors(field.name).length > 1" class="additional-errors">
-                                <div *ngFor="let error of getFieldErrors(field.name).slice(1)" class="field-error-message">
-                                    <mat-icon class="error-icon-small">warning</mat-icon>
-                                    {{ error }}
-                                </div>
-                            </div>
+              <!-- Additional error messages -->
+              <div *ngIf="getFieldErrors(field.name).length > 1" class="additional-errors">
+                <div *ngFor="let error of getFieldErrors(field.name).slice(1)" class="field-error-message">
+                  <mat-icon class="error-icon-small">warning</mat-icon>
+                  {{ error }}
+                </div>
+              </div>
 
-                            <!-- Help text with relationship info -->
-                            <mat-hint *ngIf="field.help_text && !hasFieldError(field.name)">
-                                {{ field.help_text }}
-                            </mat-hint>
+              <!-- Help text with relationship info -->
+              <mat-hint *ngIf="field.help_text && !hasFieldError(field.name)">
+                {{ field.help_text }}
+              </mat-hint>
 
-                            <!-- Relationship info hint -->
-                            <mat-hint *ngIf="isRelationField(field) && !field.help_text && !hasFieldError(field.name)">
-                                Related to: {{ field.related_model || 'external model' }}
-                                <span *ngIf="relationOptions && relationOptions[field.name] && relationOptions[field.name].length > 0">
+              <!-- Relationship info hint -->
+              <mat-hint *ngIf="isRelationField(field) && !field.help_text && !hasFieldError(field.name)">
+                Related to: {{ field.related_model || 'external model' }}
+                <span *ngIf="relationOptions && relationOptions[field.name] && relationOptions[field.name].length > 0">
                                     ({{ relationOptions[field.name].length }} options available)
                                 </span>
-                            </mat-hint>
-                        </mat-form-field>
+              </mat-hint>
+            </mat-form-field>
 
-                        <!-- Debug info for relationships (only in development) -->
-                        <div *ngIf="showDebug && isRelationField(field)" class="debug-info">
-                            <details>
-                                <summary>Debug: {{ field.name }}</summary>
-                                <pre>{{ getFieldDebugInfo(field) }}</pre>
-                            </details>
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </mat-card-content>
+            <!-- Debug info for relationships (only in development) -->
+            <div *ngIf="showDebug && isRelationField(field)" class="debug-info">
+              <details>
+                <summary>Debug: {{ field.name }}</summary>
+                <pre>{{ getFieldDebugInfo(field) }}</pre>
+              </details>
+            </div>
+          </div>
+        </div>
+      </form>
+    </mat-card-content>
 
-        <!-- Actions -->
-        <mat-card-actions class="form-actions">
-            <button mat-button type="button" (click)="handleCancel()" class="cancel-btn">
-                Cancel
-            </button>
+    <!-- Actions -->
+    <mat-card-actions class="form-actions">
+      <button mat-button type="button" (click)="handleCancel()" class="cancel-btn">
+        Cancel
+      </button>
 
-            <button mat-raised-button
-                    color="primary"
-                    type="button"
-                    (click)="submitForm()"
-                    [disabled]="!form.valid || submitting"
-                    class="submit-btn">
-                <mat-spinner diameter="20" *ngIf="submitting"></mat-spinner>
-                <mat-icon *ngIf="!submitting">{{ editingRecord ? 'save' : 'add' }}</mat-icon>
-                <span *ngIf="!submitting">{{ editingRecord ? 'Save Changes' : 'Create' }}</span>
-                <span *ngIf="submitting">{{ editingRecord ? 'Saving...' : 'Creating...' }}</span>
-            </button>
-        </mat-card-actions>
-    </mat-card>
+      <button mat-raised-button
+              color="primary"
+              type="button"
+              (click)="submitForm()"
+              [disabled]="!form.valid || submitting"
+              class="submit-btn">
+        <mat-spinner diameter="20" *ngIf="submitting"></mat-spinner>
+        <mat-icon *ngIf="!submitting">{{ editingRecord ? 'save' : 'add' }}</mat-icon>
+        <span *ngIf="!submitting">{{ editingRecord ? 'Save Changes' : 'Create' }}</span>
+        <span *ngIf="submitting">{{ editingRecord ? 'Saving...' : 'Creating...' }}</span>
+      </button>
+    </mat-card-actions>
+  </mat-card>
 </div>

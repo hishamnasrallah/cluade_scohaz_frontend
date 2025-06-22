@@ -509,21 +509,45 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   // Form submission
+// Form submission
   submitForm(): void {
     this.clearServerErrors();
 
     if (this.form.valid) {
-      const formData: any = this.editState.isEditing ?
-          this.editModeService.getChangedFields() :
-          { ...this.form.value };
+      let formData: any;
+
+      if (this.editState.isEditing) {
+        // For editing, we'll let the parent component decide whether to send all data or just changes
+        // based on whether it uses PUT or PATCH
+        const changedFields = this.editModeService.getChangedFields();
+        const allFormData = { ...this.form.value };
+
+        // Add metadata to help parent component decide
+        formData = {
+          _changedFields: changedFields,
+          _allFields: allFormData,
+          _changedCount: Object.keys(changedFields).length,
+          _totalCount: Object.keys(allFormData).length,
+          ...changedFields // Default to changed fields
+        };
+      } else {
+        // For new records, send all form data
+        formData = { ...this.form.value };
+      }
 
       // Add files to form data
       for (const fieldName in this.fileFields) {
         const fileInfo = this.fileFields[fieldName];
         if (fileInfo.newFile) {
           formData[fieldName] = fileInfo.newFile;
+          if (formData._allFields) {
+            formData._allFields[fieldName] = fileInfo.newFile;
+          }
         } else if (!this.editState.isEditing || fileInfo.replaceFile) {
           formData[fieldName] = null;
+          if (formData._allFields) {
+            formData._allFields[fieldName] = null;
+          }
         }
       }
 
@@ -532,6 +556,9 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
         if (this.editState.isEditing) {
           if (this.hasFieldChanged(fieldName)) {
             formData[fieldName] = this.manyToManySelections[fieldName];
+            if (formData._allFields) {
+              formData._allFields[fieldName] = this.manyToManySelections[fieldName];
+            }
           }
         } else {
           formData[fieldName] = this.manyToManySelections[fieldName];
@@ -550,7 +577,6 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
       this.form.updateValueAndValidity();
     }
   }
-
   // Cancel handling
   handleCancel(): void {
     if (this.editState.hasChanges) {
