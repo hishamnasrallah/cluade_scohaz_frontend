@@ -398,6 +398,7 @@ $ocean-muted: #6B7280;
     border: 2px solid rgba(52, 197, 170, 0.3);
     border-radius: 14px;
     transition: all 0.3s ease;
+    position: relative;  // FIX: Add position relative
 
     &:hover {
       background: linear-gradient(135deg, rgba(196, 247, 239, 0.3) 0%, rgba(196, 247, 239, 0.15) 100%);
@@ -418,6 +419,8 @@ $ocean-muted: #6B7280;
       display: flex;
       flex-direction: column;
       gap: 6px;
+      position: relative;  // FIX: Add position relative
+      z-index: 1;         // FIX: Ensure proper stacking
     }
 
     .file-name {
@@ -430,14 +433,17 @@ $ocean-muted: #6B7280;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      color: $ocean-primary;
+      color: #34C5AA;
       text-decoration: none;
       font-size: 0.85rem;
       font-weight: 600;
       transition: all 0.3s ease;
+      position: relative;  // FIX: Add position relative
+      z-index: 10;        // FIX: Ensure link is above other elements
+      cursor: pointer;     // FIX: Explicit cursor pointer
 
       &:hover {
-        color: $ocean-secondary;
+        color: #2BA99B;
         text-decoration: underline;
       }
 
@@ -445,6 +451,7 @@ $ocean-muted: #6B7280;
         font-size: 16px;
         width: 16px;
         height: 16px;
+        pointer-events: none;  // FIX: Prevent icon from blocking clicks
       }
     }
   }

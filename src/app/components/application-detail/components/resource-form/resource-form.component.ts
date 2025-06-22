@@ -102,11 +102,11 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
   private autoSaveSubject = new Subject<string>();
 
   constructor(
-      private formBuilder: FormBuilderService,
-      private editModeService: EditModeService,
-      private dialog: MatDialog,
-      private snackBar: MatSnackBar,
-      private configService: ConfigService
+    private formBuilder: FormBuilderService,
+    private editModeService: EditModeService,
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar,
+    private configService: ConfigService
 
 
   ) {}
@@ -139,10 +139,10 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
 
   private initializeEditMode(): void {
     this.editModeService.editState$
-        .pipe(takeUntil(this.destroy$))
-        .subscribe(state => {
-          this.editState = state;
-        });
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(state => {
+        this.editState = state;
+      });
 
     if (this.editingRecord) {
       this.editModeService.setEditData(this.editingRecord);
@@ -154,20 +154,20 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
     this.formFields = this.formBuilder.getFormFields(this.resource);
 
     this.form.valueChanges
-        .pipe(
-            takeUntil(this.destroy$),
-            debounceTime(300),
-            distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr))
-        )
-        .subscribe(formValue => {
-          Object.keys(formValue).forEach(fieldName => {
-            this.editModeService.updateField(fieldName, formValue[fieldName]);
-          });
-
-          if (this.autoSaveEnabled && this.editState.hasChanges) {
-            this.autoSaveSubject.next('auto-save');
-          }
+      .pipe(
+        takeUntil(this.destroy$),
+        debounceTime(300),
+        distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr))
+      )
+      .subscribe(formValue => {
+        Object.keys(formValue).forEach(fieldName => {
+          this.editModeService.updateField(fieldName, formValue[fieldName]);
         });
+
+        if (this.autoSaveEnabled && this.editState.hasChanges) {
+          this.autoSaveSubject.next('auto-save');
+        }
+      });
 
     if (this.editingRecord) {
       this.initializeFileFields();
@@ -177,15 +177,15 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
 
   private setupAutoSave(): void {
     this.autoSaveSubject
-        .pipe(
-            takeUntil(this.destroy$),
-            debounceTime(2000)
-        )
-        .subscribe(() => {
-          if (this.autoSaveEnabled && this.editState.hasChanges && this.form.valid) {
-            this.performAutoSave();
-          }
-        });
+      .pipe(
+        takeUntil(this.destroy$),
+        debounceTime(2000)
+      )
+      .subscribe(() => {
+        if (this.autoSaveEnabled && this.editState.hasChanges && this.form.valid) {
+          this.performAutoSave();
+        }
+      });
   }
 
   private performAutoSave(): void {
@@ -216,8 +216,10 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
           }
         }
 
-        // FIXED: Ensure URL is complete
+        // FIX: Remove quotes from URL if present
         if (fileUrl && typeof fileUrl === 'string') {
+          // Strip surrounding quotes if they exist
+          fileUrl = fileUrl.replace(/^["']|["']$/g, '');
           fileUrl = this.ensureCompleteUrl(fileUrl);
         }
 
@@ -232,7 +234,6 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
       }
     });
   }
-
   private ensureCompleteUrl(url: string): string {
     if (!url) return '';
 
@@ -324,7 +325,10 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
         console.log(`🔍 DEBUG: M2M field ${field.name} existing value:`, existingValue);
 
         if (Array.isArray(existingValue)) {
-          this.manyToManySelections[field.name] = [...existingValue];
+          // FIX: Ensure IDs are numbers
+          this.manyToManySelections[field.name] = existingValue.map(id =>
+            typeof id === 'string' ? parseInt(id, 10) : id
+          );
           console.log(`✅ Initialized M2M field ${field.name} with:`, this.manyToManySelections[field.name]);
         } else {
           this.manyToManySelections[field.name] = [];
@@ -420,9 +424,12 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
       if (result !== undefined && Array.isArray(result)) {
         console.log(`✅ Updating M2M selection for ${field.name}:`, result);
 
-        this.manyToManySelections[field.name] = result;
-        this.form.get(field.name)?.setValue(result);
-        this.onFieldChange(field.name, result);
+        // FIX: Ensure IDs are numbers
+        this.manyToManySelections[field.name] = result.map(id =>
+          typeof id === 'string' ? parseInt(id, 10) : id
+        );
+        this.form.get(field.name)?.setValue(this.manyToManySelections[field.name]);
+        this.onFieldChange(field.name, this.manyToManySelections[field.name]);
 
         // Show success message
         const selectedCount = result.length;
@@ -453,7 +460,8 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   getRelationshipType(field: ResourceField): string {
-    return FieldTypeUtils.getRelationTypeDisplayName(field);
+    // @ts-ignore
+    return FieldTypeUtils.getRelationshipType(field);
   }
 
   hasRelationOptions(field: ResourceField): boolean {
@@ -553,8 +561,7 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  // Form submission
-// Form submission
+  // Form submission - FIXED
   submitForm(): void {
     this.clearServerErrors();
 
@@ -580,33 +587,61 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
         formData = { ...this.form.value };
       }
 
-      // Add files to form data
+      // FIX 1: Handle file fields properly - exclude unchanged existing files
       for (const fieldName in this.fileFields) {
         const fileInfo = this.fileFields[fieldName];
-        if (fileInfo.newFile) {
-          formData[fieldName] = fileInfo.newFile;
-          if (formData._allFields) {
-            formData._allFields[fieldName] = fileInfo.newFile;
+
+        if (this.editState.isEditing) {
+          // For editing mode
+          if (fileInfo.newFile) {
+            // New file selected - include it
+            formData[fieldName] = fileInfo.newFile;
+            if (formData._allFields) {
+              formData._allFields[fieldName] = fileInfo.newFile;
+            }
+            if (formData._changedFields) {
+              formData._changedFields[fieldName] = fileInfo.newFile;
+            }
+          } else if (fileInfo.replaceFile || (fileInfo.hasExistingFile && !fileInfo.replaceFile)) {
+            // IMPORTANT FIX: Remove file field from submission if no new file selected
+            // This prevents sending null/empty for existing files
+            delete formData[fieldName];
+            if (formData._allFields) {
+              delete formData._allFields[fieldName];
+            }
+            if (formData._changedFields) {
+              delete formData._changedFields[fieldName];
+            }
           }
-        } else if (!this.editState.isEditing || fileInfo.replaceFile) {
-          formData[fieldName] = null;
-          if (formData._allFields) {
-            formData._allFields[fieldName] = null;
+        } else {
+          // For new records
+          if (fileInfo.newFile) {
+            formData[fieldName] = fileInfo.newFile;
           }
         }
       }
 
-      // Add many-to-many selections
+      // FIX 2: Handle many-to-many selections - ensure they are numbers
       for (const fieldName in this.manyToManySelections) {
+        const selections = this.manyToManySelections[fieldName];
+
+        // Convert all IDs to numbers
+        const numericIds = selections.map(id =>
+          typeof id === 'string' ? parseInt(id, 10) : id
+        );
+
         if (this.editState.isEditing) {
           if (this.hasFieldChanged(fieldName)) {
-            formData[fieldName] = this.manyToManySelections[fieldName];
+            formData[fieldName] = numericIds;
             if (formData._allFields) {
-              formData._allFields[fieldName] = this.manyToManySelections[fieldName];
+              formData._allFields[fieldName] = numericIds;
+            }
+            if (formData._changedFields) {
+              formData._changedFields[fieldName] = numericIds;
             }
           }
         } else {
-          formData[fieldName] = this.manyToManySelections[fieldName];
+          formData[fieldName] = numericIds;
         }
       }
 
@@ -830,6 +865,9 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
     // Ensure the URL is complete and properly formatted
     let url = fileInfo.existingFileUrl;
 
+    // FIX: Remove any surrounding quotes
+    url = url.replace(/^["']|["']$/g, '');
+
     // If it's already a complete URL, return as is
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url;
@@ -946,8 +984,8 @@ export class ResourceFormComponent implements OnInit, OnDestroy, OnChanges {
 })
 export class ConfirmCancelDialogComponent {
   constructor(
-      public dialogRef: MatDialogRef<ConfirmCancelDialogComponent>,
-      @Inject(MAT_DIALOG_DATA) public data: any,
+    public dialogRef: MatDialogRef<ConfirmCancelDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any,
 
   ) {}
 

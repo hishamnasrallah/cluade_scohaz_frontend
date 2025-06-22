@@ -701,16 +701,18 @@ export class ApplicationDetailComponent implements OnInit {
           return;
         }
 
+        // FIX: Don't include file fields unless they were actually changed
+        if (FieldTypeUtils.isFileField(field)) {
+          return; // Skip file fields - they're handled separately
+        }
+
         // Include field if it has a value in the original data
         if (allFields && fieldName in allFields) {
           const value = allFields[fieldName];
 
           // Include all non-null, non-undefined, non-empty values
           if (value !== null && value !== undefined && value !== '') {
-            // Don't include file fields unless they were actually changed
-            if (!FieldTypeUtils.isFileField(field)) {
-              result[fieldName] = value;
-            }
+            result[fieldName] = value;
           } else if (field.required) {
             // For required fields, include even if null/empty to let server validate
             result[fieldName] = value;
@@ -731,6 +733,7 @@ export class ApplicationDetailComponent implements OnInit {
     console.log('🔍 DEBUG: Total fields being sent:', Object.keys(result).length);
     return result;
   }
+
   private getAllFormData(resource: Resource): any {
     // Get all data from edit mode service (original + changes)
     const allData = this.editModeService.getAllData();
@@ -747,6 +750,11 @@ export class ApplicationDetailComponent implements OnInit {
     const cleanData: any = {};
     Object.keys(allData).forEach(key => {
       if (!fieldsToRemove.includes(key)) {
+        // FIX: Skip file fields that don't have new data
+        const field = resource.fields.find(f => f.name === key);
+        if (field && FieldTypeUtils.isFileField(field) && !allData[key]) {
+          return; // Skip this field
+        }
         cleanData[key] = allData[key];
       }
     });

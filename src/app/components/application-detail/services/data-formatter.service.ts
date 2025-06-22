@@ -167,17 +167,20 @@ export class DataFormatterService {
 
   // ENHANCED to handle file uploads
   prepareFormData(formValue: any, fields: ResourceField[]): FormData | any {
-    // Check if we have any file fields
-    const hasFileFields = fields.some(field =>
-      field && this.isFileField(field.type) && formValue[field.name] instanceof File
+    // FIX: Create a copy to avoid modifying the original
+    const formValueCopy = { ...formValue };
+
+    // Check if we have any file fields with actual file data
+    const hasFileFieldsWithData = fields.some(field =>
+      field && this.isFileField(field.type) && formValueCopy[field.name] instanceof File
     );
 
-    if (hasFileFields) {
+    if (hasFileFieldsWithData) {
       // Use FormData for file uploads
-      return this.prepareMultipartFormData(formValue, fields);
+      return this.prepareMultipartFormData(formValueCopy, fields);
     } else {
       // Use regular JSON for non-file forms
-      return this.prepareJsonData(formValue, fields);
+      return this.prepareJsonData(formValueCopy, fields);
     }
   }
 
@@ -188,6 +191,11 @@ export class DataFormatterService {
       if (!field || !field.name || field.read_only) return;
 
       const value = formValue[field.name];
+
+      // FIX: Skip fields that don't exist in formValue (they were removed intentionally)
+      if (!(field.name in formValue)) {
+        return;
+      }
 
       if (value === null || value === undefined) {
         // Don't append null/undefined values to FormData
@@ -217,6 +225,11 @@ export class DataFormatterService {
 
     fields.forEach((field: ResourceField) => {
       if (!field || !field.name || field.read_only) return;
+
+      // FIX: Skip fields that don't exist in formValue (they were removed intentionally)
+      if (!(field.name in formValue)) {
+        return;
+      }
 
       const value = formValue[field.name];
 
@@ -284,6 +297,13 @@ export class DataFormatterService {
       case 'MediaField':
         // File fields should be handled separately in multipart form data
         return value instanceof File ? value : null;
+
+      case 'ManyToManyField':
+        // FIX: Ensure many-to-many values are numbers
+        if (Array.isArray(value)) {
+          return value.map(id => typeof id === 'string' ? parseInt(id, 10) : id);
+        }
+        return value;
 
       default:
         return value;
