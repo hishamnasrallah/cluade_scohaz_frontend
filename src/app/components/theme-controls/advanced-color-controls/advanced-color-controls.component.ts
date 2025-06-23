@@ -1,4 +1,3 @@
-// src/app/components/theme-controls/advanced-color-controls/advanced-color-controls.component.ts
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -7,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { ThemeConfig, generateColorPalette, getContrastRatio } from '../../../models/theme.model';
+import { ThemeConfig, generateColorPalette, getContrastRatio as calculateContrastRatio } from '../../../models/theme.model';
 
 interface ColorGroup {
   title: string;

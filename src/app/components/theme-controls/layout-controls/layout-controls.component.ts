@@ -50,7 +50,7 @@ interface GridPreset {
       <!-- Layout Type -->
       <div class="control-section">
         <h4>Layout Type</h4>
-        <mat-radio-group [(value)]="theme.layoutType" 
+        <mat-radio-group [(ngModel)]="theme.layoutType"
                         (change)="updateProperty('layoutType', $event.value)"
                         class="layout-type-group">
           <div class="layout-options">
@@ -102,8 +102,8 @@ interface GridPreset {
           <div class="control-item">
             <label>Spacing Unit: {{ theme.spacingUnit }}px</label>
             <mat-slider [min]="4" [max]="32" [step]="4"
-                       [value]="theme.spacingUnit"
-                       (input)="updateSpacingUnit($event.value)"
+                       [(ngModel)]="theme.spacingUnit"
+                       (ngModelChange)="updateSpacingUnit($event.value)"
                        [discrete]="true">
               <input matSliderThumb>
             </mat-slider>
@@ -113,8 +113,8 @@ interface GridPreset {
             <div class="size-control">
               <label>X-Small: {{ theme.spacingXSmall }}px</label>
               <mat-slider [min]="2" [max]="16" [step]="1"
-                         [value]="theme.spacingXSmall"
-                         (input)="updateProperty('spacingXSmall', $event.value)"
+                         [(ngModel)]="theme.spacingXSmall"
+                         (ngModelChange)="updateProperty('spacingXSmall', $event.value)"
                          [discrete]="true">
                 <input matSliderThumb>
               </mat-slider>
@@ -124,8 +124,8 @@ interface GridPreset {
             <div class="size-control">
               <label>Small: {{ theme.spacingSmall }}px</label>
               <mat-slider [min]="4" [max]="24" [step]="2"
-                         [value]="theme.spacingSmall"
-                         (input)="updateProperty('spacingSmall', $event.value)"
+                         [(ngModel)]="theme.spacingSmall"
+                         (ngModelChange)="updateProperty('spacingSmall', $event.value)"
                          [discrete]="true">
                 <input matSliderThumb>
               </mat-slider>
@@ -135,8 +135,8 @@ interface GridPreset {
             <div class="size-control">
               <label>Medium: {{ theme.spacingMedium }}px</label>
               <mat-slider [min]="8" [max]="40" [step]="4"
-                         [value]="theme.spacingMedium"
-                         (input)="updateProperty('spacingMedium', $event.value)"
+                         [(ngModel)]="theme.spacingMedium"
+                         (ngModelChange)="updateProperty('spacingMedium', $event.value)"
                          [discrete]="true">
                 <input matSliderThumb>
               </mat-slider>
@@ -146,8 +146,8 @@ interface GridPreset {
             <div class="size-control">
               <label>Large: {{ theme.spacingLarge }}px</label>
               <mat-slider [min]="16" [max]="64" [step]="4"
-                         [value]="theme.spacingLarge"
-                         (input)="updateProperty('spacingLarge', $event.value)"
+                         [(ngModel)]="theme.spacingLarge"
+                         (ngModelChange)="updateProperty('spacingLarge', $event.value)"
                          [discrete]="true">
                 <input matSliderThumb>
               </mat-slider>
@@ -157,8 +157,8 @@ interface GridPreset {
             <div class="size-control">
               <label>X-Large: {{ theme.spacingXLarge }}px</label>
               <mat-slider [min]="24" [max]="96" [step]="8"
-                         [value]="theme.spacingXLarge"
-                         (input)="updateProperty('spacingXLarge', $event.value)"
+                         [(ngModel)]="theme.spacingXLarge"
+                         (ngModelChange)="updateProperty('spacingXLarge', $event.value)"
                          [discrete]="true">
                 <input matSliderThumb>
               </mat-slider>
@@ -197,8 +197,8 @@ interface GridPreset {
         <div class="control-item">
           <label>Max Container Width: {{ theme.containerMaxWidth }}px</label>
           <mat-slider [min]="960" [max]="1920" [step]="20"
-                     [value]="theme.containerMaxWidth"
-                     (input)="updateProperty('containerMaxWidth', $event.value)"
+                     [(ngModel)]="theme.containerMaxWidth"
+                     (ngModelChange)="updateProperty('containerMaxWidth', $event.value)"
                      [discrete]="true">
             <input matSliderThumb>
           </mat-slider>
@@ -225,7 +225,7 @@ interface GridPreset {
         <div class="position-controls">
           <div class="control-group">
             <label>Header Position</label>
-            <mat-select [(value)]="theme.headerPosition"
+            <mat-select [(ngModel)]="theme.headerPosition"
                        (selectionChange)="updateProperty('headerPosition', $event.value)">
               <mat-option value="fixed">Fixed</mat-option>
               <mat-option value="static">Static</mat-option>
@@ -235,7 +235,7 @@ interface GridPreset {
 
           <div class="control-group">
             <label>Sidebar Position</label>
-            <mat-select [(value)]="theme.sidebarPosition"
+            <mat-select [(ngModel)]="theme.sidebarPosition"
                        (selectionChange)="updateProperty('sidebarPosition', $event.value)">
               <mat-option value="left">Left</mat-option>
               <mat-option value="right">Right</mat-option>
@@ -244,7 +244,7 @@ interface GridPreset {
 
           <div class="control-group">
             <label>Footer Position</label>
-            <mat-select [(value)]="theme.footerPosition"
+            <mat-select [(ngModel)]="theme.footerPosition"
                        (selectionChange)="updateProperty('footerPosition', $event.value)">
               <mat-option value="fixed">Fixed</mat-option>
               <mat-option value="static">Static</mat-option>
@@ -286,8 +286,8 @@ interface GridPreset {
           <div class="control-item">
             <label>Sidebar Width: {{ theme.sidebarWidth }}px</label>
             <mat-slider [min]="200" [max]="400" [step]="10"
-                       [value]="theme.sidebarWidth"
-                       (input)="updateProperty('sidebarWidth', $event.value)"
+                       [(ngModel)]="theme.sidebarWidth"
+                       (ngModelChange)="updateProperty('sidebarWidth', $event.value)"
                        [discrete]="true">
               <input matSliderThumb>
             </mat-slider>
@@ -296,8 +296,8 @@ interface GridPreset {
           <div class="control-item">
             <label>Collapsed Width: {{ theme.sidebarCollapsedWidth }}px</label>
             <mat-slider [min]="40" [max]="100" [step]="4"
-                       [value]="theme.sidebarCollapsedWidth"
-                       (input)="updateProperty('sidebarCollapsedWidth', $event.value)"
+                       [(ngModel)]="theme.sidebarCollapsedWidth"
+                       (ngModelChange)="updateProperty('sidebarCollapsedWidth', $event.value)"
                        [discrete]="true">
               <input matSliderThumb>
             </mat-slider>
@@ -342,8 +342,8 @@ interface GridPreset {
           <div class="control-item">
             <label>Grid Columns: {{ theme.gridColumns }}</label>
             <mat-slider [min]="4" [max]="24" [step]="2"
-                       [value]="theme.gridColumns"
-                       (input)="updateProperty('gridColumns', $event.value)"
+                       [(ngModel)]="theme.gridColumns"
+                       (ngModelChange)="updateProperty('gridColumns', $event.value)"
                        [discrete]="true">
               <input matSliderThumb>
             </mat-slider>
@@ -352,8 +352,8 @@ interface GridPreset {
           <div class="control-item">
             <label>Grid Gutter: {{ theme.gridGutter }}px</label>
             <mat-slider [min]="8" [max]="48" [step]="4"
-                       [value]="theme.gridGutter"
-                       (input)="updateProperty('gridGutter', $event.value)"
+                       [(ngModel)]="theme.gridGutter"
+                       (ngModelChange)="updateProperty('gridGutter', $event.value)"
                        [discrete]="true">
               <input matSliderThumb>
             </mat-slider>
@@ -377,36 +377,36 @@ interface GridPreset {
               <div class="breakpoint-item">
                 <label>XS: {{ theme.gridBreakpointXs }}px</label>
                 <input type="number"
-                       [value]="theme.gridBreakpointXs"
-                       (input)="updateProperty('gridBreakpointXs', +$any($event.target).value)"
+                       [(ngModel)]="theme.gridBreakpointXs"
+                       (ngModelChange)="updateProperty('gridBreakpointXs', +$any($event.target).value)"
                        class="breakpoint-input" />
               </div>
               <div class="breakpoint-item">
                 <label>SM: {{ theme.gridBreakpointSm }}px</label>
                 <input type="number"
-                       [value]="theme.gridBreakpointSm"
-                       (input)="updateProperty('gridBreakpointSm', +$any($event.target).value)"
+                       [(ngModel)]="theme.gridBreakpointSm"
+                       (ngModelChange)="updateProperty('gridBreakpointSm', +$any($event.target).value)"
                        class="breakpoint-input" />
               </div>
               <div class="breakpoint-item">
                 <label>MD: {{ theme.gridBreakpointMd }}px</label>
                 <input type="number"
-                       [value]="theme.gridBreakpointMd"
-                       (input)="updateProperty('gridBreakpointMd', +$any($event.target).value)"
+                       [(ngModel)]="theme.gridBreakpointMd"
+                       (ngModelChange)="updateProperty('gridBreakpointMd', +$any($event.target).value)"
                        class="breakpoint-input" />
               </div>
               <div class="breakpoint-item">
                 <label>LG: {{ theme.gridBreakpointLg }}px</label>
                 <input type="number"
-                       [value]="theme.gridBreakpointLg"
-                       (input)="updateProperty('gridBreakpointLg', +$any($event.target).value)"
+                       [(ngModel)]="theme.gridBreakpointLg"
+                       (ngModelChange)="updateProperty('gridBreakpointLg', +$any($event.target).value)"
                        class="breakpoint-input" />
               </div>
               <div class="breakpoint-item">
                 <label>XL: {{ theme.gridBreakpointXl }}px</label>
                 <input type="number"
-                       [value]="theme.gridBreakpointXl"
-                       (input)="updateProperty('gridBreakpointXl', +$any($event.target).value)"
+                       [(ngModel)]="theme.gridBreakpointXl"
+                       (ngModelChange)="updateProperty('gridBreakpointXl', +$any($event.target).value)"
                        class="breakpoint-input" />
               </div>
             </div>
@@ -427,8 +427,8 @@ interface GridPreset {
           <div class="zindex-item" *ngFor="let layer of zIndexLayers">
             <label>{{ layer.label }}: {{ theme[layer.key] }}</label>
             <input type="number"
-                   [value]="theme[layer.key]"
-                   (input)="updateProperty(layer.key, +$any($event.target).value)"
+                   [(ngModel)]="theme[layer.key]"
+                   (ngModelChange)="updateProperty(layer.key, +$any($event.target).value)"
                    class="zindex-input" />
             <span class="zindex-desc">{{ layer.description }}</span>
           </div>
@@ -450,7 +450,7 @@ interface GridPreset {
       <!-- Density Settings -->
       <div class="control-section">
         <h4>UI Density</h4>
-        <mat-radio-group [(value)]="theme.density"
+        <mat-radio-group [(ngModel)]="theme.density"
                         (change)="updateProperty('density', $event.value)"
                         class="density-group">
           <mat-radio-button value="comfortable">

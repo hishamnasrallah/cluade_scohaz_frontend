@@ -86,8 +86,8 @@ interface ComponentPreset {
               <div class="control-item">
                 <label>Height: {{ theme.buttonHeight }}px</label>
                 <mat-slider [min]="28" [max]="56" [step]="2"
-                           [value]="theme.buttonHeight"
-                           (input)="updateProperty('buttonHeight', $event.value)"
+                           [(ngModel)]="theme.buttonHeight"
+                           (ngModelChange)="updateProperty('buttonHeight', $event.value)"
                            [discrete]="true">
                   <input matSliderThumb>
                 </mat-slider>
@@ -97,8 +97,8 @@ interface ComponentPreset {
                 <div class="control-item">
                   <label>Padding X: {{ theme.buttonPaddingX }}px</label>
                   <mat-slider [min]="8" [max]="48" [step]="4"
-                             [value]="theme.buttonPaddingX"
-                             (input)="updateProperty('buttonPaddingX', $event.value)"
+                             [(ngModel)]="theme.buttonPaddingX"
+                             (ngModelChange)="updateProperty('buttonPaddingX', $event.value)"
                              [discrete]="true">
                     <input matSliderThumb>
                   </mat-slider>
@@ -107,8 +107,8 @@ interface ComponentPreset {
                 <div class="control-item">
                   <label>Padding Y: {{ theme.buttonPaddingY }}px</label>
                   <mat-slider [min]="4" [max]="24" [step]="2"
-                             [value]="theme.buttonPaddingY"
-                             (input)="updateProperty('buttonPaddingY', $event.value)"
+                             [(ngModel)]="theme.buttonPaddingY"
+                             (ngModelChange)="updateProperty('buttonPaddingY', $event.value)"
                              [discrete]="true">
                     <input matSliderThumb>
                   </mat-slider>
@@ -122,8 +122,8 @@ interface ComponentPreset {
               <div class="control-item">
                 <label>Font Size: {{ theme.buttonFontSize }}px</label>
                 <mat-slider [min]="12" [max]="20" [step]="1"
-                           [value]="theme.buttonFontSize"
-                           (input)="updateProperty('buttonFontSize', $event.value)"
+                           [(ngModel)]="theme.buttonFontSize"
+                           (ngModelChange)="updateProperty('buttonFontSize', $event.value)"
                            [discrete]="true">
                   <input matSliderThumb>
                 </mat-slider>
@@ -132,8 +132,8 @@ interface ComponentPreset {
               <div class="control-item">
                 <label>Font Weight: {{ theme.buttonFontWeight }}</label>
                 <mat-slider [min]="400" [max]="800" [step]="100"
-                           [value]="theme.buttonFontWeight"
-                           (input)="updateProperty('buttonFontWeight', $event.value)"
+                           [(ngModel)]="theme.buttonFontWeight"
+                           (ngModelChange)="updateProperty('buttonFontWeight', $event.value)"
                            [discrete]="true">
                   <input matSliderThumb>
                 </mat-slider>
@@ -146,8 +146,8 @@ interface ComponentPreset {
               <div class="control-item">
                 <label>Border Radius: {{ theme.buttonBorderRadius }}px</label>
                 <mat-slider [min]="0" [max]="28" [step]="2"
-                           [value]="theme.buttonBorderRadius"
-                           (input)="updateProperty('buttonBorderRadius', $event.value)"
+                           [(ngModel)]="theme.buttonBorderRadius"
+                           (ngModelChange)="updateProperty('buttonBorderRadius', $event.value)"
                            [discrete]="true">
                   <input matSliderThumb>
                 </mat-slider>
@@ -234,8 +234,8 @@ interface ComponentPreset {
               <div class="control-item">
                 <label>Height: {{ theme.inputHeight }}px</label>
                 <mat-slider [min]="32" [max]="64" [step]="2"
-                           [value]="theme.inputHeight"
-                           (input)="updateProperty('inputHeight', $event.value)"
+                           [(ngModel)]="theme.inputHeight"
+                           (ngModelChange)="updateProperty('inputHeight', $event.value)"
                            [discrete]="true">
                   <input matSliderThumb>
                 </mat-slider>
@@ -245,8 +245,8 @@ interface ComponentPreset {
                 <div class="control-item">
                   <label>Padding X: {{ theme.inputPaddingX }}px</label>
                   <mat-slider [min]="8" [max]="32" [step]="4"
-                             [value]="theme.inputPaddingX"
-                             (input)="updateProperty('inputPaddingX', $event.value)"
+                             [(ngModel)]="theme.inputPaddingX"
+                             (ngModelChange)="updateProperty('inputPaddingX', $event.value)"
                              [discrete]="true">
                     <input matSliderThumb>
                   </mat-slider>
@@ -255,8 +255,8 @@ interface ComponentPreset {
                 <div class="control-item">
                   <label>Padding Y: {{ theme.inputPaddingY }}px</label>
                   <mat-slider [min]="4" [max]="20" [step]="2"
-                             [value]="theme.inputPaddingY"
-                             (input)="updateProperty('inputPaddingY', $event.value)"
+                             [(ngModel)]="theme.inputPaddingY"
+                             (ngModelChange)="updateProperty('inputPaddingY', $event.value)"
                              [discrete]="true">
                     <input matSliderThumb>
                   </mat-slider>
@@ -270,8 +270,8 @@ interface ComponentPreset {
               <div class="control-item">
                 <label>Font Size: {{ theme.inputFontSize }}px</label>
                 <mat-slider [min]="12" [max]="20" [step]="1"
-                           [value]="theme.inputFontSize"
-                           (input)="updateProperty('inputFontSize', $event.value)"
+                           [(ngModel)]="theme.inputFontSize"
+                           (ngModelChange)="updateProperty('inputFontSize', $event.value)"
                            [discrete]="true">
                   <input matSliderThumb>
                 </mat-slider>
@@ -280,8 +280,8 @@ interface ComponentPreset {
               <div class="control-item">
                 <label>Border Radius: {{ theme.inputBorderRadius }}px</label>
                 <mat-slider [min]="0" [max]="20" [step]="2"
-                           [value]="theme.inputBorderRadius"
-                           (input)="updateProperty('inputBorderRadius', $event.value)"
+                           [(ngModel)]="theme.inputBorderRadius"
+                           (ngModelChange)="updateProperty('inputBorderRadius', $event.value)"
                            [discrete]="true">
                   <input matSliderThumb>
                 </mat-slider>
@@ -346,8 +346,8 @@ interface ComponentPreset {
               <div class="control-item">
                 <label>Padding: {{ theme.cardPadding }}px</label>
                 <mat-slider [min]="8" [max]="48" [step]="4"
-                           [value]="theme.cardPadding"
-                           (input)="updateProperty('cardPadding', $event.value)"
+                           [(ngModel)]="theme.cardPadding"
+                           (ngModelChange)="updateProperty('cardPadding', $event.value)"
                            [discrete]="true">
                   <input matSliderThumb>
                 </mat-slider>
@@ -356,8 +356,8 @@ interface ComponentPreset {
               <div class="control-item">
                 <label>Border Radius: {{ theme.cardBorderRadius }}px</label>
                 <mat-slider [min]="0" [max]="32" [step]="4"
-                           [value]="theme.cardBorderRadius"
-                           (input)="updateProperty('cardBorderRadius', $event.value)"
+                           [(ngModel)]="theme.cardBorderRadius"
+                           (ngModelChange)="updateProperty('cardBorderRadius', $event.value)"
                            [discrete]="true">
                   <input matSliderThumb>
                 </mat-slider>
@@ -366,8 +366,8 @@ interface ComponentPreset {
               <div class="control-item">
                 <label>Elevation: {{ theme.cardElevation }}</label>
                 <mat-slider [min]="0" [max]="24" [step]="1"
-                           [value]="theme.cardElevation"
-                           (input)="updateProperty('cardElevation', $event.value)"
+                           [(ngModel)]="theme.cardElevation"
+                           (ngModelChange)="updateProperty('cardElevation', $event.value)"
                            [discrete]="true">
                   <input matSliderThumb>
                 </mat-slider>
@@ -432,8 +432,8 @@ interface ComponentPreset {
               <div class="control-item">
                 <label>Border Radius: {{ theme.modalBorderRadius }}px</label>
                 <mat-slider [min]="0" [max]="32" [step]="4"
-                           [value]="theme.modalBorderRadius"
-                           (input)="updateProperty('modalBorderRadius', $event.value)"
+                           [(ngModel)]="theme.modalBorderRadius"
+                           (ngModelChange)="updateProperty('modalBorderRadius', $event.value)"
                            [discrete]="true">
                   <input matSliderThumb>
                 </mat-slider>
@@ -442,8 +442,8 @@ interface ComponentPreset {
               <div class="control-item">
                 <label>Padding: {{ theme.modalPadding }}px</label>
                 <mat-slider [min]="16" [max]="64" [step]="4"
-                           [value]="theme.modalPadding"
-                           (input)="updateProperty('modalPadding', $event.value)"
+                           [(ngModel)]="theme.modalPadding"
+                           (ngModelChange)="updateProperty('modalPadding', $event.value)"
                            [discrete]="true">
                   <input matSliderThumb>
                 </mat-slider>
@@ -486,8 +486,8 @@ interface ComponentPreset {
               <div class="control-item">
                 <label>Font Size: {{ theme.tooltipFontSize }}px</label>
                 <mat-slider [min]="10" [max]="16" [step]="1"
-                           [value]="theme.tooltipFontSize"
-                           (input)="updateProperty('tooltipFontSize', $event.value)"
+                           [(ngModel)]="theme.tooltipFontSize"
+                           (ngModelChange)="updateProperty('tooltipFontSize', $event.value)"
                            [discrete]="true">
                   <input matSliderThumb>
                 </mat-slider>
@@ -496,8 +496,8 @@ interface ComponentPreset {
               <div class="control-item">
                 <label>Padding: {{ theme.tooltipPadding }}px</label>
                 <mat-slider [min]="4" [max]="16" [step]="2"
-                           [value]="theme.tooltipPadding"
-                           (input)="updateProperty('tooltipPadding', $event.value)"
+                           [(ngModel)]="theme.tooltipPadding"
+                           (ngModelChange)="updateProperty('tooltipPadding', $event.value)"
                            [discrete]="true">
                   <input matSliderThumb>
                 </mat-slider>
@@ -506,8 +506,8 @@ interface ComponentPreset {
               <div class="control-item">
                 <label>Border Radius: {{ theme.tooltipBorderRadius }}px</label>
                 <mat-slider [min]="0" [max]="12" [step]="2"
-                           [value]="theme.tooltipBorderRadius"
-                           (input)="updateProperty('tooltipBorderRadius', $event.value)"
+                           [(ngModel)]="theme.tooltipBorderRadius"
+                           (ngModelChange)="updateProperty('tooltipBorderRadius', $event.value)"
                            [discrete]="true">
                   <input matSliderThumb>
                 </mat-slider>

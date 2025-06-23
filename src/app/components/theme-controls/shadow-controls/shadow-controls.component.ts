@@ -70,8 +70,8 @@ interface ShadowPreset {
             [min]="0"
             [max]="1"
             [step]="0.05"
-            [value]="theme.shadowIntensity"
-            (input)="updateProperty('shadowIntensity', $event.value)"
+            [(ngModel)]="theme.shadowIntensity"
+            (ngModelChange)="updateProperty('shadowIntensity', $event.value)"
             [discrete]="true">
             <input matSliderThumb>
           </mat-slider>
@@ -96,12 +96,12 @@ interface ShadowPreset {
                  (click)="colorPicker.click()"></div>
             <input #colorPicker
                    type="color"
-                   [value]="convertToHex(theme.shadowColor)"
-                   (input)="updateProperty('shadowColor', convertToRgba($any($event.target).value))"
+                   [(ngModel)]="convertToHex(theme.shadowColor)"
+                   (ngModelChange)="updateProperty('shadowColor', convertToRgba($any($event.target).value))"
                    class="hidden-input" />
             <input type="text"
-                   [value]="theme.shadowColor"
-                   (input)="updateProperty('shadowColor', $any($event.target).value)"
+                   [(ngModel)]="theme.shadowColor"
+                   (ngModelChange)="updateProperty('shadowColor', $any($event.target).value)"
                    class="color-text"
                    placeholder="rgba(0, 0, 0, 0.1)" />
 
@@ -271,8 +271,8 @@ interface ShadowPreset {
               [min]="0"
               [max]="30"
               [step]="1"
-              [value]="theme.blurIntensity"
-              (input)="updateProperty('blurIntensity', $event.value)"
+              [(ngModel)]="theme.blurIntensity"
+              (ngModelChange)="updateProperty('blurIntensity', $event.value)"
               [discrete]="true">
               <input matSliderThumb>
             </mat-slider>
@@ -285,8 +285,8 @@ interface ShadowPreset {
                 [min]="0"
                 [max]="20"
                 [step]="1"
-                [value]="theme.blurSmall"
-                (input)="updateProperty('blurSmall', $event.value)"
+                [(ngModel)]="theme.blurSmall"
+                (ngModelChange)="updateProperty('blurSmall', $event.value)"
                 [discrete]="true">
                 <input matSliderThumb>
               </mat-slider>
@@ -298,8 +298,8 @@ interface ShadowPreset {
                 [min]="0"
                 [max]="30"
                 [step]="1"
-                [value]="theme.blurMedium"
-                (input)="updateProperty('blurMedium', $event.value)"
+                [(ngModel)]="theme.blurMedium"
+                (ngModelChange)="updateProperty('blurMedium', $event.value)"
                 [discrete]="true">
                 <input matSliderThumb>
               </mat-slider>
@@ -311,8 +311,8 @@ interface ShadowPreset {
                 [min]="0"
                 [max]="50"
                 [step]="1"
-                [value]="theme.blurLarge"
-                (input)="updateProperty('blurLarge', $event.value)"
+                [(ngModel)]="theme.blurLarge"
+                (ngModelChange)="updateProperty('blurLarge', $event.value)"
                 [discrete]="true">
                 <input matSliderThumb>
               </mat-slider>

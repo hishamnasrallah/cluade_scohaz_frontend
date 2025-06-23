@@ -33,7 +33,7 @@ import { EffectsControlsComponent } from '../theme-controls/effects-controls/eff
 
 // Services and Models
 import { ThemeService } from '../../services/theme.service';
-import { ThemeConfig, ThemePreset } from '../../models/theme.model';
+import {ThemeConfig, ThemeDefaults, ThemePreset} from '../../models/theme.model';
 
 @Component({
   selector: 'app-theme-creator',
@@ -437,69 +437,9 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private getDefaultTheme(): ThemeConfig {
-    return {
-      // Core Colors
-      primaryColor: '#34C5AA',
-      secondaryColor: '#2BA99B',
-      backgroundColor: '#F4FDFD',
-      textColor: '#2F4858',
-      accentColor: '#5FD3C4',
-
-      // Semantic Colors
-      successColor: '#22C55E',
-      warningColor: '#F59E0B',
-      errorColor: '#EF4444',
-      infoColor: '#3B82F6',
-
-      // Surface Colors
-      surfaceCard: '#FFFFFF',
-      surfaceModal: '#FFFFFF',
-      surfaceHover: 'rgba(196, 247, 239, 0.3)',
-
-      // Typography
-      fontFamily: 'Inter, system-ui, sans-serif',
-      fontSizeBase: 16,
-      fontWeight: 400,
-      lineHeight: 1.5,
-      letterSpacing: 0,
-      headingFontFamily: 'Poppins, sans-serif',
-      headingFontWeight: 600,
-
-      // Spacing & Layout
-      spacingUnit: 16,
-      borderRadius: 12,
-      borderWidth: 1,
-
-      // Effects
-      shadowIntensity: 0.1,
-      blurIntensity: 10,
-      animationSpeed: 300,
-      animationEasing: 'ease-out',
-
-      // Features
-      designStyle: 'modern',
-      navigationStyle: 'elevated',
-      cardStyle: 'elevated',
-      buttonStyle: 'primary',
-
-      // Mode
-      mode: 'light',
-
-      // Performance
-      enableAnimations: true,
-      enableBlur: true,
-      enableShadows: true,
-
-      // Accessibility
-      reducedMotion: false,
-      highContrast: false,
-
-      // Brand
-      brandName: 'PraXelo Enterprise',
-      logoUrl: 'assets/logo.svg'
-    };
+    // Use the complete default theme from ThemeDefaults
+    return { ...ThemeDefaults.DEFAULT_THEME };
   }
-
   applyPreset(preset: ThemePreset): void {
     this.currentTheme = { ...this.currentTheme, ...preset.config };
     this.updateFormValues(this.currentTheme);
