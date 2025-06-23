@@ -556,7 +556,200 @@
   * {
     box-sizing: border-box;
   }
+  // Typography with ALL properties
+  .theme-h1 {
+    font-family: var(--theme-heading-font, 'Poppins, sans-serif');
+    font-weight: var(--theme-heading-weight, 600);
+    font-size: calc(var(--theme-h1-size, 40px) * var(--theme-text-scale, 1));
+    color: var(--theme-text, #2F4858);
+    margin: 0 0 calc(var(--theme-spacing, 16px) * 0.75);
+    line-height: var(--theme-line-height, 1.5);
+  }
 
+  .theme-h2 {
+    font-family: var(--theme-heading-font, 'Poppins, sans-serif');
+    font-weight: var(--theme-heading-weight, 600);
+    font-size: calc(var(--theme-h2-size, 32px) * var(--theme-text-scale, 1));
+    color: var(--theme-text, #2F4858);
+    margin: 0 0 calc(var(--theme-spacing, 16px) * 0.75);
+    line-height: var(--theme-line-height, 1.5);
+  }
+
+  .theme-h3 {
+    font-family: var(--theme-heading-font, 'Poppins, sans-serif');
+    font-weight: var(--theme-heading-weight, 600);
+    font-size: calc(var(--theme-h3-size, 28px) * var(--theme-text-scale, 1));
+    color: var(--theme-text, #2F4858);
+    margin: 0 0 calc(var(--theme-spacing, 16px) * 0.75);
+    line-height: var(--theme-line-height, 1.5);
+  }
+
+  .theme-h4 {
+    font-family: var(--theme-heading-font, 'Poppins, sans-serif');
+    font-weight: var(--theme-heading-weight, 600);
+    font-size: calc(var(--theme-h4-size, 24px) * var(--theme-text-scale, 1));
+    color: var(--theme-text, #2F4858);
+    margin: 0 0 calc(var(--theme-spacing, 16px) * 0.75);
+    line-height: var(--theme-line-height, 1.5);
+  }
+
+  .theme-h5 {
+    font-family: var(--theme-heading-font, 'Poppins, sans-serif');
+    font-weight: var(--theme-heading-weight, 600);
+    font-size: calc(var(--theme-h5-size, 20px) * var(--theme-text-scale, 1));
+    color: var(--theme-text, #2F4858);
+    margin: 0 0 calc(var(--theme-spacing, 16px) * 0.75);
+    line-height: var(--theme-line-height, 1.5);
+  }
+
+  .theme-h6 {
+    font-family: var(--theme-heading-font, 'Poppins, sans-serif');
+    font-weight: var(--theme-heading-weight, 600);
+    font-size: calc(var(--theme-h6-size, 18px) * var(--theme-text-scale, 1));
+    color: var(--theme-text, #2F4858);
+    margin: 0 0 calc(var(--theme-spacing, 16px) * 0.75);
+    line-height: var(--theme-line-height, 1.5);
+  }
+
+  // Text size variants
+  .theme-text {
+    color: var(--theme-text, #2F4858);
+    margin: 0 0 var(--theme-spacing, 16px);
+    font-size: calc(var(--theme-font-size, 16px) * var(--theme-text-scale, 1));
+    font-weight: var(--theme-font-weight, 400);
+    line-height: var(--theme-line-height, 1.5);
+    letter-spacing: var(--theme-letter-spacing, 0);
+  }
+
+  .theme-text-small {
+    color: var(--theme-text, #2F4858);
+    margin: 0 0 var(--theme-spacing, 16px);
+    font-size: calc(var(--theme-font-size-small, 14px) * var(--theme-text-scale, 1));
+    font-weight: var(--theme-font-weight-light, 300);
+    line-height: var(--theme-line-height-tight, 1.25);
+    letter-spacing: var(--theme-letter-spacing-tight, -0.025em);
+  }
+
+  .theme-text-medium {
+    color: var(--theme-text, #2F4858);
+    margin: 0 0 var(--theme-spacing, 16px);
+    font-size: calc(var(--theme-font-size-medium, 16px) * var(--theme-text-scale, 1));
+    font-weight: var(--theme-font-weight-medium, 500);
+    line-height: var(--theme-line-height, 1.5);
+    letter-spacing: var(--theme-letter-spacing, 0);
+  }
+
+  .theme-text-large {
+    color: var(--theme-text, #2F4858);
+    margin: 0 0 var(--theme-spacing, 16px);
+    font-size: calc(var(--theme-font-size-large, 18px) * var(--theme-text-scale, 1));
+    font-weight: var(--theme-font-weight-medium, 500);
+    line-height: var(--theme-line-height-relaxed, 1.75);
+    letter-spacing: var(--theme-letter-spacing-wide, 0.025em);
+  }
+
+  .theme-text-xlarge {
+    color: var(--theme-text, #2F4858);
+    margin: 0 0 var(--theme-spacing, 16px);
+    font-size: calc(var(--theme-font-size-xlarge, 20px) * var(--theme-text-scale, 1));
+    font-weight: var(--theme-font-weight-bold, 700);
+    line-height: var(--theme-line-height-relaxed, 1.75);
+    letter-spacing: var(--theme-letter-spacing-wide, 0.025em);
+  }
+
+  // Weight variants
+  .theme-weight-samples {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin: 24px 0;
+
+    span {
+      color: var(--theme-text, #2F4858);
+      font-size: calc(var(--theme-font-size, 16px) * var(--theme-text-scale, 1));
+    }
+  }
+
+  .theme-weight-light {
+    font-weight: var(--theme-font-weight-light, 300);
+  }
+
+  .theme-weight-regular {
+    font-weight: var(--theme-font-weight, 400);
+  }
+
+  .theme-weight-medium {
+    font-weight: var(--theme-font-weight-medium, 500);
+  }
+
+  .theme-weight-bold {
+    font-weight: var(--theme-font-weight-bold, 700);
+  }
+
+  // Line height variants
+  .theme-line-height-samples {
+    margin: 24px 0;
+
+    p {
+      margin: 0 0 16px;
+      color: var(--theme-text, #2F4858);
+      font-size: calc(var(--theme-font-size, 16px) * var(--theme-text-scale, 1));
+    }
+  }
+
+  .theme-line-tight {
+    line-height: var(--theme-line-height-tight, 1.25);
+  }
+
+  .theme-line-normal {
+    line-height: var(--theme-line-height, 1.5);
+  }
+
+  .theme-line-relaxed {
+    line-height: var(--theme-line-height-relaxed, 1.75);
+  }
+
+  // Letter spacing variants
+  .theme-letter-spacing-samples {
+    margin: 24px 0;
+
+    p {
+      margin: 0 0 16px;
+      color: var(--theme-text, #2F4858);
+      font-size: calc(var(--theme-font-size, 16px) * var(--theme-text-scale, 1));
+    }
+  }
+
+  .theme-spacing-tight {
+    letter-spacing: var(--theme-letter-spacing-tight, -0.025em);
+  }
+
+  .theme-spacing-normal {
+    letter-spacing: var(--theme-letter-spacing, 0);
+  }
+
+  .theme-spacing-wide {
+    letter-spacing: var(--theme-letter-spacing-wide, 0.025em);
+  }
+
+  // Update existing styles to use text scaling
+  .theme-heading {
+    font-size: calc(var(--theme-font-size, 16px) * 1.125 * var(--theme-text-scale, 1));
+  }
+
+  .theme-heading-small {
+    font-size: calc(var(--theme-font-size, 16px) * var(--theme-text-scale, 1));
+  }
+
+  .theme-text-secondary {
+    color: color-mix(in srgb, var(--theme-text, #2F4858) 70%, transparent);
+    font-size: calc(var(--theme-font-size, 16px) * 0.875 * var(--theme-text-scale, 1));
+  }
+
+  // Ensure all text elements use text scaling
+  * {
+    font-size: calc(var(--current-font-size, 1em) * var(--theme-text-scale, 1));
+  }
   // Brand Header
   .theme-brand-header {
     display: flex;

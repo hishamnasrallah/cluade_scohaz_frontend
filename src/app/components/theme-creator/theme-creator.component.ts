@@ -337,7 +337,7 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
     private snackBar: MatSnackBar,
     private cdr: ChangeDetectorRef
   ) {
-    this.currentTheme = this.getDefaultTheme(); // Add this line
+    this.currentTheme = this.getDefaultTheme();
     this.initializeForm();
   }
 
@@ -352,14 +352,13 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
         }
       });
 
-    // Subscribe to theme changes with debounce
+    // Subscribe to theme changes WITHOUT debounce for immediate updates
     this.themeChangeSubject
       .pipe(
-        debounceTime(100),
-        distinctUntilChanged(),
         takeUntil(this.destroy$)
       )
       .subscribe(changes => {
+        // Apply immediately to preview
         this.applyThemeToPreview(this.currentTheme);
       });
   }
@@ -587,15 +586,15 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
       gridBreakpointXl: [1280]
     });
 
-    // Subscribe to form changes
+    // Subscribe to form changes WITHOUT debounce for immediate updates
     this.themeForm.valueChanges
       .pipe(
-        debounceTime(100),
         takeUntil(this.destroy$)
       )
       .subscribe(values => {
         this.currentTheme = { ...this.currentTheme, ...values };
-        this.themeChangeSubject.next(values);
+        // Apply changes immediately
+        this.applyThemeToPreview(this.currentTheme);
       });
   }
 
@@ -669,7 +668,7 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
     root.style.setProperty('--theme-divider', theme.dividerColor || 'rgba(0, 0, 0, 0.08)');
     root.style.setProperty('--theme-overlay', theme.overlayColor || 'rgba(0, 0, 0, 0.5)');
 
-    // Typography
+    // Typography - ALL properties including new ones
     root.style.setProperty('--theme-font-family', theme.fontFamily);
     root.style.setProperty('--theme-font-size', `${theme.fontSizeBase}px`);
     root.style.setProperty('--theme-font-size-small', `${theme.fontSizeSmall}px`);
@@ -694,6 +693,10 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
     root.style.setProperty('--theme-h4-size', `${theme.h4Size}px`);
     root.style.setProperty('--theme-h5-size', `${theme.h5Size}px`);
     root.style.setProperty('--theme-h6-size', `${theme.h6Size}px`);
+
+    // Text scaling - IMPORTANT
+    root.style.setProperty('--theme-text-scale', theme.textScaling.toString());
+    root.style.setProperty('--theme-text-scaling', theme.textScaling.toString());
 
     // Spacing & Layout
     root.style.setProperty('--theme-spacing', `${theme.spacingUnit}px`);
@@ -782,9 +785,6 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
     root.style.setProperty('--theme-grid-columns', theme.gridColumns.toString());
     root.style.setProperty('--theme-grid-gutter', `${theme.gridGutter}px`);
 
-    // Text scaling
-    root.style.setProperty('--theme-text-scale', theme.textScaling.toString());
-
     // Apply design style class
     root.setAttribute('data-theme-style', theme.designStyle);
     root.setAttribute('data-theme-mode', theme.mode);
@@ -861,18 +861,16 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
   updateThemeProperty(property: keyof ThemeConfig, value: any): void {
     this.currentTheme = { ...this.currentTheme, [property]: value };
     this.themeForm.patchValue({ [property]: value }, { emitEvent: false });
-    this.themeChangeSubject.next({ [property]: value });
+    // Apply immediately
+    this.applyThemeToPreview(this.currentTheme);
   }
 
   onThemeChange(changes: Partial<ThemeConfig>): void {
     this.currentTheme = { ...this.currentTheme, ...changes };
     this.updateFormValues(this.currentTheme);
 
-    // Apply changes immediately to preview without debounce
+    // Apply changes immediately to preview
     this.applyThemeToPreview(this.currentTheme);
-
-    // Also update the subject for other subscribers
-    this.themeChangeSubject.next(changes);
   }
 
   async saveTheme(): Promise<void> {
