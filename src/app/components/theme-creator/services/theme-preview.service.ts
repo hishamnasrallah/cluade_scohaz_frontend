@@ -1,4 +1,4 @@
-// src/app/components/theme-creator/services/theme-preview.service.ts (FULL FILE)
+// src/app/components/theme-creator/services/theme-preview.service.ts (FULL FILE - UPDATED)
 import { Injectable } from '@angular/core';
 import { ThemeConfig } from '../../../models/theme.model';
 
@@ -26,6 +26,9 @@ export class ThemePreviewService {
     this.applyPerformanceSettings(root, theme);
     this.applyAccessibilitySettings(root, theme);
     this.applyDesignStyleClasses(root, theme);
+    this.applyDensitySettings(root, theme);
+    this.applyIconStyles(root, theme);
+    this.applyAnimationTimingFunctions(root, theme);
   }
 
   private applyCoreColors(root: HTMLElement, theme: ThemeConfig): void {
@@ -178,13 +181,14 @@ export class ThemePreviewService {
   }
 
   private applyAnimation(root: HTMLElement, theme: ThemeConfig): void {
-    root.style.setProperty(`${this.CSS_PREFIX}-duration`, `${theme.animationSpeed}ms`);
-    root.style.setProperty(`${this.CSS_PREFIX}-duration-slow`, `${theme.animationSpeedSlow}ms`);
-    root.style.setProperty(`${this.CSS_PREFIX}-duration-fast`, `${theme.animationSpeedFast}ms`);
-    root.style.setProperty(`${this.CSS_PREFIX}-easing`, theme.animationEasing);
-    root.style.setProperty(`${this.CSS_PREFIX}-easing-in`, theme.animationEasingIn);
-    root.style.setProperty(`${this.CSS_PREFIX}-easing-out`, theme.animationEasingOut);
-    root.style.setProperty(`${this.CSS_PREFIX}-easing-in-out`, theme.animationEasingInOut);
+    root.style.setProperty(`${this.CSS_PREFIX}-duration`, `${theme.animationSpeed || 300}ms`);
+    root.style.setProperty(`${this.CSS_PREFIX}-duration-slow`, `${theme.animationSpeedSlow || 500}ms`);
+    root.style.setProperty(`${this.CSS_PREFIX}-duration-fast`, `${theme.animationSpeedFast || 150}ms`);
+    root.style.setProperty(`${this.CSS_PREFIX}-duration-normal`, `${theme.animationSpeed || 300}ms`);
+    root.style.setProperty(`${this.CSS_PREFIX}-easing`, theme.animationEasing || 'ease-out');
+    root.style.setProperty(`${this.CSS_PREFIX}-easing-in`, theme.animationEasingIn || 'ease-in');
+    root.style.setProperty(`${this.CSS_PREFIX}-easing-out`, theme.animationEasingOut || 'ease-out');
+    root.style.setProperty(`${this.CSS_PREFIX}-easing-in-out`, theme.animationEasingInOut || 'ease-in-out');
   }
 
   private applyComponentSpecific(root: HTMLElement, theme: ThemeConfig): void {
@@ -224,12 +228,21 @@ export class ThemePreviewService {
   }
 
   private applyGradients(root: HTMLElement, theme: ThemeConfig): void {
+    // Set gradient enabled attribute
+    root.setAttribute('data-theme-gradients', theme.enableGradients ? 'true' : 'false');
+
     if (theme.enableGradients) {
-      root.style.setProperty(`${this.CSS_PREFIX}-gradient-primary`, theme.primaryGradient);
-      root.style.setProperty(`${this.CSS_PREFIX}-gradient-secondary`, theme.secondaryGradient);
-      root.style.setProperty(`${this.CSS_PREFIX}-gradient-accent`, theme.accentGradient);
-      root.style.setProperty(`${this.CSS_PREFIX}-gradient-background`, theme.backgroundGradient);
-      root.style.setProperty(`${this.CSS_PREFIX}-gradient-angle`, `${theme.gradientAngle}deg`);
+      root.style.setProperty(`${this.CSS_PREFIX}-gradient-primary`, theme.primaryGradient || 'linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%)');
+      root.style.setProperty(`${this.CSS_PREFIX}-gradient-secondary`, theme.secondaryGradient || 'linear-gradient(135deg, #5FD3C4 0%, #34C5AA 100%)');
+      root.style.setProperty(`${this.CSS_PREFIX}-gradient-accent`, theme.accentGradient || 'linear-gradient(135deg, #2F4858 0%, #3A5A6C 100%)');
+      root.style.setProperty(`${this.CSS_PREFIX}-gradient-background`, theme.backgroundGradient || 'linear-gradient(135deg, #F4FDFD 0%, #E8F9F7 100%)');
+      root.style.setProperty(`${this.CSS_PREFIX}-gradient-angle`, `${theme.gradientAngle || 135}deg`);
+
+      // Also set without prefix for easier usage
+      root.style.setProperty(`${this.CSS_PREFIX}-primary-gradient`, theme.primaryGradient || 'linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%)');
+      root.style.setProperty(`${this.CSS_PREFIX}-secondary-gradient`, theme.secondaryGradient || 'linear-gradient(135deg, #5FD3C4 0%, #34C5AA 100%)');
+      root.style.setProperty(`${this.CSS_PREFIX}-accent-gradient`, theme.accentGradient || 'linear-gradient(135deg, #2F4858 0%, #3A5A6C 100%)');
+      root.style.setProperty(`${this.CSS_PREFIX}-background-gradient`, theme.backgroundGradient || 'linear-gradient(135deg, #F4FDFD 0%, #E8F9F7 100%)');
     }
   }
 
@@ -249,14 +262,14 @@ export class ThemePreviewService {
   }
 
   private applyDesignAttributes(root: HTMLElement, theme: ThemeConfig): void {
-    root.setAttribute('data-theme-style', theme.designStyle);
-    root.setAttribute('data-theme-mode', theme.mode);
-    root.setAttribute('data-navigation-style', theme.navigationStyle);
-    root.setAttribute('data-card-style', theme.cardStyle);
-    root.setAttribute('data-button-style', theme.buttonStyle);
-    root.setAttribute('data-icon-style', theme.iconStyle);
-    root.setAttribute('data-density', theme.density);
-    root.setAttribute('data-layout-type', theme.layoutType);
+    root.setAttribute('data-theme-style', theme.designStyle || 'modern');
+    root.setAttribute('data-theme-mode', theme.mode || 'light');
+    root.setAttribute('data-navigation-style', theme.navigationStyle || 'elevated');
+    root.setAttribute('data-card-style', theme.cardStyle || 'elevated');
+    root.setAttribute('data-button-style', theme.buttonStyle || 'primary');
+    root.setAttribute('data-icon-style', theme.iconStyle || 'outlined');
+    root.setAttribute('data-density', theme.density || 'comfortable');
+    root.setAttribute('data-layout-type', theme.layoutType || 'fluid');
   }
 
   private applyPerformanceSettings(root: HTMLElement, theme: ThemeConfig): void {
@@ -277,6 +290,30 @@ export class ThemePreviewService {
     } else {
       root.classList.remove('no-blur');
     }
+
+    if (!theme.enableTransitions) {
+      root.classList.add('no-transitions');
+    } else {
+      root.classList.remove('no-transitions');
+    }
+
+    if (!theme.enableHoverEffects) {
+      root.classList.add('no-hover');
+    } else {
+      root.classList.remove('no-hover');
+    }
+
+    if (!theme.enableFocusEffects) {
+      root.classList.add('no-focus');
+    } else {
+      root.classList.remove('no-focus');
+    }
+
+    if (!theme.enableRipple) {
+      root.classList.add('no-ripple');
+    } else {
+      root.classList.remove('no-ripple');
+    }
   }
 
   private applyAccessibilitySettings(root: HTMLElement, theme: ThemeConfig): void {
@@ -290,6 +327,24 @@ export class ThemePreviewService {
       root.classList.add('high-contrast');
     } else {
       root.classList.remove('high-contrast');
+    }
+
+    if (theme.focusVisible) {
+      root.classList.add('focus-visible');
+    } else {
+      root.classList.remove('focus-visible');
+    }
+
+    if (theme.keyboardNavigation) {
+      root.classList.add('keyboard-nav');
+    } else {
+      root.classList.remove('keyboard-nav');
+    }
+
+    if (theme.screenReaderFriendly) {
+      root.classList.add('screen-reader');
+    } else {
+      root.classList.remove('screen-reader');
     }
   }
 
@@ -315,5 +370,46 @@ export class ThemePreviewService {
     // Apply density
     root.classList.remove('density-comfortable', 'density-compact', 'density-spacious');
     root.classList.add(`density-${theme.density}`);
+  }
+
+  private applyDensitySettings(root: HTMLElement, theme: ThemeConfig): void {
+    // Set density as data attribute
+    root.setAttribute('data-density', theme.density || 'comfortable');
+
+    // Apply density-specific variables
+    const densityMultipliers = {
+      'compact': 0.8,
+      'comfortable': 1,
+      'spacious': 1.2
+    };
+
+    const multiplier = densityMultipliers[theme.density || 'comfortable'] || 1;
+
+    // Apply density to various properties
+    root.style.setProperty(`${this.CSS_PREFIX}-density-multiplier`, multiplier.toString());
+  }
+
+  private applyIconStyles(root: HTMLElement, theme: ThemeConfig): void {
+    // Set icon style as data attribute
+    root.setAttribute('data-icon-style', theme.iconStyle || 'outlined');
+
+    // Apply icon-specific classes
+    root.classList.remove('icons-outlined', 'icons-filled', 'icons-rounded', 'icons-sharp', 'icons-two-tone');
+    root.classList.add(`icons-${theme.iconStyle || 'outlined'}`);
+  }
+
+  private applyAnimationTimingFunctions(root: HTMLElement, theme: ThemeConfig): void {
+    // Set all animation timing function variations
+    root.style.setProperty(`${this.CSS_PREFIX}-timing`, theme.animationEasing || 'ease-out');
+    root.style.setProperty(`${this.CSS_PREFIX}-timing-in`, theme.animationEasingIn || 'ease-in');
+    root.style.setProperty(`${this.CSS_PREFIX}-timing-out`, theme.animationEasingOut || 'ease-out');
+    root.style.setProperty(`${this.CSS_PREFIX}-timing-in-out`, theme.animationEasingInOut || 'ease-in-out');
+
+    // Apply specific animation properties for preview elements
+    const animatedElements = root.querySelectorAll('.animated-element');
+    animatedElements.forEach(element => {
+      (element as HTMLElement).style.setProperty('--duration', `${theme.animationSpeed || 300}ms`);
+      (element as HTMLElement).style.setProperty('--timing', theme.animationEasing || 'ease-out');
+    });
   }
 }

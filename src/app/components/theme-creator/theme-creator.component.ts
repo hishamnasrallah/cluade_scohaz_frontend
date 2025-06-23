@@ -1,4 +1,4 @@
-// src/app/components/theme-creator/theme-creator.component.ts (COMPLETE FULL FILE)
+// src/app/components/theme-creator/theme-creator.component.ts (COMPLETE FULL FILE - UPDATED)
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -34,6 +34,11 @@ import { ComponentControlsComponent } from '../theme-controls/component-controls
 import { AnimationControlsComponent } from '../theme-controls/animation-controls/animation-controls.component';
 import { BrandControlsComponent } from '../theme-controls/brand-controls/brand-controls.component';
 import { AccessibilityControlsComponent } from '../theme-controls/accessibility-controls/accessibility-controls.component';
+
+// NEW ADVANCED COMPONENTS
+import { GradientEditorComponent } from '../theme-controls/gradient-editor/gradient-editor.component';
+import { IconStyleSelectorComponent } from '../theme-controls/icon-style-selector/icon-style-selector.component';
+import { DensityControlsComponent } from '../theme-controls/density-controls/density-controls.component';
 
 // Services and View Model
 import { ThemeService } from '../../services/theme.service';
@@ -95,7 +100,14 @@ import { ThemePreset } from '../../models/theme.model';
     ComponentControlsComponent,
     AnimationControlsComponent,
     BrandControlsComponent,
-    AccessibilityControlsComponent
+    AccessibilityControlsComponent,
+    // GradientEditorComponent,
+    DensityControlsComponent,
+    IconStyleSelectorComponent,
+    // NEW ADVANCED COMPONENTS
+    GradientEditorComponent,
+    IconStyleSelectorComponent,
+    DensityControlsComponent
   ],
   providers: [
     ThemeFormService,

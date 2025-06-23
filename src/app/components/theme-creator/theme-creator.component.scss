@@ -539,6 +539,48 @@
 
 // CRITICAL: Isolated Theme Preview Styles
 .theme-preview-root {
+  &[data-density="compact"] {
+    .theme-card {
+      padding: calc(var(--theme-card-padding, 24px) * 0.75);
+    }
+
+    .theme-button {
+      height: calc(var(--theme-button-height, 40px) * 0.85);
+      font-size: calc(var(--theme-button-font-size, 14px) * 0.9);
+    }
+
+    .theme-input {
+      height: calc(var(--theme-input-height, 44px) * 0.85);
+    }
+  }
+
+  &[data-density="spacious"] {
+    .theme-card {
+      padding: calc(var(--theme-card-padding, 24px) * 1.25);
+    }
+
+    .theme-button {
+      height: calc(var(--theme-button-height, 40px) * 1.15);
+      font-size: calc(var(--theme-button-font-size, 14px) * 1.1);
+    }
+
+    .theme-input {
+      height: calc(var(--theme-input-height, 44px) * 1.15);
+    }
+  }
+  &[data-theme-gradients="true"] {
+    .theme-button-primary {
+      background: var(--theme-primary-gradient, linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%)) !important;
+    }
+
+    .theme-icon-container {
+      background: var(--theme-accent-gradient, linear-gradient(135deg, #2F4858 0%, #3A5A6C 100%));
+    }
+
+    .preview-brand-header {
+      background: var(--theme-background-gradient, linear-gradient(135deg, #F4FDFD 0%, #E8F9F7 100%));
+    }
+  }
   // Isolate the preview from parent styles
   all: initial;
   display: block;
@@ -1840,6 +1882,194 @@
             left: auto;
             right: 50%;
             transform: translateX(50%);
+          }
+        }
+      }
+    }
+  }
+}
+
+// Gradient Showcase Styles
+.gradient-showcase {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+
+  .gradient-box {
+    height: 80px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    transition: transform var(--theme-duration, 300ms) var(--theme-easing, ease-out);
+
+    &:hover {
+      transform: scale(1.05);
+    }
+  }
+}
+
+// Icon Showcase Styles
+.icon-showcase {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 20px;
+  background: var(--theme-surface-hover, rgba(196, 247, 239, 0.15));
+  border-radius: 12px;
+
+  mat-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: var(--theme-text, #2F4858);
+    transition: all var(--theme-duration, 300ms) var(--theme-easing, ease-out);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--theme-primary, #34C5AA);
+      transform: scale(1.2);
+    }
+
+    // Icon style classes
+    &.icon-outlined {
+      font-family: 'Material Icons Outlined' !important;
+    }
+
+    &.icon-filled {
+      font-family: 'Material Icons' !important;
+    }
+
+    &.icon-rounded {
+      font-family: 'Material Icons Round' !important;
+    }
+
+    &.icon-sharp {
+      font-family: 'Material Icons Sharp' !important;
+    }
+
+    &.icon-two-tone {
+      font-family: 'Material Icons Two Tone' !important;
+    }
+  }
+}
+
+// Animation Examples Styles
+.animation-examples {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+
+  .animated-element {
+    padding: 20px;
+    background: linear-gradient(135deg, var(--theme-primary, #34C5AA) 0%, var(--theme-secondary, #2BA99B) 100%);
+    color: white;
+    text-align: center;
+    border-radius: 12px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(52, 197, 170, 0.3);
+
+    &.fade-in {
+      animation: fadeIn var(--duration) var(--timing) infinite alternate;
+    }
+
+    &.slide-in {
+      animation: slideIn var(--duration) var(--timing) infinite alternate;
+    }
+
+    &.scale-in {
+      animation: scaleIn var(--duration) var(--timing) infinite alternate;
+    }
+
+    &.rotate-in {
+      animation: rotateIn var(--duration) var(--timing) infinite alternate;
+    }
+  }
+}
+
+
+
+// Animation keyframes to add
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes slideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  0% {
+    opacity: 0.8;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes rotateIn {
+  0% {
+    opacity: 0.8;
+    transform: rotate(-10deg) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(0) scale(1);
+  }
+}
+
+.theme-tabs {
+  ::ng-deep {
+    // Make tabs scrollable for new tabs
+    .mat-mdc-tab-labels {
+      overflow-x: auto;
+      overflow-y: hidden;
+
+      &::-webkit-scrollbar {
+        height: 3px;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: rgba(52, 197, 170, 0.3);
+        border-radius: 3px;
+      }
+    }
+
+    // Smaller tab sizes to fit more tabs
+    .mat-mdc-tab {
+      min-width: 60px !important;
+      padding: 0 12px !important;
+
+      .mdc-tab__content {
+        span {
+          font-size: 13px;
+          display: none;
+
+          @media (min-width: 1280px) {
+            display: inline;
           }
         }
       }

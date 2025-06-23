@@ -1,4 +1,4 @@
-<!-- src/app/components/theme-creator/theme-creator.component.html (FULL FILE) -->
+<!-- src/app/components/theme-creator/theme-creator.component.html (FULL FILE - UPDATED) -->
 <div class="theme-creator-container">
   <!-- Header -->
   <mat-card class="theme-header ocean-mint-card">
@@ -108,6 +108,22 @@
             </div>
           </mat-tab>
 
+          <!-- Gradients Tab (NEW) -->
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon>gradient</mat-icon>
+              <span>Gradients</span>
+            </ng-template>
+
+            <div class="tab-content">
+              <!-- Gradient Editor -->
+              <app-gradient-editor
+                [theme]="currentTheme"
+                (themeChange)="onThemeChange($event)">
+              </app-gradient-editor>
+            </div>
+          </mat-tab>
+
           <!-- Typography Tab -->
           <mat-tab>
             <ng-template mat-tab-label>
@@ -137,6 +153,22 @@
                 [theme]="currentTheme"
                 (themeChange)="onThemeChange($event)">
               </app-layout-controls>
+            </div>
+          </mat-tab>
+
+          <!-- Density Tab (NEW) -->
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon>view_comfy</mat-icon>
+              <span>Density</span>
+            </ng-template>
+
+            <div class="tab-content">
+              <!-- Density Controls -->
+              <app-density-controls
+                [theme]="currentTheme"
+                (themeChange)="onThemeChange($event)">
+              </app-density-controls>
             </div>
           </mat-tab>
 
@@ -185,6 +217,22 @@
                 [theme]="currentTheme"
                 (themeChange)="onThemeChange($event)">
               </app-component-controls>
+            </div>
+          </mat-tab>
+
+          <!-- Icons Tab (NEW) -->
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon>emoji_symbols</mat-icon>
+              <span>Icons</span>
+            </ng-template>
+
+            <div class="tab-content">
+              <!-- Icon Style Selector -->
+              <app-icon-style-selector
+                [theme]="currentTheme"
+                (themeChange)="onThemeChange($event)">
+              </app-icon-style-selector>
             </div>
           </mat-tab>
 
@@ -278,7 +326,9 @@
               <mat-card *ngFor="let metric of sampleMetrics; trackBy: trackByMetric"
                         class="metric-card theme-card">
                 <div class="metric-header">
-                  <mat-icon class="theme-icon" [style.color]="metric.trend === 'up' ? currentTheme.successColor : currentTheme.errorColor">
+                  <mat-icon class="theme-icon"
+                            [class]="'icon-' + currentTheme.iconStyle"
+                            [style.color]="metric.trend === 'up' ? currentTheme.successColor : currentTheme.errorColor">
                     {{ metric.icon }}
                   </mat-icon>
                   <span class="metric-change theme-text-accent"
@@ -308,7 +358,7 @@
                             [style.font-size.px]="currentTheme.buttonFontSize"
                             [style.font-weight]="currentTheme.buttonFontWeight"
                             [style.border-radius.px]="currentTheme.buttonBorderRadius">
-                      <mat-icon>check</mat-icon>
+                      <mat-icon [class]="'icon-' + currentTheme.iconStyle">check</mat-icon>
                       Primary Button
                     </button>
 
@@ -334,8 +384,31 @@
                             [style.width.px]="currentTheme.buttonHeight"
                             [style.height.px]="currentTheme.buttonHeight"
                             [style.border-radius.px]="currentTheme.buttonBorderRadius">
-                      <mat-icon>add</mat-icon>
+                      <mat-icon [class]="'icon-' + currentTheme.iconStyle">add</mat-icon>
                     </button>
+                  </div>
+                </div>
+
+                <!-- Gradient Showcase (NEW) -->
+                <div class="component-section" *ngIf="currentTheme.enableGradients">
+                  <h4 class="section-title theme-heading-small">Gradients</h4>
+                  <div class="gradient-showcase">
+                    <div class="gradient-box"
+                         [style.background]="currentTheme.primaryGradient">
+                      Primary Gradient
+                    </div>
+                    <div class="gradient-box"
+                         [style.background]="currentTheme.secondaryGradient">
+                      Secondary Gradient
+                    </div>
+                    <div class="gradient-box"
+                         [style.background]="currentTheme.accentGradient">
+                      Accent Gradient
+                    </div>
+                    <div class="gradient-box"
+                         [style.background]="currentTheme.backgroundGradient">
+                      Background Gradient
+                    </div>
                   </div>
                 </div>
 
@@ -352,7 +425,7 @@
                            [style.border-radius.px]="currentTheme.inputBorderRadius">
 
                     <div class="input-with-icon">
-                      <mat-icon class="input-icon">search</mat-icon>
+                      <mat-icon class="input-icon" [class]="'icon-' + currentTheme.iconStyle">search</mat-icon>
                       <input type="text"
                              placeholder="Search..."
                              class="theme-input with-icon"
@@ -402,11 +475,24 @@
                          [style.border-radius.px]="currentTheme.cardBorderRadius"
                          [attr.data-elevation]="currentTheme.cardElevation">
                       <div class="card-header">
-                        <mat-icon>dashboard</mat-icon>
+                        <mat-icon [class]="'icon-' + currentTheme.iconStyle">dashboard</mat-icon>
                         <span>Compact Card</span>
                       </div>
                       <p>Smaller card variant with adjusted padding</p>
                     </div>
+                  </div>
+                </div>
+
+                <!-- Icon Styles Showcase (NEW) -->
+                <div class="component-section">
+                  <h4 class="section-title theme-heading-small">Icon Styles</h4>
+                  <div class="icon-showcase">
+                    <mat-icon [class]="'icon-' + currentTheme.iconStyle">home</mat-icon>
+                    <mat-icon [class]="'icon-' + currentTheme.iconStyle">favorite</mat-icon>
+                    <mat-icon [class]="'icon-' + currentTheme.iconStyle">settings</mat-icon>
+                    <mat-icon [class]="'icon-' + currentTheme.iconStyle">star</mat-icon>
+                    <mat-icon [class]="'icon-' + currentTheme.iconStyle">notifications</mat-icon>
+                    <mat-icon [class]="'icon-' + currentTheme.iconStyle">shopping_cart</mat-icon>
                   </div>
                 </div>
 
@@ -420,7 +506,7 @@
                       <div class="modal-header">
                         <h3>Modal Title</h3>
                         <button class="modal-close">
-                          <mat-icon>close</mat-icon>
+                          <mat-icon [class]="'icon-' + currentTheme.iconStyle">close</mat-icon>
                         </button>
                       </div>
                       <div class="modal-content">
@@ -449,7 +535,7 @@
                     </div>
 
                     <div class="tooltip-trigger">
-                      <mat-icon>info</mat-icon>
+                      <mat-icon [class]="'icon-' + currentTheme.iconStyle">info</mat-icon>
                       <div class="theme-tooltip icon-tooltip"
                            [style.font-size.px]="currentTheme.tooltipFontSize"
                            [style.padding.px]="currentTheme.tooltipPadding"
@@ -474,13 +560,13 @@
                     <mat-form-field appearance="outline" class="theme-form-field">
                       <mat-label>Full Name</mat-label>
                       <input matInput placeholder="Enter your name" class="theme-input">
-                      <mat-icon matPrefix class="theme-icon">person</mat-icon>
+                      <mat-icon matPrefix class="theme-icon" [class]="'icon-' + currentTheme.iconStyle">person</mat-icon>
                     </mat-form-field>
 
                     <mat-form-field appearance="outline" class="theme-form-field">
                       <mat-label>Email</mat-label>
                       <input matInput type="email" placeholder="Enter your email" class="theme-input">
-                      <mat-icon matPrefix class="theme-icon">email</mat-icon>
+                      <mat-icon matPrefix class="theme-icon" [class]="'icon-' + currentTheme.iconStyle">email</mat-icon>
                     </mat-form-field>
                   </div>
 
@@ -492,12 +578,12 @@
                   <div class="button-group">
                     <button mat-raised-button
                             class="theme-button theme-button-primary">
-                      <mat-icon>check</mat-icon>
+                      <mat-icon [class]="'icon-' + currentTheme.iconStyle">check</mat-icon>
                       Submit
                     </button>
 
                     <button mat-raised-button class="theme-button theme-button-secondary">
-                      <mat-icon>refresh</mat-icon>
+                      <mat-icon [class]="'icon-' + currentTheme.iconStyle">refresh</mat-icon>
                       Reset
                     </button>
 
@@ -548,10 +634,42 @@
                   <div *ngFor="let feature of enterpriseFeatures; trackBy: trackByFeature"
                        class="feature-item theme-feature-card">
                     <div class="feature-icon theme-icon-container">
-                      <mat-icon class="theme-icon-large">{{ feature.icon }}</mat-icon>
+                      <mat-icon class="theme-icon-large" [class]="'icon-' + currentTheme.iconStyle">{{ feature.icon }}</mat-icon>
                     </div>
                     <h4 class="feature-title theme-heading-small">{{ feature.title }}</h4>
                     <p class="feature-desc theme-text-secondary">{{ feature.description }}</p>
+                  </div>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <!-- Animated Elements Preview (NEW) -->
+            <mat-card class="animation-preview theme-card" *ngIf="currentTheme.enableAnimations">
+              <mat-card-header>
+                <mat-card-title class="theme-heading">Animation Preview</mat-card-title>
+              </mat-card-header>
+
+              <mat-card-content>
+                <div class="animation-examples">
+                  <div class="animated-element fade-in"
+                       [style.animation-duration.ms]="currentTheme.animationSpeed"
+                       [style.animation-timing-function]="currentTheme.animationEasing">
+                    Fade In
+                  </div>
+                  <div class="animated-element slide-in"
+                       [style.animation-duration.ms]="currentTheme.animationSpeed"
+                       [style.animation-timing-function]="currentTheme.animationEasing">
+                    Slide In
+                  </div>
+                  <div class="animated-element scale-in"
+                       [style.animation-duration.ms]="currentTheme.animationSpeedFast"
+                       [style.animation-timing-function]="currentTheme.animationEasing">
+                    Scale In
+                  </div>
+                  <div class="animated-element rotate-in"
+                       [style.animation-duration.ms]="currentTheme.animationSpeedSlow"
+                       [style.animation-timing-function]="currentTheme.animationEasing">
+                    Rotate In
                   </div>
                 </div>
               </mat-card-content>
