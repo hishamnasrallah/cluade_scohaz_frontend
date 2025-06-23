@@ -113,10 +113,10 @@ import { ThemeConfig } from '../../../models/theme.model';
           <div class="control-item">
             <label>Gradient Angle: {{ theme.gradientAngle }}°</label>
             <mat-slider [min]="0" [max]="360" [step]="15"
-                        [(ngModel)]="theme.gradientAngle"
-                        (ngModelChange)="updateProperty('gradientAngle', $event)"
                         [discrete]="true">
-              <input matSliderThumb>
+              <input matSliderThumb
+                     [value]="theme.gradientAngle"
+                     (valueChange)="updateProperty('gradientAngle', $event)">
             </mat-slider>
           </div>
         </div>

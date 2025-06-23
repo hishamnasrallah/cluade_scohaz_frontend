@@ -27,30 +27,30 @@ import { ThemeConfig } from '../../../models/theme.model';
         <div class="control-item">
           <label>Normal Speed: {{ theme.animationSpeed }}ms</label>
           <mat-slider [min]="0" [max]="1000" [step]="50"
-                      [(ngModel)]="theme.animationSpeed"
-                      (ngModelChange)="updateProperty('animationSpeed', $event)"
                       [discrete]="true">
-            <input matSliderThumb>
+            <input matSliderThumb
+                   [value]="theme.animationSpeed"
+                   (valueChange)="updateProperty('animationSpeed', $event)">
           </mat-slider>
         </div>
 
         <div class="control-item">
           <label>Slow Speed: {{ theme.animationSpeedSlow }}ms</label>
           <mat-slider [min]="0" [max]="2000" [step]="100"
-                      [(ngModel)]="theme.animationSpeedSlow"
-                      (ngModelChange)="updateProperty('animationSpeedSlow', $event)"
                       [discrete]="true">
-            <input matSliderThumb>
+            <input matSliderThumb
+                   [value]="theme.animationSpeedSlow"
+                   (valueChange)="updateProperty('animationSpeedSlow', $event)">
           </mat-slider>
         </div>
 
         <div class="control-item">
           <label>Fast Speed: {{ theme.animationSpeedFast }}ms</label>
           <mat-slider [min]="0" [max]="500" [step]="25"
-                      [(ngModel)]="theme.animationSpeedFast"
-                      (ngModelChange)="updateProperty('animationSpeedFast', $event)"
                       [discrete]="true">
-            <input matSliderThumb>
+            <input matSliderThumb
+                   [value]="theme.animationSpeedFast"
+                   (valueChange)="updateProperty('animationSpeedFast', $event)">
           </mat-slider>
         </div>
       </div>

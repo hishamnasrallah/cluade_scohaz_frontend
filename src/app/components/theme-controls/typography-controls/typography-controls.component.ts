@@ -40,9 +40,8 @@ import {MatSlider, MatSliderThumb} from '@angular/material/slider';
           <label>Font Size: {{ theme.fontSizeBase }}px</label>
           <mat-slider [min]="12" [max]="24" [step]="1" [discrete]="true">
             <input matSliderThumb
-                   name="fontSizeBase"
-                   [(ngModel)]="theme.fontSizeBase"
-                   (ngModelChange)="updateProperty('fontSizeBase', $event)">
+                   [value]="theme.fontSizeBase"
+                   (valueChange)="updateProperty('fontSizeBase', $event)">
           </mat-slider>
           <div class="font-size-preview">
             <span [style.font-size.px]="12">Small (12px)</span>

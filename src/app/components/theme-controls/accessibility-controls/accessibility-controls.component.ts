@@ -83,10 +83,10 @@ import { ThemeConfig } from '../../../models/theme.model';
         <div class="control-item">
           <label>Text Scale: {{ (theme.textScaling * 100).toFixed(0) }}%</label>
           <mat-slider [min]="0.8" [max]="1.5" [step]="0.05"
-                      [(ngModel)]="theme.textScaling"
-                      (ngModelChange)="updateProperty('textScaling', $event)"
                       [discrete]="true">
-            <input matSliderThumb>
+            <input matSliderThumb
+                   [value]="theme.textScaling"
+                   (valueChange)="updateProperty('textScaling', $event)">
           </mat-slider>
         </div>
       </div>

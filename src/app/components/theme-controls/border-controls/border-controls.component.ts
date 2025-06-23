@@ -59,10 +59,10 @@ interface BorderPreset {
               [min]="0"
               [max]="50"
               [step]="1"
-              [(ngModel)]="theme.borderRadius"
-              (ngModelChange)="updateProperty('borderRadius', $event.value)"
               [discrete]="true">
-              <input matSliderThumb>
+              <input matSliderThumb
+                     [value]="theme.borderRadius"
+                     (valueChange)="updateProperty('borderRadius', $event)">
             </mat-slider>
             <div class="preview-box" [style.border-radius.px]="theme.borderRadius"></div>
           </div>
@@ -73,10 +73,10 @@ interface BorderPreset {
               [min]="0"
               [max]="30"
               [step]="1"
-              [(ngModel)]="theme.borderRadiusSmall"
-              (ngModelChange)="updateProperty('borderRadiusSmall', $event.value)"
               [discrete]="true">
-              <input matSliderThumb>
+              <input matSliderThumb
+                     [value]="theme.borderRadiusSmall"
+                     (valueChange)="updateProperty('borderRadiusSmall', $event)">
             </mat-slider>
             <div class="preview-box small" [style.border-radius.px]="theme.borderRadiusSmall"></div>
           </div>
@@ -85,10 +85,10 @@ interface BorderPreset {
             <label>Medium Radius: {{ theme.borderRadiusMedium }}px</label>
             <mat-slider
               [min]="0"
-              [max]="40"
+              [max]="60"
               [step]="1"
-              [(ngModel)]="theme.borderRadiusMedium"
-              (ngModelChange)="updateProperty('borderRadiusMedium', $event.value)"
+              [(ngModel)]="theme.borderRadiusLarge"
+              (ngModelChange)="updateProperty('borderRadiusLarge', $event.value)"
               [discrete]="true">
               <input matSliderThumb>
             </mat-slider>
@@ -101,24 +101,21 @@ interface BorderPreset {
               [min]="0"
               [max]="60"
               [step]="1"
-              [(ngModel)]="theme.borderRadiusLarge"
-              (ngModelChange)="updateProperty('borderRadiusLarge', $event.value)"
               [discrete]="true">
-              <input matSliderThumb>
+              <input matSliderThumb
+                     [value]="theme.borderRadiusLarge"
+                     (valueChange)="updateProperty('borderRadiusLarge', $event)">
             </mat-slider>
             <div class="preview-box large" [style.border-radius.px]="theme.borderRadiusLarge"></div>
           </div>
 
           <div class="control-item">
             <label>Circle Radius: {{ theme.borderRadiusCircle }}px</label>
-            <mat-slider
-              [min]="0"
-              [max]="50"
-              [step]="1"
-              [(ngModel)]="theme.borderRadius"
-              (ngModelChange)="updateProperty('borderRadius', $event)"
-              [discrete]="true">
-              <input matSliderThumb>
+            <mat-slider [min]="0" [max]="50" [step]="1"
+                        [discrete]="true">
+              <input matSliderThumb
+                     [value]="theme.borderRadiusCircle"
+                     (valueChange)="updateProperty('borderRadiusCircle', $event)">
             </mat-slider>
 
             <div class="preview-box circle" [style.border-radius.px]="theme.borderRadiusCircle"></div>
@@ -136,10 +133,10 @@ interface BorderPreset {
             [min]="0"
             [max]="10"
             [step]="1"
-            [(ngModel)]="theme.borderWidth"
-            (ngModelChange)="updateProperty('borderWidth', $event.value)"
             [discrete]="true">
-            <input matSliderThumb>
+            <input matSliderThumb
+                   [value]="theme.borderWidth"
+                   (valueChange)="updateProperty('borderWidth', $event)">
           </mat-slider>
 
           <div class="width-preview">

@@ -81,11 +81,11 @@ export class ThemePreviewService {
     root.style.setProperty(`${this.CSS_PREFIX}-font-size`, `${theme.fontSizeBase}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-font-size-base`, `${theme.fontSizeBase}px`);
 
-    // Font size variants
-    root.style.setProperty(`${this.CSS_PREFIX}-font-size-small`, `${theme.fontSizeSmall}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-font-size-medium`, `${theme.fontSizeMedium}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-font-size-large`, `${theme.fontSizeLarge}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-font-size-xlarge`, `${theme.fontSizeXLarge}px`);
+    // Font size variants with defaults
+    root.style.setProperty(`${this.CSS_PREFIX}-font-size-small`, `${theme.fontSizeSmall || 14}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-font-size-medium`, `${theme.fontSizeMedium || 16}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-font-size-large`, `${theme.fontSizeLarge || 18}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-font-size-xlarge`, `${theme.fontSizeXLarge || 20}px`);
 
 // Font weights
     root.style.setProperty(`${this.CSS_PREFIX}-font-weight`, (theme.fontWeight || 400).toString());
@@ -102,41 +102,38 @@ export class ThemePreviewService {
     root.style.setProperty(`${this.CSS_PREFIX}-text-scale`, (theme.textScaling || 1).toString());
     root.style.setProperty(`${this.CSS_PREFIX}-text-scaling`, (theme.textScaling || 1).toString());
 
-    // Letter spacing
-    root.style.setProperty(`${this.CSS_PREFIX}-letter-spacing`, `${theme.letterSpacing}em`);
-    root.style.setProperty(`${this.CSS_PREFIX}-letter-spacing-tight`, `${theme.letterSpacingTight}em`);
-    root.style.setProperty(`${this.CSS_PREFIX}-letter-spacing-wide`, `${theme.letterSpacingWide}em`);
+// Letter spacing - fix the undefined issue
+    root.style.setProperty(`${this.CSS_PREFIX}-letter-spacing`, `${theme.letterSpacing || 0}em`);
+    root.style.setProperty(`${this.CSS_PREFIX}-letter-spacing-tight`, `${theme.letterSpacingTight || -0.025}em`);
+    root.style.setProperty(`${this.CSS_PREFIX}-letter-spacing-wide`, `${theme.letterSpacingWide || 0.025}em`);
 
-    // Heading typography
+// Heading typography - add null checks
+    root.style.setProperty(`${this.CSS_PREFIX}-heading-weight`, (theme.headingFontWeight || 700).toString());
+    root.style.setProperty(`${this.CSS_PREFIX}-heading-font-weight`, (theme.headingFontWeight || 700).toString());
     root.style.setProperty(`${this.CSS_PREFIX}-heading-font`, theme.headingFontFamily);
     root.style.setProperty(`${this.CSS_PREFIX}-heading-font-family`, theme.headingFontFamily);
-    root.style.setProperty(`${this.CSS_PREFIX}-heading-weight`, theme.headingFontWeight.toString());
-    root.style.setProperty(`${this.CSS_PREFIX}-heading-font-weight`, theme.headingFontWeight.toString());
 
-    // Heading sizes
-    root.style.setProperty(`${this.CSS_PREFIX}-h1-size`, `${theme.h1Size}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-h2-size`, `${theme.h2Size}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-h3-size`, `${theme.h3Size}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-h4-size`, `${theme.h4Size}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-h5-size`, `${theme.h5Size}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-h6-size`, `${theme.h6Size}px`);
+    // Heading sizes with defaults
+    root.style.setProperty(`${this.CSS_PREFIX}-h1-size`, `${theme.h1Size || 40}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-h2-size`, `${theme.h2Size || 32}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-h3-size`, `${theme.h3Size || 28}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-h4-size`, `${theme.h4Size || 24}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-h5-size`, `${theme.h5Size || 20}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-h6-size`, `${theme.h6Size || 18}px`);
 
-    // Text scaling
-    root.style.setProperty(`${this.CSS_PREFIX}-text-scale`, theme.textScaling.toString());
-    root.style.setProperty(`${this.CSS_PREFIX}-text-scaling`, theme.textScaling.toString());
   }
 
   private applySpacingAndLayout(root: HTMLElement, theme: ThemeConfig): void {
     root.style.setProperty(`${this.CSS_PREFIX}-spacing`, `${theme.spacingUnit}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-spacing-unit`, `${theme.spacingUnit}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-spacing-xsmall`, `${theme.spacingXSmall}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-spacing-small`, `${theme.spacingSmall}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-spacing-medium`, `${theme.spacingMedium}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-spacing-large`, `${theme.spacingLarge}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-spacing-xlarge`, `${theme.spacingXLarge}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-container-max`, `${theme.containerMaxWidth}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-sidebar-width`, `${theme.sidebarWidth}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-sidebar-collapsed`, `${theme.sidebarCollapsedWidth}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-spacing-xsmall`, `${theme.spacingXSmall || 4}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-spacing-small`, `${theme.spacingSmall || 8}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-spacing-medium`, `${theme.spacingMedium || 16}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-spacing-large`, `${theme.spacingLarge || 24}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-spacing-xlarge`, `${theme.spacingXLarge || 32}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-container-max`, `${theme.containerMaxWidth || 1200}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-sidebar-width`, `${theme.sidebarWidth || 240}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-sidebar-collapsed`, `${theme.sidebarCollapsedWidth || 64}px`);
   }
 
   private applyBorders(root: HTMLElement, theme: ThemeConfig): void {
@@ -153,16 +150,16 @@ export class ThemePreviewService {
   }
 
   private applyEffects(root: HTMLElement, theme: ThemeConfig): void {
-    root.style.setProperty(`${this.CSS_PREFIX}-shadow-intensity`, theme.shadowIntensity.toString());
+    root.style.setProperty(`${this.CSS_PREFIX}-shadow-intensity`, (theme.shadowIntensity || 0.12).toString());
     root.style.setProperty(`${this.CSS_PREFIX}-shadow-color`, theme.shadowColor);
     root.style.setProperty(`${this.CSS_PREFIX}-shadow-small`, theme.shadowSmall);
     root.style.setProperty(`${this.CSS_PREFIX}-shadow-medium`, theme.shadowMedium);
     root.style.setProperty(`${this.CSS_PREFIX}-shadow-large`, theme.shadowLarge);
     root.style.setProperty(`${this.CSS_PREFIX}-shadow-inset`, theme.shadowInset);
-    root.style.setProperty(`${this.CSS_PREFIX}-blur`, `${theme.blurIntensity}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-blur-small`, `${theme.blurSmall}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-blur-medium`, `${theme.blurMedium}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-blur-large`, `${theme.blurLarge}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-blur`, `${theme.blurIntensity || 8}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-blur-small`, `${theme.blurSmall || 4}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-blur-medium`, `${theme.blurMedium || 8}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-blur-large`, `${theme.blurLarge || 12}px`);
   }
 
   private applyAnimation(root: HTMLElement, theme: ThemeConfig): void {
@@ -176,25 +173,25 @@ export class ThemePreviewService {
   }
 
   private applyComponentSpecific(root: HTMLElement, theme: ThemeConfig): void {
-    root.style.setProperty(`${this.CSS_PREFIX}-button-height`, `${theme.buttonHeight}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-button-padding-x`, `${theme.buttonPaddingX}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-button-padding-y`, `${theme.buttonPaddingY}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-button-font-size`, `${theme.buttonFontSize}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-button-font-weight`, theme.buttonFontWeight.toString());
-    root.style.setProperty(`${this.CSS_PREFIX}-button-radius`, `${theme.buttonBorderRadius}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-input-height`, `${theme.inputHeight}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-input-padding-x`, `${theme.inputPaddingX}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-input-padding-y`, `${theme.inputPaddingY}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-input-font-size`, `${theme.inputFontSize}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-input-radius`, `${theme.inputBorderRadius}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-card-padding`, `${theme.cardPadding}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-card-radius`, `${theme.cardBorderRadius}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-card-elevation`, theme.cardElevation.toString());
-    root.style.setProperty(`${this.CSS_PREFIX}-modal-radius`, `${theme.modalBorderRadius}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-modal-padding`, `${theme.modalPadding}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-tooltip-font-size`, `${theme.tooltipFontSize}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-tooltip-padding`, `${theme.tooltipPadding}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-tooltip-radius`, `${theme.tooltipBorderRadius}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-button-height`, `${theme.buttonHeight || 40}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-button-padding-x`, `${theme.buttonPaddingX || 24}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-button-padding-y`, `${theme.buttonPaddingY || 12}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-button-font-size`, `${theme.buttonFontSize || 14}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-button-font-weight`, (theme.buttonFontWeight || 600).toString());
+    root.style.setProperty(`${this.CSS_PREFIX}-button-radius`, `${theme.buttonBorderRadius || 8}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-input-height`, `${theme.inputHeight || 44}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-input-padding-x`, `${theme.inputPaddingX || 16}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-input-padding-y`, `${theme.inputPaddingY || 12}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-input-font-size`, `${theme.inputFontSize || 16}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-input-radius`, `${theme.inputBorderRadius || 8}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-card-padding`, `${theme.cardPadding || 24}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-card-radius`, `${theme.cardBorderRadius || 12}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-card-elevation`, (theme.cardElevation || 1).toString());
+    root.style.setProperty(`${this.CSS_PREFIX}-modal-radius`, `${theme.modalBorderRadius || 16}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-modal-padding`, `${theme.modalPadding || 32}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-tooltip-font-size`, `${theme.tooltipFontSize || 12}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-tooltip-padding`, `${theme.tooltipPadding || 8}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-tooltip-radius`, `${theme.tooltipBorderRadius || 4}px`);
   }
 
   private applyGradients(root: HTMLElement, theme: ThemeConfig): void {
@@ -208,18 +205,18 @@ export class ThemePreviewService {
   }
 
   private applyZIndexLayers(root: HTMLElement, theme: ThemeConfig): void {
-    root.style.setProperty(`${this.CSS_PREFIX}-z-dropdown`, theme.zIndexDropdown.toString());
-    root.style.setProperty(`${this.CSS_PREFIX}-z-modal`, theme.zIndexModal.toString());
-    root.style.setProperty(`${this.CSS_PREFIX}-z-popover`, theme.zIndexPopover.toString());
-    root.style.setProperty(`${this.CSS_PREFIX}-z-tooltip`, theme.zIndexTooltip.toString());
-    root.style.setProperty(`${this.CSS_PREFIX}-z-header`, theme.zIndexHeader.toString());
-    root.style.setProperty(`${this.CSS_PREFIX}-z-drawer`, theme.zIndexDrawer.toString());
-    root.style.setProperty(`${this.CSS_PREFIX}-z-overlay`, theme.zIndexOverlay.toString());
+    root.style.setProperty(`${this.CSS_PREFIX}-z-dropdown`, (theme.zIndexDropdown || 1000).toString());
+    root.style.setProperty(`${this.CSS_PREFIX}-z-modal`, (theme.zIndexModal || 1050).toString());
+    root.style.setProperty(`${this.CSS_PREFIX}-z-popover`, (theme.zIndexPopover || 1060).toString());
+    root.style.setProperty(`${this.CSS_PREFIX}-z-tooltip`, (theme.zIndexTooltip || 1070).toString());
+    root.style.setProperty(`${this.CSS_PREFIX}-z-header`, (theme.zIndexHeader || 1030).toString());
+    root.style.setProperty(`${this.CSS_PREFIX}-z-drawer`, (theme.zIndexDrawer || 1040).toString());
+    root.style.setProperty(`${this.CSS_PREFIX}-z-overlay`, (theme.zIndexOverlay || 1020).toString());
   }
 
   private applyGridSystem(root: HTMLElement, theme: ThemeConfig): void {
-    root.style.setProperty(`${this.CSS_PREFIX}-grid-columns`, theme.gridColumns.toString());
-    root.style.setProperty(`${this.CSS_PREFIX}-grid-gutter`, `${theme.gridGutter}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-grid-columns`, (theme.gridColumns || 12).toString());
+    root.style.setProperty(`${this.CSS_PREFIX}-grid-gutter`, `${theme.gridGutter || 24}px`);
   }
 
   private applyDesignAttributes(root: HTMLElement, theme: ThemeConfig): void {
