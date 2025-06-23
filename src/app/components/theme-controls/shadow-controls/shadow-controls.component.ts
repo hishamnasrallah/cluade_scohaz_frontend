@@ -96,8 +96,8 @@ interface ShadowPreset {
                  (click)="colorPicker.click()"></div>
             <input #colorPicker
                    type="color"
-                   [(ngModel)]="convertToHex(theme.shadowColor)"
-                   (ngModelChange)="updateProperty('shadowColor', convertToRgba($any($event.target).value))"
+                   [(ngModel)]="shadowHexColor"
+                   (ngModelChange)="updateShadowColorFromHex($event)"
                    class="hidden-input" />
             <input type="text"
                    [(ngModel)]="theme.shadowColor"
@@ -807,13 +807,20 @@ export class ShadowControlsComponent {
       medium: '10px 10px 20px #d1d5db, -10px -10px 20px #ffffff',
       large: '15px 15px 30px #d1d5db, -15px -15px 30px #ffffff',
       color: 'rgba(0, 0, 0, 0.1)'
-    }
-  ];
+    },
+
+];
+  shadowHexColor: string = '#000000';
 
   ngOnInit() {
     this.parseShadowValues();
-  }
+    this.shadowHexColor = this.convertToHex(this.theme.shadowColor);
 
+  }
+  updateShadowColorFromHex(hex: string): void {
+    this.shadowHexColor = hex;
+    this.updateProperty('shadowColor', this.convertToRgba(hex));
+  }
   updateProperty(key: keyof ThemeConfig, value: any): void {
     this.themeChange.emit({ [key]: value });
   }

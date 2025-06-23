@@ -25,11 +25,17 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
-// Theme Control Components
+// Theme Control Components - ALL COMPONENTS IMPORTED
 import { ColorPickerComponent } from '../theme-controls/color-picker/color-picker.component';
 import { TypographyControlsComponent } from '../theme-controls/typography-controls/typography-controls.component';
 import { SpacingControlsComponent } from '../theme-controls/spacing-controls/spacing-controls.component';
 import { EffectsControlsComponent } from '../theme-controls/effects-controls/effects-controls.component';
+import { AdvancedColorControlsComponent } from '../theme-controls/advanced-color-controls/advanced-color-controls.component';
+import { AdvancedTypographyControlsComponent } from '../theme-controls/advanced-typography-controls/advanced-typography-controls.component';
+import { BorderControlsComponent } from '../theme-controls/border-controls/border-controls.component';
+import { LayoutControlsComponent } from '../theme-controls/layout-controls/layout-controls.component';
+import { ShadowControlsComponent } from '../theme-controls/shadow-controls/shadow-controls.component';
+import { ComponentControlsComponent } from '../theme-controls/component-controls/component-controls.component';
 
 // Services and Models
 import { ThemeService } from '../../services/theme.service';
@@ -62,11 +68,17 @@ import {ThemeConfig, ThemeDefaults, ThemePreset} from '../../models/theme.model'
     MatBadgeModule,
     MatProgressSpinnerModule,
     MatSlideToggleModule,
-    // Theme Control Components
-    ColorPickerComponent,
-    TypographyControlsComponent,
-    SpacingControlsComponent,
-    EffectsControlsComponent
+    // ALL Theme Control Components
+    // ColorPickerComponent,
+    // TypographyControlsComponent,
+    // SpacingControlsComponent,
+    // EffectsControlsComponent,
+    AdvancedColorControlsComponent,
+    AdvancedTypographyControlsComponent,
+    BorderControlsComponent,
+    LayoutControlsComponent,
+    ShadowControlsComponent,
+    ComponentControlsComponent
   ],
   templateUrl: './theme-creator.component.html',
   styleUrls: ['./theme-creator.component.scss']
@@ -265,20 +277,25 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
   navigationStyles = [
     { value: 'elevated', label: 'Elevated' },
     { value: 'flat', label: 'Flat' },
-    { value: 'bordered', label: 'Bordered' }
+    { value: 'bordered', label: 'Bordered' },
+    { value: 'transparent', label: 'Transparent' },
+    { value: 'gradient', label: 'Gradient' }
   ];
 
   buttonStyles = [
     { value: 'primary', label: 'Primary' },
     { value: 'secondary', label: 'Secondary' },
     { value: 'outline', label: 'Outline' },
-    { value: 'ghost', label: 'Ghost' }
+    { value: 'ghost', label: 'Ghost' },
+    { value: 'gradient', label: 'Gradient' },
+    { value: 'glow', label: 'Glow' },
+    { value: 'neumorphic', label: 'Neumorphic' }
   ];
 
   enterpriseFeatures = [
     {
       title: 'Advanced Theming',
-      description: 'Comprehensive design system with 50+ theme properties',
+      description: 'Comprehensive design system with 100+ theme properties',
       icon: 'palette'
     },
     {
@@ -358,66 +375,210 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private initializeForm(): void {
+    // Create comprehensive form with ALL theme properties
     this.themeForm = this.fb.group({
       // Core colors
       primaryColor: ['#34C5AA'],
+      primaryLightColor: ['#5FD3C4'],
+      primaryDarkColor: ['#2BA99B'],
       secondaryColor: ['#2BA99B'],
+      secondaryLightColor: ['#34C5AA'],
+      secondaryDarkColor: ['#238A7F'],
       backgroundColor: ['#F4FDFD'],
+      backgroundPaperColor: ['#FFFFFF'],
+      backgroundDefaultColor: ['#F8FAFB'],
       textColor: ['#2F4858'],
+      textSecondaryColor: ['#6B7280'],
+      textDisabledColor: ['#9CA3AF'],
+      textHintColor: ['#D1D5DB'],
       accentColor: ['#5FD3C4'],
+      accentLightColor: ['#A8E8DD'],
+      accentDarkColor: ['#34C5AA'],
 
       // Semantic colors
       successColor: ['#22C55E'],
+      successLightColor: ['#86EFAC'],
+      successDarkColor: ['#16A34A'],
       warningColor: ['#F59E0B'],
+      warningLightColor: ['#FCD34D'],
+      warningDarkColor: ['#D97706'],
       errorColor: ['#EF4444'],
+      errorLightColor: ['#FCA5A5'],
+      errorDarkColor: ['#DC2626'],
       infoColor: ['#3B82F6'],
+      infoLightColor: ['#93BBFE'],
+      infoDarkColor: ['#2563EB'],
 
       // Surface colors
       surfaceCard: ['#FFFFFF'],
       surfaceModal: ['#FFFFFF'],
       surfaceHover: ['rgba(196, 247, 239, 0.3)'],
+      surfaceFocus: ['rgba(52, 197, 170, 0.12)'],
+      surfaceSelected: ['rgba(52, 197, 170, 0.08)'],
+      surfaceDisabled: ['rgba(0, 0, 0, 0.04)'],
+      dividerColor: ['rgba(0, 0, 0, 0.08)'],
+      overlayColor: ['rgba(0, 0, 0, 0.5)'],
 
-      // Typography
+      // Typography - Body
       fontFamily: ['Inter, system-ui, sans-serif'],
       fontSizeBase: [16],
+      fontSizeSmall: [14],
+      fontSizeMedium: [16],
+      fontSizeLarge: [18],
+      fontSizeXLarge: [20],
       fontWeight: [400],
+      fontWeightLight: [300],
+      fontWeightMedium: [500],
+      fontWeightBold: [700],
       lineHeight: [1.5],
+      lineHeightTight: [1.25],
+      lineHeightRelaxed: [1.75],
       letterSpacing: [0],
+      letterSpacingTight: [-0.025],
+      letterSpacingWide: [0.025],
+
+      // Typography - Headings
       headingFontFamily: ['Poppins, sans-serif'],
       headingFontWeight: [600],
+      h1Size: [40],
+      h2Size: [32],
+      h3Size: [28],
+      h4Size: [24],
+      h5Size: [20],
+      h6Size: [18],
 
       // Spacing & Layout
       spacingUnit: [16],
+      spacingXSmall: [4],
+      spacingSmall: [8],
+      spacingMedium: [16],
+      spacingLarge: [24],
+      spacingXLarge: [32],
+      containerMaxWidth: [1400],
+      sidebarWidth: [280],
+      sidebarCollapsedWidth: [64],
+
+      // Borders
       borderRadius: [12],
+      borderRadiusSmall: [8],
+      borderRadiusMedium: [12],
+      borderRadiusLarge: [16],
+      borderRadiusCircle: [9999],
       borderWidth: [1],
+      borderStyle: ['solid'],
+      borderColor: ['rgba(0, 0, 0, 0.08)'],
+      borderFocusColor: ['#34C5AA'],
+      borderHoverColor: ['rgba(52, 197, 170, 0.3)'],
 
-      // Effects
+      // Shadows & Effects
       shadowIntensity: [0.1],
+      shadowColor: ['rgba(0, 0, 0, 0.1)'],
+      shadowSmall: ['0 1px 3px rgba(0, 0, 0, 0.06)'],
+      shadowMedium: ['0 4px 6px rgba(0, 0, 0, 0.08)'],
+      shadowLarge: ['0 10px 15px rgba(0, 0, 0, 0.1)'],
+      shadowInset: ['inset 0 2px 4px rgba(0, 0, 0, 0.05)'],
       blurIntensity: [10],
-      animationSpeed: [300],
-      animationEasing: ['ease-out'],
+      blurSmall: [4],
+      blurMedium: [10],
+      blurLarge: [20],
 
-      // Features
+      // Animation
+      animationSpeed: [300],
+      animationSpeedSlow: [500],
+      animationSpeedFast: [150],
+      animationEasing: ['cubic-bezier(0.4, 0, 0.2, 1)'],
+      animationEasingIn: ['cubic-bezier(0.4, 0, 1, 1)'],
+      animationEasingOut: ['cubic-bezier(0, 0, 0.2, 1)'],
+      animationEasingInOut: ['cubic-bezier(0.4, 0, 0.2, 1)'],
+
+      // Component Specific
+      buttonHeight: [40],
+      buttonPaddingX: [24],
+      buttonPaddingY: [12],
+      buttonFontSize: [14],
+      buttonFontWeight: [600],
+      buttonBorderRadius: [10],
+      inputHeight: [44],
+      inputPaddingX: [16],
+      inputPaddingY: [12],
+      inputFontSize: [16],
+      inputBorderRadius: [10],
+      cardPadding: [24],
+      cardBorderRadius: [16],
+      cardElevation: [1],
+      modalBorderRadius: [20],
+      modalPadding: [32],
+      tooltipFontSize: [12],
+      tooltipPadding: [8],
+      tooltipBorderRadius: [6],
+
+      // Advanced Features
       designStyle: ['modern'],
       navigationStyle: ['elevated'],
       cardStyle: ['elevated'],
       buttonStyle: ['primary'],
+      iconStyle: ['outlined'],
+      density: ['comfortable'],
+
+      // Gradients
+      enableGradients: [true],
+      primaryGradient: ['linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%)'],
+      secondaryGradient: ['linear-gradient(135deg, #5FD3C4 0%, #34C5AA 100%)'],
+      accentGradient: ['linear-gradient(135deg, #2F4858 0%, #3A5A6C 100%)'],
+      backgroundGradient: ['linear-gradient(135deg, #F4FDFD 0%, #E8F9F7 100%)'],
+      gradientAngle: [135],
+
+      // Brand
+      brandName: ['PraXelo Enterprise'],
+      brandSlogan: ['Enterprise Low-Code Platform'],
+      brandFont: ['Poppins, sans-serif'],
+      logoUrl: ['assets/logo.svg'],
+      faviconUrl: ['assets/favicon.ico'],
 
       // Mode
       mode: ['light'],
+      colorScheme: ['ocean-mint'],
 
       // Performance
       enableAnimations: [true],
+      enableTransitions: [true],
       enableBlur: [true],
       enableShadows: [true],
+      enableHoverEffects: [true],
+      enableFocusEffects: [true],
+      enableRipple: [true],
 
       // Accessibility
       reducedMotion: [false],
       highContrast: [false],
+      focusVisible: [true],
+      keyboardNavigation: [true],
+      screenReaderFriendly: [true],
+      textScaling: [1],
 
-      // Brand
-      brandName: ['PraXelo Enterprise'],
-      logoUrl: ['assets/logo.svg']
+      // Layout Settings
+      layoutType: ['fluid'],
+      headerPosition: ['sticky'],
+      sidebarPosition: ['left'],
+      footerPosition: ['static'],
+
+      // Z-Index Layers
+      zIndexDropdown: [1000],
+      zIndexModal: [1300],
+      zIndexPopover: [1200],
+      zIndexTooltip: [1400],
+      zIndexHeader: [1100],
+      zIndexDrawer: [1200],
+      zIndexOverlay: [1250],
+
+      // Grid System
+      gridColumns: [12],
+      gridGutter: [24],
+      gridBreakpointXs: [0],
+      gridBreakpointSm: [576],
+      gridBreakpointMd: [768],
+      gridBreakpointLg: [1024],
+      gridBreakpointXl: [1280]
     });
 
     // Subscribe to form changes
@@ -437,9 +598,11 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private getDefaultTheme(): ThemeConfig {
-    // Use the complete default theme from ThemeDefaults
-    return { ...ThemeDefaults.DEFAULT_THEME };
+    // Load from existing project styles or use defaults
+    const savedTheme = this.themeService.getTheme();
+    return savedTheme || { ...ThemeDefaults.DEFAULT_THEME };
   }
+
   applyPreset(preset: ThemePreset): void {
     this.currentTheme = { ...this.currentTheme, ...preset.config };
     this.updateFormValues(this.currentTheme);
@@ -457,45 +620,164 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
     // Apply CSS variables only to preview container
     const root = this.previewRoot;
 
+    // Apply ALL theme properties as CSS variables
     // Core colors
     root.style.setProperty('--theme-primary', theme.primaryColor);
+    root.style.setProperty('--theme-primary-light', theme.primaryLightColor);
+    root.style.setProperty('--theme-primary-dark', theme.primaryDarkColor);
     root.style.setProperty('--theme-secondary', theme.secondaryColor);
+    root.style.setProperty('--theme-secondary-light', theme.secondaryLightColor);
+    root.style.setProperty('--theme-secondary-dark', theme.secondaryDarkColor);
     root.style.setProperty('--theme-background', theme.backgroundColor);
+    root.style.setProperty('--theme-background-paper', theme.backgroundPaperColor);
+    root.style.setProperty('--theme-background-default', theme.backgroundDefaultColor);
     root.style.setProperty('--theme-text', theme.textColor);
+    root.style.setProperty('--theme-text-secondary', theme.textSecondaryColor);
+    root.style.setProperty('--theme-text-disabled', theme.textDisabledColor);
+    root.style.setProperty('--theme-text-hint', theme.textHintColor);
     root.style.setProperty('--theme-accent', theme.accentColor);
+    root.style.setProperty('--theme-accent-light', theme.accentLightColor);
+    root.style.setProperty('--theme-accent-dark', theme.accentDarkColor);
 
     // Semantic colors
     root.style.setProperty('--theme-success', theme.successColor);
+    root.style.setProperty('--theme-success-light', theme.successLightColor);
+    root.style.setProperty('--theme-success-dark', theme.successDarkColor);
     root.style.setProperty('--theme-warning', theme.warningColor);
+    root.style.setProperty('--theme-warning-light', theme.warningLightColor);
+    root.style.setProperty('--theme-warning-dark', theme.warningDarkColor);
     root.style.setProperty('--theme-error', theme.errorColor);
+    root.style.setProperty('--theme-error-light', theme.errorLightColor);
+    root.style.setProperty('--theme-error-dark', theme.errorDarkColor);
     root.style.setProperty('--theme-info', theme.infoColor);
+    root.style.setProperty('--theme-info-light', theme.infoLightColor);
+    root.style.setProperty('--theme-info-dark', theme.infoDarkColor);
 
     // Surface colors
     root.style.setProperty('--theme-surface-card', theme.surfaceCard);
     root.style.setProperty('--theme-surface-modal', theme.surfaceModal);
     root.style.setProperty('--theme-surface-hover', theme.surfaceHover);
+    root.style.setProperty('--theme-surface-focus', theme.surfaceFocus);
+    root.style.setProperty('--theme-surface-selected', theme.surfaceSelected);
+    root.style.setProperty('--theme-surface-disabled', theme.surfaceDisabled);
+    root.style.setProperty('--theme-divider', theme.dividerColor);
+    root.style.setProperty('--theme-overlay', theme.overlayColor);
 
     // Typography
     root.style.setProperty('--theme-font-family', theme.fontFamily);
     root.style.setProperty('--theme-font-size', `${theme.fontSizeBase}px`);
+    root.style.setProperty('--theme-font-size-small', `${theme.fontSizeSmall}px`);
+    root.style.setProperty('--theme-font-size-medium', `${theme.fontSizeMedium}px`);
+    root.style.setProperty('--theme-font-size-large', `${theme.fontSizeLarge}px`);
+    root.style.setProperty('--theme-font-size-xlarge', `${theme.fontSizeXLarge}px`);
     root.style.setProperty('--theme-font-weight', theme.fontWeight.toString());
+    root.style.setProperty('--theme-font-weight-light', theme.fontWeightLight.toString());
+    root.style.setProperty('--theme-font-weight-medium', theme.fontWeightMedium.toString());
+    root.style.setProperty('--theme-font-weight-bold', theme.fontWeightBold.toString());
     root.style.setProperty('--theme-line-height', theme.lineHeight.toString());
+    root.style.setProperty('--theme-line-height-tight', theme.lineHeightTight.toString());
+    root.style.setProperty('--theme-line-height-relaxed', theme.lineHeightRelaxed.toString());
     root.style.setProperty('--theme-letter-spacing', `${theme.letterSpacing}em`);
+    root.style.setProperty('--theme-letter-spacing-tight', `${theme.letterSpacingTight}em`);
+    root.style.setProperty('--theme-letter-spacing-wide', `${theme.letterSpacingWide}em`);
     root.style.setProperty('--theme-heading-font', theme.headingFontFamily);
     root.style.setProperty('--theme-heading-weight', theme.headingFontWeight.toString());
+    root.style.setProperty('--theme-h1-size', `${theme.h1Size}px`);
+    root.style.setProperty('--theme-h2-size', `${theme.h2Size}px`);
+    root.style.setProperty('--theme-h3-size', `${theme.h3Size}px`);
+    root.style.setProperty('--theme-h4-size', `${theme.h4Size}px`);
+    root.style.setProperty('--theme-h5-size', `${theme.h5Size}px`);
+    root.style.setProperty('--theme-h6-size', `${theme.h6Size}px`);
 
     // Spacing & Layout
     root.style.setProperty('--theme-spacing', `${theme.spacingUnit}px`);
+    root.style.setProperty('--theme-spacing-xsmall', `${theme.spacingXSmall}px`);
+    root.style.setProperty('--theme-spacing-small', `${theme.spacingSmall}px`);
+    root.style.setProperty('--theme-spacing-medium', `${theme.spacingMedium}px`);
+    root.style.setProperty('--theme-spacing-large', `${theme.spacingLarge}px`);
+    root.style.setProperty('--theme-spacing-xlarge', `${theme.spacingXLarge}px`);
+    root.style.setProperty('--theme-container-max', `${theme.containerMaxWidth}px`);
+    root.style.setProperty('--theme-sidebar-width', `${theme.sidebarWidth}px`);
+    root.style.setProperty('--theme-sidebar-collapsed', `${theme.sidebarCollapsedWidth}px`);
+
+    // Borders
     root.style.setProperty('--theme-radius', `${theme.borderRadius}px`);
+    root.style.setProperty('--theme-radius-small', `${theme.borderRadiusSmall}px`);
+    root.style.setProperty('--theme-radius-medium', `${theme.borderRadiusMedium}px`);
+    root.style.setProperty('--theme-radius-large', `${theme.borderRadiusLarge}px`);
+    root.style.setProperty('--theme-radius-circle', `${theme.borderRadiusCircle}px`);
     root.style.setProperty('--theme-border-width', `${theme.borderWidth}px`);
+    root.style.setProperty('--theme-border-style', theme.borderStyle);
+    root.style.setProperty('--theme-border-color', theme.borderColor);
+    root.style.setProperty('--theme-border-focus', theme.borderFocusColor);
+    root.style.setProperty('--theme-border-hover', theme.borderHoverColor);
 
     // Effects
     root.style.setProperty('--theme-shadow-intensity', theme.shadowIntensity.toString());
+    root.style.setProperty('--theme-shadow-color', theme.shadowColor);
+    root.style.setProperty('--theme-shadow-small', theme.shadowSmall);
+    root.style.setProperty('--theme-shadow-medium', theme.shadowMedium);
+    root.style.setProperty('--theme-shadow-large', theme.shadowLarge);
+    root.style.setProperty('--theme-shadow-inset', theme.shadowInset);
     root.style.setProperty('--theme-blur', `${theme.blurIntensity}px`);
+    root.style.setProperty('--theme-blur-small', `${theme.blurSmall}px`);
+    root.style.setProperty('--theme-blur-medium', `${theme.blurMedium}px`);
+    root.style.setProperty('--theme-blur-large', `${theme.blurLarge}px`);
 
     // Animation
     root.style.setProperty('--theme-duration', `${theme.animationSpeed}ms`);
+    root.style.setProperty('--theme-duration-slow', `${theme.animationSpeedSlow}ms`);
+    root.style.setProperty('--theme-duration-fast', `${theme.animationSpeedFast}ms`);
     root.style.setProperty('--theme-easing', theme.animationEasing);
+    root.style.setProperty('--theme-easing-in', theme.animationEasingIn);
+    root.style.setProperty('--theme-easing-out', theme.animationEasingOut);
+    root.style.setProperty('--theme-easing-in-out', theme.animationEasingInOut);
+
+    // Component specific
+    root.style.setProperty('--theme-button-height', `${theme.buttonHeight}px`);
+    root.style.setProperty('--theme-button-padding-x', `${theme.buttonPaddingX}px`);
+    root.style.setProperty('--theme-button-padding-y', `${theme.buttonPaddingY}px`);
+    root.style.setProperty('--theme-button-font-size', `${theme.buttonFontSize}px`);
+    root.style.setProperty('--theme-button-font-weight', theme.buttonFontWeight.toString());
+    root.style.setProperty('--theme-button-radius', `${theme.buttonBorderRadius}px`);
+    root.style.setProperty('--theme-input-height', `${theme.inputHeight}px`);
+    root.style.setProperty('--theme-input-padding-x', `${theme.inputPaddingX}px`);
+    root.style.setProperty('--theme-input-padding-y', `${theme.inputPaddingY}px`);
+    root.style.setProperty('--theme-input-font-size', `${theme.inputFontSize}px`);
+    root.style.setProperty('--theme-input-radius', `${theme.inputBorderRadius}px`);
+    root.style.setProperty('--theme-card-padding', `${theme.cardPadding}px`);
+    root.style.setProperty('--theme-card-radius', `${theme.cardBorderRadius}px`);
+    root.style.setProperty('--theme-card-elevation', theme.cardElevation.toString());
+    root.style.setProperty('--theme-modal-radius', `${theme.modalBorderRadius}px`);
+    root.style.setProperty('--theme-modal-padding', `${theme.modalPadding}px`);
+    root.style.setProperty('--theme-tooltip-font-size', `${theme.tooltipFontSize}px`);
+    root.style.setProperty('--theme-tooltip-padding', `${theme.tooltipPadding}px`);
+    root.style.setProperty('--theme-tooltip-radius', `${theme.tooltipBorderRadius}px`);
+
+    // Gradients
+    if (theme.enableGradients) {
+      root.style.setProperty('--theme-gradient-primary', theme.primaryGradient);
+      root.style.setProperty('--theme-gradient-secondary', theme.secondaryGradient);
+      root.style.setProperty('--theme-gradient-accent', theme.accentGradient);
+      root.style.setProperty('--theme-gradient-background', theme.backgroundGradient);
+      root.style.setProperty('--theme-gradient-angle', `${theme.gradientAngle}deg`);
+    }
+
+    // Z-index layers
+    root.style.setProperty('--theme-z-dropdown', theme.zIndexDropdown.toString());
+    root.style.setProperty('--theme-z-modal', theme.zIndexModal.toString());
+    root.style.setProperty('--theme-z-popover', theme.zIndexPopover.toString());
+    root.style.setProperty('--theme-z-tooltip', theme.zIndexTooltip.toString());
+    root.style.setProperty('--theme-z-header', theme.zIndexHeader.toString());
+    root.style.setProperty('--theme-z-drawer', theme.zIndexDrawer.toString());
+    root.style.setProperty('--theme-z-overlay', theme.zIndexOverlay.toString());
+
+    // Grid system
+    root.style.setProperty('--theme-grid-columns', theme.gridColumns.toString());
+    root.style.setProperty('--theme-grid-gutter', `${theme.gridGutter}px`);
+
+    // Text scaling
+    root.style.setProperty('--theme-text-scale', theme.textScaling.toString());
 
     // Apply design style class
     root.setAttribute('data-theme-style', theme.designStyle);
@@ -503,6 +785,9 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
     root.setAttribute('data-navigation-style', theme.navigationStyle);
     root.setAttribute('data-card-style', theme.cardStyle);
     root.setAttribute('data-button-style', theme.buttonStyle);
+    root.setAttribute('data-icon-style', theme.iconStyle);
+    root.setAttribute('data-density', theme.density);
+    root.setAttribute('data-layout-type', theme.layoutType);
 
     // Apply performance settings
     if (!theme.enableAnimations) {
@@ -545,22 +830,26 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private applyDesignStyleClasses(root: HTMLElement, theme: ThemeConfig): void {
     // Remove all design style classes
-    root.classList.remove('style-modern', 'style-minimal', 'style-glassmorphic', 'style-neumorphic', 'style-material');
+    root.classList.remove('style-modern', 'style-minimal', 'style-glassmorphic', 'style-neumorphic', 'style-material', 'style-flat', 'style-gradient');
 
     // Add current design style class
     root.classList.add(`style-${theme.designStyle}`);
 
     // Apply navigation style
-    root.classList.remove('nav-elevated', 'nav-flat', 'nav-bordered');
+    root.classList.remove('nav-elevated', 'nav-flat', 'nav-bordered', 'nav-transparent', 'nav-gradient');
     root.classList.add(`nav-${theme.navigationStyle}`);
 
     // Apply card style
-    root.classList.remove('card-elevated', 'card-flat', 'card-bordered', 'card-glass');
+    root.classList.remove('card-elevated', 'card-flat', 'card-bordered', 'card-glass', 'card-gradient', 'card-neumorphic');
     root.classList.add(`card-${theme.cardStyle}`);
 
     // Apply button style
-    root.classList.remove('btn-primary', 'btn-secondary', 'btn-outline', 'btn-ghost');
+    root.classList.remove('btn-primary', 'btn-secondary', 'btn-outline', 'btn-ghost', 'btn-gradient', 'btn-glow', 'btn-neumorphic');
     root.classList.add(`btn-${theme.buttonStyle}`);
+
+    // Apply density
+    root.classList.remove('density-comfortable', 'density-compact', 'density-spacious');
+    root.classList.add(`density-${theme.density}`);
   }
 
   updateThemeProperty(property: keyof ThemeConfig, value: any): void {

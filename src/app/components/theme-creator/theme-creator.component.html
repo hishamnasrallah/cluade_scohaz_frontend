@@ -100,12 +100,11 @@
             </ng-template>
 
             <div class="tab-content">
-              <app-color-picker
+              <!-- Advanced Color Controls with ALL color properties -->
+              <app-advanced-color-controls
                 [theme]="currentTheme"
                 (themeChange)="onThemeChange($event)">
-              </app-color-picker>
-
-
+              </app-advanced-color-controls>
             </div>
           </mat-tab>
 
@@ -117,69 +116,177 @@
             </ng-template>
 
             <div class="tab-content">
-              <app-typography-controls
+              <!-- Advanced Typography Controls with ALL typography properties -->
+              <app-advanced-typography-controls
                 [theme]="currentTheme"
                 (themeChange)="onThemeChange($event)">
-              </app-typography-controls>
+              </app-advanced-typography-controls>
             </div>
           </mat-tab>
 
-          <!-- Layout Tab -->
+          <!-- Layout & Spacing Tab -->
           <mat-tab>
             <ng-template mat-tab-label>
-              <mat-icon>dashboard</mat-icon>
+              <mat-icon>view_quilt</mat-icon>
               <span>Layout</span>
             </ng-template>
 
             <div class="tab-content">
-              <app-spacing-controls
+              <!-- Layout Controls with grid, spacing, containers -->
+              <app-layout-controls
                 [theme]="currentTheme"
                 (themeChange)="onThemeChange($event)">
-              </app-spacing-controls>
-
-              <!-- Additional Layout Controls -->
-              <div class="control-group">
-                <h4>Component Styles</h4>
-
-                <div class="style-control">
-                  <label>Navigation Style</label>
-                  <select
-                    [value]="currentTheme.navigationStyle"
-                    (change)="updateThemeProperty('navigationStyle', $any($event.target).value)"
-                    class="form-select">
-                    <option *ngFor="let style of navigationStyles" [value]="style.value">
-                      {{ style.label }}
-                    </option>
-                  </select>
-                </div>
-
-                <div class="style-control">
-                  <label>Button Style</label>
-                  <select
-                    [value]="currentTheme.buttonStyle"
-                    (change)="updateThemeProperty('buttonStyle', $any($event.target).value)"
-                    class="form-select">
-                    <option *ngFor="let style of buttonStyles" [value]="style.value">
-                      {{ style.label }}
-                    </option>
-                  </select>
-                </div>
-              </div>
+              </app-layout-controls>
             </div>
           </mat-tab>
 
-          <!-- Effects Tab -->
+          <!-- Borders & Radius Tab -->
           <mat-tab>
             <ng-template mat-tab-label>
-              <mat-icon>auto_awesome</mat-icon>
+              <mat-icon>rounded_corner</mat-icon>
+              <span>Borders</span>
+            </ng-template>
+
+            <div class="tab-content">
+              <!-- Border Controls with all radius and border properties -->
+              <app-border-controls
+                [theme]="currentTheme"
+                (themeChange)="onThemeChange($event)">
+              </app-border-controls>
+            </div>
+          </mat-tab>
+
+          <!-- Shadows & Effects Tab -->
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon>blur_on</mat-icon>
               <span>Effects</span>
             </ng-template>
 
             <div class="tab-content">
-              <app-effects-controls
+              <!-- Shadow Controls with all shadow definitions -->
+              <app-shadow-controls
                 [theme]="currentTheme"
                 (themeChange)="onThemeChange($event)">
-              </app-effects-controls>
+              </app-shadow-controls>
+            </div>
+          </mat-tab>
+
+          <!-- Components Tab -->
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon>widgets</mat-icon>
+              <span>Components</span>
+            </ng-template>
+
+            <div class="tab-content">
+              <!-- Component Controls with button, input, card properties -->
+              <app-component-controls
+                [theme]="currentTheme"
+                (themeChange)="onThemeChange($event)">
+              </app-component-controls>
+            </div>
+          </mat-tab>
+
+          <!-- Animation Tab -->
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon>animation</mat-icon>
+              <span>Animation</span>
+            </ng-template>
+
+            <div class="tab-content">
+              <div class="control-group">
+                <h4>Animation Speeds</h4>
+
+                <div class="control-item">
+                  <label>Normal Speed: {{ currentTheme.animationSpeed }}ms</label>
+                  <mat-slider [min]="0" [max]="1000" [step]="50"
+                              [(ngModel)]="currentTheme.animationSpeed"
+                              (ngModelChange)="updateThemeProperty('animationSpeed', $event)"
+                              [discrete]="true">
+                    <input matSliderThumb>
+                  </mat-slider>
+                </div>
+
+                <div class="control-item">
+                  <label>Slow Speed: {{ currentTheme.animationSpeedSlow }}ms</label>
+                  <mat-slider [min]="0" [max]="2000" [step]="100"
+                              [(ngModel)]="currentTheme.animationSpeedSlow"
+                              (ngModelChange)="updateThemeProperty('animationSpeedSlow', $event)"
+                              [discrete]="true">
+                    <input matSliderThumb>
+                  </mat-slider>
+                </div>
+
+                <div class="control-item">
+                  <label>Fast Speed: {{ currentTheme.animationSpeedFast }}ms</label>
+                  <mat-slider [min]="0" [max]="500" [step]="25"
+                              [(ngModel)]="currentTheme.animationSpeedFast"
+                              (ngModelChange)="updateThemeProperty('animationSpeedFast', $event)"
+                              [discrete]="true">
+                    <input matSliderThumb>
+                  </mat-slider>
+                </div>
+              </div>
+
+              <div class="control-group">
+                <h4>Animation Easing Functions</h4>
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Default Easing</mat-label>
+                  <mat-select [(value)]="currentTheme.animationEasing"
+                              (selectionChange)="updateThemeProperty('animationEasing', $event.value)">
+                    <mat-option value="ease">Ease</mat-option>
+                    <mat-option value="ease-in">Ease In</mat-option>
+                    <mat-option value="ease-out">Ease Out</mat-option>
+                    <mat-option value="ease-in-out">Ease In Out</mat-option>
+                    <mat-option value="linear">Linear</mat-option>
+                    <mat-option value="cubic-bezier(0.4, 0, 0.2, 1)">Material Design</mat-option>
+                    <mat-option value="cubic-bezier(0.68, -0.55, 0.265, 1.55)">Elastic</mat-option>
+                    <mat-option value="cubic-bezier(0.175, 0.885, 0.32, 1.275)">Back</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Easing In</mat-label>
+                  <mat-select [(value)]="currentTheme.animationEasingIn"
+                              (selectionChange)="updateThemeProperty('animationEasingIn', $event.value)">
+                    <mat-option value="cubic-bezier(0.4, 0, 1, 1)">Default In</mat-option>
+                    <mat-option value="cubic-bezier(0.55, 0.055, 0.675, 0.19)">Circ In</mat-option>
+                    <mat-option value="cubic-bezier(0.755, 0.05, 0.855, 0.06)">Expo In</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <div class="control-group">
+                <h4>Performance Options</h4>
+
+                <mat-checkbox [(ngModel)]="currentTheme.enableAnimations"
+                              (ngModelChange)="updateThemeProperty('enableAnimations', $event)">
+                  Enable Animations
+                </mat-checkbox>
+
+                <mat-checkbox [(ngModel)]="currentTheme.enableTransitions"
+                              (ngModelChange)="updateThemeProperty('enableTransitions', $event)">
+                  Enable Transitions
+                </mat-checkbox>
+
+                <mat-checkbox [(ngModel)]="currentTheme.enableHoverEffects"
+                              (ngModelChange)="updateThemeProperty('enableHoverEffects', $event)">
+                  Enable Hover Effects
+                </mat-checkbox>
+
+                <mat-checkbox [(ngModel)]="currentTheme.enableFocusEffects"
+                              (ngModelChange)="updateThemeProperty('enableFocusEffects', $event)">
+                  Enable Focus Effects
+                </mat-checkbox>
+
+                <mat-checkbox [(ngModel)]="currentTheme.enableRipple"
+                              (ngModelChange)="updateThemeProperty('enableRipple', $event)">
+                  Enable Ripple Effects
+                </mat-checkbox>
+              </div>
             </div>
           </mat-tab>
 
@@ -205,6 +312,24 @@
                   </mat-form-field>
 
                   <mat-form-field appearance="outline" class="theme-form-field">
+                    <mat-label>Brand Slogan</mat-label>
+                    <input matInput
+                           [(ngModel)]="currentTheme.brandSlogan"
+                           (ngModelChange)="updateThemeProperty('brandSlogan', $event)"
+                           placeholder="Enter brand slogan">
+                    <mat-icon matPrefix>format_quote</mat-icon>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="theme-form-field">
+                    <mat-label>Brand Font</mat-label>
+                    <input matInput
+                           [(ngModel)]="currentTheme.brandFont"
+                           (ngModelChange)="updateThemeProperty('brandFont', $event)"
+                           placeholder="e.g., Poppins, sans-serif">
+                    <mat-icon matPrefix>font_download</mat-icon>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="theme-form-field">
                     <mat-label>Logo URL</mat-label>
                     <input matInput
                            [(ngModel)]="currentTheme.logoUrl"
@@ -212,6 +337,65 @@
                            placeholder="Enter logo URL">
                     <mat-icon matPrefix>image</mat-icon>
                   </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="theme-form-field">
+                    <mat-label>Favicon URL</mat-label>
+                    <input matInput
+                           [(ngModel)]="currentTheme.faviconUrl"
+                           (ngModelChange)="updateThemeProperty('faviconUrl', $event)"
+                           placeholder="Enter favicon URL">
+                    <mat-icon matPrefix>bookmark</mat-icon>
+                  </mat-form-field>
+                </div>
+
+                <div class="control-group">
+                  <h4>Gradients</h4>
+
+                  <mat-checkbox [(ngModel)]="currentTheme.enableGradients"
+                                (ngModelChange)="updateThemeProperty('enableGradients', $event)">
+                    Enable Gradients
+                  </mat-checkbox>
+
+                  <div *ngIf="currentTheme.enableGradients" class="gradient-controls">
+                    <mat-form-field appearance="outline" class="theme-form-field">
+                      <mat-label>Primary Gradient</mat-label>
+                      <input matInput
+                             [(ngModel)]="currentTheme.primaryGradient"
+                             (ngModelChange)="updateThemeProperty('primaryGradient', $event)"
+                             placeholder="e.g., linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%)">
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="theme-form-field">
+                      <mat-label>Secondary Gradient</mat-label>
+                      <input matInput
+                             [(ngModel)]="currentTheme.secondaryGradient"
+                             (ngModelChange)="updateThemeProperty('secondaryGradient', $event)">
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="theme-form-field">
+                      <mat-label>Accent Gradient</mat-label>
+                      <input matInput
+                             [(ngModel)]="currentTheme.accentGradient"
+                             (ngModelChange)="updateThemeProperty('accentGradient', $event)">
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="theme-form-field">
+                      <mat-label>Background Gradient</mat-label>
+                      <input matInput
+                             [(ngModel)]="currentTheme.backgroundGradient"
+                             (ngModelChange)="updateThemeProperty('backgroundGradient', $event)">
+                    </mat-form-field>
+
+                    <div class="control-item">
+                      <label>Gradient Angle: {{ currentTheme.gradientAngle }}°</label>
+                      <mat-slider [min]="0" [max]="360" [step]="15"
+                                  [(ngModel)]="currentTheme.gradientAngle"
+                                  (ngModelChange)="updateThemeProperty('gradientAngle', $event)"
+                                  [discrete]="true">
+                        <input matSliderThumb>
+                      </mat-slider>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -237,7 +421,22 @@
                 </div>
 
                 <div class="control-group">
+                  <h4>Color Scheme</h4>
+                  <mat-select [(value)]="currentTheme.colorScheme"
+                              (selectionChange)="updateThemeProperty('colorScheme', $event.value)"
+                              class="full-width">
+                    <mat-option value="ocean-mint">Ocean Mint</mat-option>
+                    <mat-option value="corporate">Corporate</mat-option>
+                    <mat-option value="creative">Creative</mat-option>
+                    <mat-option value="elegant">Elegant</mat-option>
+                    <mat-option value="tech">Tech</mat-option>
+                    <mat-option value="custom">Custom</mat-option>
+                  </mat-select>
+                </div>
+
+                <div class="control-group">
                   <h4>Accessibility Options</h4>
+
                   <mat-checkbox [(ngModel)]="currentTheme.reducedMotion"
                                 (ngModelChange)="updateThemeProperty('reducedMotion', $event)">
                     Reduced Motion
@@ -247,6 +446,34 @@
                                 (ngModelChange)="updateThemeProperty('highContrast', $event)">
                     High Contrast
                   </mat-checkbox>
+
+                  <mat-checkbox [(ngModel)]="currentTheme.focusVisible"
+                                (ngModelChange)="updateThemeProperty('focusVisible', $event)">
+                    Always Show Focus Indicators
+                  </mat-checkbox>
+
+                  <mat-checkbox [(ngModel)]="currentTheme.keyboardNavigation"
+                                (ngModelChange)="updateThemeProperty('keyboardNavigation', $event)">
+                    Enhanced Keyboard Navigation
+                  </mat-checkbox>
+
+                  <mat-checkbox [(ngModel)]="currentTheme.screenReaderFriendly"
+                                (ngModelChange)="updateThemeProperty('screenReaderFriendly', $event)">
+                    Screen Reader Optimized
+                  </mat-checkbox>
+                </div>
+
+                <div class="control-group">
+                  <h4>Text Scaling</h4>
+                  <div class="control-item">
+                    <label>Text Scale: {{ (currentTheme.textScaling * 100).toFixed(0) }}%</label>
+                    <mat-slider [min]="0.8" [max]="1.5" [step]="0.05"
+                                [(ngModel)]="currentTheme.textScaling"
+                                (ngModelChange)="updateThemeProperty('textScaling', $event)"
+                                [discrete]="true">
+                      <input matSliderThumb>
+                    </mat-slider>
+                  </div>
                 </div>
               </div>
             </div>
