@@ -1,5 +1,5 @@
 // src/app/components/theme-creator/theme-creator.component.ts
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
@@ -23,6 +23,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 // Theme Control Components
 import { ColorPickerComponent } from '../theme-controls/color-picker/color-picker.component';
@@ -60,6 +61,7 @@ import { ThemeConfig, ThemePreset } from '../../models/theme.model';
     MatExpansionModule,
     MatBadgeModule,
     MatProgressSpinnerModule,
+    MatSlideToggleModule,
     // Theme Control Components
     ColorPickerComponent,
     TypographyControlsComponent,
@@ -69,8 +71,11 @@ import { ThemeConfig, ThemePreset } from '../../models/theme.model';
   templateUrl: './theme-creator.component.html',
   styleUrls: ['./theme-creator.component.scss']
 })
-export class ThemeCreatorComponent implements OnInit, OnDestroy {
+export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
+  @ViewChild('previewContainer', { read: ElementRef }) previewContainer!: ElementRef;
+
   private destroy$ = new Subject<void>();
+  private previewRoot!: HTMLElement;
 
   // Current theme configuration
   currentTheme: ThemeConfig = this.getDefaultTheme();
@@ -245,6 +250,12 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy {
     }
   ];
 
+  // Additional preview data
+  sampleChartData = {
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    data: [65, 78, 90, 85, 92, 95]
+  };
+
   constructor(
     private fb: FormBuilder,
     private themeService: ThemeService,
@@ -261,11 +272,19 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy {
       .subscribe(theme => {
         if (theme) {
           this.currentTheme = { ...theme };
-          // Apply theme immediately to see changes
-          this.applyTheme(this.currentTheme);
         }
       });
   }
+
+  ngAfterViewInit(): void {
+    // Initialize preview container
+    if (this.previewContainer) {
+      this.previewRoot = this.previewContainer.nativeElement;
+      // Apply initial theme to preview
+      this.applyThemeToPreview(this.currentTheme);
+    }
+  }
+
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
@@ -401,7 +420,7 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy {
   applyPreset(preset: ThemePreset): void {
     this.currentTheme = { ...this.currentTheme, ...preset.config };
     this.updateFormValues(this.currentTheme);
-    this.applyTheme(this.currentTheme);
+    this.applyThemeToPreview(this.currentTheme);
 
     this.snackBar.open(`Applied ${preset.name} preset`, 'Close', {
       duration: 3000,
@@ -409,26 +428,103 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy {
     });
   }
 
-  private applyTheme(theme: ThemeConfig): void {
-    this.themeService.applyTheme(theme);
+  private applyThemeToPreview(theme: ThemeConfig): void {
+    if (!this.previewRoot) return;
+
+    // Apply CSS variables only to preview container
+    const root = this.previewRoot;
+
+    // Core colors
+    root.style.setProperty('--theme-primary', theme.primaryColor);
+    root.style.setProperty('--theme-secondary', theme.secondaryColor);
+    root.style.setProperty('--theme-background', theme.backgroundColor);
+    root.style.setProperty('--theme-text', theme.textColor);
+    root.style.setProperty('--theme-accent', theme.accentColor);
+
+    // Semantic colors
+    root.style.setProperty('--theme-success', theme.successColor);
+    root.style.setProperty('--theme-warning', theme.warningColor);
+    root.style.setProperty('--theme-error', theme.errorColor);
+    root.style.setProperty('--theme-info', theme.infoColor);
+
+    // Surface colors
+    root.style.setProperty('--theme-surface-card', theme.surfaceCard);
+    root.style.setProperty('--theme-surface-modal', theme.surfaceModal);
+    root.style.setProperty('--theme-surface-hover', theme.surfaceHover);
+
+    // Typography
+    root.style.setProperty('--theme-font-family', theme.fontFamily);
+    root.style.setProperty('--theme-font-size', `${theme.fontSizeBase}px`);
+    root.style.setProperty('--theme-font-weight', theme.fontWeight.toString());
+    root.style.setProperty('--theme-line-height', theme.lineHeight.toString());
+    root.style.setProperty('--theme-letter-spacing', `${theme.letterSpacing}em`);
+    root.style.setProperty('--theme-heading-font', theme.headingFontFamily);
+    root.style.setProperty('--theme-heading-weight', theme.headingFontWeight.toString());
+
+    // Spacing & Layout
+    root.style.setProperty('--theme-spacing', `${theme.spacingUnit}px`);
+    root.style.setProperty('--theme-radius', `${theme.borderRadius}px`);
+    root.style.setProperty('--theme-border-width', `${theme.borderWidth}px`);
+
+    // Effects
+    root.style.setProperty('--theme-shadow-intensity', theme.shadowIntensity.toString());
+    root.style.setProperty('--theme-blur', `${theme.blurIntensity}px`);
+
+    // Animation
+    root.style.setProperty('--theme-duration', `${theme.animationSpeed}ms`);
+    root.style.setProperty('--theme-easing', theme.animationEasing);
+
+    // Apply design style class
+    root.setAttribute('data-theme-style', theme.designStyle);
+    root.setAttribute('data-theme-mode', theme.mode);
+
+    // Apply performance settings
+    if (!theme.enableAnimations) {
+      root.classList.add('no-animations');
+    } else {
+      root.classList.remove('no-animations');
+    }
+
+    if (!theme.enableShadows) {
+      root.classList.add('no-shadows');
+    } else {
+      root.classList.remove('no-shadows');
+    }
+
+    // Apply accessibility settings
+    if (theme.reducedMotion) {
+      root.classList.add('motion-reduce');
+    } else {
+      root.classList.remove('motion-reduce');
+    }
+
+    if (theme.highContrast) {
+      root.classList.add('high-contrast');
+    } else {
+      root.classList.remove('high-contrast');
+    }
   }
 
   updateThemeProperty(property: keyof ThemeConfig, value: any): void {
     this.currentTheme = { ...this.currentTheme, [property]: value };
-    this.applyTheme(this.currentTheme);
+    this.applyThemeToPreview(this.currentTheme);
   }
 
   onThemeChange(changes: Partial<ThemeConfig>): void {
     this.currentTheme = { ...this.currentTheme, ...changes };
     this.updateFormValues(this.currentTheme);
-    this.applyTheme(this.currentTheme);
+    this.applyThemeToPreview(this.currentTheme);
   }
 
   async saveTheme(): Promise<void> {
     this.isSaving = true;
 
     try {
+      // Save to local storage
       await this.themeService.saveTheme(this.currentTheme);
+
+      // Apply to the main application
+      this.themeService.applyTheme(this.currentTheme);
 
       this.snackBar.open('Theme saved successfully!', 'Close', {
         duration: 3000,
@@ -448,7 +544,7 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy {
     const defaultTheme = this.getDefaultTheme();
     this.currentTheme = defaultTheme;
     this.updateFormValues(defaultTheme);
-    this.applyTheme(defaultTheme);
+    this.applyThemeToPreview(defaultTheme);
 
     this.snackBar.open('Theme reset to defaults', 'Close', {
       duration: 3000
@@ -482,7 +578,7 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy {
           const theme = JSON.parse(e.target?.result as string) as ThemeConfig;
           this.currentTheme = theme;
           this.updateFormValues(theme);
-          this.applyTheme(theme);
+          this.applyThemeToPreview(theme);
 
           this.snackBar.open('Theme imported successfully!', 'Close', {
             duration: 3000,
@@ -538,5 +634,21 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy {
       default:
         return 'flat';
     }
+  }
+
+  // Helper methods for preview
+  getSpacing(multiplier: number = 1): string {
+    return `${this.currentTheme.spacingUnit * multiplier}px`;
+  }
+
+  getShadow(): string {
+    const intensity = this.currentTheme.shadowIntensity;
+    if (!this.currentTheme.enableShadows || intensity === 0) return 'none';
+
+    return `0 4px 6px rgba(0, 0, 0, ${intensity}), 0 1px 3px rgba(0, 0, 0, ${intensity * 0.8})`;
+  }
+
+  getBorderRadius(): string {
+    return `${this.currentTheme.borderRadius}px`;
   }
 }

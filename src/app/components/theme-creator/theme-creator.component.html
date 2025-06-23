@@ -206,192 +206,260 @@
         </mat-card-header>
 
         <mat-card-content class="preview-content">
-          <!-- Navigation Example -->
-          <nav class="preview-nav">
-            <button *ngFor="let item of navigationItems"
-                    mat-button
-                    class="nav-item">
-              {{ item }}
-            </button>
-          </nav>
+          <!-- Preview Container with Isolated Styles -->
+          <div #previewContainer class="theme-preview-root">
+            <!-- Navigation Example -->
+            <nav class="preview-nav theme-nav">
+              <button *ngFor="let item of navigationItems"
+                      mat-button
+                      class="nav-item theme-nav-item">
+                {{ item }}
+              </button>
+            </nav>
 
-          <!-- Metrics Grid -->
-          <div class="metrics-grid">
-            <mat-card *ngFor="let metric of sampleMetrics"
-                      class="metric-card">
-              <div class="metric-header">
-                <mat-icon [color]="metric.trend === 'up' ? 'primary' : 'warn'">
-                  {{ metric.icon }}
-                </mat-icon>
-                <span class="metric-change"
-                      [ngClass]="{'positive': metric.trend === 'up', 'negative': metric.trend === 'down'}">
-                  {{ metric.change }}
-                </span>
+            <!-- Metrics Grid -->
+            <div class="metrics-grid theme-metrics">
+              <mat-card *ngFor="let metric of sampleMetrics"
+                        class="metric-card theme-card">
+                <div class="metric-header">
+                  <mat-icon class="theme-icon" [color]="metric.trend === 'up' ? 'primary' : 'warn'">
+                    {{ metric.icon }}
+                  </mat-icon>
+                  <span class="metric-change theme-text-accent"
+                        [ngClass]="{'positive': metric.trend === 'up', 'negative': metric.trend === 'down'}">
+                    {{ metric.change }}
+                  </span>
+                </div>
+                <h3 class="metric-value theme-heading">{{ metric.value }}</h3>
+                <p class="metric-title theme-text">{{ metric.title }}</p>
+              </mat-card>
+            </div>
+
+            <!-- Sample Form -->
+            <mat-card class="sample-form-card theme-card">
+              <mat-card-header>
+                <mat-card-title class="theme-heading">Sample Form</mat-card-title>
+              </mat-card-header>
+
+              <mat-card-content>
+                <form class="sample-form">
+                  <div class="form-row">
+                    <mat-form-field appearance="outline" class="theme-form-field">
+                      <mat-label>Full Name</mat-label>
+                      <input matInput placeholder="Enter your name" class="theme-input">
+                      <mat-icon matPrefix class="theme-icon">person</mat-icon>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="theme-form-field">
+                      <mat-label>Email</mat-label>
+                      <input matInput type="email" placeholder="Enter your email" class="theme-input">
+                      <mat-icon matPrefix class="theme-icon">email</mat-icon>
+                    </mat-form-field>
+                  </div>
+
+                  <mat-form-field appearance="outline" class="theme-form-field full-width">
+                    <mat-label>Message</mat-label>
+                    <textarea matInput rows="4" placeholder="Type your message..." class="theme-input"></textarea>
+                  </mat-form-field>
+
+                  <div class="button-group">
+                    <button mat-raised-button class="theme-button-primary">
+                      <mat-icon>check</mat-icon>
+                      Primary
+                    </button>
+
+                    <button mat-raised-button class="theme-button-secondary">
+                      <mat-icon>refresh</mat-icon>
+                      Secondary
+                    </button>
+
+                    <button mat-stroked-button class="theme-button-outline">
+                      <mat-icon>radio_button_unchecked</mat-icon>
+                      Outline
+                    </button>
+
+                    <button mat-button class="theme-button-ghost">
+                      Ghost
+                    </button>
+
+                    <button mat-raised-button class="theme-button-error">
+                      <mat-icon>warning</mat-icon>
+                      Error
+                    </button>
+
+                    <button mat-raised-button class="theme-button-success">
+                      <mat-icon>check_circle</mat-icon>
+                      Success
+                    </button>
+                  </div>
+                </form>
+              </mat-card-content>
+            </mat-card>
+
+            <!-- Typography Preview -->
+            <mat-card class="typography-preview theme-card">
+              <mat-card-header>
+                <mat-card-title class="theme-heading">Typography Showcase</mat-card-title>
+              </mat-card-header>
+
+              <mat-card-content>
+                <h1 class="theme-h1">Heading Level 1</h1>
+                <h2 class="theme-h2">Heading Level 2</h2>
+                <h3 class="theme-h3">Heading Level 3</h3>
+                <h4 class="theme-h4">Heading Level 4</h4>
+                <p class="theme-text">
+                  This is a paragraph with regular text. It demonstrates the base font family,
+                  size, weight, line height, and letter spacing settings.
+                </p>
+                <p class="theme-text-secondary">
+                  This is secondary text with a lighter appearance, perfect for descriptions
+                  and supporting content.
+                </p>
+                <a href="#" class="theme-link" (click)="$event.preventDefault()">This is a themed link</a>
+              </mat-card-content>
+            </mat-card>
+
+            <!-- Feature Showcase -->
+            <mat-card class="features-card theme-card">
+              <mat-card-header>
+                <mat-card-title class="theme-heading">Enterprise Features</mat-card-title>
+              </mat-card-header>
+
+              <mat-card-content>
+                <div class="features-grid">
+                  <div *ngFor="let feature of enterpriseFeatures"
+                       class="feature-item theme-feature-card">
+                    <div class="feature-icon theme-icon-container">
+                      <mat-icon class="theme-icon-large">{{ feature.icon }}</mat-icon>
+                    </div>
+                    <h4 class="feature-title theme-heading-small">{{ feature.title }}</h4>
+                    <p class="feature-desc theme-text-secondary">{{ feature.description }}</p>
+                  </div>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <!-- Component Showcase -->
+            <mat-expansion-panel class="components-panel theme-expansion">
+              <mat-expansion-panel-header class="theme-expansion-header">
+                <mat-panel-title>
+                  <mat-icon class="theme-icon">widgets</mat-icon>
+                  Component Examples
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+
+              <div class="components-showcase">
+                <!-- Chips Example -->
+                <div class="component-example">
+                  <h4 class="theme-heading-small">Chips</h4>
+                  <mat-chip-listbox class="theme-chips">
+                    <mat-chip-option class="theme-chip-primary">Angular</mat-chip-option>
+                    <mat-chip-option class="theme-chip-secondary">Material</mat-chip-option>
+                    <mat-chip-option class="theme-chip">TypeScript</mat-chip-option>
+                    <mat-chip-option class="theme-chip-accent">SCSS</mat-chip-option>
+                  </mat-chip-listbox>
+                </div>
+
+                <!-- Progress Example -->
+                <div class="component-example">
+                  <h4 class="theme-heading-small">Progress Indicators</h4>
+                  <div class="progress-examples">
+                    <mat-progress-spinner mode="determinate"
+                                          [value]="75"
+                                          diameter="60"
+                                          class="theme-spinner">
+                    </mat-progress-spinner>
+                    <div class="progress-bar-container">
+                      <div class="theme-progress-bar" [style.width.%]="65"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Toggle Example -->
+                <div class="component-example">
+                  <h4 class="theme-heading-small">Toggle Controls</h4>
+                  <div class="toggle-examples">
+                    <mat-slide-toggle class="theme-toggle" checked>Enabled Feature</mat-slide-toggle>
+                    <mat-slide-toggle class="theme-toggle">Disabled Feature</mat-slide-toggle>
+                  </div>
+                </div>
+
+                <!-- Badge Example -->
+                <div class="component-example">
+                  <h4 class="theme-heading-small">Badges & Notifications</h4>
+                  <div class="badge-examples">
+                    <button mat-icon-button
+                            [matBadge]="8"
+                            matBadgeColor="primary"
+                            class="theme-icon-button">
+                      <mat-icon class="theme-icon">notifications</mat-icon>
+                    </button>
+                    <button mat-icon-button
+                            [matBadge]="15"
+                            matBadgeColor="accent"
+                            class="theme-icon-button">
+                      <mat-icon class="theme-icon">mail</mat-icon>
+                    </button>
+                    <button mat-icon-button
+                            [matBadge]="3"
+                            matBadgeColor="warn"
+                            class="theme-icon-button">
+                      <mat-icon class="theme-icon">error</mat-icon>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Alert Examples -->
+                <div class="component-example">
+                  <h4 class="theme-heading-small">Alerts</h4>
+                  <div class="alert-examples">
+                    <div class="theme-alert theme-alert-info">
+                      <mat-icon class="theme-icon">info</mat-icon>
+                      Information message
+                    </div>
+                    <div class="theme-alert theme-alert-success">
+                      <mat-icon class="theme-icon">check_circle</mat-icon>
+                      Success message
+                    </div>
+                    <div class="theme-alert theme-alert-warning">
+                      <mat-icon class="theme-icon">warning</mat-icon>
+                      Warning message
+                    </div>
+                    <div class="theme-alert theme-alert-error">
+                      <mat-icon class="theme-icon">error</mat-icon>
+                      Error message
+                    </div>
+                  </div>
+                </div>
               </div>
-              <h3 class="metric-value">{{ metric.value }}</h3>
-              <p class="metric-title">{{ metric.title }}</p>
+            </mat-expansion-panel>
+
+            <!-- Shadow & Effects Preview -->
+            <mat-card class="effects-preview theme-card" *ngIf="currentTheme.enableShadows || currentTheme.enableBlur">
+              <mat-card-header>
+                <mat-card-title class="theme-heading">Effects Preview</mat-card-title>
+              </mat-card-header>
+
+              <mat-card-content>
+                <div class="effects-grid">
+                  <div class="shadow-example theme-shadow-small">
+                    Small Shadow
+                  </div>
+                  <div class="shadow-example theme-shadow-medium">
+                    Medium Shadow
+                  </div>
+                  <div class="shadow-example theme-shadow-large">
+                    Large Shadow
+                  </div>
+                  <div class="glass-example theme-glass" *ngIf="currentTheme.designStyle === 'glassmorphic'">
+                    Glass Effect
+                  </div>
+                </div>
+              </mat-card-content>
             </mat-card>
           </div>
-
-          <!-- Sample Form -->
-          <mat-card class="sample-form-card">
-            <mat-card-header>
-              <mat-card-title>Sample Form</mat-card-title>
-            </mat-card-header>
-
-            <mat-card-content>
-              <form class="sample-form">
-                <div class="form-row">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Full Name</mat-label>
-                    <input matInput placeholder="Enter your name">
-                    <mat-icon matPrefix>person</mat-icon>
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline">
-                    <mat-label>Email</mat-label>
-                    <input matInput type="email" placeholder="Enter your email">
-                    <mat-icon matPrefix>email</mat-icon>
-                  </mat-form-field>
-                </div>
-
-                <div class="button-group">
-                  <button mat-raised-button color="primary">
-                    <mat-icon>check</mat-icon>
-                    Primary
-                  </button>
-
-                  <button mat-raised-button color="accent">
-                    <mat-icon>refresh</mat-icon>
-                    Secondary
-                  </button>
-
-                  <button mat-stroked-button color="primary">
-                    <mat-icon>radio_button_unchecked</mat-icon>
-                    Outline
-                  </button>
-
-                  <button mat-button color="primary">
-                    Ghost
-                  </button>
-
-                  <button mat-raised-button color="warn">
-                    <mat-icon>warning</mat-icon>
-                    Warning
-                  </button>
-
-                  <button mat-raised-button class="success-button">
-                    <mat-icon>check_circle</mat-icon>
-                    Success
-                  </button>
-                </div>
-              </form>
-            </mat-card-content>
-          </mat-card>
-
-          <!-- Feature Showcase -->
-          <mat-card class="features-card">
-            <mat-card-header>
-              <mat-card-title>Enterprise Features</mat-card-title>
-            </mat-card-header>
-
-            <mat-card-content>
-              <div class="features-grid">
-                <div *ngFor="let feature of enterpriseFeatures"
-                     class="feature-item">
-                  <div class="feature-icon">
-                    <mat-icon>{{ feature.icon }}</mat-icon>
-                  </div>
-                  <h4 class="feature-title">{{ feature.title }}</h4>
-                  <p class="feature-desc">{{ feature.description }}</p>
-                </div>
-              </div>
-            </mat-card-content>
-          </mat-card>
-
-          <!-- Sample Components -->
-          <mat-expansion-panel class="components-panel">
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                <mat-icon>widgets</mat-icon>
-                Component Examples
-              </mat-panel-title>
-            </mat-expansion-panel-header>
-
-            <div class="components-showcase">
-              <!-- Chips Example -->
-              <div class="component-example">
-                <h4>Chips</h4>
-                <mat-chip-listbox>
-                  <mat-chip-option color="primary">Angular</mat-chip-option>
-                  <mat-chip-option color="accent">Material</mat-chip-option>
-                  <mat-chip-option>TypeScript</mat-chip-option>
-                  <mat-chip-option color="warn">SCSS</mat-chip-option>
-                </mat-chip-listbox>
-              </div>
-
-              <!-- Progress Example -->
-              <div class="component-example">
-                <h4>Progress</h4>
-                <mat-progress-spinner mode="determinate" [value]="75" diameter="40">
-                </mat-progress-spinner>
-              </div>
-
-              <!-- Badge Example -->
-              <div class="component-example">
-                <h4>Badges</h4>
-                <div class="badge-examples">
-                  <button mat-icon-button [matBadge]="8" matBadgeColor="primary">
-                    <mat-icon>notifications</mat-icon>
-                  </button>
-                  <button mat-icon-button [matBadge]="15" matBadgeColor="accent">
-                    <mat-icon>mail</mat-icon>
-                  </button>
-                  <button mat-icon-button [matBadge]="3" matBadgeColor="warn">
-                    <mat-icon>error</mat-icon>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </mat-expansion-panel>
         </mat-card-content>
       </mat-card>
     </div>
   </div>
 </div>
-
-<!-- Define enterprise features data in component -->
-<ng-container *ngIf="false">
-  enterpriseFeatures = [
-  &#123;
-  title: 'Advanced Theming',
-  description: 'Comprehensive design system with 50+ theme properties',
-  icon: 'palette'
-  &#125;,
-  &#123;
-  title: 'Real-time Updates',
-  description: 'Live theme changes without page refreshes',
-  icon: 'update'
-  &#125;,
-  &#123;
-  title: 'Accessibility First',
-  description: 'WCAG 2.1 compliant with reduced motion support',
-  icon: 'accessibility_new'
-  &#125;,
-  &#123;
-  title: 'Performance Optimized',
-  description: 'GPU-accelerated animations and minimal reflows',
-  icon: 'speed'
-  &#125;,
-  {{ "{" }}
-  title: 'Modern Design Trends',
-  description: 'Glassmorphism, neumorphism, and more',
-  icon: 'auto_awesome'
-  &#125;,
-  {{ "{" }}
-  title: 'Enterprise Ready',
-  description: 'Multi-brand support and theme hierarchies',
-  icon: 'business'
-  &#125;
-  ];
-</ng-container>
