@@ -668,25 +668,43 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
     root.style.setProperty('--theme-divider', theme.dividerColor || 'rgba(0, 0, 0, 0.08)');
     root.style.setProperty('--theme-overlay', theme.overlayColor || 'rgba(0, 0, 0, 0.5)');
 
-    // Typography - ALL properties including new ones
+    // Typography - ALL properties including new ones - COMPREHENSIVE FIX
+    // Font family for body text
     root.style.setProperty('--theme-font-family', theme.fontFamily);
+
+    // Base font size (this is the main body text size)
     root.style.setProperty('--theme-font-size', `${theme.fontSizeBase}px`);
+    root.style.setProperty('--theme-font-size-base', `${theme.fontSizeBase}px`);
+
+    // Font size variants
     root.style.setProperty('--theme-font-size-small', `${theme.fontSizeSmall}px`);
     root.style.setProperty('--theme-font-size-medium', `${theme.fontSizeMedium}px`);
     root.style.setProperty('--theme-font-size-large', `${theme.fontSizeLarge}px`);
     root.style.setProperty('--theme-font-size-xlarge', `${theme.fontSizeXLarge}px`);
+
+    // Font weights
     root.style.setProperty('--theme-font-weight', theme.fontWeight.toString());
     root.style.setProperty('--theme-font-weight-light', theme.fontWeightLight.toString());
     root.style.setProperty('--theme-font-weight-medium', theme.fontWeightMedium.toString());
     root.style.setProperty('--theme-font-weight-bold', theme.fontWeightBold.toString());
+
+    // Line heights
     root.style.setProperty('--theme-line-height', theme.lineHeight.toString());
     root.style.setProperty('--theme-line-height-tight', theme.lineHeightTight.toString());
     root.style.setProperty('--theme-line-height-relaxed', theme.lineHeightRelaxed.toString());
+
+    // Letter spacing
     root.style.setProperty('--theme-letter-spacing', `${theme.letterSpacing}em`);
     root.style.setProperty('--theme-letter-spacing-tight', `${theme.letterSpacingTight}em`);
     root.style.setProperty('--theme-letter-spacing-wide', `${theme.letterSpacingWide}em`);
+
+    // Heading specific typography
     root.style.setProperty('--theme-heading-font', theme.headingFontFamily);
+    root.style.setProperty('--theme-heading-font-family', theme.headingFontFamily);
     root.style.setProperty('--theme-heading-weight', theme.headingFontWeight.toString());
+    root.style.setProperty('--theme-heading-font-weight', theme.headingFontWeight.toString());
+
+    // Individual heading sizes
     root.style.setProperty('--theme-h1-size', `${theme.h1Size}px`);
     root.style.setProperty('--theme-h2-size', `${theme.h2Size}px`);
     root.style.setProperty('--theme-h3-size', `${theme.h3Size}px`);
@@ -694,7 +712,7 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
     root.style.setProperty('--theme-h5-size', `${theme.h5Size}px`);
     root.style.setProperty('--theme-h6-size', `${theme.h6Size}px`);
 
-    // Text scaling - IMPORTANT
+    // Text scaling - IMPORTANT for accessibility
     root.style.setProperty('--theme-text-scale', theme.textScaling.toString());
     root.style.setProperty('--theme-text-scaling', theme.textScaling.toString());
 

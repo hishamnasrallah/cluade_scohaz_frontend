@@ -556,7 +556,8 @@
   * {
     box-sizing: border-box;
   }
-  // Typography with ALL properties
+
+  // Typography with ALL properties - FIXED: Removed duplicate definitions
   .theme-h1 {
     font-family: var(--theme-heading-font, 'Poppins, sans-serif');
     font-weight: var(--theme-heading-weight, 600);
@@ -732,24 +733,17 @@
     letter-spacing: var(--theme-letter-spacing-wide, 0.025em);
   }
 
-  // Update existing styles to use text scaling
-  .theme-heading {
-    font-size: calc(var(--theme-font-size, 16px) * 1.125 * var(--theme-text-scale, 1));
-  }
-
-  .theme-heading-small {
-    font-size: calc(var(--theme-font-size, 16px) * var(--theme-text-scale, 1));
-  }
-
+  // Secondary and accent text styles
   .theme-text-secondary {
     color: color-mix(in srgb, var(--theme-text, #2F4858) 70%, transparent);
     font-size: calc(var(--theme-font-size, 16px) * 0.875 * var(--theme-text-scale, 1));
   }
 
-  // Ensure all text elements use text scaling
-  * {
-    font-size: calc(var(--current-font-size, 1em) * var(--theme-text-scale, 1));
+  .theme-text-accent {
+    color: var(--theme-accent, #5FD3C4);
+    font-weight: 600;
   }
+
   // Brand Header
   .theme-brand-header {
     display: flex;
@@ -768,40 +762,27 @@
     .theme-brand-name {
       font-family: var(--theme-heading-font, 'Poppins, sans-serif');
       font-weight: var(--theme-heading-weight, 600);
-      font-size: calc(var(--theme-font-size, 16px) * 1.5);
+      font-size: calc(var(--theme-font-size, 16px) * 1.5 * var(--theme-text-scale, 1));
       color: var(--theme-text, #2F4858);
       margin: 0;
     }
   }
 
-  // Typography using theme variables
-  .theme-h1, .theme-h2, .theme-h3, .theme-h4, .theme-heading {
+  // Other heading styles
+  .theme-heading {
     font-family: var(--theme-heading-font, 'Poppins, sans-serif');
     font-weight: var(--theme-heading-weight, 600);
+    font-size: calc(var(--theme-font-size, 16px) * 1.125 * var(--theme-text-scale, 1));
     color: var(--theme-text, #2F4858);
     margin: 0 0 calc(var(--theme-spacing, 16px) * 0.75);
   }
 
-  .theme-h1 { font-size: calc(var(--theme-font-size, 16px) * 2.5); }
-  .theme-h2 { font-size: calc(var(--theme-font-size, 16px) * 2); }
-  .theme-h3 { font-size: calc(var(--theme-font-size, 16px) * 1.5); }
-  .theme-h4 { font-size: calc(var(--theme-font-size, 16px) * 1.25); }
-  .theme-heading { font-size: calc(var(--theme-font-size, 16px) * 1.125); }
-  .theme-heading-small { font-size: var(--theme-font-size, 16px); }
-
-  .theme-text {
+  .theme-heading-small {
+    font-family: var(--theme-heading-font, 'Poppins, sans-serif');
+    font-weight: var(--theme-heading-weight, 600);
+    font-size: calc(var(--theme-font-size, 16px) * var(--theme-text-scale, 1));
     color: var(--theme-text, #2F4858);
-    margin: 0 0 var(--theme-spacing, 16px);
-  }
-
-  .theme-text-secondary {
-    color: color-mix(in srgb, var(--theme-text, #2F4858) 70%, transparent);
-    font-size: calc(var(--theme-font-size, 16px) * 0.875);
-  }
-
-  .theme-text-accent {
-    color: var(--theme-accent, #5FD3C4);
-    font-weight: 600;
+    margin: 0 0 calc(var(--theme-spacing, 16px) * 0.75);
   }
 
   .theme-link {
