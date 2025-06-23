@@ -1,5 +1,5 @@
 // src/app/components/theme-controls/shadow-controls/shadow-controls.component.ts
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatSliderModule } from '@angular/material/slider';
@@ -16,7 +16,15 @@ interface ShadowPreset {
   small: string;
   medium: string;
   large: string;
+  inset: string;
   color: string;
+}
+
+interface ShadowValues {
+  x: number;
+  y: number;
+  blur: number;
+  spread: number;
 }
 
 @Component({
@@ -78,7 +86,7 @@ interface ShadowPreset {
 
           <div class="intensity-preview">
             <div class="preview-box"
-                 [style.box-shadow]="generateShadow('medium')">
+                 [style.box-shadow]="theme.shadowMedium">
               Preview
             </div>
           </div>
@@ -96,12 +104,12 @@ interface ShadowPreset {
                  (click)="colorPicker.click()"></div>
             <input #colorPicker
                    type="color"
-                   [(ngModel)]="shadowHexColor"
-                   (ngModelChange)="updateShadowColorFromHex($event)"
+                   [value]="shadowHexColor"
+                   (input)="updateShadowColorFromHex($any($event.target).value)"
                    class="hidden-input" />
             <input type="text"
-                   [(ngModel)]="theme.shadowColor"
-                   (ngModelChange)="updateProperty('shadowColor', $any($event.target).value)"
+                   [value]="theme.shadowColor"
+                   (input)="updateProperty('shadowColor', $any($event.target).value)"
                    class="color-text"
                    placeholder="rgba(0, 0, 0, 0.1)" />
 
@@ -290,6 +298,11 @@ interface ShadowPreset {
                        [value]="theme.blurSmall"
                        (valueChange)="updateProperty('blurSmall', $event)">
               </mat-slider>
+              <div class="blur-preview-small">
+                <div class="blur-overlay" [style.backdrop-filter]="'blur(' + theme.blurSmall + 'px)'">
+                  Small
+                </div>
+              </div>
             </div>
 
             <div class="control-item">
@@ -303,6 +316,11 @@ interface ShadowPreset {
                        [value]="theme.blurMedium"
                        (valueChange)="updateProperty('blurMedium', $event)">
               </mat-slider>
+              <div class="blur-preview-medium">
+                <div class="blur-overlay" [style.backdrop-filter]="'blur(' + theme.blurMedium + 'px)'">
+                  Medium
+                </div>
+              </div>
             </div>
 
             <div class="control-item">
@@ -316,6 +334,11 @@ interface ShadowPreset {
                        [value]="theme.blurLarge"
                        (valueChange)="updateProperty('blurLarge', $event)">
               </mat-slider>
+              <div class="blur-preview-large">
+                <div class="blur-overlay" [style.backdrop-filter]="'blur(' + theme.blurLarge + 'px)'">
+                  Large
+                </div>
+              </div>
             </div>
           </div>
 
@@ -615,6 +638,28 @@ interface ShadowPreset {
       margin-top: 24px;
     }
 
+    .blur-preview-small,
+    .blur-preview-medium,
+    .blur-preview-large {
+      margin-top: 16px;
+      position: relative;
+      height: 80px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+
+      .blur-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: #2F4858;
+      }
+    }
+
     .blur-preview {
       margin-top: 24px;
       position: relative;
@@ -743,15 +788,15 @@ interface ShadowPreset {
     }
   `]
 })
-export class ShadowControlsComponent {
+export class ShadowControlsComponent implements OnInit {
   @Input() theme!: ThemeConfig;
   @Output() themeChange = new EventEmitter<Partial<ThemeConfig>>();
 
   // Shadow values parsed from strings
-  smallShadow = { x: 0, y: 1, blur: 3, spread: 0 };
-  mediumShadow = { x: 0, y: 4, blur: 6, spread: 0 };
-  largeShadow = { x: 0, y: 10, blur: 15, spread: 0 };
-  insetShadow = { x: 0, y: 2, blur: 4, spread: 0 };
+  smallShadow: ShadowValues = { x: 0, y: 1, blur: 3, spread: 0 };
+  mediumShadow: ShadowValues = { x: 0, y: 4, blur: 6, spread: 0 };
+  largeShadow: ShadowValues = { x: 0, y: 10, blur: 15, spread: 0 };
+  insetShadow: ShadowValues = { x: 0, y: 2, blur: 4, spread: 0 };
 
   shadowPresets: ShadowPreset[] = [
     {
@@ -761,6 +806,7 @@ export class ShadowControlsComponent {
       small: 'none',
       medium: 'none',
       large: 'none',
+      inset: 'none',
       color: 'rgba(0, 0, 0, 0)'
     },
     {
@@ -770,6 +816,7 @@ export class ShadowControlsComponent {
       small: '0 1px 3px rgba(0, 0, 0, 0.06)',
       medium: '0 4px 6px rgba(0, 0, 0, 0.08)',
       large: '0 10px 15px rgba(0, 0, 0, 0.1)',
+      inset: 'inset 0 2px 4px rgba(0, 0, 0, 0.05)',
       color: 'rgba(0, 0, 0, 0.1)'
     },
     {
@@ -779,6 +826,7 @@ export class ShadowControlsComponent {
       small: '0 1px 3px rgba(0, 0, 0, 0.12)',
       medium: '0 4px 6px rgba(0, 0, 0, 0.15)',
       large: '0 10px 15px rgba(0, 0, 0, 0.18)',
+      inset: 'inset 0 2px 4px rgba(0, 0, 0, 0.08)',
       color: 'rgba(0, 0, 0, 0.15)'
     },
     {
@@ -788,6 +836,7 @@ export class ShadowControlsComponent {
       small: '0 2px 4px rgba(0, 0, 0, 0.2)',
       medium: '0 5px 10px rgba(0, 0, 0, 0.25)',
       large: '0 15px 25px rgba(0, 0, 0, 0.3)',
+      inset: 'inset 0 2px 4px rgba(0, 0, 0, 0.15)',
       color: 'rgba(0, 0, 0, 0.25)'
     },
     {
@@ -797,6 +846,7 @@ export class ShadowControlsComponent {
       small: '0 2px 4px rgba(52, 197, 170, 0.2)',
       medium: '0 4px 8px rgba(52, 197, 170, 0.25)',
       large: '0 10px 20px rgba(52, 197, 170, 0.3)',
+      inset: 'inset 0 2px 4px rgba(52, 197, 170, 0.1)',
       color: 'rgba(52, 197, 170, 0.25)'
     },
     {
@@ -806,21 +856,35 @@ export class ShadowControlsComponent {
       small: '5px 5px 10px #d1d5db, -5px -5px 10px #ffffff',
       medium: '10px 10px 20px #d1d5db, -10px -10px 20px #ffffff',
       large: '15px 15px 30px #d1d5db, -15px -15px 30px #ffffff',
+      inset: 'inset 2px 2px 5px #d1d5db, inset -2px -2px 5px #ffffff',
       color: 'rgba(0, 0, 0, 0.1)'
-    },
+    }
+  ];
 
-];
   shadowHexColor: string = '#000000';
 
   ngOnInit() {
     this.parseShadowValues();
     this.shadowHexColor = this.convertToHex(this.theme.shadowColor);
 
+    // Ensure default values
+    if (!this.theme.shadowSmall) this.theme.shadowSmall = '0 1px 3px rgba(0, 0, 0, 0.06)';
+    if (!this.theme.shadowMedium) this.theme.shadowMedium = '0 4px 6px rgba(0, 0, 0, 0.08)';
+    if (!this.theme.shadowLarge) this.theme.shadowLarge = '0 10px 15px rgba(0, 0, 0, 0.1)';
+    if (!this.theme.shadowInset) this.theme.shadowInset = 'inset 0 2px 4px rgba(0, 0, 0, 0.05)';
+    if (!this.theme.blurSmall) this.theme.blurSmall = 4;
+    if (!this.theme.blurMedium) this.theme.blurMedium = 10;
+    if (!this.theme.blurLarge) this.theme.blurLarge = 20;
   }
+
   updateShadowColorFromHex(hex: string): void {
     this.shadowHexColor = hex;
-    this.updateProperty('shadowColor', this.convertToRgba(hex));
+    const rgba = this.convertToRgba(hex);
+    this.updateProperty('shadowColor', rgba);
+    // Update all shadow definitions with new color
+    this.updateAllShadowsWithNewColor();
   }
+
   updateProperty(key: keyof ThemeConfig, value: any): void {
     this.themeChange.emit({ [key]: value });
   }
@@ -836,33 +900,17 @@ export class ShadowControlsComponent {
       shadowSmall: preset.small,
       shadowMedium: preset.medium,
       shadowLarge: preset.large,
+      shadowInset: preset.inset,
       shadowColor: preset.color
     });
-  }
-
-  generateShadow(size: 'small' | 'medium' | 'large'): string {
-    const intensity = this.theme.shadowIntensity;
-    const color = this.theme.shadowColor || 'rgba(0, 0, 0, 0.1)';
-
-    switch (size) {
-      case 'small':
-        return `0 1px 3px ${color}`;
-      case 'medium':
-        return `0 4px 6px ${color}`;
-      case 'large':
-        return `0 10px 15px ${color}`;
-    }
+    // Re-parse shadow values after applying preset
+    setTimeout(() => this.parseShadowValues(), 0);
   }
 
   convertToHex(color: string | undefined): string {
-    // Handle undefined or null values
-    if (!color) {
-      return '#000000';
-    }
+    if (!color) return '#000000';
 
-    // Simple conversion for demonstration
     if (color.startsWith('rgba') || color.startsWith('rgb')) {
-      // Extract RGB values and convert to hex
       const matches = color.match(/\d+/g);
       if (matches && matches.length >= 3) {
         const r = parseInt(matches[0]).toString(16).padStart(2, '0');
@@ -870,15 +918,9 @@ export class ShadowControlsComponent {
         const b = parseInt(matches[2]).toString(16).padStart(2, '0');
         return `#${r}${g}${b}`;
       }
-      return '#000000';
     }
 
-    // If it's already a hex color, return it
-    if (color.startsWith('#')) {
-      return color;
-    }
-
-    return '#000000';
+    return color.startsWith('#') ? color : '#000000';
   }
 
   convertToRgba(hex: string): string {
@@ -890,20 +932,20 @@ export class ShadowControlsComponent {
 
   resetShadowColor(): void {
     this.updateProperty('shadowColor', 'rgba(0, 0, 0, 0.1)');
+    this.shadowHexColor = '#000000';
+    this.updateAllShadowsWithNewColor();
   }
 
   parseShadowValues(): void {
-    // Parse existing shadow values
-    // This is a simplified version - in production, you'd have a proper parser
     try {
-      const parseValues = (shadow: string) => {
-        const matches = shadow.match(/(-?\d+)px/g);
+      const parseValues = (shadow: string): ShadowValues => {
+        const matches = shadow.match(/(-?\d+(?:\.\d+)?)/g);
         if (matches && matches.length >= 3) {
           return {
-            x: parseInt(matches[0]),
-            y: parseInt(matches[1]),
-            blur: parseInt(matches[2]),
-            spread: matches[3] ? parseInt(matches[3]) : 0
+            x: parseFloat(matches[0]),
+            y: parseFloat(matches[1]),
+            blur: parseFloat(matches[2]),
+            spread: matches[3] ? parseFloat(matches[3]) : 0
           };
         }
         return { x: 0, y: 0, blur: 0, spread: 0 };
@@ -918,13 +960,16 @@ export class ShadowControlsComponent {
       if (this.theme.shadowLarge && this.theme.shadowLarge !== 'none') {
         this.largeShadow = parseValues(this.theme.shadowLarge);
       }
+      if (this.theme.shadowInset && this.theme.shadowInset !== 'none') {
+        this.insetShadow = parseValues(this.theme.shadowInset);
+      }
     } catch (e) {
       console.error('Error parsing shadow values:', e);
     }
   }
 
   updateShadowSize(size: 'small' | 'medium' | 'large' | 'inset'): void {
-    let shadow: any;
+    let shadow: ShadowValues;
     let key: keyof ThemeConfig;
 
     switch (size) {
@@ -951,5 +996,16 @@ export class ShadowControlsComponent {
       : `${shadow.x}px ${shadow.y}px ${shadow.blur}px ${shadow.spread}px ${this.theme.shadowColor}`;
 
     this.themeChange.emit({ [key]: shadowValue });
+  }
+
+  private updateAllShadowsWithNewColor(): void {
+    // Update all shadow definitions with the new color
+    const updates: Partial<ThemeConfig> = {
+      shadowSmall: `${this.smallShadow.x}px ${this.smallShadow.y}px ${this.smallShadow.blur}px ${this.smallShadow.spread}px ${this.theme.shadowColor}`,
+      shadowMedium: `${this.mediumShadow.x}px ${this.mediumShadow.y}px ${this.mediumShadow.blur}px ${this.mediumShadow.spread}px ${this.theme.shadowColor}`,
+      shadowLarge: `${this.largeShadow.x}px ${this.largeShadow.y}px ${this.largeShadow.blur}px ${this.largeShadow.spread}px ${this.theme.shadowColor}`,
+      shadowInset: `inset ${this.insetShadow.x}px ${this.insetShadow.y}px ${this.insetShadow.blur}px ${this.insetShadow.spread}px ${this.theme.shadowColor}`
+    };
+    this.themeChange.emit(updates);
   }
 }

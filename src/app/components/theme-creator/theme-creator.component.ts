@@ -109,6 +109,7 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('previewContainer', { read: ElementRef }) previewContainer!: ElementRef;
 
   private previewRoot!: HTMLElement;
+  private updatePreviewDebounceTimer: any;
 
   // Constants exposed to template
   readonly themePresets: ThemePreset[] = THEME_PRESETS;
@@ -144,18 +145,21 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
       this.previewRoot = this.previewContainer.nativeElement;
       // Apply initial theme to preview
       setTimeout(() => {
-        this.vm.applyThemeToPreview(this.previewRoot);
+        this.updatePreviewImmediate();
       }, 0);
     }
   }
 
   ngOnDestroy(): void {
+    if (this.updatePreviewDebounceTimer) {
+      clearTimeout(this.updatePreviewDebounceTimer);
+    }
     this.vm.destroy();
   }
 
   applyPreset(preset: ThemePreset): void {
     this.vm.applyPreset(preset);
-    this.vm.applyThemeToPreview(this.previewRoot);
+    this.updatePreviewImmediate();
 
     this.snackBar.open(`Applied ${preset.name} preset`, 'Close', {
       duration: 3000,
@@ -165,12 +169,35 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
 
   updateThemeProperty(property: keyof typeof this.currentTheme, value: any): void {
     this.vm.updateThemeProperty(property, value);
-    this.vm.applyThemeToPreview(this.previewRoot);
+    this.updatePreviewDebounced();
   }
 
   onThemeChange(changes: Partial<typeof this.currentTheme>): void {
     this.vm.onThemeChange(changes);
-    this.vm.applyThemeToPreview(this.previewRoot);
+    this.updatePreviewImmediate();
+  }
+
+  private updatePreviewImmediate(): void {
+    if (this.previewRoot) {
+      this.vm.applyThemeToPreview(this.previewRoot);
+      // Force change detection to ensure Angular updates the view
+      this.cdr.detectChanges();
+    }
+  }
+
+  private updatePreviewDebounced(): void {
+    // Clear any existing timer
+    if (this.updatePreviewDebounceTimer) {
+      clearTimeout(this.updatePreviewDebounceTimer);
+    }
+
+    // Update immediately for better user experience
+    this.updatePreviewImmediate();
+
+    // Also set a debounced update in case of rapid changes
+    this.updatePreviewDebounceTimer = setTimeout(() => {
+      this.updatePreviewImmediate();
+    }, 50);
   }
 
   async saveTheme(): Promise<void> {
@@ -190,7 +217,7 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
 
   resetTheme(): void {
     this.vm.resetTheme();
-    this.vm.applyThemeToPreview(this.previewRoot);
+    this.updatePreviewImmediate();
 
     this.snackBar.open('Theme reset to defaults', 'Close', {
       duration: 3000
@@ -212,7 +239,7 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
     if (file) {
       try {
         await this.vm.importTheme(file);
-        this.vm.applyThemeToPreview(this.previewRoot);
+        this.updatePreviewImmediate();
 
         this.snackBar.open('Theme imported successfully!', 'Close', {
           duration: 3000,
@@ -229,7 +256,7 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
 
   toggleMode(): void {
     this.vm.toggleMode();
-    this.vm.applyThemeToPreview(this.previewRoot);
+    this.updatePreviewImmediate();
   }
 
   openAdvancedSettings(): void {
@@ -238,7 +265,7 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   refreshPreview(): void {
-    this.vm.applyThemeToPreview(this.previewRoot);
+    this.updatePreviewImmediate();
   }
 
   // Helper methods

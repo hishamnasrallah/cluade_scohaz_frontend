@@ -87,27 +87,27 @@ export class ThemePreviewService {
     root.style.setProperty(`${this.CSS_PREFIX}-font-size-large`, `${theme.fontSizeLarge || 18}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-font-size-xlarge`, `${theme.fontSizeXLarge || 20}px`);
 
-// Font weights
+    // Font weights
     root.style.setProperty(`${this.CSS_PREFIX}-font-weight`, (theme.fontWeight || 400).toString());
     root.style.setProperty(`${this.CSS_PREFIX}-font-weight-light`, (theme.fontWeightLight || 300).toString());
     root.style.setProperty(`${this.CSS_PREFIX}-font-weight-medium`, (theme.fontWeightMedium || 500).toString());
     root.style.setProperty(`${this.CSS_PREFIX}-font-weight-bold`, (theme.fontWeightBold || 700).toString());
 
-// Line heights
+    // Line heights
     root.style.setProperty(`${this.CSS_PREFIX}-line-height`, (theme.lineHeight || 1.5).toString());
     root.style.setProperty(`${this.CSS_PREFIX}-line-height-tight`, (theme.lineHeightTight || 1.25).toString());
     root.style.setProperty(`${this.CSS_PREFIX}-line-height-relaxed`, (theme.lineHeightRelaxed || 1.75).toString());
 
-// Text scaling
+    // Text scaling
     root.style.setProperty(`${this.CSS_PREFIX}-text-scale`, (theme.textScaling || 1).toString());
     root.style.setProperty(`${this.CSS_PREFIX}-text-scaling`, (theme.textScaling || 1).toString());
 
-// Letter spacing - fix the undefined issue
+    // Letter spacing - fix the undefined issue
     root.style.setProperty(`${this.CSS_PREFIX}-letter-spacing`, `${theme.letterSpacing || 0}em`);
     root.style.setProperty(`${this.CSS_PREFIX}-letter-spacing-tight`, `${theme.letterSpacingTight || -0.025}em`);
     root.style.setProperty(`${this.CSS_PREFIX}-letter-spacing-wide`, `${theme.letterSpacingWide || 0.025}em`);
 
-// Heading typography - add null checks
+    // Heading typography - add null checks
     root.style.setProperty(`${this.CSS_PREFIX}-heading-weight`, (theme.headingFontWeight || 700).toString());
     root.style.setProperty(`${this.CSS_PREFIX}-heading-font-weight`, (theme.headingFontWeight || 700).toString());
     root.style.setProperty(`${this.CSS_PREFIX}-heading-font`, theme.headingFontFamily);
@@ -120,7 +120,6 @@ export class ThemePreviewService {
     root.style.setProperty(`${this.CSS_PREFIX}-h4-size`, `${theme.h4Size || 24}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-h5-size`, `${theme.h5Size || 20}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-h6-size`, `${theme.h6Size || 18}px`);
-
   }
 
   private applySpacingAndLayout(root: HTMLElement, theme: ThemeConfig): void {
@@ -137,29 +136,45 @@ export class ThemePreviewService {
   }
 
   private applyBorders(root: HTMLElement, theme: ThemeConfig): void {
+    // Border radius - all sizes
     root.style.setProperty(`${this.CSS_PREFIX}-radius`, `${theme.borderRadius}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-radius-small`, `${theme.borderRadiusSmall}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-radius-medium`, `${theme.borderRadiusMedium}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-radius-large`, `${theme.borderRadiusLarge}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-radius-circle`, `${theme.borderRadiusCircle}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-radius-small`, `${theme.borderRadiusSmall || 8}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-radius-medium`, `${theme.borderRadiusMedium || 12}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-radius-large`, `${theme.borderRadiusLarge || 16}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-radius-circle`, `${theme.borderRadiusCircle || 9999}px`);
+
+    // Also set specific border radius properties
+    root.style.setProperty(`${this.CSS_PREFIX}-border-radius`, `${theme.borderRadius}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-border-radius-small`, `${theme.borderRadiusSmall || 8}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-border-radius-medium`, `${theme.borderRadiusMedium || 12}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-border-radius-large`, `${theme.borderRadiusLarge || 16}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-border-radius-circle`, `${theme.borderRadiusCircle || 9999}px`);
+
+    // Border width and style
     root.style.setProperty(`${this.CSS_PREFIX}-border-width`, `${theme.borderWidth}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-border-style`, theme.borderStyle);
+    root.style.setProperty(`${this.CSS_PREFIX}-border-style`, theme.borderStyle || 'solid');
+
+    // Border colors
     root.style.setProperty(`${this.CSS_PREFIX}-border-color`, theme.borderColor);
     root.style.setProperty(`${this.CSS_PREFIX}-border-focus`, theme.borderFocusColor);
     root.style.setProperty(`${this.CSS_PREFIX}-border-hover`, theme.borderHoverColor);
   }
 
   private applyEffects(root: HTMLElement, theme: ThemeConfig): void {
+    // Shadow properties
     root.style.setProperty(`${this.CSS_PREFIX}-shadow-intensity`, (theme.shadowIntensity || 0.12).toString());
-    root.style.setProperty(`${this.CSS_PREFIX}-shadow-color`, theme.shadowColor);
-    root.style.setProperty(`${this.CSS_PREFIX}-shadow-small`, theme.shadowSmall);
-    root.style.setProperty(`${this.CSS_PREFIX}-shadow-medium`, theme.shadowMedium);
-    root.style.setProperty(`${this.CSS_PREFIX}-shadow-large`, theme.shadowLarge);
-    root.style.setProperty(`${this.CSS_PREFIX}-shadow-inset`, theme.shadowInset);
+    root.style.setProperty(`${this.CSS_PREFIX}-shadow-color`, theme.shadowColor || 'rgba(0, 0, 0, 0.1)');
+    root.style.setProperty(`${this.CSS_PREFIX}-shadow-small`, theme.shadowSmall || '0 1px 3px rgba(0, 0, 0, 0.06)');
+    root.style.setProperty(`${this.CSS_PREFIX}-shadow-medium`, theme.shadowMedium || '0 4px 6px rgba(0, 0, 0, 0.08)');
+    root.style.setProperty(`${this.CSS_PREFIX}-shadow-large`, theme.shadowLarge || '0 10px 15px rgba(0, 0, 0, 0.1)');
+    root.style.setProperty(`${this.CSS_PREFIX}-shadow-inset`, theme.shadowInset || 'inset 0 2px 4px rgba(0, 0, 0, 0.05)');
+
+    // Blur properties
     root.style.setProperty(`${this.CSS_PREFIX}-blur`, `${theme.blurIntensity || 8}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-blur-intensity`, `${theme.blurIntensity || 8}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-blur-small`, `${theme.blurSmall || 4}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-blur-medium`, `${theme.blurMedium || 8}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-blur-large`, `${theme.blurLarge || 12}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-blur-medium`, `${theme.blurMedium || 10}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-blur-large`, `${theme.blurLarge || 20}px`);
   }
 
   private applyAnimation(root: HTMLElement, theme: ThemeConfig): void {
@@ -178,16 +193,16 @@ export class ThemePreviewService {
     root.style.setProperty(`${this.CSS_PREFIX}-button-padding-y`, `${theme.buttonPaddingY || 12}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-button-font-size`, `${theme.buttonFontSize || 14}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-button-font-weight`, (theme.buttonFontWeight || 600).toString());
-    root.style.setProperty(`${this.CSS_PREFIX}-button-radius`, `${theme.buttonBorderRadius || 8}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-button-radius`, `${theme.buttonBorderRadius || theme.borderRadiusSmall || 8}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-input-height`, `${theme.inputHeight || 44}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-input-padding-x`, `${theme.inputPaddingX || 16}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-input-padding-y`, `${theme.inputPaddingY || 12}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-input-font-size`, `${theme.inputFontSize || 16}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-input-radius`, `${theme.inputBorderRadius || 8}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-input-radius`, `${theme.inputBorderRadius || theme.borderRadiusSmall || 8}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-card-padding`, `${theme.cardPadding || 24}px`);
-    root.style.setProperty(`${this.CSS_PREFIX}-card-radius`, `${theme.cardBorderRadius || 12}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-card-radius`, `${theme.cardBorderRadius || theme.borderRadius || 12}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-card-elevation`, (theme.cardElevation || 1).toString());
-    root.style.setProperty(`${this.CSS_PREFIX}-modal-radius`, `${theme.modalBorderRadius || 16}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-modal-radius`, `${theme.modalBorderRadius || theme.borderRadiusLarge || 16}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-modal-padding`, `${theme.modalPadding || 32}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-tooltip-font-size`, `${theme.tooltipFontSize || 12}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-tooltip-padding`, `${theme.tooltipPadding || 8}px`);

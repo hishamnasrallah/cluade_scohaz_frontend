@@ -1,5 +1,5 @@
 // src/app/components/theme-controls/border-controls/border-controls.component.ts
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatSliderModule } from '@angular/material/slider';
@@ -16,6 +16,7 @@ interface BorderPreset {
   radiusSmall: number;
   radiusMedium: number;
   radiusLarge: number;
+  radiusCircle: number;
   width: number;
   style: string;
 }
@@ -85,12 +86,12 @@ interface BorderPreset {
             <label>Medium Radius: {{ theme.borderRadiusMedium }}px</label>
             <mat-slider
               [min]="0"
-              [max]="60"
+              [max]="40"
               [step]="1"
-              [(ngModel)]="theme.borderRadiusLarge"
-              (ngModelChange)="updateProperty('borderRadiusLarge', $event.value)"
               [discrete]="true">
-              <input matSliderThumb>
+              <input matSliderThumb
+                     [value]="theme.borderRadiusMedium"
+                     (valueChange)="updateProperty('borderRadiusMedium', $event)">
             </mat-slider>
             <div class="preview-box medium" [style.border-radius.px]="theme.borderRadiusMedium"></div>
           </div>
@@ -111,14 +112,19 @@ interface BorderPreset {
 
           <div class="control-item">
             <label>Circle Radius: {{ theme.borderRadiusCircle }}px</label>
-            <mat-slider [min]="0" [max]="50" [step]="1"
-                        [discrete]="true">
+            <mat-slider
+              [min]="0"
+              [max]="9999"
+              [step]="1"
+              [discrete]="true">
               <input matSliderThumb
                      [value]="theme.borderRadiusCircle"
                      (valueChange)="updateProperty('borderRadiusCircle', $event)">
             </mat-slider>
-
-            <div class="preview-box circle" [style.border-radius.px]="theme.borderRadiusCircle"></div>
+            <div class="preview-box circle"
+                 [style.border-radius.px]="theme.borderRadiusCircle"
+                 [style.width.px]="60"
+                 [style.height.px]="60"></div>
           </div>
         </div>
       </div>
@@ -140,7 +146,10 @@ interface BorderPreset {
           </mat-slider>
 
           <div class="width-preview">
-            <div class="width-box" [style.border-width.px]="theme.borderWidth"></div>
+            <div class="width-box"
+                 [style.border-width.px]="theme.borderWidth"
+                 [style.border-style]="theme.borderStyle"
+                 [style.border-color]="theme.borderColor"></div>
             <span class="width-label">{{ theme.borderWidth }}px</span>
           </div>
         </div>
@@ -155,7 +164,10 @@ interface BorderPreset {
           <mat-select [value]="theme.borderStyle" (selectionChange)="updateProperty('borderStyle', $event.value)">
             <mat-option *ngFor="let style of borderStyles" [value]="style.value">
               <div class="style-option">
-                <div class="style-preview" [style.border-style]="style.value"></div>
+                <div class="style-preview"
+                     [style.border-style]="style.value"
+                     [style.border-width.px]="2"
+                     [style.border-color]="'#34C5AA'"></div>
                 <span>{{ style.label }}</span>
               </div>
             </mat-option>
@@ -205,7 +217,7 @@ interface BorderPreset {
             <div class="color-input-group">
               <input
                 type="color"
-                [value]="theme.borderFocusColor"
+                [value]="convertToHex(theme.borderFocusColor)"
                 (input)="updateProperty('borderFocusColor', $any($event.target).value)"
                 class="color-picker"
               />
@@ -376,8 +388,8 @@ interface BorderPreset {
       }
 
       &.circle {
-        width: 80px;
-        height: 80px;
+        width: 60px;
+        height: 60px;
       }
     }
 
@@ -488,6 +500,7 @@ interface BorderPreset {
         border: 2px solid rgba(196, 247, 239, 0.5);
         border-radius: 8px;
         cursor: pointer;
+        background-color: transparent;
         padding: 2px;
         transition: all 0.2s ease;
 
@@ -622,7 +635,7 @@ interface BorderPreset {
     }
   `]
 })
-export class BorderControlsComponent {
+export class BorderControlsComponent implements OnInit {
   @Input() theme!: ThemeConfig;
   @Output() themeChange = new EventEmitter<Partial<ThemeConfig>>();
 
@@ -651,6 +664,7 @@ export class BorderControlsComponent {
       radiusSmall: 8,
       radiusMedium: 12,
       radiusLarge: 16,
+      radiusCircle: 9999,
       width: 1,
       style: 'solid'
     },
@@ -660,6 +674,7 @@ export class BorderControlsComponent {
       radiusSmall: 2,
       radiusMedium: 4,
       radiusLarge: 6,
+      radiusCircle: 9999,
       width: 1,
       style: 'solid'
     },
@@ -669,6 +684,7 @@ export class BorderControlsComponent {
       radiusSmall: 12,
       radiusMedium: 16,
       radiusLarge: 20,
+      radiusCircle: 9999,
       width: 2,
       style: 'solid'
     },
@@ -678,6 +694,7 @@ export class BorderControlsComponent {
       radiusSmall: 0,
       radiusMedium: 0,
       radiusLarge: 0,
+      radiusCircle: 0,
       width: 1,
       style: 'solid'
     },
@@ -687,6 +704,7 @@ export class BorderControlsComponent {
       radiusSmall: 16,
       radiusMedium: 24,
       radiusLarge: 32,
+      radiusCircle: 9999,
       width: 3,
       style: 'solid'
     },
@@ -696,12 +714,23 @@ export class BorderControlsComponent {
       radiusSmall: 0,
       radiusMedium: 0,
       radiusLarge: 0,
+      radiusCircle: 0,
       width: 0,
       style: 'none'
     }
   ];
 
+  ngOnInit(): void {
+    // Ensure all properties have default values
+    if (!this.theme.borderRadiusSmall) this.theme.borderRadiusSmall = 8;
+    if (!this.theme.borderRadiusMedium) this.theme.borderRadiusMedium = 12;
+    if (!this.theme.borderRadiusLarge) this.theme.borderRadiusLarge = 16;
+    if (!this.theme.borderRadiusCircle) this.theme.borderRadiusCircle = 9999;
+    if (!this.theme.borderStyle) this.theme.borderStyle = 'solid';
+  }
+
   updateProperty(key: keyof ThemeConfig, value: any): void {
+    // Emit the change immediately
     this.themeChange.emit({ [key]: value });
   }
 
@@ -714,14 +743,9 @@ export class BorderControlsComponent {
       borderRadius: preset.value,
       borderRadiusSmall: Math.max(0, preset.value - 4),
       borderRadiusMedium: preset.value,
-      borderRadiusLarge: preset.value + 4
+      borderRadiusLarge: preset.value + 4,
+      borderRadiusCircle: preset.value === 0 ? 0 : 9999
     };
-
-    if (preset.value === 0) {
-      updates.borderRadiusCircle = 0;
-    } else {
-      updates.borderRadiusCircle = 9999;
-    }
 
     this.themeChange.emit(updates);
   }
@@ -738,20 +762,16 @@ export class BorderControlsComponent {
       borderRadiusSmall: preset.radiusSmall,
       borderRadiusMedium: preset.radiusMedium,
       borderRadiusLarge: preset.radiusLarge,
+      borderRadiusCircle: preset.radiusCircle,
       borderWidth: preset.width,
       borderStyle: preset.style as any
     });
   }
 
   convertToHex(color: string | undefined): string {
-    // Handle undefined or null values
-    if (!color) {
-      return '#000000';
-    }
+    if (!color) return '#000000';
 
-    // Simple conversion for demonstration
     if (color.startsWith('rgba') || color.startsWith('rgb')) {
-      // Extract RGB values and convert to hex
       const matches = color.match(/\d+/g);
       if (matches && matches.length >= 3) {
         const r = parseInt(matches[0]).toString(16).padStart(2, '0');
@@ -759,14 +779,8 @@ export class BorderControlsComponent {
         const b = parseInt(matches[2]).toString(16).padStart(2, '0');
         return `#${r}${g}${b}`;
       }
-      return '#000000';
     }
 
-    // If it's already a hex color, return it
-    if (color.startsWith('#')) {
-      return color;
-    }
-
-    return '#000000';
+    return color.startsWith('#') ? color : '#000000';
   }
 }
