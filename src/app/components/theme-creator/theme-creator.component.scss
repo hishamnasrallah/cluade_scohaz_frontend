@@ -367,9 +367,10 @@
 }
 
 // Preview Navigation
+// Preview Navigation
 .preview-nav {
-  background: rgba(196, 247, 239, 0.3);
-  border-radius: 12px;
+  background: var(--surface-hover, rgba(196, 247, 239, 0.3));
+  border-radius: var(--border-radius, 12px);
   padding: 8px;
   margin-bottom: 24px;
   display: flex;
@@ -377,19 +378,20 @@
   flex-wrap: wrap;
 
   .nav-item {
-    border-radius: 8px !important;
-    font-weight: 500 !important;
-    transition: all 0.3s ease !important;
+    border-radius: calc(var(--border-radius, 12px) * 0.66) !important;
+    font-weight: var(--font-weight, 500) !important;
+    font-family: var(--font-family, inherit) !important;
+    transition: all var(--animation-speed, 300ms) var(--animation-easing, ease) !important;
+    color: var(--text-color, #2F4858) !important;
 
     &:hover {
-      background: white !important;
-      color: #34C5AA !important;
+      background: var(--surface-card, white) !important;
+      color: var(--primary-color, #34C5AA) !important;
       transform: translateY(-1px);
-      box-shadow: 0 2px 8px rgba(47, 72, 88, 0.08);
+      box-shadow: 0 2px 8px rgba(47, 72, 88, calc(var(--shadow-intensity, 0.1) * 0.8));
     }
   }
 }
-
 // Metrics Grid
 .metrics-grid {
   display: grid;

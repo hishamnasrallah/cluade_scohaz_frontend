@@ -131,6 +131,33 @@ export class ThemeService {
     this.root.style.setProperty(`${this.CSS_PREFIX}-duration`, `${theme.animationSpeed}ms`);
     this.root.style.setProperty(`${this.CSS_PREFIX}-easing`, theme.animationEasing);
 
+    // Also set without prefix for easier usage
+    this.root.style.setProperty(`--primary-color`, theme.primaryColor);
+    this.root.style.setProperty(`--secondary-color`, theme.secondaryColor);
+    this.root.style.setProperty(`--background-color`, theme.backgroundColor);
+    this.root.style.setProperty(`--text-color`, theme.textColor);
+    this.root.style.setProperty(`--accent-color`, theme.accentColor);
+    this.root.style.setProperty(`--success-color`, theme.successColor);
+    this.root.style.setProperty(`--warning-color`, theme.warningColor);
+    this.root.style.setProperty(`--error-color`, theme.errorColor);
+    this.root.style.setProperty(`--info-color`, theme.infoColor);
+    this.root.style.setProperty(`--surface-card`, theme.surfaceCard);
+    this.root.style.setProperty(`--surface-hover`, theme.surfaceHover);
+    this.root.style.setProperty(`--font-family`, theme.fontFamily);
+    this.root.style.setProperty(`--font-size`, `${theme.fontSizeBase}px`);
+    this.root.style.setProperty(`--font-weight`, theme.fontWeight.toString());
+    this.root.style.setProperty(`--line-height`, theme.lineHeight.toString());
+    this.root.style.setProperty(`--letter-spacing`, `${theme.letterSpacing}em`);
+    this.root.style.setProperty(`--heading-font-family`, theme.headingFontFamily);
+    this.root.style.setProperty(`--heading-font-weight`, theme.headingFontWeight.toString());
+    this.root.style.setProperty(`--spacing`, `${theme.spacingUnit}px`);
+    this.root.style.setProperty(`--border-radius`, `${theme.borderRadius}px`);
+    this.root.style.setProperty(`--border-width`, `${theme.borderWidth}px`);
+    this.root.style.setProperty(`--shadow-intensity`, theme.shadowIntensity.toString());
+    this.root.style.setProperty(`--blur`, `${theme.blurIntensity}px`);
+    this.root.style.setProperty(`--animation-speed`, `${theme.animationSpeed}ms`);
+    this.root.style.setProperty(`--animation-easing`, theme.animationEasing);
+
     // Mode specific adjustments
     if (theme.mode === 'dark') {
       this.applyDarkMode(theme);
@@ -141,7 +168,6 @@ export class ThemeService {
     // Design style
     this.root.setAttribute('data-design-style', theme.designStyle);
   }
-
   private applySpecialStyles(theme: ThemeConfig): void {
     let specialStyles = '';
 

@@ -261,20 +261,11 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy {
       .subscribe(theme => {
         if (theme) {
           this.currentTheme = { ...theme };
-          this.updateFormValues(theme);
-          this.applyTheme(theme);
+          // Apply theme immediately to see changes
+          this.applyTheme(this.currentTheme);
         }
       });
-
-    // Subscribe to form changes
-    this.themeForm.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(values => {
-        this.currentTheme = { ...this.currentTheme, ...values };
-        this.applyTheme(this.currentTheme);
-      });
   }
-
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();

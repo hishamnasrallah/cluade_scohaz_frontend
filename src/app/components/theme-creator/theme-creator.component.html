@@ -164,7 +164,7 @@
                 <div class="control-group">
                   <h4>Theme Mode</h4>
                   <mat-radio-group [(ngModel)]="currentTheme.mode"
-                                   (change)="onThemeChange({mode: $event.value})">
+                                   (ngModelChange)="onThemeChange({mode: $event})">
                     <mat-radio-button value="light">Light</mat-radio-button>
                     <mat-radio-button value="dark">Dark</mat-radio-button>
                     <mat-radio-button value="auto">Auto</mat-radio-button>
@@ -174,12 +174,12 @@
                 <div class="control-group">
                   <h4>Accessibility Options</h4>
                   <mat-checkbox [(ngModel)]="currentTheme.reducedMotion"
-                                (change)="onThemeChange({reducedMotion: $event.checked})">
+                                (ngModelChange)="onThemeChange({reducedMotion: $event})">
                     Reduced Motion
                   </mat-checkbox>
 
                   <mat-checkbox [(ngModel)]="currentTheme.highContrast"
-                                (change)="onThemeChange({highContrast: $event.checked})">
+                                (ngModelChange)="onThemeChange({highContrast: $event})">
                     High Contrast
                   </mat-checkbox>
                 </div>
