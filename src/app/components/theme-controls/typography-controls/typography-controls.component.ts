@@ -3,11 +3,12 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ThemeConfig } from '../../../models/theme.model';
+import {MatSlider, MatSliderThumb} from '@angular/material/slider';
 
 @Component({
   selector: 'app-typography-controls',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatSlider, MatSliderThumb],
   template: `
     <div class="typography-controls">
       <div class="control-group">
@@ -37,14 +38,12 @@ import { ThemeConfig } from '../../../models/theme.model';
       <div class="slider-group">
         <div class="control-group">
           <label>Font Size: {{ theme.fontSizeBase }}px</label>
-          <input
-            type="range"
-            min="12"
-            max="24"
-            [value]="theme.fontSizeBase"
-            (input)="updateProperty('fontSizeBase', +$any($event.target).value)"
-            class="slider"
-          />
+          <mat-slider [min]="12" [max]="24" [step]="1" [discrete]="true">
+            <input matSliderThumb
+                   name="fontSizeBase"
+                   [(ngModel)]="theme.fontSizeBase"
+                   (ngModelChange)="updateProperty('fontSizeBase', $event)">
+          </mat-slider>
           <div class="font-size-preview">
             <span [style.font-size.px]="12">Small (12px)</span>
             <span [style.font-size.px]="theme.fontSizeBase">Base ({{ theme.fontSizeBase }}px)</span>

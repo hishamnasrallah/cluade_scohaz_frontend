@@ -153,11 +153,11 @@ checkBrowserCompatibility();
 // Bootstrap Application with enhanced error handling
 bootstrapApplication(AppComponent, appConfig)
   .then(() => {
-    console.log('%c🚀 Form Builder Pro - Application bootstrapped successfully',
+    console.log(' Form Builder Pro - Application bootstrapped successfully',
       'color: #4f46e5; font-size: 14px; font-weight: bold;');
 
     if (isDevMode()) {
-      console.log('%c⚠️ Running in development mode',
+      console.log('Running in development mode',
         'color: #f59e0b; font-size: 12px;');
     }
 

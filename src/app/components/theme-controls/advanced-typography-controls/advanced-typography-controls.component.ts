@@ -94,51 +94,51 @@ interface TypeScale {
 
               <div class="size-control">
                 <span class="size-label">Base: {{ theme.fontSizeBase }}px</span>
-                <mat-slider [min]="10" [max]="24" [step]="1"
-                            [ngModel]="theme.fontSizeBase"
-                            (ngModelChange)="updateProperty('fontSizeBase', $event)"
-                            [discrete]="true">
-                  <input matSliderThumb>
+                <mat-slider [min]="10" [max]="24" [step]="1" [discrete]="true">
+                  <input matSliderThumb
+                         name="fontSizeBase"
+                         [ngModel]="theme.fontSizeBase"
+                         (ngModelChange)="updateProperty('fontSizeBase', $event)">
                 </mat-slider>
               </div>
 
               <div class="size-control">
                 <span class="size-label">Small: {{ theme.fontSizeSmall }}px</span>
-                <mat-slider [min]="10" [max]="20" [step]="1"
-                            [ngModel]="theme.fontSizeSmall"
-                            (ngModelChange)="updateProperty('fontSizeSmall', $event)"
-                            [discrete]="true">
-                  <input matSliderThumb>
+                <mat-slider [min]="10" [max]="20" [step]="1" [discrete]="true">
+                  <input matSliderThumb
+                         name="fontSizeSmall"
+                         [ngModel]="theme.fontSizeSmall"
+                         (ngModelChange)="updateProperty('fontSizeSmall', $event)">
                 </mat-slider>
               </div>
 
               <div class="size-control">
                 <span class="size-label">Medium: {{ theme.fontSizeMedium }}px</span>
-                <mat-slider [min]="12" [max]="24" [step]="1"
-                            [ngModel]="theme.fontSizeMedium"
-                            (ngModelChange)="updateProperty('fontSizeMedium', $event)"
-                            [discrete]="true">
-                  <input matSliderThumb>
+                <mat-slider [min]="12" [max]="24" [step]="1" [discrete]="true">
+                  <input matSliderThumb
+                         name="fontSizeMedium"
+                         [ngModel]="theme.fontSizeMedium"
+                         (ngModelChange)="updateProperty('fontSizeMedium', $event)">
                 </mat-slider>
               </div>
 
               <div class="size-control">
                 <span class="size-label">Large: {{ theme.fontSizeLarge }}px</span>
-                <mat-slider [min]="14" [max]="28" [step]="1"
-                            [ngModel]="theme.fontSizeLarge"
-                            (ngModelChange)="updateProperty('fontSizeLarge', $event)"
-                            [discrete]="true">
-                  <input matSliderThumb>
+                <mat-slider [min]="14" [max]="28" [step]="1" [discrete]="true">
+                  <input matSliderThumb
+                         name="fontSizeLarge"
+                         [ngModel]="theme.fontSizeLarge"
+                         (ngModelChange)="updateProperty('fontSizeLarge', $event)">
                 </mat-slider>
               </div>
 
               <div class="size-control">
                 <span class="size-label">X-Large: {{ theme.fontSizeXLarge }}px</span>
-                <mat-slider [min]="16" [max]="32" [step]="1"
-                            [ngModel]="theme.fontSizeXLarge"
-                            (ngModelChange)="updateProperty('fontSizeXLarge', $event)"
-                            [discrete]="true">
-                  <input matSliderThumb>
+                <mat-slider [min]="16" [max]="32" [step]="1" [discrete]="true">
+                  <input matSliderThumb
+                         name="fontSizeXLarge"
+                         [ngModel]="theme.fontSizeXLarge"
+                         (ngModelChange)="updateProperty('fontSizeXLarge', $event)">
                 </mat-slider>
               </div>
             </div>
@@ -197,31 +197,31 @@ interface TypeScale {
               <div class="line-height-controls">
                 <div class="control-item">
                   <span>Normal: {{ theme.lineHeight }}</span>
-                  <mat-slider [min]="1" [max]="2.5" [step]="0.05"
-                              [ngModel]="theme.lineHeight"
-                              (ngModelChange)="updateProperty('lineHeight', $event)"
-                              [discrete]="true">
-                    <input matSliderThumb>
+                  <mat-slider [min]="1" [max]="2.5" [step]="0.05" [discrete]="true">
+                    <input matSliderThumb
+                           name="lineHeight"
+                           [ngModel]="theme.lineHeight"
+                           (ngModelChange)="updateProperty('lineHeight', $event)">
                   </mat-slider>
                 </div>
 
                 <div class="control-item">
                   <span>Tight: {{ theme.lineHeightTight }}</span>
-                  <mat-slider [min]="1" [max]="2" [step]="0.05"
-                              [ngModel]="theme.lineHeightTight"
-                              (ngModelChange)="updateProperty('lineHeightTight', $event)"
-                              [discrete]="true">
-                    <input matSliderThumb>
+                  <mat-slider [min]="1" [max]="2" [step]="0.05" [discrete]="true">
+                    <input matSliderThumb
+                           name="lineHeightTight"
+                           [ngModel]="theme.lineHeightTight"
+                           (ngModelChange)="updateProperty('lineHeightTight', $event)">
                   </mat-slider>
                 </div>
 
                 <div class="control-item">
                   <span>Relaxed: {{ theme.lineHeightRelaxed }}</span>
-                  <mat-slider [min]="1.2" [max]="3" [step]="0.05"
-                              [ngModel]="theme.lineHeightRelaxed"
-                              (ngModelChange)="updateProperty('lineHeightRelaxed', $event)"
-                              [discrete]="true">
-                    <input matSliderThumb>
+                  <mat-slider [min]="1.2" [max]="3" [step]="0.05" [discrete]="true">
+                    <input matSliderThumb
+                           name="lineHeightRelaxed"
+                           [ngModel]="theme.lineHeightRelaxed"
+                           (ngModelChange)="updateProperty('lineHeightRelaxed', $event)">
                   </mat-slider>
                 </div>
               </div>
@@ -234,31 +234,31 @@ interface TypeScale {
               <div class="letter-spacing-controls">
                 <div class="control-item">
                   <span>Normal: {{ theme.letterSpacing }}em</span>
-                  <mat-slider [min]="-0.1" [max]="0.2" [step]="0.005"
-                              [ngModel]="theme.letterSpacing"
-                              (ngModelChange)="updateProperty('letterSpacing', $event)"
-                              [discrete]="true">
-                    <input matSliderThumb>
+                  <mat-slider [min]="-0.1" [max]="0.2" [step]="0.005" [discrete]="true">
+                    <input matSliderThumb
+                           name="letterSpacing"
+                           [ngModel]="theme.letterSpacing"
+                           (ngModelChange)="updateProperty('letterSpacing', $event)">
                   </mat-slider>
                 </div>
 
                 <div class="control-item">
                   <span>Tight: {{ theme.letterSpacingTight }}em</span>
-                  <mat-slider [min]="-0.1" [max]="0.1" [step]="0.005"
-                              [ngModel]="theme.letterSpacingTight"
-                              (ngModelChange)="updateProperty('letterSpacingTight', $event)"
-                              [discrete]="true">
-                    <input matSliderThumb>
+                  <mat-slider [min]="-0.1" [max]="0.1" [step]="0.005" [discrete]="true">
+                    <input matSliderThumb
+                           name="letterSpacingTight"
+                           [ngModel]="theme.letterSpacingTight"
+                           (ngModelChange)="updateProperty('letterSpacingTight', $event)">
                   </mat-slider>
                 </div>
 
                 <div class="control-item">
                   <span>Wide: {{ theme.letterSpacingWide }}em</span>
-                  <mat-slider [min]="-0.05" [max]="0.3" [step]="0.005"
-                              [ngModel]="theme.letterSpacingWide"
-                              (ngModelChange)="updateProperty('letterSpacingWide', $event)"
-                              [discrete]="true">
-                    <input matSliderThumb>
+                  <mat-slider [min]="-0.05" [max]="0.3" [step]="0.005" [discrete]="true">
+                    <input matSliderThumb
+                           name="letterSpacingWide"
+                           [ngModel]="theme.letterSpacingWide"
+                           (ngModelChange)="updateProperty('letterSpacingWide', $event)">
                   </mat-slider>
                 </div>
               </div>
@@ -286,11 +286,11 @@ interface TypeScale {
             <!-- Heading Font Weight -->
             <div class="control-group">
               <label>Heading Weight: {{ theme.headingFontWeight }}</label>
-              <mat-slider [min]="100" [max]="900" [step]="100"
-                          [ngModel]="theme.headingFontWeight"
-                          (ngModelChange)="updateProperty('headingFontWeight', $event)"
-                          [discrete]="true">
-                <input matSliderThumb>
+              <mat-slider [min]="100" [max]="900" [step]="100" [discrete]="true">
+                <input matSliderThumb
+                       name="headingFontWeight"
+                       [ngModel]="theme.headingFontWeight"
+                       (ngModelChange)="updateProperty('headingFontWeight', $event)">
               </mat-slider>
             </div>
 
@@ -301,11 +301,11 @@ interface TypeScale {
               <div class="heading-sizes">
                 <div class="heading-control">
                   <span>H1: {{ theme.h1Size }}px</span>
-                  <mat-slider [min]="24" [max]="72" [step]="2"
-                              [ngModel]="theme.h1Size"
-                              (ngModelChange)="updateProperty('h1Size', $event)"
-                              [discrete]="true">
-                    <input matSliderThumb>
+                  <mat-slider [min]="24" [max]="72" [step]="2" [discrete]="true">
+                    <input matSliderThumb
+                           name="h1Size"
+                           [ngModel]="theme.h1Size"
+                           (ngModelChange)="updateProperty('h1Size', $event)">
                   </mat-slider>
                   <h1 class="preview-heading"
                       [style.font-size.px]="theme.h1Size * theme.textScaling"
@@ -317,11 +317,11 @@ interface TypeScale {
 
                 <div class="heading-control">
                   <span>H2: {{ theme.h2Size }}px</span>
-                  <mat-slider [min]="20" [max]="56" [step]="2"
-                              [ngModel]="theme.h2Size"
-                              (ngModelChange)="updateProperty('h2Size', $event)"
-                              [discrete]="true">
-                    <input matSliderThumb>
+                  <mat-slider [min]="20" [max]="56" [step]="2" [discrete]="true">
+                    <input matSliderThumb
+                           name="h2Size"
+                           [ngModel]="theme.h2Size"
+                           (ngModelChange)="updateProperty('h2Size', $event)">
                   </mat-slider>
                   <h2 class="preview-heading"
                       [style.font-size.px]="theme.h2Size * theme.textScaling"
@@ -333,11 +333,11 @@ interface TypeScale {
 
                 <div class="heading-control">
                   <span>H3: {{ theme.h3Size }}px</span>
-                  <mat-slider [min]="18" [max]="48" [step]="2"
-                              [ngModel]="theme.h3Size"
-                              (ngModelChange)="updateProperty('h3Size', $event)"
-                              [discrete]="true">
-                    <input matSliderThumb>
+                  <mat-slider [min]="18" [max]="48" [step]="2" [discrete]="true">
+                    <input matSliderThumb
+                           name="h3Size"
+                           [ngModel]="theme.h3Size"
+                           (ngModelChange)="updateProperty('h3Size', $event)">
                   </mat-slider>
                   <h3 class="preview-heading"
                       [style.font-size.px]="theme.h3Size * theme.textScaling"
@@ -349,11 +349,11 @@ interface TypeScale {
 
                 <div class="heading-control">
                   <span>H4: {{ theme.h4Size }}px</span>
-                  <mat-slider [min]="16" [max]="36" [step]="1"
-                              [ngModel]="theme.h4Size"
-                              (ngModelChange)="updateProperty('h4Size', $event)"
-                              [discrete]="true">
-                    <input matSliderThumb>
+                  <mat-slider [min]="16" [max]="36" [step]="1" [discrete]="true">
+                    <input matSliderThumb
+                           name="h4Size"
+                           [ngModel]="theme.h4Size"
+                           (ngModelChange)="updateProperty('h4Size', $event)">
                   </mat-slider>
                   <h4 class="preview-heading"
                       [style.font-size.px]="theme.h4Size * theme.textScaling"
@@ -365,11 +365,11 @@ interface TypeScale {
 
                 <div class="heading-control">
                   <span>H5: {{ theme.h5Size }}px</span>
-                  <mat-slider [min]="14" [max]="28" [step]="1"
-                              [ngModel]="theme.h5Size"
-                              (ngModelChange)="updateProperty('h5Size', $event)"
-                              [discrete]="true">
-                    <input matSliderThumb>
+                  <mat-slider [min]="14" [max]="28" [step]="1" [discrete]="true">
+                    <input matSliderThumb
+                           name="h5Size"
+                           [ngModel]="theme.h5Size"
+                           (ngModelChange)="updateProperty('h5Size', $event)">
                   </mat-slider>
                   <h5 class="preview-heading"
                       [style.font-size.px]="theme.h5Size * theme.textScaling"
@@ -381,11 +381,11 @@ interface TypeScale {
 
                 <div class="heading-control">
                   <span>H6: {{ theme.h6Size }}px</span>
-                  <mat-slider [min]="12" [max]="24" [step]="1"
-                              [ngModel]="theme.h6Size"
-                              (ngModelChange)="updateProperty('h6Size', $event)"
-                              [discrete]="true">
-                    <input matSliderThumb>
+                  <mat-slider [min]="12" [max]="24" [step]="1" [discrete]="true">
+                    <input matSliderThumb
+                           name="h6Size"
+                           [ngModel]="theme.h6Size"
+                           (ngModelChange)="updateProperty('h6Size', $event)">
                   </mat-slider>
                   <h6 class="preview-heading"
                       [style.font-size.px]="theme.h6Size * theme.textScaling"
@@ -423,11 +423,11 @@ interface TypeScale {
             <!-- Text Scaling -->
             <div class="control-group">
               <label>Text Scaling: {{ (theme.textScaling * 100).toFixed(0) }}%</label>
-              <mat-slider [min]="0.8" [max]="1.5" [step]="0.05"
-                          [ngModel]="theme.textScaling"
-                          (ngModelChange)="updateProperty('textScaling', $event)"
-                          [discrete]="true">
-                <input matSliderThumb>
+              <mat-slider [min]="0.8" [max]="1.5" [step]="0.05" [discrete]="true">
+                <input matSliderThumb
+                       name="textScaling"
+                       [ngModel]="theme.textScaling"
+                       (ngModelChange)="updateProperty('textScaling', $event)">
               </mat-slider>
               <p class="scaling-note">Adjusts all font sizes proportionally for accessibility</p>
 

@@ -87,16 +87,20 @@ export class ThemePreviewService {
     root.style.setProperty(`${this.CSS_PREFIX}-font-size-large`, `${theme.fontSizeLarge}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-font-size-xlarge`, `${theme.fontSizeXLarge}px`);
 
-    // Font weights
-    root.style.setProperty(`${this.CSS_PREFIX}-font-weight`, theme.fontWeight.toString());
-    root.style.setProperty(`${this.CSS_PREFIX}-font-weight-light`, theme.fontWeightLight.toString());
-    root.style.setProperty(`${this.CSS_PREFIX}-font-weight-medium`, theme.fontWeightMedium.toString());
-    root.style.setProperty(`${this.CSS_PREFIX}-font-weight-bold`, theme.fontWeightBold.toString());
+// Font weights
+    root.style.setProperty(`${this.CSS_PREFIX}-font-weight`, (theme.fontWeight || 400).toString());
+    root.style.setProperty(`${this.CSS_PREFIX}-font-weight-light`, (theme.fontWeightLight || 300).toString());
+    root.style.setProperty(`${this.CSS_PREFIX}-font-weight-medium`, (theme.fontWeightMedium || 500).toString());
+    root.style.setProperty(`${this.CSS_PREFIX}-font-weight-bold`, (theme.fontWeightBold || 700).toString());
 
-    // Line heights
-    root.style.setProperty(`${this.CSS_PREFIX}-line-height`, theme.lineHeight.toString());
-    root.style.setProperty(`${this.CSS_PREFIX}-line-height-tight`, theme.lineHeightTight.toString());
-    root.style.setProperty(`${this.CSS_PREFIX}-line-height-relaxed`, theme.lineHeightRelaxed.toString());
+// Line heights
+    root.style.setProperty(`${this.CSS_PREFIX}-line-height`, (theme.lineHeight || 1.5).toString());
+    root.style.setProperty(`${this.CSS_PREFIX}-line-height-tight`, (theme.lineHeightTight || 1.25).toString());
+    root.style.setProperty(`${this.CSS_PREFIX}-line-height-relaxed`, (theme.lineHeightRelaxed || 1.75).toString());
+
+// Text scaling
+    root.style.setProperty(`${this.CSS_PREFIX}-text-scale`, (theme.textScaling || 1).toString());
+    root.style.setProperty(`${this.CSS_PREFIX}-text-scaling`, (theme.textScaling || 1).toString());
 
     // Letter spacing
     root.style.setProperty(`${this.CSS_PREFIX}-letter-spacing`, `${theme.letterSpacing}em`);
