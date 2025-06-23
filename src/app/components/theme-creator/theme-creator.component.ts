@@ -668,32 +668,32 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
     root.style.setProperty('--theme-divider', theme.dividerColor || 'rgba(0, 0, 0, 0.08)');
     root.style.setProperty('--theme-overlay', theme.overlayColor || 'rgba(0, 0, 0, 0.5)');
 
-    // Typography - ALL properties including new ones - COMPREHENSIVE FIX
-    // Font family for body text
+    // Typography - COMPREHENSIVE FIX FOR ALL PROPERTIES
+    // Font family
     root.style.setProperty('--theme-font-family', theme.fontFamily);
 
-    // Base font size (this is the main body text size)
+    // Base font size - IMPORTANT: Must be set correctly
     root.style.setProperty('--theme-font-size', `${theme.fontSizeBase}px`);
     root.style.setProperty('--theme-font-size-base', `${theme.fontSizeBase}px`);
 
-    // Font size variants
+    // Font size variants - These must be px values
     root.style.setProperty('--theme-font-size-small', `${theme.fontSizeSmall}px`);
     root.style.setProperty('--theme-font-size-medium', `${theme.fontSizeMedium}px`);
     root.style.setProperty('--theme-font-size-large', `${theme.fontSizeLarge}px`);
     root.style.setProperty('--theme-font-size-xlarge', `${theme.fontSizeXLarge}px`);
 
-    // Font weights
+    // Font weights - Must be numeric values without units
     root.style.setProperty('--theme-font-weight', theme.fontWeight.toString());
     root.style.setProperty('--theme-font-weight-light', theme.fontWeightLight.toString());
     root.style.setProperty('--theme-font-weight-medium', theme.fontWeightMedium.toString());
     root.style.setProperty('--theme-font-weight-bold', theme.fontWeightBold.toString());
 
-    // Line heights
+    // Line heights - Numeric values without units
     root.style.setProperty('--theme-line-height', theme.lineHeight.toString());
     root.style.setProperty('--theme-line-height-tight', theme.lineHeightTight.toString());
     root.style.setProperty('--theme-line-height-relaxed', theme.lineHeightRelaxed.toString());
 
-    // Letter spacing
+    // Letter spacing - em values
     root.style.setProperty('--theme-letter-spacing', `${theme.letterSpacing}em`);
     root.style.setProperty('--theme-letter-spacing-tight', `${theme.letterSpacingTight}em`);
     root.style.setProperty('--theme-letter-spacing-wide', `${theme.letterSpacingWide}em`);
@@ -704,7 +704,7 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
     root.style.setProperty('--theme-heading-weight', theme.headingFontWeight.toString());
     root.style.setProperty('--theme-heading-font-weight', theme.headingFontWeight.toString());
 
-    // Individual heading sizes
+    // Individual heading sizes - Must be px values
     root.style.setProperty('--theme-h1-size', `${theme.h1Size}px`);
     root.style.setProperty('--theme-h2-size', `${theme.h2Size}px`);
     root.style.setProperty('--theme-h3-size', `${theme.h3Size}px`);
@@ -718,6 +718,7 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Spacing & Layout
     root.style.setProperty('--theme-spacing', `${theme.spacingUnit}px`);
+    root.style.setProperty('--theme-spacing-unit', `${theme.spacingUnit}px`);
     root.style.setProperty('--theme-spacing-xsmall', `${theme.spacingXSmall}px`);
     root.style.setProperty('--theme-spacing-small', `${theme.spacingSmall}px`);
     root.style.setProperty('--theme-spacing-medium', `${theme.spacingMedium}px`);
