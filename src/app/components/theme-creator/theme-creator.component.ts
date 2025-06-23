@@ -36,6 +36,9 @@ import { BorderControlsComponent } from '../theme-controls/border-controls/borde
 import { LayoutControlsComponent } from '../theme-controls/layout-controls/layout-controls.component';
 import { ShadowControlsComponent } from '../theme-controls/shadow-controls/shadow-controls.component';
 import { ComponentControlsComponent } from '../theme-controls/component-controls/component-controls.component';
+import { AnimationControlsComponent } from '../theme-controls/animation-controls/animation-controls.component';
+import { BrandControlsComponent } from '../theme-controls/brand-controls/brand-controls.component';
+import { AccessibilityControlsComponent } from '../theme-controls/accessibility-controls/accessibility-controls.component';
 
 // Services and Models
 import { ThemeService } from '../../services/theme.service';
@@ -69,16 +72,19 @@ import {ThemeConfig, ThemeDefaults, ThemePreset} from '../../models/theme.model'
     MatProgressSpinnerModule,
     MatSlideToggleModule,
     // ALL Theme Control Components
-    // ColorPickerComponent,
-    // TypographyControlsComponent,
-    // SpacingControlsComponent,
-    // EffectsControlsComponent,
+    ColorPickerComponent,
+    TypographyControlsComponent,
+    SpacingControlsComponent,
+    EffectsControlsComponent,
     AdvancedColorControlsComponent,
     AdvancedTypographyControlsComponent,
     BorderControlsComponent,
     LayoutControlsComponent,
     ShadowControlsComponent,
-    ComponentControlsComponent
+    ComponentControlsComponent,
+    AnimationControlsComponent,
+    BrandControlsComponent,
+    AccessibilityControlsComponent
   ],
   templateUrl: './theme-creator.component.html',
   styleUrls: ['./theme-creator.component.scss']
@@ -91,8 +97,7 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
   private themeChangeSubject = new Subject<Partial<ThemeConfig>>();
 
   // Current theme configuration
-  currentTheme: ThemeConfig = this.getDefaultTheme();
-
+  currentTheme!: ThemeConfig;
   // Form group for theme controls
   themeForm!: FormGroup;
 
@@ -332,6 +337,7 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
     private snackBar: MatSnackBar,
     private cdr: ChangeDetectorRef
   ) {
+    this.currentTheme = this.getDefaultTheme(); // Add this line
     this.initializeForm();
   }
 
