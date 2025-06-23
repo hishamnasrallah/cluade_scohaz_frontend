@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ThemeService } from '../../services/theme.service';
-import { ThemeConfig } from '../../models/theme.model';
+import { ThemeService } from '../../../services/theme.service';
+import { ThemeConfig } from '../../../models/theme.model';
 import { Observable } from 'rxjs';
 
 @Component({

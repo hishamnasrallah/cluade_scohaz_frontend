@@ -1,0 +1,340 @@
+// src/styles/theme.scss
+// Global theme styles that use CSS variables
+
+// Apply theme variables to Material components
+.mat-toolbar {
+  background-color: var(--theme-primary) !important;
+  color: var(--theme-primary-contrast) !important;
+}
+
+.mat-sidenav {
+  background-color: var(--theme-background-paper) !important;
+}
+
+.mat-sidenav-content {
+  background-color: var(--theme-background) !important;
+}
+
+// Update Material form fields with theme
+.mat-mdc-form-field {
+  .mat-mdc-text-field-wrapper {
+    background-color: var(--theme-input-background) !important;
+  }
+
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled) {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: var(--theme-input-border) !important;
+    }
+  }
+
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled).mdc-text-field--focused {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: var(--theme-primary) !important;
+    }
+  }
+
+  .mat-mdc-form-field-focus-overlay {
+    background-color: transparent !important;
+  }
+
+  .mdc-text-field:not(.mdc-text-field--disabled) .mdc-text-field__input {
+    color: var(--theme-input-text) !important;
+  }
+
+  .mat-mdc-form-field-label {
+    color: var(--theme-text-secondary) !important;
+  }
+}
+
+// Material Buttons with theme
+.mat-mdc-raised-button {
+  &.mat-primary {
+    background-color: var(--theme-primary) !important;
+    color: var(--theme-primary-contrast) !important;
+  }
+
+  &.mat-accent {
+    background-color: var(--theme-accent) !important;
+    color: var(--theme-accent-contrast) !important;
+  }
+
+  &.mat-warn {
+    background-color: var(--theme-warn) !important;
+    color: var(--theme-warn-contrast) !important;
+  }
+}
+
+// Cards with theme
+.mat-mdc-card {
+  background-color: var(--theme-background-paper) !important;
+  color: var(--theme-text-primary) !important;
+  box-shadow: var(--theme-shadow-small) !important;
+}
+
+// Lists with theme
+.mat-mdc-list-item {
+  color: var(--theme-text-primary) !important;
+
+  &:hover {
+    background-color: rgba(var(--theme-primary), 0.08) !important;
+  }
+
+  &.active {
+    background-color: rgba(var(--theme-primary), 0.12) !important;
+    color: var(--theme-primary) !important;
+  }
+}
+
+// Expansion panels with theme
+.mat-expansion-panel {
+  background-color: var(--theme-background-paper) !important;
+  color: var(--theme-text-primary) !important;
+}
+
+.mat-expansion-panel-header {
+  background-color: var(--theme-background-dark) !important;
+
+  &:hover:not(.mat-expanded) {
+    background-color: rgba(var(--theme-primary), 0.04) !important;
+  }
+}
+
+// Tabs with theme
+.mat-mdc-tab-labels {
+  background-color: var(--theme-background-paper) !important;
+}
+
+.mat-mdc-tab {
+  color: var(--theme-text-secondary) !important;
+
+  &.mat-mdc-tab-active {
+    color: var(--theme-primary) !important;
+  }
+}
+
+.mat-mdc-tab-header {
+  border-bottom: 1px solid var(--theme-divider) !important;
+}
+
+// Dividers with theme
+.mat-divider {
+  border-top-color: var(--theme-divider) !important;
+}
+
+// Icons with theme
+.mat-icon {
+  color: var(--theme-text-secondary);
+}
+
+// Snackbars with theme
+.mat-mdc-snack-bar-container {
+  &.success-snackbar {
+    background-color: #4caf50 !important;
+    color: white !important;
+  }
+
+  &.error-snackbar {
+    background-color: var(--theme-warn) !important;
+    color: var(--theme-warn-contrast) !important;
+  }
+
+  &.info-snackbar {
+    background-color: var(--theme-primary) !important;
+    color: var(--theme-primary-contrast) !important;
+  }
+}
+
+// Dark theme specific styles
+body.theme-dark {
+  color-scheme: dark;
+
+  // Scrollbars
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--theme-background-dark);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--theme-divider);
+    border-radius: 6px;
+    border: 3px solid var(--theme-background-dark);
+  }
+
+  // Input autofill
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--theme-input-text);
+    -webkit-box-shadow: 0 0 0px 1000px var(--theme-input-background) inset;
+  }
+}
+
+// Light theme specific styles
+body.theme-light {
+  color-scheme: light;
+}
+
+// Global transition for theme changes
+* {
+  transition: background-color var(--theme-transition-standard),
+  color var(--theme-transition-standard),
+  border-color var(--theme-transition-standard);
+}
+
+// Builder specific theme styles
+.builder-container {
+  background-color: var(--theme-background) !important;
+  color: var(--theme-text-primary) !important;
+}
+
+.palette {
+  background-color: var(--theme-background-paper) !important;
+  border-color: var(--theme-divider) !important;
+}
+
+.component {
+  background-color: var(--theme-background) !important;
+  border-color: var(--theme-border) !important;
+
+  &:hover {
+    background-color: var(--theme-background-paper) !important;
+    border-color: var(--theme-primary) !important;
+  }
+}
+
+.component-icon {
+  background-color: var(--theme-background-paper) !important;
+  border-color: var(--theme-border) !important;
+}
+
+.config-panel {
+  background-color: var(--theme-background-paper) !important;
+}
+
+.code-preview {
+  background-color: var(--theme-background-paper) !important;
+
+  pre {
+    background-color: var(--theme-background-dark) !important;
+  }
+}
+
+// Canvas styles with theme
+.canvas-wrapper {
+  background-color: var(--theme-background) !important;
+}
+
+.canvas-header {
+  background-color: var(--theme-background-paper) !important;
+  border-color: var(--theme-divider) !important;
+}
+
+.drop-area {
+  background-color: var(--theme-background) !important;
+
+  &.cdk-drop-list-dragging {
+    border-color: var(--theme-primary) !important;
+    background-color: rgba(var(--theme-primary), 0.05) !important;
+  }
+}
+
+.component-wrapper {
+  background-color: var(--theme-background-paper) !important;
+
+  &:hover {
+    border-color: rgba(var(--theme-primary), 0.3) !important;
+  }
+
+  &.selected {
+    border-color: var(--theme-primary) !important;
+  }
+}
+
+// Add spacing utilities
+.spacing-small {
+  padding: var(--theme-spacing-small);
+}
+
+.spacing-medium {
+  padding: var(--theme-spacing-medium);
+}
+
+.spacing-large {
+  padding: var(--theme-spacing-large);
+}
+
+// Add border radius utilities
+.radius-small {
+  border-radius: var(--theme-radius-small);
+}
+
+.radius-medium {
+  border-radius: var(--theme-radius-medium);
+}
+
+.radius-large {
+  border-radius: var(--theme-radius-large);
+}
+
+// Add shadow utilities
+.shadow-none {
+  box-shadow: var(--theme-shadow-none);
+}
+
+.shadow-small {
+  box-shadow: var(--theme-shadow-small);
+}
+
+.shadow-medium {
+  box-shadow: var(--theme-shadow-medium);
+}
+
+.shadow-large {
+  box-shadow: var(--theme-shadow-large);
+}
+
+// Typography with theme
+body {
+  font-family: var(--theme-font-family);
+  color: var(--theme-text-primary);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--theme-text-primary);
+  font-weight: var(--theme-font-weight-medium);
+}
+
+p {
+  color: var(--theme-text-secondary);
+}
+
+.text-small {
+  font-size: var(--theme-font-size-small);
+}
+
+.text-medium {
+  font-size: var(--theme-font-size-medium);
+}
+
+.text-large {
+  font-size: var(--theme-font-size-large);
+}
+
+// Links with theme
+a {
+  color: var(--theme-primary);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--theme-primary-dark);
+    text-decoration: underline;
+  }
+}

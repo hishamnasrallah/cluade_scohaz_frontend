@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ThemeService } from '../../services/theme.service';
 import { ThemeConfig, ThemePreset } from '../../models/theme.model';
 import { Observable } from 'rxjs';
-import { ThemePreviewComponent } from '../theme-preview/theme-preview.component';
+import { ThemePreviewComponent } from '../../builder/components/theme-preview/theme-preview.component';
 import { ColorPickerComponent } from '../theme-controls/color-picker/color-picker.component';
 import { TypographyControlsComponent } from '../theme-controls/typography-controls/typography-controls.component';
 import { SpacingControlsComponent } from '../theme-controls/spacing-controls/spacing-controls.component';
