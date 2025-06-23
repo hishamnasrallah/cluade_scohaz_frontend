@@ -1,183 +1,397 @@
+<!-- src/app/components/theme-creator/theme-creator.component.html -->
 <div class="theme-creator-container">
-  <div class="theme-creator-grid">
-    <!-- Theme Controls Panel -->
-    <div class="theme-controls-panel">
-      <header class="panel-header">
-        <h2>Theme Creator</h2>
-        <div class="header-actions">
-          <button class="btn btn-sm btn-outline" (click)="resetTheme()">
-            🔄 Reset
-          </button>
-          <button class="btn btn-sm btn-primary" (click)="exportTheme()">
-            📤 Export
-          </button>
-          <button class="btn btn-sm btn-secondary" (click)="importTheme()">
-            📥 Import
-          </button>
-          <input
-            #importInput
-            type="file"
-            accept=".json"
-            style="display: none"
-            (change)="handleImport($event)"
-          />
+  <!-- Header -->
+  <mat-card class="theme-header ocean-mint-card">
+    <div class="header-content">
+      <div class="brand-section">
+        <div class="logo-wrapper">
+          <mat-icon class="brand-icon">palette</mat-icon>
         </div>
-      </header>
-
-      <!-- Design Presets -->
-      <section class="presets-section">
-        <h3>Design Presets</h3>
-        <div class="presets-grid" *ngIf="presets$ | async as presets">
-          <button
-            *ngFor="let preset of presets"
-            class="preset-button"
-            (click)="applyPreset(preset.id)"
-            [title]="preset.description"
-          >
-            <span class="preset-name">{{ preset.name }}</span>
-          </button>
-        </div>
-      </section>
-
-      <!-- Tab Navigation -->
-      <nav class="tab-navigation">
-        <button
-          *ngFor="let tab of tabs"
-          class="tab-button"
-          [class.active]="activeTab === tab.id"
-          (click)="setActiveTab(tab.id)"
-        >
-          <span class="tab-label">{{ tab.label }}</span>
-        </button>
-      </nav>
-
-      <!-- Tab Content -->
-      <div class="tab-content" *ngIf="theme$ | async as theme">
-        <!-- Colors Tab -->
-        <div *ngIf="activeTab === 'colors'" class="tab-panel">
-          <app-color-picker
-            [theme]="theme"
-            (themeChange)="themeService.updateTheme($event)"
-          ></app-color-picker>
-        </div>
-
-        <!-- Typography Tab -->
-        <div *ngIf="activeTab === 'typography'" class="tab-panel">
-          <app-typography-controls
-            [theme]="theme"
-            (themeChange)="themeService.updateTheme($event)"
-          ></app-typography-controls>
-        </div>
-
-        <!-- Layout Tab -->
-        <div *ngIf="activeTab === 'layout'" class="tab-panel">
-          <app-spacing-controls
-            [theme]="theme"
-            (themeChange)="themeService.updateTheme($event)"
-          ></app-spacing-controls>
-        </div>
-
-        <!-- Effects Tab -->
-        <div *ngIf="activeTab === 'effects'" class="tab-panel">
-          <app-effects-controls
-            [theme]="theme"
-            (themeChange)="themeService.updateTheme($event)"
-          ></app-effects-controls>
-        </div>
-
-        <!-- Accessibility Tab -->
-        <div *ngIf="activeTab === 'accessibility'" class="tab-panel">
-          <div class="control-group">
-            <h4>Theme Mode</h4>
-            <div class="button-group">
-              <button
-                class="mode-button"
-                [class.active]="theme.mode === 'light'"
-                (click)="themeService.updateThemeProperty('mode', 'light')"
-              >
-                ☀️ Light
-              </button>
-              <button
-                class="mode-button"
-                [class.active]="theme.mode === 'dark'"
-                (click)="themeService.updateThemeProperty('mode', 'dark')"
-              >
-                🌙 Dark
-              </button>
-              <button
-                class="mode-button"
-                [class.active]="theme.mode === 'auto'"
-                (click)="themeService.updateThemeProperty('mode', 'auto')"
-              >
-                🔄 Auto
-              </button>
-            </div>
-          </div>
-
-          <div class="control-group">
-            <h4>Accessibility Options</h4>
-            <label class="checkbox-label">
-              <input
-                type="checkbox"
-                [checked]="theme.reducedMotion"
-                (change)="themeService.updateThemeProperty('reducedMotion', $any($event.target).checked)"
-              />
-              <span>Reduced Motion</span>
-            </label>
-            <label class="checkbox-label">
-              <input
-                type="checkbox"
-                [checked]="theme.highContrast"
-                (change)="themeService.updateThemeProperty('highContrast', $any($event.target).checked)"
-              />
-              <span>High Contrast</span>
-            </label>
-          </div>
-
-          <div class="control-group">
-            <label>Focus Outline Width</label>
-            <input
-              type="range"
-              min="1"
-              max="5"
-              [value]="theme.focusOutlineWidth"
-              (input)="themeService.updateThemeProperty('focusOutlineWidth', +$any($event.target).value)"
-            />
-            <span class="value-display">{{ theme.focusOutlineWidth }}px</span>
-          </div>
+        <div class="brand-info">
+          <h1 class="brand-title">Theme Builder Pro</h1>
+          <p class="brand-subtitle">Enterprise Dynamic Theme System</p>
         </div>
       </div>
+
+      <div class="header-actions">
+        <button mat-stroked-button
+                class="ocean-mint-stroked"
+                (click)="fileInput.click()">
+          <mat-icon>upload</mat-icon>
+          Import
+        </button>
+        <input #fileInput
+               type="file"
+               accept=".json"
+               style="display: none"
+               (change)="importTheme($event)">
+
+        <button mat-stroked-button
+                class="ocean-mint-stroked"
+                (click)="exportTheme()">
+          <mat-icon>download</mat-icon>
+          Export
+        </button>
+
+        <button mat-stroked-button
+                class="ocean-mint-stroked"
+                (click)="resetTheme()">
+          <mat-icon>refresh</mat-icon>
+          Reset
+        </button>
+
+        <button mat-raised-button
+                color="primary"
+                [disabled]="isSaving"
+                (click)="saveTheme()">
+          <mat-icon>save</mat-icon>
+          {{ isSaving ? 'Saving...' : 'Save Theme' }}
+        </button>
+
+        <button mat-icon-button
+                [matTooltip]="currentTheme.mode === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'"
+                (click)="toggleMode()">
+          <mat-icon>{{ currentTheme.mode === 'light' ? 'dark_mode' : 'light_mode' }}</mat-icon>
+        </button>
+      </div>
     </div>
+  </mat-card>
+
+  <!-- Main Content Grid -->
+  <div class="content-grid">
+    <!-- Theme Controls Panel -->
+    <mat-card class="controls-panel ocean-mint-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>tune</mat-icon>
+          Theme Controls
+        </mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+        <!-- Design Presets -->
+        <div class="presets-section">
+          <h3 class="section-title">Design Presets</h3>
+          <div class="presets-grid">
+            <button *ngFor="let preset of themePresets"
+                    mat-stroked-button
+                    class="preset-button"
+                    [ngClass]="{'active': currentTheme.designStyle === preset.config.designStyle}"
+                    (click)="applyPreset(preset)"
+                    [matTooltip]="preset.name">
+              <span class="preset-icon">{{ preset.icon }}</span>
+              <span class="preset-name">{{ preset.name }}</span>
+            </button>
+          </div>
+        </div>
+
+        <mat-divider class="section-divider"></mat-divider>
+
+        <!-- Theme Customization Tabs -->
+        <mat-tab-group [(selectedIndex)]="selectedTabIndex"
+                       animationDuration="300ms"
+                       class="theme-tabs">
+
+          <!-- Colors Tab -->
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon>palette</mat-icon>
+              <span>Colors</span>
+            </ng-template>
+
+            <div class="tab-content">
+              <app-color-picker
+                [theme]="currentTheme"
+                (themeChange)="onThemeChange($event)">
+              </app-color-picker>
+            </div>
+          </mat-tab>
+
+          <!-- Typography Tab -->
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon>text_fields</mat-icon>
+              <span>Typography</span>
+            </ng-template>
+
+            <div class="tab-content">
+              <app-typography-controls
+                [theme]="currentTheme"
+                (themeChange)="onThemeChange($event)">
+              </app-typography-controls>
+            </div>
+          </mat-tab>
+
+          <!-- Layout Tab -->
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon>dashboard</mat-icon>
+              <span>Layout</span>
+            </ng-template>
+
+            <div class="tab-content">
+              <app-spacing-controls
+                [theme]="currentTheme"
+                (themeChange)="onThemeChange($event)">
+              </app-spacing-controls>
+            </div>
+          </mat-tab>
+
+          <!-- Effects Tab -->
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon>auto_awesome</mat-icon>
+              <span>Effects</span>
+            </ng-template>
+
+            <div class="tab-content">
+              <app-effects-controls
+                [theme]="currentTheme"
+                (themeChange)="onThemeChange($event)">
+              </app-effects-controls>
+            </div>
+          </mat-tab>
+
+          <!-- Accessibility Tab -->
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon>accessibility</mat-icon>
+              <span>A11y</span>
+            </ng-template>
+
+            <div class="tab-content">
+              <div class="accessibility-controls">
+                <div class="control-group">
+                  <h4>Theme Mode</h4>
+                  <mat-radio-group [(ngModel)]="currentTheme.mode"
+                                   (change)="onThemeChange({mode: $event.value})">
+                    <mat-radio-button value="light">Light</mat-radio-button>
+                    <mat-radio-button value="dark">Dark</mat-radio-button>
+                    <mat-radio-button value="auto">Auto</mat-radio-button>
+                  </mat-radio-group>
+                </div>
+
+                <div class="control-group">
+                  <h4>Accessibility Options</h4>
+                  <mat-checkbox [(ngModel)]="currentTheme.reducedMotion"
+                                (change)="onThemeChange({reducedMotion: $event.checked})">
+                    Reduced Motion
+                  </mat-checkbox>
+
+                  <mat-checkbox [(ngModel)]="currentTheme.highContrast"
+                                (change)="onThemeChange({highContrast: $event.checked})">
+                    High Contrast
+                  </mat-checkbox>
+                </div>
+              </div>
+            </div>
+          </mat-tab>
+        </mat-tab-group>
+      </mat-card-content>
+    </mat-card>
 
     <!-- Live Preview Panel -->
     <div class="preview-panel">
-      <app-theme-preview></app-theme-preview>
-    </div>
-  </div>
+      <mat-card class="ocean-mint-card preview-container">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>visibility</mat-icon>
+            Live Preview
+          </mat-card-title>
+          <button mat-icon-button
+                  (click)="isPreviewExpanded = !isPreviewExpanded"
+                  [matTooltip]="isPreviewExpanded ? 'Collapse' : 'Expand'">
+            <mat-icon>{{ isPreviewExpanded ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+          </button>
+        </mat-card-header>
 
-  <!-- Export Modal -->
-  <div class="modal-overlay" *ngIf="showExportModal" (click)="showExportModal = false">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3>Export Theme CSS</h3>
-        <button class="close-button" (click)="showExportModal = false">✕</button>
-      </div>
-      <div class="modal-body">
-        <textarea
-          class="code-output"
-          [value]="exportedCode"
-          readonly
-          rows="20"
-        ></textarea>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-primary" (click)="copyToClipboard(exportedCode)">
-          📋 Copy to Clipboard
-        </button>
-        <button class="btn btn-secondary" (click)="exportJSON()">
-          💾 Download JSON
-        </button>
-      </div>
+        <mat-card-content class="preview-content">
+          <!-- Navigation Example -->
+          <nav class="preview-nav">
+            <button *ngFor="let item of navigationItems"
+                    mat-button
+                    class="nav-item">
+              {{ item }}
+            </button>
+          </nav>
+
+          <!-- Metrics Grid -->
+          <div class="metrics-grid">
+            <mat-card *ngFor="let metric of sampleMetrics"
+                      class="metric-card">
+              <div class="metric-header">
+                <mat-icon [color]="metric.trend === 'up' ? 'primary' : 'warn'">
+                  {{ metric.icon }}
+                </mat-icon>
+                <span class="metric-change"
+                      [ngClass]="{'positive': metric.trend === 'up', 'negative': metric.trend === 'down'}">
+                  {{ metric.change }}
+                </span>
+              </div>
+              <h3 class="metric-value">{{ metric.value }}</h3>
+              <p class="metric-title">{{ metric.title }}</p>
+            </mat-card>
+          </div>
+
+          <!-- Sample Form -->
+          <mat-card class="sample-form-card">
+            <mat-card-header>
+              <mat-card-title>Sample Form</mat-card-title>
+            </mat-card-header>
+
+            <mat-card-content>
+              <form class="sample-form">
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Full Name</mat-label>
+                    <input matInput placeholder="Enter your name">
+                    <mat-icon matPrefix>person</mat-icon>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Email</mat-label>
+                    <input matInput type="email" placeholder="Enter your email">
+                    <mat-icon matPrefix>email</mat-icon>
+                  </mat-form-field>
+                </div>
+
+                <div class="button-group">
+                  <button mat-raised-button color="primary">
+                    <mat-icon>check</mat-icon>
+                    Primary
+                  </button>
+
+                  <button mat-raised-button color="accent">
+                    <mat-icon>refresh</mat-icon>
+                    Secondary
+                  </button>
+
+                  <button mat-stroked-button color="primary">
+                    <mat-icon>radio_button_unchecked</mat-icon>
+                    Outline
+                  </button>
+
+                  <button mat-button color="primary">
+                    Ghost
+                  </button>
+
+                  <button mat-raised-button color="warn">
+                    <mat-icon>warning</mat-icon>
+                    Warning
+                  </button>
+
+                  <button mat-raised-button class="success-button">
+                    <mat-icon>check_circle</mat-icon>
+                    Success
+                  </button>
+                </div>
+              </form>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Feature Showcase -->
+          <mat-card class="features-card">
+            <mat-card-header>
+              <mat-card-title>Enterprise Features</mat-card-title>
+            </mat-card-header>
+
+            <mat-card-content>
+              <div class="features-grid">
+                <div *ngFor="let feature of enterpriseFeatures"
+                     class="feature-item">
+                  <div class="feature-icon">
+                    <mat-icon>{{ feature.icon }}</mat-icon>
+                  </div>
+                  <h4 class="feature-title">{{ feature.title }}</h4>
+                  <p class="feature-desc">{{ feature.description }}</p>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Sample Components -->
+          <mat-expansion-panel class="components-panel">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <mat-icon>widgets</mat-icon>
+                Component Examples
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+
+            <div class="components-showcase">
+              <!-- Chips Example -->
+              <div class="component-example">
+                <h4>Chips</h4>
+                <mat-chip-listbox>
+                  <mat-chip-option color="primary">Angular</mat-chip-option>
+                  <mat-chip-option color="accent">Material</mat-chip-option>
+                  <mat-chip-option>TypeScript</mat-chip-option>
+                  <mat-chip-option color="warn">SCSS</mat-chip-option>
+                </mat-chip-listbox>
+              </div>
+
+              <!-- Progress Example -->
+              <div class="component-example">
+                <h4>Progress</h4>
+                <mat-progress-spinner mode="determinate" [value]="75" diameter="40">
+                </mat-progress-spinner>
+              </div>
+
+              <!-- Badge Example -->
+              <div class="component-example">
+                <h4>Badges</h4>
+                <div class="badge-examples">
+                  <button mat-icon-button [matBadge]="8" matBadgeColor="primary">
+                    <mat-icon>notifications</mat-icon>
+                  </button>
+                  <button mat-icon-button [matBadge]="15" matBadgeColor="accent">
+                    <mat-icon>mail</mat-icon>
+                  </button>
+                  <button mat-icon-button [matBadge]="3" matBadgeColor="warn">
+                    <mat-icon>error</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </mat-expansion-panel>
+        </mat-card-content>
+      </mat-card>
     </div>
   </div>
 </div>
+
+<!-- Define enterprise features data in component -->
+<ng-container *ngIf="false">
+  enterpriseFeatures = [
+  &#123;
+  title: 'Advanced Theming',
+  description: 'Comprehensive design system with 50+ theme properties',
+  icon: 'palette'
+  &#125;,
+  &#123;
+  title: 'Real-time Updates',
+  description: 'Live theme changes without page refreshes',
+  icon: 'update'
+  &#125;,
+  &#123;
+  title: 'Accessibility First',
+  description: 'WCAG 2.1 compliant with reduced motion support',
+  icon: 'accessibility_new'
+  &#125;,
+  &#123;
+  title: 'Performance Optimized',
+  description: 'GPU-accelerated animations and minimal reflows',
+  icon: 'speed'
+  &#125;,
+  {{ "{" }}
+  title: 'Modern Design Trends',
+  description: 'Glassmorphism, neumorphism, and more',
+  icon: 'auto_awesome'
+  &#125;,
+  {{ "{" }}
+  title: 'Enterprise Ready',
+  description: 'Multi-brand support and theme hierarchies',
+  icon: 'business'
+  &#125;
+  ];
+</ng-container>
