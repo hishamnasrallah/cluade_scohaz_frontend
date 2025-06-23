@@ -101,66 +101,60 @@ interface GridPreset {
         <div class="spacing-controls">
           <div class="control-item">
             <label>Spacing Unit: {{ theme.spacingUnit }}px</label>
-            <mat-slider [min]="4" [max]="32" [step]="4"
-                       [(ngModel)]="theme.spacingUnit"
-                       (ngModelChange)="updateSpacingUnit($event.value)"
-                       [discrete]="true">
-              <input matSliderThumb>
+            <mat-slider [min]="4" [max]="32" [step]="4" [discrete]="true">
+              <input matSliderThumb
+                     [value]="theme.spacingUnit"
+                     (valueChange)="updateSpacingUnit($event)">
             </mat-slider>
           </div>
 
           <div class="spacing-sizes">
             <div class="size-control">
               <label>X-Small: {{ theme.spacingXSmall }}px</label>
-              <mat-slider [min]="2" [max]="16" [step]="1"
-                         [(ngModel)]="theme.spacingXSmall"
-                         (ngModelChange)="updateProperty('spacingXSmall', $event.value)"
-                         [discrete]="true">
-                <input matSliderThumb>
+              <mat-slider [min]="2" [max]="16" [step]="1" [discrete]="true">
+                <input matSliderThumb
+                       [value]="theme.spacingXSmall"
+                       (valueChange)="updateProperty('spacingXSmall', $event)">
               </mat-slider>
               <div class="spacing-preview" [style.height.px]="theme.spacingXSmall"></div>
             </div>
 
             <div class="size-control">
               <label>Small: {{ theme.spacingSmall }}px</label>
-              <mat-slider [min]="4" [max]="24" [step]="2"
-                         [(ngModel)]="theme.spacingSmall"
-                         (ngModelChange)="updateProperty('spacingSmall', $event.value)"
-                         [discrete]="true">
-                <input matSliderThumb>
+              <mat-slider [min]="4" [max]="24" [step]="2" [discrete]="true">
+                <input matSliderThumb
+                       [value]="theme.spacingSmall"
+                       (valueChange)="updateProperty('spacingSmall', $event)">
               </mat-slider>
               <div class="spacing-preview" [style.height.px]="theme.spacingSmall"></div>
             </div>
 
             <div class="size-control">
               <label>Medium: {{ theme.spacingMedium }}px</label>
-              <mat-slider [min]="8" [max]="40" [step]="4"
-                         [(ngModel)]="theme.spacingMedium"
-                         (ngModelChange)="updateProperty('spacingMedium', $event.value)"
-                         [discrete]="true">
-                <input matSliderThumb>
+              <mat-slider [min]="8" [max]="40" [step]="4" [discrete]="true">
+                <input matSliderThumb
+                       [value]="theme.spacingMedium"
+                       (valueChange)="updateProperty('spacingMedium', $event)">
               </mat-slider>
               <div class="spacing-preview" [style.height.px]="theme.spacingMedium"></div>
             </div>
 
             <div class="size-control">
               <label>Large: {{ theme.spacingLarge }}px</label>
-              <mat-slider [min]="16" [max]="64" [step]="4"
-                         [(ngModel)]="theme.spacingLarge"
-                         (ngModelChange)="updateProperty('spacingLarge', $event.value)"
-                         [discrete]="true">
-                <input matSliderThumb>
+              <mat-slider [min]="16" [max]="64" [step]="4" [discrete]="true">
+                <input matSliderThumb
+                       [value]="theme.spacingLarge"
+                       (valueChange)="updateProperty('spacingLarge', $event)">
               </mat-slider>
               <div class="spacing-preview" [style.height.px]="theme.spacingLarge"></div>
             </div>
 
             <div class="size-control">
               <label>X-Large: {{ theme.spacingXLarge }}px</label>
-              <mat-slider [min]="24" [max]="96" [step]="8"
-                         [(ngModel)]="theme.spacingXLarge"
-                         (ngModelChange)="updateProperty('spacingXLarge', $event.value)"
-                         [discrete]="true">
-                <input matSliderThumb>
+              <mat-slider [min]="24" [max]="96" [step]="8" [discrete]="true">
+                <input matSliderThumb
+                       [value]="theme.spacingXLarge"
+                       (valueChange)="updateProperty('spacingXLarge', $event)">
               </mat-slider>
               <div class="spacing-preview" [style.height.px]="theme.spacingXLarge"></div>
             </div>
@@ -196,11 +190,10 @@ interface GridPreset {
 
         <div class="control-item">
           <label>Max Container Width: {{ theme.containerMaxWidth }}px</label>
-          <mat-slider [min]="960" [max]="1920" [step]="20"
-                     [(ngModel)]="theme.containerMaxWidth"
-                     (ngModelChange)="updateProperty('containerMaxWidth', $event.value)"
-                     [discrete]="true">
-            <input matSliderThumb>
+          <mat-slider [min]="960" [max]="1920" [step]="20" [discrete]="true">
+            <input matSliderThumb
+                   [value]="theme.containerMaxWidth"
+                   (valueChange)="updateProperty('containerMaxWidth', $event)">
           </mat-slider>
         </div>
 
@@ -285,21 +278,19 @@ interface GridPreset {
         <div class="sidebar-controls">
           <div class="control-item">
             <label>Sidebar Width: {{ theme.sidebarWidth }}px</label>
-            <mat-slider [min]="200" [max]="400" [step]="10"
-                       [(ngModel)]="theme.sidebarWidth"
-                       (ngModelChange)="updateProperty('sidebarWidth', $event.value)"
-                       [discrete]="true">
-              <input matSliderThumb>
+            <mat-slider [min]="200" [max]="400" [step]="10" [discrete]="true">
+              <input matSliderThumb
+                     [value]="theme.sidebarWidth"
+                     (valueChange)="updateProperty('sidebarWidth', $event)">
             </mat-slider>
           </div>
 
           <div class="control-item">
             <label>Collapsed Width: {{ theme.sidebarCollapsedWidth }}px</label>
-            <mat-slider [min]="40" [max]="100" [step]="4"
-                       [(ngModel)]="theme.sidebarCollapsedWidth"
-                       (ngModelChange)="updateProperty('sidebarCollapsedWidth', $event.value)"
-                       [discrete]="true">
-              <input matSliderThumb>
+            <mat-slider [min]="40" [max]="100" [step]="4" [discrete]="true">
+              <input matSliderThumb
+                     [value]="theme.sidebarCollapsedWidth"
+                     (valueChange)="updateProperty('sidebarCollapsedWidth', $event)">
             </mat-slider>
           </div>
 
@@ -341,21 +332,19 @@ interface GridPreset {
 
           <div class="control-item">
             <label>Grid Columns: {{ theme.gridColumns }}</label>
-            <mat-slider [min]="4" [max]="24" [step]="2"
-                       [(ngModel)]="theme.gridColumns"
-                       (ngModelChange)="updateProperty('gridColumns', $event.value)"
-                       [discrete]="true">
-              <input matSliderThumb>
+            <mat-slider [min]="4" [max]="24" [step]="2" [discrete]="true">
+              <input matSliderThumb
+                     [value]="theme.gridColumns"
+                     (valueChange)="updateProperty('gridColumns', $event)">
             </mat-slider>
           </div>
 
           <div class="control-item">
             <label>Grid Gutter: {{ theme.gridGutter }}px</label>
-            <mat-slider [min]="8" [max]="48" [step]="4"
-                       [(ngModel)]="theme.gridGutter"
-                       (ngModelChange)="updateProperty('gridGutter', $event.value)"
-                       [discrete]="true">
-              <input matSliderThumb>
+            <mat-slider [min]="8" [max]="48" [step]="4" [discrete]="true">
+              <input matSliderThumb
+                     [value]="theme.gridGutter"
+                     (valueChange)="updateProperty('gridGutter', $event)">
             </mat-slider>
           </div>
 
