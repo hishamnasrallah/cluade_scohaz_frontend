@@ -1,6 +1,6 @@
 // src/app/builder/components/canvas/canvas.component.ts
 
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import {Component, OnInit, OnDestroy, Output, EventEmitter, Input} from '@angular/core';
 import {
   CdkDrag,
   CdkDragDrop,
@@ -244,6 +244,8 @@ export class CanvasComponent implements OnInit, OnDestroy {
   }
 
   // Auto-save functionality
+  @Output() componentSelected = new EventEmitter<ComponentConfig>();
+  @Input() components!: ComponentConfig[];
   private setupAutoSave(): void {
     // Auto-save every 30 seconds if there are changes
     setInterval(() => {

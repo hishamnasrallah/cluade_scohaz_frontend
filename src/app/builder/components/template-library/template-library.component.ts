@@ -2,7 +2,7 @@
 
 import { Component, Output, EventEmitter } from '@angular/core';
 import { ComponentConfig } from '../../models/component-config.model';
-import { NgFor, NgIf } from '@angular/common';
+import {NgFor, NgIf, TitleCasePipe} from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -118,7 +118,8 @@ export interface FormTemplate {
     MatIconModule,
     MatChipsModule,
     MatTooltipModule,
-    MatTabsModule
+    MatTabsModule,
+    TitleCasePipe
   ],
   styles: [`
     .template-library {

@@ -1,6 +1,6 @@
 // src/app/builder/components/validation-panel/validation-panel.component.ts
 
-import { Component, Input, OnInit, OnChanges } from '@angular/core';
+import {Component, Input, OnInit, OnChanges, Output, EventEmitter} from '@angular/core';
 import { ComponentConfig } from '../../models/component-config.model';
 import { ValidationRule, ConditionalLogic, Condition } from '../../models/validation-rules.model';
 import { ValidationRulesService } from '../../services/validation-rules.service';
@@ -358,6 +358,7 @@ export class ValidationPanelComponent implements OnInit, OnChanges {
       return;
     }
 
+    // @ts-ignore
     const template = this.validationService.getRuleTemplates()[templateKey];
     if (template) {
       const fieldId = this.selectedComponent.instanceId || this.selectedComponent.id;
@@ -411,6 +412,7 @@ export class ValidationPanelComponent implements OnInit, OnChanges {
   }
 
   // Conditional Logic Methods
+  @Output() rulesUpdated = new EventEmitter<unknown>();
   addNewLogic(): void {
     const newLogic: ConditionalLogic = {
       id: Date.now().toString(),
