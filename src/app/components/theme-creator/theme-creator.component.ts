@@ -72,10 +72,10 @@ import {ThemeConfig, ThemeDefaults, ThemePreset} from '../../models/theme.model'
     MatProgressSpinnerModule,
     MatSlideToggleModule,
     // ALL Theme Control Components
-    ColorPickerComponent,
-    TypographyControlsComponent,
-    SpacingControlsComponent,
-    EffectsControlsComponent,
+    // ColorPickerComponent,
+    // TypographyControlsComponent,
+    // SpacingControlsComponent,
+    // EffectsControlsComponent,
     AdvancedColorControlsComponent,
     AdvancedTypographyControlsComponent,
     BorderControlsComponent,
@@ -627,47 +627,47 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
     const root = this.previewRoot;
 
     // Apply ALL theme properties as CSS variables
-    // Core colors
+    // Core colors - ALL variants with fallbacks
     root.style.setProperty('--theme-primary', theme.primaryColor);
-    root.style.setProperty('--theme-primary-light', theme.primaryLightColor);
-    root.style.setProperty('--theme-primary-dark', theme.primaryDarkColor);
+    root.style.setProperty('--theme-primary-light', theme.primaryLightColor || '#5FD3C4');
+    root.style.setProperty('--theme-primary-dark', theme.primaryDarkColor || '#2BA99B');
     root.style.setProperty('--theme-secondary', theme.secondaryColor);
-    root.style.setProperty('--theme-secondary-light', theme.secondaryLightColor);
-    root.style.setProperty('--theme-secondary-dark', theme.secondaryDarkColor);
+    root.style.setProperty('--theme-secondary-light', theme.secondaryLightColor || '#34C5AA');
+    root.style.setProperty('--theme-secondary-dark', theme.secondaryDarkColor || '#238A7F');
     root.style.setProperty('--theme-background', theme.backgroundColor);
-    root.style.setProperty('--theme-background-paper', theme.backgroundPaperColor);
-    root.style.setProperty('--theme-background-default', theme.backgroundDefaultColor);
+    root.style.setProperty('--theme-background-paper', theme.backgroundPaperColor || '#FFFFFF');
+    root.style.setProperty('--theme-background-default', theme.backgroundDefaultColor || '#F8FAFB');
     root.style.setProperty('--theme-text', theme.textColor);
-    root.style.setProperty('--theme-text-secondary', theme.textSecondaryColor);
-    root.style.setProperty('--theme-text-disabled', theme.textDisabledColor);
-    root.style.setProperty('--theme-text-hint', theme.textHintColor);
+    root.style.setProperty('--theme-text-secondary', theme.textSecondaryColor || '#6B7280');
+    root.style.setProperty('--theme-text-disabled', theme.textDisabledColor || '#9CA3AF');
+    root.style.setProperty('--theme-text-hint', theme.textHintColor || '#D1D5DB');
     root.style.setProperty('--theme-accent', theme.accentColor);
-    root.style.setProperty('--theme-accent-light', theme.accentLightColor);
-    root.style.setProperty('--theme-accent-dark', theme.accentDarkColor);
+    root.style.setProperty('--theme-accent-light', theme.accentLightColor || '#A8E8DD');
+    root.style.setProperty('--theme-accent-dark', theme.accentDarkColor || '#34C5AA');
 
-    // Semantic colors
+    // Semantic colors - ALL variants
     root.style.setProperty('--theme-success', theme.successColor);
-    root.style.setProperty('--theme-success-light', theme.successLightColor);
-    root.style.setProperty('--theme-success-dark', theme.successDarkColor);
+    root.style.setProperty('--theme-success-light', theme.successLightColor || '#86EFAC');
+    root.style.setProperty('--theme-success-dark', theme.successDarkColor || '#16A34A');
     root.style.setProperty('--theme-warning', theme.warningColor);
-    root.style.setProperty('--theme-warning-light', theme.warningLightColor);
-    root.style.setProperty('--theme-warning-dark', theme.warningDarkColor);
+    root.style.setProperty('--theme-warning-light', theme.warningLightColor || '#FCD34D');
+    root.style.setProperty('--theme-warning-dark', theme.warningDarkColor || '#D97706');
     root.style.setProperty('--theme-error', theme.errorColor);
-    root.style.setProperty('--theme-error-light', theme.errorLightColor);
-    root.style.setProperty('--theme-error-dark', theme.errorDarkColor);
+    root.style.setProperty('--theme-error-light', theme.errorLightColor || '#FCA5A5');
+    root.style.setProperty('--theme-error-dark', theme.errorDarkColor || '#DC2626');
     root.style.setProperty('--theme-info', theme.infoColor);
-    root.style.setProperty('--theme-info-light', theme.infoLightColor);
-    root.style.setProperty('--theme-info-dark', theme.infoDarkColor);
+    root.style.setProperty('--theme-info-light', theme.infoLightColor || '#93BBFE');
+    root.style.setProperty('--theme-info-dark', theme.infoDarkColor || '#2563EB');
 
-    // Surface colors
-    root.style.setProperty('--theme-surface-card', theme.surfaceCard);
-    root.style.setProperty('--theme-surface-modal', theme.surfaceModal);
-    root.style.setProperty('--theme-surface-hover', theme.surfaceHover);
-    root.style.setProperty('--theme-surface-focus', theme.surfaceFocus);
-    root.style.setProperty('--theme-surface-selected', theme.surfaceSelected);
-    root.style.setProperty('--theme-surface-disabled', theme.surfaceDisabled);
-    root.style.setProperty('--theme-divider', theme.dividerColor);
-    root.style.setProperty('--theme-overlay', theme.overlayColor);
+    // Surface colors - ALL variants with fallbacks
+    root.style.setProperty('--theme-surface-card', theme.surfaceCard || '#FFFFFF');
+    root.style.setProperty('--theme-surface-modal', theme.surfaceModal || '#FFFFFF');
+    root.style.setProperty('--theme-surface-hover', theme.surfaceHover || 'rgba(196, 247, 239, 0.3)');
+    root.style.setProperty('--theme-surface-focus', theme.surfaceFocus || 'rgba(52, 197, 170, 0.12)');
+    root.style.setProperty('--theme-surface-selected', theme.surfaceSelected || 'rgba(52, 197, 170, 0.08)');
+    root.style.setProperty('--theme-surface-disabled', theme.surfaceDisabled || 'rgba(0, 0, 0, 0.04)');
+    root.style.setProperty('--theme-divider', theme.dividerColor || 'rgba(0, 0, 0, 0.08)');
+    root.style.setProperty('--theme-overlay', theme.overlayColor || 'rgba(0, 0, 0, 0.5)');
 
     // Typography
     root.style.setProperty('--theme-font-family', theme.fontFamily);
@@ -867,6 +867,11 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
   onThemeChange(changes: Partial<ThemeConfig>): void {
     this.currentTheme = { ...this.currentTheme, ...changes };
     this.updateFormValues(this.currentTheme);
+
+    // Apply changes immediately to preview without debounce
+    this.applyThemeToPreview(this.currentTheme);
+
+    // Also update the subject for other subscribers
     this.themeChangeSubject.next(changes);
   }
 

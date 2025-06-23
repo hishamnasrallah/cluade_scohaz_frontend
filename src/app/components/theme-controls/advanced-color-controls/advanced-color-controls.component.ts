@@ -88,14 +88,14 @@ interface ColorGroup {
                 <button mat-icon-button
                         (click)="copyColor(color.key)"
                         [matTooltip]="'Copy ' + theme[color.key]"
-                        class="copy-btn">
+                        class="copy-btn mini-btn">
                   <mat-icon>content_copy</mat-icon>
                 </button>
 
                 <button mat-icon-button
                         (click)="generateVariations(color.key)"
                         matTooltip="Generate variations"
-                        class="variations-btn">
+                        class="variations-btn mini-btn">
                   <mat-icon>auto_awesome</mat-icon>
                 </button>
               </div>
@@ -168,6 +168,16 @@ interface ColorGroup {
     </div>
   `,
   styles: [`
+    .mini-btn {
+      width: 32px;
+      height: 32px;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
     .advanced-color-controls {
       display: flex;
       flex-direction: column;
@@ -212,21 +222,20 @@ interface ColorGroup {
 
     .colors-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 24px;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px;
     }
 
     .color-control-item {
-      padding: 16px;
+      padding: 12px;
       background: white;
-      border: 2px solid rgba(196, 247, 239, 0.5);
-      border-radius: 12px;
-      transition: all 0.3s ease;
+      border: 1px solid rgba(196, 247, 239, 0.5);
+      border-radius: 8px;
+      transition: all 0.2s ease;
 
       &:hover {
         border-color: #34C5AA;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(52, 197, 170, 0.15);
+        box-shadow: 0 2px 8px rgba(52, 197, 170, 0.1);
       }
     }
 
@@ -234,14 +243,13 @@ interface ColorGroup {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
 
       label {
-        font-weight: 600;
+        font-weight: 500;
         color: #2F4858;
-        font-size: 14px;
+        font-size: 13px;
       }
-
       .color-description {
         display: flex;
         align-items: center;
@@ -258,8 +266,8 @@ interface ColorGroup {
 
     .color-input-group {
       display: flex;
-      gap: 12px;
-      align-items: stretch;
+      gap: 8px;
+      align-items: center;
     }
 
     .color-preview-wrapper {
@@ -267,61 +275,45 @@ interface ColorGroup {
     }
 
     .color-preview {
-      width: 80px;
-      height: 80px;
-      border-radius: 12px;
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      border: 2px solid rgba(0, 0, 0, 0.1);
-      transition: all 0.3s ease;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      transition: all 0.2s ease;
       position: relative;
       overflow: hidden;
 
       &:hover {
         transform: scale(1.05);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       }
-
-      .color-value {
-        position: absolute;
-        bottom: 4px;
-        left: 50%;
-        transform: translateX(-50%);
-        font-size: 10px;
-        font-weight: 600;
-        background: rgba(255, 255, 255, 0.9);
-        padding: 2px 6px;
-        border-radius: 4px;
-        color: #2F4858;
-        white-space: nowrap;
-      }
-    }
-
     .hidden-color-input {
       position: absolute;
       opacity: 0;
       pointer-events: none;
     }
 
-    .color-controls {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+      .color-controls {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
 
-    .color-text-input {
-      flex: 1;
-      padding: 10px 14px;
-      border: 2px solid rgba(196, 247, 239, 0.5);
-      border-radius: 8px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      background-color: white;
-      color: #2F4858;
-      transition: all 0.2s ease;
+      .color-text-input {
+        flex: 1;
+        padding: 6px 10px;
+        border: 1px solid rgba(196, 247, 239, 0.5);
+        border-radius: 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 12px;
+        background-color: white;
+        color: #2F4858;
+        transition: all 0.2s ease;
 
       &:focus {
         outline: none;
@@ -486,6 +478,7 @@ interface ColorGroup {
       padding: 12px;
       width: 100%;
     }
+    }
   `]
 })
 export class AdvancedColorControlsComponent implements OnInit {
@@ -500,24 +493,24 @@ export class AdvancedColorControlsComponent implements OnInit {
       description: 'Main brand colors used throughout the interface',
       colors: [
         { key: 'primaryColor', label: 'Primary', showContrast: true, contrastAgainst: 'backgroundColor' },
-        { key: 'primaryLightColor', label: 'Primary Light' },
-        { key: 'primaryDarkColor', label: 'Primary Dark' },
+        { key: 'primaryLightColor', label: 'Primary Light', description: 'Lighter variant for hover states' },
+        { key: 'primaryDarkColor', label: 'Primary Dark', description: 'Darker variant for active states' },
         { key: 'secondaryColor', label: 'Secondary', showContrast: true, contrastAgainst: 'backgroundColor' },
-        { key: 'secondaryLightColor', label: 'Secondary Light' },
-        { key: 'secondaryDarkColor', label: 'Secondary Dark' }
+        { key: 'secondaryLightColor', label: 'Secondary Light', description: 'Lighter variant of secondary' },
+        { key: 'secondaryDarkColor', label: 'Secondary Dark', description: 'Darker variant of secondary' }
       ]
     },
     {
       title: 'Background & Text',
       description: 'Base colors for content and typography',
       colors: [
-        { key: 'backgroundColor', label: 'Background' },
-        { key: 'backgroundPaperColor', label: 'Paper Background' },
-        { key: 'backgroundDefaultColor', label: 'Default Background' },
+        { key: 'backgroundColor', label: 'Background', description: 'Main background color' },
+        { key: 'backgroundPaperColor', label: 'Paper Background', description: 'Background for cards and surfaces' },
+        { key: 'backgroundDefaultColor', label: 'Default Background', description: 'Default backdrop color' },
         { key: 'textColor', label: 'Text', showContrast: true, contrastAgainst: 'backgroundColor' },
-        { key: 'textSecondaryColor', label: 'Secondary Text', showContrast: true, contrastAgainst: 'backgroundColor' },
-        { key: 'textDisabledColor', label: 'Disabled Text' },
-        { key: 'textHintColor', label: 'Hint Text' }
+        { key: 'textSecondaryColor', label: 'Secondary Text', showContrast: true, contrastAgainst: 'backgroundColor', description: 'For less important text' },
+        { key: 'textDisabledColor', label: 'Disabled Text', description: 'For disabled elements' },
+        { key: 'textHintColor', label: 'Hint Text', description: 'For placeholder and hint text' }
       ]
     },
     {
@@ -525,8 +518,8 @@ export class AdvancedColorControlsComponent implements OnInit {
       description: 'Highlight and emphasis colors',
       colors: [
         { key: 'accentColor', label: 'Accent', showContrast: true, contrastAgainst: 'backgroundColor' },
-        { key: 'accentLightColor', label: 'Accent Light' },
-        { key: 'accentDarkColor', label: 'Accent Dark' }
+        { key: 'accentLightColor', label: 'Accent Light', description: 'Lighter variant of accent' },
+        { key: 'accentDarkColor', label: 'Accent Dark', description: 'Darker variant of accent' }
       ]
     },
     {
@@ -534,31 +527,31 @@ export class AdvancedColorControlsComponent implements OnInit {
       description: 'Colors with specific meanings for user feedback',
       colors: [
         { key: 'successColor', label: 'Success', showContrast: true, contrastAgainst: 'backgroundColor' },
-        { key: 'successLightColor', label: 'Success Light' },
-        { key: 'successDarkColor', label: 'Success Dark' },
+        { key: 'successLightColor', label: 'Success Light', description: 'For success backgrounds' },
+        { key: 'successDarkColor', label: 'Success Dark', description: 'For success borders' },
         { key: 'warningColor', label: 'Warning', showContrast: true, contrastAgainst: 'backgroundColor' },
-        { key: 'warningLightColor', label: 'Warning Light' },
-        { key: 'warningDarkColor', label: 'Warning Dark' },
+        { key: 'warningLightColor', label: 'Warning Light', description: 'For warning backgrounds' },
+        { key: 'warningDarkColor', label: 'Warning Dark', description: 'For warning borders' },
         { key: 'errorColor', label: 'Error', showContrast: true, contrastAgainst: 'backgroundColor' },
-        { key: 'errorLightColor', label: 'Error Light' },
-        { key: 'errorDarkColor', label: 'Error Dark' },
+        { key: 'errorLightColor', label: 'Error Light', description: 'For error backgrounds' },
+        { key: 'errorDarkColor', label: 'Error Dark', description: 'For error borders' },
         { key: 'infoColor', label: 'Info', showContrast: true, contrastAgainst: 'backgroundColor' },
-        { key: 'infoLightColor', label: 'Info Light' },
-        { key: 'infoDarkColor', label: 'Info Dark' }
+        { key: 'infoLightColor', label: 'Info Light', description: 'For info backgrounds' },
+        { key: 'infoDarkColor', label: 'Info Dark', description: 'For info borders' }
       ]
     },
     {
       title: 'Surface & States',
       description: 'Colors for different UI states and surfaces',
       colors: [
-        { key: 'surfaceCard', label: 'Card Surface' },
-        { key: 'surfaceModal', label: 'Modal Surface' },
-        { key: 'surfaceHover', label: 'Hover State', allowAlpha: true },
-        { key: 'surfaceFocus', label: 'Focus State', allowAlpha: true },
-        { key: 'surfaceSelected', label: 'Selected State', allowAlpha: true },
-        { key: 'surfaceDisabled', label: 'Disabled State', allowAlpha: true },
-        { key: 'dividerColor', label: 'Divider', allowAlpha: true },
-        { key: 'overlayColor', label: 'Overlay', allowAlpha: true }
+        { key: 'surfaceCard', label: 'Card Surface', description: 'Background for cards' },
+        { key: 'surfaceModal', label: 'Modal Surface', description: 'Background for modals' },
+        { key: 'surfaceHover', label: 'Hover State', allowAlpha: true, description: 'Color for hover overlays' },
+        { key: 'surfaceFocus', label: 'Focus State', allowAlpha: true, description: 'Color for focus indicators' },
+        { key: 'surfaceSelected', label: 'Selected State', allowAlpha: true, description: 'Color for selected items' },
+        { key: 'surfaceDisabled', label: 'Disabled State', allowAlpha: true, description: 'Color for disabled overlays' },
+        { key: 'dividerColor', label: 'Divider', allowAlpha: true, description: 'Color for dividers and separators' },
+        { key: 'overlayColor', label: 'Overlay', allowAlpha: true, description: 'Color for modal overlays' }
       ]
     },
     {
@@ -649,6 +642,7 @@ export class AdvancedColorControlsComponent implements OnInit {
 
   updateColor(key: keyof ThemeConfig, value: string): void {
     if (this.isValidColor(value)) {
+      // Emit the change immediately without any debounce
       this.themeChange.emit({ [key]: value });
     }
   }
@@ -742,14 +736,49 @@ export class AdvancedColorControlsComponent implements OnInit {
     const primary = this.theme.primaryColor;
     const palette = generateColorPalette(primary);
 
-    // Apply generated palette
-    this.themeChange.emit({
+    // Apply generated palette to ALL color variants
+    const updates: Partial<ThemeConfig> = {
       primaryLightColor: palette.shades['300'],
       primaryDarkColor: palette.shades['700'],
       accentColor: palette.shades['400'],
       accentLightColor: palette.shades['200'],
       accentDarkColor: palette.shades['600']
-    });
+    };
+
+    // Also generate secondary colors if needed
+    if (this.theme.secondaryColor) {
+      const secondaryPalette = generateColorPalette(this.theme.secondaryColor);
+      updates.secondaryLightColor = secondaryPalette.shades['300'];
+      updates.secondaryDarkColor = secondaryPalette.shades['700'];
+    }
+
+    // Generate semantic color variants
+    if (this.theme.successColor) {
+      const successPalette = generateColorPalette(this.theme.successColor);
+      updates.successLightColor = successPalette.shades['300'];
+      updates.successDarkColor = successPalette.shades['700'];
+    }
+
+    if (this.theme.warningColor) {
+      const warningPalette = generateColorPalette(this.theme.warningColor);
+      updates.warningLightColor = warningPalette.shades['300'];
+      updates.warningDarkColor = warningPalette.shades['700'];
+    }
+
+    if (this.theme.errorColor) {
+      const errorPalette = generateColorPalette(this.theme.errorColor);
+      updates.errorLightColor = errorPalette.shades['300'];
+      updates.errorDarkColor = errorPalette.shades['700'];
+    }
+
+    if (this.theme.infoColor) {
+      const infoPalette = generateColorPalette(this.theme.infoColor);
+      updates.infoLightColor = infoPalette.shades['300'];
+      updates.infoDarkColor = infoPalette.shades['700'];
+    }
+
+    // Apply all updates at once
+    this.themeChange.emit(updates);
 
     this.snackBar.open('Color palette generated!', 'Close', {
       duration: 3000,
@@ -803,18 +832,41 @@ export class AdvancedColorControlsComponent implements OnInit {
 
   applyColorScheme(scheme: any): void {
     const palette = generateColorPalette(scheme.primary);
+    const secondaryPalette = generateColorPalette(scheme.secondary);
+    const accentPalette = generateColorPalette(scheme.accent);
 
-    this.themeChange.emit({
+    // Apply complete color scheme with ALL variants
+    const updates: Partial<ThemeConfig> = {
       primaryColor: scheme.primary,
       primaryLightColor: palette.shades['300'],
       primaryDarkColor: palette.shades['700'],
       secondaryColor: scheme.secondary,
-      secondaryLightColor: palette.shades['400'],
-      secondaryDarkColor: palette.shades['600'],
+      secondaryLightColor: secondaryPalette.shades['300'],
+      secondaryDarkColor: secondaryPalette.shades['700'],
       accentColor: scheme.accent,
+      accentLightColor: accentPalette.shades['300'],
+      accentDarkColor: accentPalette.shades['700'],
       backgroundColor: scheme.background,
-      backgroundPaperColor: scheme.background === '#0F172A' ? '#1E293B' : '#FFFFFF'
-    });
+      backgroundPaperColor: scheme.background === '#0F172A' ? '#1E293B' : '#FFFFFF',
+      backgroundDefaultColor: scheme.background === '#0F172A' ? '#0F172A' : '#F8FAFB'
+    };
+
+    // Also update text colors based on background
+    if (scheme.background === '#0F172A') {
+      // Dark mode
+      updates.textColor = '#F8FAFC';
+      updates.textSecondaryColor = '#94A3B8';
+      updates.textDisabledColor = '#64748B';
+      updates.textHintColor = '#475569';
+    } else {
+      // Light mode
+      updates.textColor = '#2F4858';
+      updates.textSecondaryColor = '#6B7280';
+      updates.textDisabledColor = '#9CA3AF';
+      updates.textHintColor = '#D1D5DB';
+    }
+
+    this.themeChange.emit(updates);
   }
 
   openColorMixer(): void {
