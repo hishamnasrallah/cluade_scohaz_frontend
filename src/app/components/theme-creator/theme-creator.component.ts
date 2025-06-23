@@ -181,12 +181,12 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
 
   updateThemeProperty(property: keyof typeof this.currentTheme, value: any): void {
     this.vm.updateThemeProperty(property, value);
-    this.updatePreviewDebounced();
+    this.updatePreviewImmediate(); // Changed from debounced to immediate
   }
 
   onThemeChange(changes: Partial<typeof this.currentTheme>): void {
     this.vm.onThemeChange(changes);
-    this.updatePreviewDebounced();
+    this.updatePreviewImmediate(); // Changed from debounced to immediate
   }
 
   private updatePreviewImmediate(): void {

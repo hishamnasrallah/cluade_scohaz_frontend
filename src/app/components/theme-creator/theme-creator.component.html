@@ -597,32 +597,273 @@
             </mat-card>
 
             <!-- Typography Preview -->
+            <!-- Typography Preview -->
             <mat-card class="typography-preview theme-card">
               <mat-card-header>
-                <mat-card-title class="theme-heading">Typography Showcase</mat-card-title>
+                <mat-card-title class="theme-heading">Complete Typography Showcase</mat-card-title>
               </mat-card-header>
 
               <mat-card-content>
-                <h1 class="theme-h1">Heading Level 1</h1>
-                <h2 class="theme-h2">Heading Level 2</h2>
-                <h3 class="theme-h3">Heading Level 3</h3>
-                <h4 class="theme-h4">Heading Level 4</h4>
-                <h5 class="theme-h5">Heading Level 5</h5>
-                <h6 class="theme-h6">Heading Level 6</h6>
+                <!-- Heading Levels Section -->
+                <div class="typography-section">
+                  <h4 class="section-title">Heading Levels</h4>
+                  <div class="headings-showcase">
+                    <div class="heading-item">
+                      <h1 class="theme-h1"
+                          [style.font-family]="currentTheme.headingFontFamily"
+                          [style.font-weight]="currentTheme.headingFontWeight"
+                          [style.font-size.px]="currentTheme.h1Size * currentTheme.textScaling">
+                        Heading Level 1 ({{ currentTheme.h1Size }}px)
+                      </h1>
+                    </div>
+                    <div class="heading-item">
+                      <h2 class="theme-h2"
+                          [style.font-family]="currentTheme.headingFontFamily"
+                          [style.font-weight]="currentTheme.headingFontWeight"
+                          [style.font-size.px]="currentTheme.h2Size * currentTheme.textScaling">
+                        Heading Level 2 ({{ currentTheme.h2Size }}px)
+                      </h2>
+                    </div>
+                    <div class="heading-item">
+                      <h3 class="theme-h3"
+                          [style.font-family]="currentTheme.headingFontFamily"
+                          [style.font-weight]="currentTheme.headingFontWeight"
+                          [style.font-size.px]="currentTheme.h3Size * currentTheme.textScaling">
+                        Heading Level 3 ({{ currentTheme.h3Size }}px)
+                      </h3>
+                    </div>
+                    <div class="heading-item">
+                      <h4 class="theme-h4"
+                          [style.font-family]="currentTheme.headingFontFamily"
+                          [style.font-weight]="currentTheme.headingFontWeight"
+                          [style.font-size.px]="currentTheme.h4Size * currentTheme.textScaling">
+                        Heading Level 4 ({{ currentTheme.h4Size }}px)
+                      </h4>
+                    </div>
+                    <div class="heading-item">
+                      <h5 class="theme-h5"
+                          [style.font-family]="currentTheme.headingFontFamily"
+                          [style.font-weight]="currentTheme.headingFontWeight"
+                          [style.font-size.px]="currentTheme.h5Size * currentTheme.textScaling">
+                        Heading Level 5 ({{ currentTheme.h5Size }}px)
+                      </h5>
+                    </div>
+                    <div class="heading-item">
+                      <h6 class="theme-h6"
+                          [style.font-family]="currentTheme.headingFontFamily"
+                          [style.font-weight]="currentTheme.headingFontWeight"
+                          [style.font-size.px]="currentTheme.h6Size * currentTheme.textScaling">
+                        Heading Level 6 ({{ currentTheme.h6Size }}px)
+                      </h6>
+                    </div>
+                  </div>
+                </div>
 
-                <p class="theme-text">
-                  This is a paragraph with regular text. It demonstrates the base font family,
-                  size, weight, line height, and letter spacing settings.
-                </p>
+                <mat-divider class="typography-divider"></mat-divider>
 
-                <p class="theme-text-secondary">
-                  This is secondary text with a lighter appearance, perfect for descriptions
-                  and supporting content.
-                </p>
-                <a href="#" class="theme-link" (click)="$event.preventDefault()">This is a themed link</a>
+                <!-- Font Weights Section -->
+                <div class="typography-section">
+                  <h4 class="section-title">Font Weight Variations</h4>
+                  <div class="weights-showcase">
+                    <p class="weight-sample"
+                       [style.font-family]="currentTheme.fontFamily"
+                       [style.font-size.px]="currentTheme.fontSizeBase * currentTheme.textScaling"
+                       [style.font-weight]="currentTheme.fontWeightLight"
+                       [style.line-height]="currentTheme.lineHeight"
+                       [style.letter-spacing.em]="currentTheme.letterSpacing">
+                      Light Weight ({{ currentTheme.fontWeightLight }}) - The quick brown fox jumps over the lazy dog
+                    </p>
+                    <p class="weight-sample"
+                       [style.font-family]="currentTheme.fontFamily"
+                       [style.font-size.px]="currentTheme.fontSizeBase * currentTheme.textScaling"
+                       [style.font-weight]="currentTheme.fontWeight"
+                       [style.line-height]="currentTheme.lineHeight"
+                       [style.letter-spacing.em]="currentTheme.letterSpacing">
+                      Regular Weight ({{ currentTheme.fontWeight }}) - The quick brown fox jumps over the lazy dog
+                    </p>
+                    <p class="weight-sample"
+                       [style.font-family]="currentTheme.fontFamily"
+                       [style.font-size.px]="currentTheme.fontSizeBase * currentTheme.textScaling"
+                       [style.font-weight]="currentTheme.fontWeightMedium"
+                       [style.line-height]="currentTheme.lineHeight"
+                       [style.letter-spacing.em]="currentTheme.letterSpacing">
+                      Medium Weight ({{ currentTheme.fontWeightMedium }}) - The quick brown fox jumps over the lazy dog
+                    </p>
+                    <p class="weight-sample"
+                       [style.font-family]="currentTheme.fontFamily"
+                       [style.font-size.px]="currentTheme.fontSizeBase * currentTheme.textScaling"
+                       [style.font-weight]="currentTheme.fontWeightBold"
+                       [style.line-height]="currentTheme.lineHeight"
+                       [style.letter-spacing.em]="currentTheme.letterSpacing">
+                      Bold Weight ({{ currentTheme.fontWeightBold }}) - The quick brown fox jumps over the lazy dog
+                    </p>
+                  </div>
+                </div>
+
+                <mat-divider class="typography-divider"></mat-divider>
+
+                <!-- Line Height Variations Section -->
+                <div class="typography-section">
+                  <h4 class="section-title">Line Height Variations</h4>
+                  <div class="line-height-showcase">
+                    <div class="line-height-sample">
+                      <span class="variation-label">Tight ({{ currentTheme.lineHeightTight }})</span>
+                      <p [style.font-family]="currentTheme.fontFamily"
+                         [style.font-size.px]="currentTheme.fontSizeBase * currentTheme.textScaling"
+                         [style.font-weight]="currentTheme.fontWeight"
+                         [style.line-height]="currentTheme.lineHeightTight"
+                         [style.letter-spacing.em]="currentTheme.letterSpacing">
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.
+                      </p>
+                    </div>
+                    <div class="line-height-sample">
+                      <span class="variation-label">Normal ({{ currentTheme.lineHeight }})</span>
+                      <p [style.font-family]="currentTheme.fontFamily"
+                         [style.font-size.px]="currentTheme.fontSizeBase * currentTheme.textScaling"
+                         [style.font-weight]="currentTheme.fontWeight"
+                         [style.line-height]="currentTheme.lineHeight"
+                         [style.letter-spacing.em]="currentTheme.letterSpacing">
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.
+                      </p>
+                    </div>
+                    <div class="line-height-sample">
+                      <span class="variation-label">Relaxed ({{ currentTheme.lineHeightRelaxed }})</span>
+                      <p [style.font-family]="currentTheme.fontFamily"
+                         [style.font-size.px]="currentTheme.fontSizeBase * currentTheme.textScaling"
+                         [style.font-weight]="currentTheme.fontWeight"
+                         [style.line-height]="currentTheme.lineHeightRelaxed"
+                         [style.letter-spacing.em]="currentTheme.letterSpacing">
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <mat-divider class="typography-divider"></mat-divider>
+
+                <!-- Letter Spacing Variations Section -->
+                <div class="typography-section">
+                  <h4 class="section-title">Letter Spacing Variations</h4>
+                  <div class="letter-spacing-showcase">
+                    <div class="letter-spacing-sample">
+                      <span class="variation-label">Tight ({{ currentTheme.letterSpacingTight }}em)</span>
+                      <p [style.font-family]="currentTheme.fontFamily"
+                         [style.font-size.px]="currentTheme.fontSizeBase * currentTheme.textScaling"
+                         [style.font-weight]="currentTheme.fontWeight"
+                         [style.line-height]="currentTheme.lineHeight"
+                         [style.letter-spacing.em]="currentTheme.letterSpacingTight">
+                        The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.
+                      </p>
+                    </div>
+                    <div class="letter-spacing-sample">
+                      <span class="variation-label">Normal ({{ currentTheme.letterSpacing }}em)</span>
+                      <p [style.font-family]="currentTheme.fontFamily"
+                         [style.font-size.px]="currentTheme.fontSizeBase * currentTheme.textScaling"
+                         [style.font-weight]="currentTheme.fontWeight"
+                         [style.line-height]="currentTheme.lineHeight"
+                         [style.letter-spacing.em]="currentTheme.letterSpacing">
+                        The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.
+                      </p>
+                    </div>
+                    <div class="letter-spacing-sample">
+                      <span class="variation-label">Wide ({{ currentTheme.letterSpacingWide }}em)</span>
+                      <p [style.font-family]="currentTheme.fontFamily"
+                         [style.font-size.px]="currentTheme.fontSizeBase * currentTheme.textScaling"
+                         [style.font-weight]="currentTheme.fontWeight"
+                         [style.line-height]="currentTheme.lineHeight"
+                         [style.letter-spacing.em]="currentTheme.letterSpacingWide">
+                        The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <mat-divider class="typography-divider"></mat-divider>
+
+                <!-- Font Sizes Section -->
+                <div class="typography-section">
+                  <h4 class="section-title">Font Size Scale</h4>
+                  <div class="font-sizes-showcase">
+                    <p class="size-sample"
+                       [style.font-family]="currentTheme.fontFamily"
+                       [style.font-size.px]="currentTheme.fontSizeSmall * currentTheme.textScaling"
+                       [style.font-weight]="currentTheme.fontWeight"
+                       [style.line-height]="currentTheme.lineHeight"
+                       [style.letter-spacing.em]="currentTheme.letterSpacing">
+                      Small Text ({{ currentTheme.fontSizeSmall }}px) - Perfect for captions and labels
+                    </p>
+                    <p class="size-sample"
+                       [style.font-family]="currentTheme.fontFamily"
+                       [style.font-size.px]="currentTheme.fontSizeMedium * currentTheme.textScaling"
+                       [style.font-weight]="currentTheme.fontWeight"
+                       [style.line-height]="currentTheme.lineHeight"
+                       [style.letter-spacing.em]="currentTheme.letterSpacing">
+                      Medium Text ({{ currentTheme.fontSizeMedium }}px) - Standard body text size
+                    </p>
+                    <p class="size-sample"
+                       [style.font-family]="currentTheme.fontFamily"
+                       [style.font-size.px]="currentTheme.fontSizeBase * currentTheme.textScaling"
+                       [style.font-weight]="currentTheme.fontWeight"
+                       [style.line-height]="currentTheme.lineHeight"
+                       [style.letter-spacing.em]="currentTheme.letterSpacing">
+                      Base Text ({{ currentTheme.fontSizeBase }}px) - Primary content size
+                    </p>
+                    <p class="size-sample"
+                       [style.font-family]="currentTheme.fontFamily"
+                       [style.font-size.px]="currentTheme.fontSizeLarge * currentTheme.textScaling"
+                       [style.font-weight]="currentTheme.fontWeight"
+                       [style.line-height]="currentTheme.lineHeight"
+                       [style.letter-spacing.em]="currentTheme.letterSpacing">
+                      Large Text ({{ currentTheme.fontSizeLarge }}px) - For emphasis and readability
+                    </p>
+                    <p class="size-sample"
+                       [style.font-family]="currentTheme.fontFamily"
+                       [style.font-size.px]="currentTheme.fontSizeXLarge * currentTheme.textScaling"
+                       [style.font-weight]="currentTheme.fontWeight"
+                       [style.line-height]="currentTheme.lineHeight"
+                       [style.letter-spacing.em]="currentTheme.letterSpacing">
+                      Extra Large Text ({{ currentTheme.fontSizeXLarge }}px) - Maximum impact
+                    </p>
+                  </div>
+                </div>
+
+                <mat-divider class="typography-divider"></mat-divider>
+
+                <!-- Combined Preview -->
+                <div class="typography-section">
+                  <h4 class="section-title">Combined Typography Example</h4>
+                  <div class="combined-preview">
+                    <h2 [style.font-family]="currentTheme.headingFontFamily"
+                        [style.font-weight]="currentTheme.headingFontWeight"
+                        [style.font-size.px]="currentTheme.h2Size * currentTheme.textScaling">
+                      {{ currentTheme.brandName || 'Enterprise Application' }}
+                    </h2>
+                    <p class="theme-text-secondary"
+                       [style.font-family]="currentTheme.fontFamily"
+                       [style.font-size.px]="currentTheme.fontSizeBase * currentTheme.textScaling"
+                       [style.font-weight]="currentTheme.fontWeightLight"
+                       [style.line-height]="currentTheme.lineHeight"
+                       [style.letter-spacing.em]="currentTheme.letterSpacing">
+                      This section demonstrates how different typography settings work together in a real-world scenario.
+                    </p>
+                    <p [style.font-family]="currentTheme.fontFamily"
+                       [style.font-size.px]="currentTheme.fontSizeBase * currentTheme.textScaling"
+                       [style.font-weight]="currentTheme.fontWeight"
+                       [style.line-height]="currentTheme.lineHeight"
+                       [style.letter-spacing.em]="currentTheme.letterSpacing">
+                      Regular body text maintains optimal readability with your chosen settings. The combination of
+                      <strong [style.font-weight]="currentTheme.fontWeightBold">font weight</strong>,
+                      line height, and letter spacing creates a harmonious reading experience.
+                    </p>
+                    <a href="#" class="theme-link"
+                       [style.font-family]="currentTheme.fontFamily"
+                       [style.font-size.px]="currentTheme.fontSizeBase * currentTheme.textScaling"
+                       [style.font-weight]="currentTheme.fontWeightMedium"
+                       (click)="$event.preventDefault()">Learn more about typography →</a>
+                  </div>
+                </div>
               </mat-card-content>
             </mat-card>
-
             <!-- Feature Showcase -->
             <mat-card class="features-card theme-card">
               <mat-card-header>
