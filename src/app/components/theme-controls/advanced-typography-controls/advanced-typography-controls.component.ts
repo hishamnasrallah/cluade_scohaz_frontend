@@ -76,7 +76,7 @@ interface TypeScale {
                 <mat-label>Select font</mat-label>
                 <mat-select [(ngModel)]="theme.fontFamily"
                            (selectionChange)="updateProperty('fontFamily', $event.value)">
-                  <mat-option *ngFor="let font of fontFamilies" [(ngModel)]="font.value">
+                  <mat-option *ngFor="let font of fontFamilies" [value]="font.value">
                     <span [style.font-family]="font.value">{{ font.label }}</span>
                   </mat-option>
                 </mat-select>
