@@ -1,4 +1,4 @@
-// src/app/components/theme-creator/theme-creator.component.ts (REFACTORED VERSION)
+// src/app/components/theme-creator/theme-creator.component.ts (COMPLETE FULL FILE)
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -174,7 +174,7 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
 
   onThemeChange(changes: Partial<typeof this.currentTheme>): void {
     this.vm.onThemeChange(changes);
-    this.updatePreviewImmediate();
+    this.updatePreviewDebounced();
   }
 
   private updatePreviewImmediate(): void {

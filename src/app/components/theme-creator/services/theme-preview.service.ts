@@ -1,4 +1,4 @@
-// src/app/components/theme-creator/services/theme-preview.service.ts
+// src/app/components/theme-creator/services/theme-preview.service.ts (FULL FILE)
 import { Injectable } from '@angular/core';
 import { ThemeConfig } from '../../../models/theme.model';
 
@@ -188,25 +188,39 @@ export class ThemePreviewService {
   }
 
   private applyComponentSpecific(root: HTMLElement, theme: ThemeConfig): void {
+    // Button properties - ALL OF THEM
     root.style.setProperty(`${this.CSS_PREFIX}-button-height`, `${theme.buttonHeight || 40}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-button-padding-x`, `${theme.buttonPaddingX || 24}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-button-padding-y`, `${theme.buttonPaddingY || 12}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-button-font-size`, `${theme.buttonFontSize || 14}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-button-font-weight`, (theme.buttonFontWeight || 600).toString());
     root.style.setProperty(`${this.CSS_PREFIX}-button-radius`, `${theme.buttonBorderRadius || theme.borderRadiusSmall || 8}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-button-border-radius`, `${theme.buttonBorderRadius || theme.borderRadiusSmall || 8}px`);
+
+    // Input properties - ALL OF THEM
     root.style.setProperty(`${this.CSS_PREFIX}-input-height`, `${theme.inputHeight || 44}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-input-padding-x`, `${theme.inputPaddingX || 16}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-input-padding-y`, `${theme.inputPaddingY || 12}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-input-font-size`, `${theme.inputFontSize || 16}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-input-radius`, `${theme.inputBorderRadius || theme.borderRadiusSmall || 8}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-input-border-radius`, `${theme.inputBorderRadius || theme.borderRadiusSmall || 8}px`);
+
+    // Card properties - ALL OF THEM
     root.style.setProperty(`${this.CSS_PREFIX}-card-padding`, `${theme.cardPadding || 24}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-card-radius`, `${theme.cardBorderRadius || theme.borderRadius || 12}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-card-border-radius`, `${theme.cardBorderRadius || theme.borderRadius || 12}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-card-elevation`, (theme.cardElevation || 1).toString());
+
+    // Modal properties - ALL OF THEM
     root.style.setProperty(`${this.CSS_PREFIX}-modal-radius`, `${theme.modalBorderRadius || theme.borderRadiusLarge || 16}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-modal-border-radius`, `${theme.modalBorderRadius || theme.borderRadiusLarge || 16}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-modal-padding`, `${theme.modalPadding || 32}px`);
+
+    // Tooltip properties - ALL OF THEM
     root.style.setProperty(`${this.CSS_PREFIX}-tooltip-font-size`, `${theme.tooltipFontSize || 12}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-tooltip-padding`, `${theme.tooltipPadding || 8}px`);
     root.style.setProperty(`${this.CSS_PREFIX}-tooltip-radius`, `${theme.tooltipBorderRadius || 4}px`);
+    root.style.setProperty(`${this.CSS_PREFIX}-tooltip-border-radius`, `${theme.tooltipBorderRadius || 4}px`);
   }
 
   private applyGradients(root: HTMLElement, theme: ThemeConfig): void {

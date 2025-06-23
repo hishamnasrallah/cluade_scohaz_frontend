@@ -1,4 +1,4 @@
-<!-- src/app/components/theme-creator/theme-creator.component.html -->
+<!-- src/app/components/theme-creator/theme-creator.component.html (FULL FILE) -->
 <div class="theme-creator-container">
   <!-- Header -->
   <mat-card class="theme-header ocean-mint-card">
@@ -291,6 +291,177 @@
               </mat-card>
             </div>
 
+            <!-- Component Showcase Section -->
+            <mat-card class="component-showcase-card theme-card">
+              <mat-card-header>
+                <mat-card-title class="theme-heading">Component Properties Showcase</mat-card-title>
+              </mat-card-header>
+
+              <mat-card-content>
+                <!-- Button Showcase -->
+                <div class="component-section">
+                  <h4 class="section-title theme-heading-small">Buttons</h4>
+                  <div class="button-showcase">
+                    <button class="theme-button theme-button-primary"
+                            [style.height.px]="currentTheme.buttonHeight"
+                            [style.padding]="currentTheme.buttonPaddingY + 'px ' + currentTheme.buttonPaddingX + 'px'"
+                            [style.font-size.px]="currentTheme.buttonFontSize"
+                            [style.font-weight]="currentTheme.buttonFontWeight"
+                            [style.border-radius.px]="currentTheme.buttonBorderRadius">
+                      <mat-icon>check</mat-icon>
+                      Primary Button
+                    </button>
+
+                    <button class="theme-button theme-button-secondary"
+                            [style.height.px]="currentTheme.buttonHeight"
+                            [style.padding]="currentTheme.buttonPaddingY + 'px ' + currentTheme.buttonPaddingX + 'px'"
+                            [style.font-size.px]="currentTheme.buttonFontSize"
+                            [style.font-weight]="currentTheme.buttonFontWeight"
+                            [style.border-radius.px]="currentTheme.buttonBorderRadius">
+                      Secondary
+                    </button>
+
+                    <button class="theme-button theme-button-outline"
+                            [style.height.px]="currentTheme.buttonHeight"
+                            [style.padding]="currentTheme.buttonPaddingY + 'px ' + currentTheme.buttonPaddingX + 'px'"
+                            [style.font-size.px]="currentTheme.buttonFontSize"
+                            [style.font-weight]="currentTheme.buttonFontWeight"
+                            [style.border-radius.px]="currentTheme.buttonBorderRadius">
+                      Outline
+                    </button>
+
+                    <button class="theme-button theme-icon-button"
+                            [style.width.px]="currentTheme.buttonHeight"
+                            [style.height.px]="currentTheme.buttonHeight"
+                            [style.border-radius.px]="currentTheme.buttonBorderRadius">
+                      <mat-icon>add</mat-icon>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Input Showcase -->
+                <div class="component-section">
+                  <h4 class="section-title theme-heading-small">Inputs</h4>
+                  <div class="input-showcase">
+                    <input type="text"
+                           placeholder="Text input"
+                           class="theme-input"
+                           [style.height.px]="currentTheme.inputHeight"
+                           [style.padding]="currentTheme.inputPaddingY + 'px ' + currentTheme.inputPaddingX + 'px'"
+                           [style.font-size.px]="currentTheme.inputFontSize"
+                           [style.border-radius.px]="currentTheme.inputBorderRadius">
+
+                    <div class="input-with-icon">
+                      <mat-icon class="input-icon">search</mat-icon>
+                      <input type="text"
+                             placeholder="Search..."
+                             class="theme-input with-icon"
+                             [style.height.px]="currentTheme.inputHeight"
+                             [style.padding]="currentTheme.inputPaddingY + 'px ' + currentTheme.inputPaddingX + 'px'"
+                             [style.padding-left.px]="currentTheme.inputPaddingX + 32"
+                             [style.font-size.px]="currentTheme.inputFontSize"
+                             [style.border-radius.px]="currentTheme.inputBorderRadius">
+                    </div>
+
+                    <textarea placeholder="Textarea"
+                              rows="3"
+                              class="theme-textarea"
+                              [style.padding]="currentTheme.inputPaddingY + 'px ' + currentTheme.inputPaddingX + 'px'"
+                              [style.font-size.px]="currentTheme.inputFontSize"
+                              [style.border-radius.px]="currentTheme.inputBorderRadius"></textarea>
+
+                    <select class="theme-select"
+                            [style.height.px]="currentTheme.inputHeight"
+                            [style.padding]="currentTheme.inputPaddingY + 'px ' + currentTheme.inputPaddingX + 'px'"
+                            [style.font-size.px]="currentTheme.inputFontSize"
+                            [style.border-radius.px]="currentTheme.inputBorderRadius">
+                      <option>Select option</option>
+                      <option>Option 1</option>
+                      <option>Option 2</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Card Showcase -->
+                <div class="component-section">
+                  <h4 class="section-title theme-heading-small">Cards</h4>
+                  <div class="card-showcase">
+                    <div class="theme-demo-card"
+                         [style.padding.px]="currentTheme.cardPadding"
+                         [style.border-radius.px]="currentTheme.cardBorderRadius"
+                         [attr.data-elevation]="currentTheme.cardElevation">
+                      <h5 class="card-title">Card Title</h5>
+                      <p class="card-content">This card demonstrates the current card properties including padding, border radius, and elevation.</p>
+                      <div class="card-actions">
+                        <button class="theme-button-small">Action</button>
+                      </div>
+                    </div>
+
+                    <div class="theme-demo-card compact"
+                         [style.padding.px]="currentTheme.cardPadding * 0.75"
+                         [style.border-radius.px]="currentTheme.cardBorderRadius"
+                         [attr.data-elevation]="currentTheme.cardElevation">
+                      <div class="card-header">
+                        <mat-icon>dashboard</mat-icon>
+                        <span>Compact Card</span>
+                      </div>
+                      <p>Smaller card variant with adjusted padding</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Modal Preview -->
+                <div class="component-section">
+                  <h4 class="section-title theme-heading-small">Modal</h4>
+                  <div class="modal-showcase">
+                    <div class="theme-modal-preview"
+                         [style.border-radius.px]="currentTheme.modalBorderRadius"
+                         [style.padding.px]="currentTheme.modalPadding">
+                      <div class="modal-header">
+                        <h3>Modal Title</h3>
+                        <button class="modal-close">
+                          <mat-icon>close</mat-icon>
+                        </button>
+                      </div>
+                      <div class="modal-content">
+                        <p>This is a modal dialog preview showing the current modal styling with padding and border radius.</p>
+                      </div>
+                      <div class="modal-footer">
+                        <button class="theme-button-secondary">Cancel</button>
+                        <button class="theme-button-primary">Confirm</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tooltip Preview -->
+                <div class="component-section">
+                  <h4 class="section-title theme-heading-small">Tooltips</h4>
+                  <div class="tooltip-showcase">
+                    <div class="tooltip-trigger">
+                      Hover me for tooltip
+                      <div class="theme-tooltip"
+                           [style.font-size.px]="currentTheme.tooltipFontSize"
+                           [style.padding.px]="currentTheme.tooltipPadding"
+                           [style.border-radius.px]="currentTheme.tooltipBorderRadius">
+                        This is a tooltip
+                      </div>
+                    </div>
+
+                    <div class="tooltip-trigger">
+                      <mat-icon>info</mat-icon>
+                      <div class="theme-tooltip icon-tooltip"
+                           [style.font-size.px]="currentTheme.tooltipFontSize"
+                           [style.padding.px]="currentTheme.tooltipPadding"
+                           [style.border-radius.px]="currentTheme.tooltipBorderRadius">
+                        Icon tooltip
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
             <!-- Sample Form -->
             <mat-card class="sample-form-card theme-card">
               <mat-card-header>
@@ -320,45 +491,19 @@
 
                   <div class="button-group">
                     <button mat-raised-button
-                            [ngClass]="{
-                              'theme-button-primary': currentTheme.buttonStyle === 'primary',
-                              'theme-button-secondary': currentTheme.buttonStyle === 'secondary'
-                            }"
-                            class="theme-button">
+                            class="theme-button theme-button-primary">
                       <mat-icon>check</mat-icon>
-                      Primary
+                      Submit
                     </button>
 
-                    <button mat-raised-button class="theme-button-secondary">
+                    <button mat-raised-button class="theme-button theme-button-secondary">
                       <mat-icon>refresh</mat-icon>
-                      Secondary
+                      Reset
                     </button>
 
                     <button mat-stroked-button
-                            [ngClass]="{
-                              'theme-button-outline': currentTheme.buttonStyle === 'outline'
-                            }"
-                            class="theme-button">
-                      <mat-icon>radio_button_unchecked</mat-icon>
-                      Outline
-                    </button>
-
-                    <button mat-button
-                            [ngClass]="{
-                              'theme-button-ghost': currentTheme.buttonStyle === 'ghost'
-                            }"
-                            class="theme-button">
-                      Ghost
-                    </button>
-
-                    <button mat-raised-button class="theme-button-error">
-                      <mat-icon>warning</mat-icon>
-                      Error
-                    </button>
-
-                    <button mat-raised-button class="theme-button-success">
-                      <mat-icon>check_circle</mat-icon>
-                      Success
+                            class="theme-button theme-button-outline">
+                      Cancel
                     </button>
                   </div>
                 </form>
@@ -383,50 +528,6 @@
                   This is a paragraph with regular text. It demonstrates the base font family,
                   size, weight, line height, and letter spacing settings.
                 </p>
-
-                <p class="theme-text-small">
-                  This is small text using the small font size variant.
-                </p>
-
-                <p class="theme-text-medium">
-                  This is medium text using the medium font size variant.
-                </p>
-
-                <p class="theme-text-large">
-                  This is large text using the large font size variant.
-                </p>
-
-                <p class="theme-text-xlarge">
-                  This is extra large text using the x-large font size variant.
-                </p>
-
-                <div class="theme-weight-samples">
-                  <span class="theme-weight-light">Light Weight Text</span>
-                  <span class="theme-weight-regular">Regular Weight Text</span>
-                  <span class="theme-weight-medium">Medium Weight Text</span>
-                  <span class="theme-weight-bold">Bold Weight Text</span>
-                </div>
-
-                <div class="theme-line-height-samples">
-                  <p class="theme-line-tight">
-                    This text has tight line height. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                    Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                  </p>
-                  <p class="theme-line-normal">
-                    This text has normal line height. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                    Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                  </p>
-                  <p class="theme-line-relaxed">
-                    This text has relaxed line height. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                    Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                  </p>
-                </div>
-
-                <div class="theme-letter-spacing-samples">
-                  <p class="theme-spacing-tight">Letter spacing tight: The quick brown fox jumps over the lazy dog</p>
-                  <p class="theme-spacing-normal">Letter spacing normal: The quick brown fox jumps over the lazy dog</p>
-                  <p class="theme-spacing-wide">Letter spacing wide: The quick brown fox jumps over the lazy dog</p>
-                </div>
 
                 <p class="theme-text-secondary">
                   This is secondary text with a lighter appearance, perfect for descriptions
@@ -455,101 +556,6 @@
                 </div>
               </mat-card-content>
             </mat-card>
-
-            <!-- Component Showcase -->
-            <mat-expansion-panel class="components-panel theme-expansion">
-              <mat-expansion-panel-header class="theme-expansion-header">
-                <mat-panel-title>
-                  <mat-icon class="theme-icon">widgets</mat-icon>
-                  Component Examples
-                </mat-panel-title>
-              </mat-expansion-panel-header>
-
-              <div class="components-showcase">
-                <!-- Chips Example -->
-                <div class="component-example">
-                  <h4 class="theme-heading-small">Chips</h4>
-                  <mat-chip-listbox class="theme-chips">
-                    <mat-chip-option class="theme-chip-primary">Angular</mat-chip-option>
-                    <mat-chip-option class="theme-chip-secondary">Material</mat-chip-option>
-                    <mat-chip-option class="theme-chip">TypeScript</mat-chip-option>
-                    <mat-chip-option class="theme-chip-accent">SCSS</mat-chip-option>
-                  </mat-chip-listbox>
-                </div>
-
-                <!-- Progress Example -->
-                <div class="component-example">
-                  <h4 class="theme-heading-small">Progress Indicators</h4>
-                  <div class="progress-examples">
-                    <mat-progress-spinner mode="determinate"
-                                          [value]="75"
-                                          diameter="60"
-                                          class="theme-spinner">
-                    </mat-progress-spinner>
-                    <div class="progress-bar-container">
-                      <div class="theme-progress-bar" [style.width.%]="65"></div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Toggle Example -->
-                <div class="component-example">
-                  <h4 class="theme-heading-small">Toggle Controls</h4>
-                  <div class="toggle-examples">
-                    <mat-slide-toggle class="theme-toggle" checked>Enabled Feature</mat-slide-toggle>
-                    <mat-slide-toggle class="theme-toggle">Disabled Feature</mat-slide-toggle>
-                  </div>
-                </div>
-
-                <!-- Badge Example -->
-                <div class="component-example">
-                  <h4 class="theme-heading-small">Badges & Notifications</h4>
-                  <div class="badge-examples">
-                    <button mat-icon-button
-                            [matBadge]="8"
-                            matBadgeColor="primary"
-                            class="theme-icon-button">
-                      <mat-icon class="theme-icon">notifications</mat-icon>
-                    </button>
-                    <button mat-icon-button
-                            [matBadge]="15"
-                            matBadgeColor="accent"
-                            class="theme-icon-button">
-                      <mat-icon class="theme-icon">mail</mat-icon>
-                    </button>
-                    <button mat-icon-button
-                            [matBadge]="3"
-                            matBadgeColor="warn"
-                            class="theme-icon-button">
-                      <mat-icon class="theme-icon">error</mat-icon>
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Alert Examples -->
-                <div class="component-example">
-                  <h4 class="theme-heading-small">Alerts</h4>
-                  <div class="alert-examples">
-                    <div class="theme-alert theme-alert-info">
-                      <mat-icon class="theme-icon">info</mat-icon>
-                      Information message
-                    </div>
-                    <div class="theme-alert theme-alert-success">
-                      <mat-icon class="theme-icon">check_circle</mat-icon>
-                      Success message
-                    </div>
-                    <div class="theme-alert theme-alert-warning">
-                      <mat-icon class="theme-icon">warning</mat-icon>
-                      Warning message
-                    </div>
-                    <div class="theme-alert theme-alert-error">
-                      <mat-icon class="theme-icon">error</mat-icon>
-                      Error message
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </mat-expansion-panel>
 
             <!-- Shadow & Effects Preview -->
             <mat-card class="effects-preview theme-card" *ngIf="currentTheme.enableShadows || currentTheme.enableBlur || currentTheme.designStyle === 'glassmorphic' || currentTheme.designStyle === 'neumorphic'">
