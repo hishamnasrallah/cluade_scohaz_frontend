@@ -653,9 +653,15 @@ export class AdvancedColorControlsComponent implements OnInit {
     }
   }
 
-  convertToHex(color: string): string {
-    // Convert rgb/rgba to hex for color picker
-    if (color.startsWith('rgb')) {
+  convertToHex(color: string | undefined): string {
+    // Handle undefined or null values
+    if (!color) {
+      return '#000000';
+    }
+
+    // Simple conversion for demonstration
+    if (color.startsWith('rgba') || color.startsWith('rgb')) {
+      // Extract RGB values and convert to hex
       const matches = color.match(/\d+/g);
       if (matches && matches.length >= 3) {
         const r = parseInt(matches[0]).toString(16).padStart(2, '0');
@@ -663,8 +669,15 @@ export class AdvancedColorControlsComponent implements OnInit {
         const b = parseInt(matches[2]).toString(16).padStart(2, '0');
         return `#${r}${g}${b}`;
       }
+      return '#000000';
     }
-    return color;
+
+    // If it's already a hex color, return it
+    if (color.startsWith('#')) {
+      return color;
+    }
+
+    return '#000000';
   }
 
   openColorPicker(key: keyof ThemeConfig): void {

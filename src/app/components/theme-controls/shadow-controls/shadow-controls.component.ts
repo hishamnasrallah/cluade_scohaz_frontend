@@ -854,12 +854,31 @@ export class ShadowControlsComponent {
     }
   }
 
-  convertToHex(color: string): string {
-    // Simple conversion for demonstration
-    if (color.startsWith('rgba')) {
+  convertToHex(color: string | undefined): string {
+    // Handle undefined or null values
+    if (!color) {
       return '#000000';
     }
-    return color;
+
+    // Simple conversion for demonstration
+    if (color.startsWith('rgba') || color.startsWith('rgb')) {
+      // Extract RGB values and convert to hex
+      const matches = color.match(/\d+/g);
+      if (matches && matches.length >= 3) {
+        const r = parseInt(matches[0]).toString(16).padStart(2, '0');
+        const g = parseInt(matches[1]).toString(16).padStart(2, '0');
+        const b = parseInt(matches[2]).toString(16).padStart(2, '0');
+        return `#${r}${g}${b}`;
+      }
+      return '#000000';
+    }
+
+    // If it's already a hex color, return it
+    if (color.startsWith('#')) {
+      return color;
+    }
+
+    return '#000000';
   }
 
   convertToRgba(hex: string): string {
