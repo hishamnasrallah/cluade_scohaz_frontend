@@ -9,7 +9,9 @@ import {
   ThemePreset,
   ThemeExport,
   validateTheme,
-  mergeThemes
+  mergeThemes,
+  generateCSSFromTheme,
+  checkAccessibility
 } from '../models/theme.model';
 
 @Injectable({
@@ -71,6 +73,10 @@ export class ThemeService {
       return;
     }
 
+    if (validation.warnings.length > 0) {
+      console.warn('Theme validation warnings:', validation.warnings);
+    }
+
     // Apply CSS variables
     this.applyCSSVariables(theme);
 
@@ -82,6 +88,12 @@ export class ThemeService {
 
     // Apply accessibility settings
     this.applyAccessibilitySettings(theme);
+
+    // Check accessibility
+    const accessibilityIssues = checkAccessibility(theme);
+    if (accessibilityIssues.length > 0) {
+      console.warn('Accessibility issues:', accessibilityIssues);
+    }
 
     // Update current theme
     this.currentThemeSubject.next(theme);
@@ -142,6 +154,7 @@ export class ThemeService {
     this.root.style.setProperty(`--error-color`, theme.errorColor);
     this.root.style.setProperty(`--info-color`, theme.infoColor);
     this.root.style.setProperty(`--surface-card`, theme.surfaceCard);
+    this.root.style.setProperty(`--surface-modal`, theme.surfaceModal);
     this.root.style.setProperty(`--surface-hover`, theme.surfaceHover);
     this.root.style.setProperty(`--font-family`, theme.fontFamily);
     this.root.style.setProperty(`--font-size`, `${theme.fontSizeBase}px`);
@@ -167,9 +180,155 @@ export class ThemeService {
 
     // Design style
     this.root.setAttribute('data-design-style', theme.designStyle);
+    this.root.setAttribute('data-navigation-style', theme.navigationStyle);
+    this.root.setAttribute('data-card-style', theme.cardStyle);
+    this.root.setAttribute('data-button-style', theme.buttonStyle);
   }
+
   private applySpecialStyles(theme: ThemeConfig): void {
     let specialStyles = '';
+
+    // Base styles using CSS variables
+    specialStyles += `
+      body {
+        font-family: var(--font-family);
+        font-size: var(--font-size);
+        font-weight: var(--font-weight);
+        line-height: var(--line-height);
+        letter-spacing: var(--letter-spacing);
+        color: var(--text-color);
+        background-color: var(--background-color);
+      }
+
+      h1, h2, h3, h4, h5, h6 {
+        font-family: var(--heading-font-family);
+        font-weight: var(--heading-font-weight);
+        color: var(--text-color);
+      }
+
+      a {
+        color: var(--primary-color);
+        transition: color var(--animation-speed) var(--animation-easing);
+      }
+
+      a:hover {
+        color: var(--secondary-color);
+      }
+
+      .mat-mdc-card {
+        background: var(--surface-card) !important;
+        border-radius: var(--border-radius) !important;
+        transition: all var(--animation-speed) var(--animation-easing) !important;
+      }
+
+      .mat-mdc-button.mat-mdc-button-base {
+        border-radius: calc(var(--border-radius) * 0.66) !important;
+        font-family: var(--font-family) !important;
+        font-weight: 600 !important;
+        transition: all var(--animation-speed) var(--animation-easing) !important;
+      }
+
+      .mat-mdc-form-field {
+        font-family: var(--font-family) !important;
+      }
+
+      .mat-mdc-text-field-wrapper {
+        border-radius: calc(var(--border-radius) * 0.66) !important;
+      }
+    `;
+
+    // Navigation style specific
+    if (theme.navigationStyle === 'elevated') {
+      specialStyles += `
+        .app-header {
+          box-shadow: 0 2px 8px rgba(0, 0, 0, calc(var(--shadow-intensity) * 0.5)) !important;
+        }
+      `;
+    } else if (theme.navigationStyle === 'flat') {
+      specialStyles += `
+        .app-header {
+          box-shadow: none !important;
+        }
+      `;
+    } else if (theme.navigationStyle === 'bordered') {
+      specialStyles += `
+        .app-header {
+          box-shadow: none !important;
+          border-bottom: var(--border-width) solid var(--surface-hover) !important;
+        }
+      `;
+    }
+
+    // Card style specific
+    if (theme.cardStyle === 'elevated') {
+      specialStyles += `
+        .mat-mdc-card {
+          box-shadow: 0 4px 6px rgba(0, 0, 0, var(--shadow-intensity)) !important;
+        }
+        .mat-mdc-card:hover {
+          box-shadow: 0 8px 12px rgba(0, 0, 0, calc(var(--shadow-intensity) * 1.5)) !important;
+        }
+      `;
+    } else if (theme.cardStyle === 'flat') {
+      specialStyles += `
+        .mat-mdc-card {
+          box-shadow: none !important;
+        }
+      `;
+    } else if (theme.cardStyle === 'bordered') {
+      specialStyles += `
+        .mat-mdc-card {
+          box-shadow: none !important;
+          border: var(--border-width) solid var(--surface-hover) !important;
+        }
+      `;
+    } else if (theme.cardStyle === 'glass') {
+      specialStyles += `
+        .mat-mdc-card {
+          background: rgba(255, 255, 255, 0.7) !important;
+          backdrop-filter: blur(var(--blur)) !important;
+          border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        }
+      `;
+    }
+
+    // Button style specific
+    if (theme.buttonStyle === 'primary') {
+      specialStyles += `
+        .mat-mdc-raised-button.mat-primary {
+          background: var(--primary-color) !important;
+        }
+      `;
+    } else if (theme.buttonStyle === 'secondary') {
+      specialStyles += `
+        .mat-mdc-raised-button.mat-primary {
+          background: var(--secondary-color) !important;
+        }
+      `;
+    } else if (theme.buttonStyle === 'outline') {
+      specialStyles += `
+        .mat-mdc-raised-button.mat-primary {
+          background: transparent !important;
+          color: var(--primary-color) !important;
+          border: 2px solid var(--primary-color) !important;
+        }
+        .mat-mdc-raised-button.mat-primary:hover {
+          background: var(--primary-color) !important;
+          color: white !important;
+        }
+      `;
+    } else if (theme.buttonStyle === 'ghost') {
+      specialStyles += `
+        .mat-mdc-raised-button.mat-primary {
+          background: transparent !important;
+          color: var(--primary-color) !important;
+          box-shadow: none !important;
+        }
+        .mat-mdc-raised-button.mat-primary:hover {
+          background: var(--surface-hover) !important;
+        }
+      `;
+    }
 
     // Glassmorphic styles
     if (theme.designStyle === 'glassmorphic') {
@@ -179,18 +338,54 @@ export class ThemeService {
           backdrop-filter: blur(${theme.blurIntensity}px) !important;
           border: 1px solid rgba(255, 255, 255, 0.2) !important;
         }
+
+        .mat-mdc-dialog-container {
+          background: rgba(255, 255, 255, 0.9) !important;
+          backdrop-filter: blur(${theme.blurIntensity}px) !important;
+        }
       `;
     }
 
     // Neumorphic styles
     if (theme.designStyle === 'neumorphic') {
-      const offset = theme.spacingUnit;
+      const offset = theme.spacingUnit * 0.5;
       specialStyles += `
         .mat-mdc-card {
           background: ${theme.backgroundColor} !important;
           box-shadow: ${offset}px ${offset}px ${offset * 2}px rgba(0, 0, 0, 0.1),
                       -${offset}px -${offset}px ${offset * 2}px rgba(255, 255, 255, 0.9) !important;
           border: none !important;
+        }
+
+        .mat-mdc-raised-button {
+          background: ${theme.backgroundColor} !important;
+          color: ${theme.textColor} !important;
+          box-shadow: ${offset * 0.5}px ${offset * 0.5}px ${offset}px rgba(0, 0, 0, 0.1),
+                      -${offset * 0.5}px -${offset * 0.5}px ${offset}px rgba(255, 255, 255, 0.9) !important;
+        }
+
+        .mat-mdc-raised-button:active {
+          box-shadow: inset ${offset * 0.5}px ${offset * 0.5}px ${offset}px rgba(0, 0, 0, 0.1),
+                      inset -${offset * 0.5}px -${offset * 0.5}px ${offset}px rgba(255, 255, 255, 0.9) !important;
+        }
+      `;
+    }
+
+    // Minimal style
+    if (theme.designStyle === 'minimal') {
+      specialStyles += `
+        * {
+          border-radius: 0 !important;
+        }
+
+        .mat-mdc-card {
+          border-radius: 0 !important;
+          box-shadow: none !important;
+          border: ${theme.borderWidth}px solid var(--surface-hover) !important;
+        }
+
+        .mat-mdc-button {
+          border-radius: 0 !important;
         }
       `;
     }
@@ -207,34 +402,6 @@ export class ThemeService {
       }
     }
 
-    // Card styles
-    switch (theme.cardStyle) {
-      case 'flat':
-        specialStyles += `
-          .mat-mdc-card {
-            box-shadow: none !important;
-          }
-        `;
-        break;
-      case 'bordered':
-        specialStyles += `
-          .mat-mdc-card {
-            box-shadow: none !important;
-            border: ${theme.borderWidth}px solid var(${this.CSS_PREFIX}-border, #e2e8f0) !important;
-          }
-        `;
-        break;
-      case 'glass':
-        specialStyles += `
-          .mat-mdc-card {
-            background: rgba(255, 255, 255, 0.7) !important;
-            backdrop-filter: blur(10px) !important;
-            border: 1px solid rgba(255, 255, 255, 0.3) !important;
-          }
-        `;
-        break;
-    }
-
     // Apply custom styles
     this.styleElement.textContent = specialStyles;
   }
@@ -242,16 +409,21 @@ export class ThemeService {
   private applyPerformanceSettings(theme: ThemeConfig): void {
     if (!theme.enableAnimations) {
       this.root.classList.add('no-animations');
+      this.root.style.setProperty(`${this.CSS_PREFIX}-duration`, '0ms');
     } else {
       this.root.classList.remove('no-animations');
     }
 
     if (!theme.enableBlur) {
+      this.root.classList.add('no-blur');
       this.root.style.setProperty(`${this.CSS_PREFIX}-blur`, '0px');
+    } else {
+      this.root.classList.remove('no-blur');
     }
 
     if (!theme.enableShadows) {
       this.root.classList.add('no-shadows');
+      this.root.style.setProperty(`${this.CSS_PREFIX}-shadow-intensity`, '0');
     } else {
       this.root.classList.remove('no-shadows');
     }
@@ -260,14 +432,19 @@ export class ThemeService {
   private applyAccessibilitySettings(theme: ThemeConfig): void {
     if (theme.reducedMotion) {
       this.root.classList.add('motion-reduce');
+      // Override animation settings for reduced motion
+      this.root.style.setProperty(`${this.CSS_PREFIX}-duration`, '0.01ms');
     } else {
       this.root.classList.remove('motion-reduce');
     }
 
     if (theme.highContrast) {
       this.root.classList.add('high-contrast');
+      // Increase contrast for better visibility
+      this.root.style.filter = 'contrast(1.2)';
     } else {
       this.root.classList.remove('high-contrast');
+      this.root.style.filter = '';
     }
 
     // Update font size for accessibility
@@ -277,11 +454,21 @@ export class ThemeService {
   private applyDarkMode(theme: ThemeConfig): void {
     this.root.classList.add('dark-mode');
 
-    // Override colors for dark mode
-    this.root.style.setProperty(`${this.CSS_PREFIX}-background`, '#0F172A');
-    this.root.style.setProperty(`${this.CSS_PREFIX}-text`, '#F8FAFC');
-    this.root.style.setProperty(`${this.CSS_PREFIX}-surface-card`, '#1E293B');
-    this.root.style.setProperty(`${this.CSS_PREFIX}-surface-modal`, '#1E293B');
+    // Override colors for dark mode if they haven't been customized
+    if (theme.backgroundColor === '#F4FDFD') {
+      this.root.style.setProperty(`${this.CSS_PREFIX}-background`, '#0F172A');
+    }
+    if (theme.textColor === '#2F4858') {
+      this.root.style.setProperty(`${this.CSS_PREFIX}-text`, '#F8FAFC');
+    }
+    if (theme.surfaceCard === '#FFFFFF') {
+      this.root.style.setProperty(`${this.CSS_PREFIX}-surface-card`, '#1E293B');
+    }
+    if (theme.surfaceModal === '#FFFFFF') {
+      this.root.style.setProperty(`${this.CSS_PREFIX}-surface-modal`, '#1E293B');
+    }
+
+    // Adjust other colors for dark mode
     this.root.style.setProperty(`${this.CSS_PREFIX}-border`, '#334155');
   }
 
@@ -356,8 +543,17 @@ export class ThemeService {
 
   importTheme(themeExport: ThemeExport): void {
     if (themeExport.theme) {
-      this.applyTheme(themeExport.theme);
+      const validation = validateTheme(themeExport.theme);
+      if (validation.isValid) {
+        this.applyTheme(themeExport.theme);
+      } else {
+        throw new Error(`Invalid theme: ${validation.errors.join(', ')}`);
+      }
     }
+  }
+
+  generateCSS(): string {
+    return generateCSSFromTheme(this.getTheme());
   }
 
   // Load theme from server
@@ -373,5 +569,16 @@ export class ThemeService {
   // Get available presets from server
   getAvailablePresets(): Observable<ThemePreset[]> {
     return this.http.get<ThemePreset[]>('/api/themes/presets');
+  }
+
+  // Check if a theme exists in storage
+  hasStoredTheme(): boolean {
+    return !!localStorage.getItem(this.STORAGE_KEY);
+  }
+
+  // Clear stored theme
+  clearStoredTheme(): void {
+    localStorage.removeItem(this.STORAGE_KEY);
+    this.applyTheme(ThemeDefaults.DEFAULT_THEME);
   }
 }

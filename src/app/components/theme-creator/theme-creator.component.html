@@ -76,7 +76,7 @@
             <button *ngFor="let preset of themePresets"
                     mat-stroked-button
                     class="preset-button"
-                    [ngClass]="{'active': currentTheme.designStyle === preset.config.designStyle}"
+                    [ngClass]="{'active': currentTheme.designStyle === preset.config.designStyle && currentTheme.primaryColor === preset.config.primaryColor}"
                     (click)="applyPreset(preset)"
                     [matTooltip]="preset.name">
               <span class="preset-icon">{{ preset.icon }}</span>
@@ -104,6 +104,8 @@
                 [theme]="currentTheme"
                 (themeChange)="onThemeChange($event)">
               </app-color-picker>
+
+
             </div>
           </mat-tab>
 
@@ -134,6 +136,35 @@
                 [theme]="currentTheme"
                 (themeChange)="onThemeChange($event)">
               </app-spacing-controls>
+
+              <!-- Additional Layout Controls -->
+              <div class="control-group">
+                <h4>Component Styles</h4>
+
+                <div class="style-control">
+                  <label>Navigation Style</label>
+                  <select
+                    [value]="currentTheme.navigationStyle"
+                    (change)="updateThemeProperty('navigationStyle', $any($event.target).value)"
+                    class="form-select">
+                    <option *ngFor="let style of navigationStyles" [value]="style.value">
+                      {{ style.label }}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="style-control">
+                  <label>Button Style</label>
+                  <select
+                    [value]="currentTheme.buttonStyle"
+                    (change)="updateThemeProperty('buttonStyle', $any($event.target).value)"
+                    class="form-select">
+                    <option *ngFor="let style of buttonStyles" [value]="style.value">
+                      {{ style.label }}
+                    </option>
+                  </select>
+                </div>
+              </div>
             </div>
           </mat-tab>
 
@@ -152,6 +183,40 @@
             </div>
           </mat-tab>
 
+          <!-- Brand Tab -->
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon>business</mat-icon>
+              <span>Brand</span>
+            </ng-template>
+
+            <div class="tab-content">
+              <div class="brand-controls">
+                <div class="control-group">
+                  <h4>Brand Identity</h4>
+
+                  <mat-form-field appearance="outline" class="theme-form-field">
+                    <mat-label>Brand Name</mat-label>
+                    <input matInput
+                           [(ngModel)]="currentTheme.brandName"
+                           (ngModelChange)="updateThemeProperty('brandName', $event)"
+                           placeholder="Enter brand name">
+                    <mat-icon matPrefix>business</mat-icon>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="theme-form-field">
+                    <mat-label>Logo URL</mat-label>
+                    <input matInput
+                           [(ngModel)]="currentTheme.logoUrl"
+                           (ngModelChange)="updateThemeProperty('logoUrl', $event)"
+                           placeholder="Enter logo URL">
+                    <mat-icon matPrefix>image</mat-icon>
+                  </mat-form-field>
+                </div>
+              </div>
+            </div>
+          </mat-tab>
+
           <!-- Accessibility Tab -->
           <mat-tab>
             <ng-template mat-tab-label>
@@ -164,7 +229,7 @@
                 <div class="control-group">
                   <h4>Theme Mode</h4>
                   <mat-radio-group [(ngModel)]="currentTheme.mode"
-                                   (ngModelChange)="onThemeChange({mode: $event})">
+                                   (ngModelChange)="updateThemeProperty('mode', $event)">
                     <mat-radio-button value="light">Light</mat-radio-button>
                     <mat-radio-button value="dark">Dark</mat-radio-button>
                     <mat-radio-button value="auto">Auto</mat-radio-button>
@@ -174,12 +239,12 @@
                 <div class="control-group">
                   <h4>Accessibility Options</h4>
                   <mat-checkbox [(ngModel)]="currentTheme.reducedMotion"
-                                (ngModelChange)="onThemeChange({reducedMotion: $event})">
+                                (ngModelChange)="updateThemeProperty('reducedMotion', $event)">
                     Reduced Motion
                   </mat-checkbox>
 
                   <mat-checkbox [(ngModel)]="currentTheme.highContrast"
-                                (ngModelChange)="onThemeChange({highContrast: $event})">
+                                (ngModelChange)="updateThemeProperty('highContrast', $event)">
                     High Contrast
                   </mat-checkbox>
                 </div>
@@ -208,9 +273,19 @@
         <mat-card-content class="preview-content">
           <!-- Preview Container with Isolated Styles -->
           <div #previewContainer class="theme-preview-root">
+            <!-- Brand Header -->
+            <div class="preview-brand-header theme-brand-header">
+              <img *ngIf="currentTheme.logoUrl"
+                   [src]="currentTheme.logoUrl"
+                   alt="Logo"
+                   class="theme-logo"
+                   (error)="onLogoError($event)">
+              <h2 class="theme-brand-name">{{ currentTheme.brandName }}</h2>
+            </div>
+
             <!-- Navigation Example -->
             <nav class="preview-nav theme-nav">
-              <button *ngFor="let item of navigationItems"
+              <button *ngFor="let item of navigationItems; trackBy: trackByNavItem"
                       mat-button
                       class="nav-item theme-nav-item">
                 {{ item }}
@@ -219,14 +294,14 @@
 
             <!-- Metrics Grid -->
             <div class="metrics-grid theme-metrics">
-              <mat-card *ngFor="let metric of sampleMetrics"
+              <mat-card *ngFor="let metric of sampleMetrics; trackBy: trackByMetric"
                         class="metric-card theme-card">
                 <div class="metric-header">
-                  <mat-icon class="theme-icon" [color]="metric.trend === 'up' ? 'primary' : 'warn'">
+                  <mat-icon class="theme-icon" [style.color]="metric.trend === 'up' ? currentTheme.successColor : currentTheme.errorColor">
                     {{ metric.icon }}
                   </mat-icon>
                   <span class="metric-change theme-text-accent"
-                        [ngClass]="{'positive': metric.trend === 'up', 'negative': metric.trend === 'down'}">
+                        [style.color]="metric.trend === 'up' ? currentTheme.successColor : currentTheme.errorColor">
                     {{ metric.change }}
                   </span>
                 </div>
@@ -263,7 +338,12 @@
                   </mat-form-field>
 
                   <div class="button-group">
-                    <button mat-raised-button class="theme-button-primary">
+                    <button mat-raised-button
+                            [ngClass]="{
+                              'theme-button-primary': currentTheme.buttonStyle === 'primary',
+                              'theme-button-secondary': currentTheme.buttonStyle === 'secondary'
+                            }"
+                            class="theme-button">
                       <mat-icon>check</mat-icon>
                       Primary
                     </button>
@@ -273,12 +353,20 @@
                       Secondary
                     </button>
 
-                    <button mat-stroked-button class="theme-button-outline">
+                    <button mat-stroked-button
+                            [ngClass]="{
+                              'theme-button-outline': currentTheme.buttonStyle === 'outline'
+                            }"
+                            class="theme-button">
                       <mat-icon>radio_button_unchecked</mat-icon>
                       Outline
                     </button>
 
-                    <button mat-button class="theme-button-ghost">
+                    <button mat-button
+                            [ngClass]="{
+                              'theme-button-ghost': currentTheme.buttonStyle === 'ghost'
+                            }"
+                            class="theme-button">
                       Ghost
                     </button>
 
@@ -327,7 +415,7 @@
 
               <mat-card-content>
                 <div class="features-grid">
-                  <div *ngFor="let feature of enterpriseFeatures"
+                  <div *ngFor="let feature of enterpriseFeatures; trackBy: trackByFeature"
                        class="feature-item theme-feature-card">
                     <div class="feature-icon theme-icon-container">
                       <mat-icon class="theme-icon-large">{{ feature.icon }}</mat-icon>
@@ -435,24 +523,27 @@
             </mat-expansion-panel>
 
             <!-- Shadow & Effects Preview -->
-            <mat-card class="effects-preview theme-card" *ngIf="currentTheme.enableShadows || currentTheme.enableBlur">
+            <mat-card class="effects-preview theme-card" *ngIf="currentTheme.enableShadows || currentTheme.enableBlur || currentTheme.designStyle === 'glassmorphic' || currentTheme.designStyle === 'neumorphic'">
               <mat-card-header>
                 <mat-card-title class="theme-heading">Effects Preview</mat-card-title>
               </mat-card-header>
 
               <mat-card-content>
                 <div class="effects-grid">
-                  <div class="shadow-example theme-shadow-small">
+                  <div class="shadow-example theme-shadow-small" *ngIf="currentTheme.enableShadows">
                     Small Shadow
                   </div>
-                  <div class="shadow-example theme-shadow-medium">
+                  <div class="shadow-example theme-shadow-medium" *ngIf="currentTheme.enableShadows">
                     Medium Shadow
                   </div>
-                  <div class="shadow-example theme-shadow-large">
+                  <div class="shadow-example theme-shadow-large" *ngIf="currentTheme.enableShadows">
                     Large Shadow
                   </div>
-                  <div class="glass-example theme-glass" *ngIf="currentTheme.designStyle === 'glassmorphic'">
+                  <div class="glass-example theme-glass" *ngIf="currentTheme.designStyle === 'glassmorphic' && currentTheme.enableBlur">
                     Glass Effect
+                  </div>
+                  <div class="neuro-example theme-neuro" *ngIf="currentTheme.designStyle === 'neumorphic'">
+                    Neumorphic
                   </div>
                 </div>
               </mat-card-content>

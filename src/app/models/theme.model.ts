@@ -216,34 +216,78 @@ export function validateTheme(theme: Partial<ThemeConfig>): ThemeValidationResul
   const colorFields: (keyof ThemeConfig)[] = [
     'primaryColor', 'secondaryColor', 'backgroundColor',
     'textColor', 'accentColor', 'successColor',
-    'warningColor', 'errorColor', 'infoColor'
+    'warningColor', 'errorColor', 'infoColor',
+    'surfaceCard', 'surfaceModal'
   ];
 
   colorFields.forEach(field => {
     if (theme[field] && typeof theme[field] === 'string') {
       const value = theme[field] as string;
-      if (!colorRegex.test(value) && !value.startsWith('rgb') && !value.startsWith('hsl')) {
+      if (!colorRegex.test(value) && !value.startsWith('rgb') && !value.startsWith('hsl') && value !== 'transparent') {
         errors.push(`Invalid color format for ${field}: ${value}`);
       }
     }
   });
 
   // Validate numeric values
-  if (theme.fontSizeBase && (theme.fontSizeBase < 10 || theme.fontSizeBase > 32)) {
-    warnings.push('Font size should be between 10px and 32px for optimal readability');
+  if (theme.fontSizeBase !== undefined) {
+    if (theme.fontSizeBase < 10 || theme.fontSizeBase > 32) {
+      warnings.push('Font size should be between 10px and 32px for optimal readability');
+    }
   }
 
-  if (theme.spacingUnit && (theme.spacingUnit < 4 || theme.spacingUnit > 48)) {
-    warnings.push('Spacing unit should be between 4px and 48px');
+  if (theme.spacingUnit !== undefined) {
+    if (theme.spacingUnit < 4 || theme.spacingUnit > 48) {
+      warnings.push('Spacing unit should be between 4px and 48px');
+    }
   }
 
-  if (theme.borderRadius && theme.borderRadius > 50) {
+  if (theme.borderRadius !== undefined && theme.borderRadius > 50) {
     warnings.push('Border radius greater than 50px may cause layout issues');
+  }
+
+  if (theme.fontWeight !== undefined) {
+    if (theme.fontWeight < 100 || theme.fontWeight > 900 || theme.fontWeight % 100 !== 0) {
+      errors.push('Font weight must be between 100 and 900 in increments of 100');
+    }
+  }
+
+  if (theme.lineHeight !== undefined) {
+    if (theme.lineHeight < 1 || theme.lineHeight > 2) {
+      warnings.push('Line height should be between 1 and 2 for optimal readability');
+    }
+  }
+
+  if (theme.letterSpacing !== undefined) {
+    if (theme.letterSpacing < -0.05 || theme.letterSpacing > 0.1) {
+      warnings.push('Letter spacing should be between -0.05em and 0.1em');
+    }
+  }
+
+  if (theme.shadowIntensity !== undefined) {
+    if (theme.shadowIntensity < 0 || theme.shadowIntensity > 0.5) {
+      errors.push('Shadow intensity must be between 0 and 0.5');
+    }
+  }
+
+  if (theme.blurIntensity !== undefined) {
+    if (theme.blurIntensity < 0 || theme.blurIntensity > 30) {
+      warnings.push('Blur intensity should be between 0 and 30px');
+    }
+  }
+
+  if (theme.animationSpeed !== undefined) {
+    if (theme.animationSpeed < 100 || theme.animationSpeed > 800) {
+      warnings.push('Animation speed should be between 100ms and 800ms');
+    }
   }
 
   // Validate contrast ratios
   if (theme.backgroundColor && theme.textColor) {
-    // Add contrast validation logic here if needed
+    const contrastRatio = getContrastRatio(theme.backgroundColor, theme.textColor);
+    if (contrastRatio < 4.5) {
+      warnings.push('Text and background color combination may not meet WCAG AA standards');
+    }
   }
 
   return {
@@ -264,4 +308,98 @@ export function exportTheme(theme: ThemeConfig, metadata?: any): ThemeExport {
 
 export function mergeThemes(base: ThemeConfig, override: Partial<ThemeConfig>): ThemeConfig {
   return { ...base, ...override };
+}
+
+// Color utility functions
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
+
+function getLuminance(r: number, g: number, b: number): number {
+  const [rs, gs, bs] = [r, g, b].map(c => {
+    c = c / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+}
+
+function getContrastRatio(color1: string, color2: string): number {
+  const rgb1 = hexToRgb(color1);
+  const rgb2 = hexToRgb(color2);
+
+  if (!rgb1 || !rgb2) return 0;
+
+  const lum1 = getLuminance(rgb1.r, rgb1.g, rgb1.b);
+  const lum2 = getLuminance(rgb2.r, rgb2.g, rgb2.b);
+
+  const brightest = Math.max(lum1, lum2);
+  const darkest = Math.min(lum1, lum2);
+
+  return (brightest + 0.05) / (darkest + 0.05);
+}
+
+// CSS Generation utilities
+export function generateCSSFromTheme(theme: ThemeConfig): string {
+  const cssVariables = Object.entries(ThemeDefaults.CSS_VARIABLE_MAP)
+    .map(([key, cssVar]) => {
+      const value = theme[key as keyof ThemeConfig];
+      if (value !== undefined) {
+        if (typeof value === 'number') {
+          if (key === 'fontSizeBase' || key === 'spacingUnit' || key === 'borderRadius' || key === 'borderWidth' || key === 'blurIntensity') {
+            return `${cssVar}: ${value}px;`;
+          } else if (key === 'letterSpacing') {
+            return `${cssVar}: ${value}em;`;
+          } else if (key === 'animationSpeed') {
+            return `${cssVar}: ${value}ms;`;
+          } else {
+            return `${cssVar}: ${value};`;
+          }
+        } else if (typeof value === 'boolean') {
+          return `${cssVar}: ${value ? '1' : '0'};`;
+        } else {
+          return `${cssVar}: ${value};`;
+        }
+      }
+      return '';
+    })
+    .filter(line => line !== '')
+    .join('\n  ');
+
+  return `:root {\n  ${cssVariables}\n}`;
+}
+
+// Accessibility utilities
+export function checkAccessibility(theme: ThemeConfig): string[] {
+  const issues: string[] = [];
+
+  // Check color contrast
+  const colorPairs = [
+    { bg: theme.backgroundColor, fg: theme.textColor, name: 'Text on Background' },
+    { bg: theme.primaryColor, fg: '#FFFFFF', name: 'White on Primary' },
+    { bg: theme.surfaceCard, fg: theme.textColor, name: 'Text on Card' }
+  ];
+
+  colorPairs.forEach(pair => {
+    const ratio = getContrastRatio(pair.bg, pair.fg);
+    if (ratio < 4.5) {
+      issues.push(`${pair.name}: Contrast ratio ${ratio.toFixed(2)} is below WCAG AA standard (4.5)`);
+    }
+  });
+
+  // Check font size
+  if (theme.fontSizeBase < 14) {
+    issues.push('Base font size is below 14px, which may impact readability');
+  }
+
+  // Check animation speed
+  if (theme.enableAnimations && theme.animationSpeed < 200) {
+    issues.push('Animation speed is very fast, consider reduced motion preferences');
+  }
+
+  return issues;
 }

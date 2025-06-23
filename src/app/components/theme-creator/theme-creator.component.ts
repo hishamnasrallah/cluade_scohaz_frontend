@@ -1,8 +1,8 @@
 // src/app/components/theme-creator/theme-creator.component.ts
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 
 // Angular Material Imports
 import { MatCardModule } from '@angular/material/card';
@@ -76,6 +76,7 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private destroy$ = new Subject<void>();
   private previewRoot!: HTMLElement;
+  private themeChangeSubject = new Subject<Partial<ThemeConfig>>();
 
   // Current theme configuration
   currentTheme: ThemeConfig = this.getDefaultTheme();
@@ -105,7 +106,11 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
         warningColor: '#F59E0B',
         errorColor: '#EF4444',
         infoColor: '#3B82F6',
+        surfaceCard: '#FFFFFF',
+        surfaceModal: '#FFFFFF',
+        surfaceHover: 'rgba(196, 247, 239, 0.3)',
         fontFamily: 'Inter, system-ui, sans-serif',
+        headingFontFamily: 'Poppins, sans-serif',
         designStyle: 'modern',
         borderRadius: 12,
         shadowIntensity: 0.1
@@ -121,6 +126,9 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
         backgroundColor: '#FFFFFF',
         textColor: '#0F172A',
         accentColor: '#F59E0B',
+        surfaceCard: '#FFFFFF',
+        surfaceModal: '#FFFFFF',
+        surfaceHover: 'rgba(59, 130, 246, 0.05)',
         designStyle: 'modern',
         borderRadius: 8,
         shadowIntensity: 0.1
@@ -136,6 +144,9 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
         backgroundColor: '#FFFFFF',
         textColor: '#111827',
         accentColor: '#374151',
+        surfaceCard: '#FFFFFF',
+        surfaceModal: '#FFFFFF',
+        surfaceHover: 'rgba(0, 0, 0, 0.02)',
         designStyle: 'minimal',
         borderRadius: 0,
         shadowIntensity: 0,
@@ -152,10 +163,14 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
         backgroundColor: '#F8FAFC',
         textColor: '#1E293B',
         accentColor: '#EC4899',
+        surfaceCard: 'rgba(255, 255, 255, 0.7)',
+        surfaceModal: 'rgba(255, 255, 255, 0.8)',
+        surfaceHover: 'rgba(59, 130, 246, 0.1)',
         designStyle: 'glassmorphic',
         borderRadius: 16,
         shadowIntensity: 0.2,
-        blurIntensity: 20
+        blurIntensity: 20,
+        enableBlur: true
       }
     },
     {
@@ -168,6 +183,9 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
         backgroundColor: '#E5E7EB',
         textColor: '#1F2937',
         accentColor: '#A78BFA',
+        surfaceCard: '#E5E7EB',
+        surfaceModal: '#E5E7EB',
+        surfaceHover: 'rgba(99, 102, 241, 0.05)',
         designStyle: 'neumorphic',
         borderRadius: 20,
         shadowIntensity: 0.15
@@ -183,7 +201,11 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
         backgroundColor: '#FFFFFF',
         textColor: '#0F172A',
         accentColor: '#3730A3',
+        surfaceCard: '#FFFFFF',
+        surfaceModal: '#FFFFFF',
+        surfaceHover: 'rgba(30, 64, 175, 0.04)',
         fontFamily: 'system-ui, sans-serif',
+        headingFontFamily: 'system-ui, sans-serif',
         designStyle: 'modern',
         borderRadius: 4,
         spacingUnit: 20
@@ -199,10 +221,33 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
         backgroundColor: '#FEF3C7',
         textColor: '#78350F',
         accentColor: '#DC2626',
+        surfaceCard: '#FFFBEB',
+        surfaceModal: '#FFFBEB',
+        surfaceHover: 'rgba(245, 158, 11, 0.1)',
         fontFamily: 'Inter, system-ui, sans-serif',
+        headingFontFamily: 'Poppins, sans-serif',
         designStyle: 'modern',
         borderRadius: 16,
         spacingUnit: 24
+      }
+    },
+    {
+      id: 'dark',
+      name: 'Dark',
+      icon: '🌙',
+      config: {
+        primaryColor: '#60A5FA',
+        secondaryColor: '#A78BFA',
+        backgroundColor: '#0F172A',
+        textColor: '#F8FAFC',
+        accentColor: '#F472B6',
+        surfaceCard: '#1E293B',
+        surfaceModal: '#1E293B',
+        surfaceHover: 'rgba(96, 165, 250, 0.1)',
+        mode: 'dark',
+        designStyle: 'modern',
+        borderRadius: 12,
+        shadowIntensity: 0.2
       }
     }
   ];
@@ -216,6 +261,19 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
   ];
 
   navigationItems = ['Dashboard', 'Analytics', 'Reports', 'Settings', 'Profile'];
+
+  navigationStyles = [
+    { value: 'elevated', label: 'Elevated' },
+    { value: 'flat', label: 'Flat' },
+    { value: 'bordered', label: 'Bordered' }
+  ];
+
+  buttonStyles = [
+    { value: 'primary', label: 'Primary' },
+    { value: 'secondary', label: 'Secondary' },
+    { value: 'outline', label: 'Outline' },
+    { value: 'ghost', label: 'Ghost' }
+  ];
 
   enterpriseFeatures = [
     {
@@ -250,17 +308,12 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   ];
 
-  // Additional preview data
-  sampleChartData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-    data: [65, 78, 90, 85, 92, 95]
-  };
-
   constructor(
     private fb: FormBuilder,
     private themeService: ThemeService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private cdr: ChangeDetectorRef
   ) {
     this.initializeForm();
   }
@@ -272,7 +325,19 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
       .subscribe(theme => {
         if (theme) {
           this.currentTheme = { ...theme };
+          this.updateFormValues(theme);
         }
+      });
+
+    // Subscribe to theme changes with debounce
+    this.themeChangeSubject
+      .pipe(
+        debounceTime(100),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(changes => {
+        this.applyThemeToPreview(this.currentTheme);
       });
   }
 
@@ -281,7 +346,9 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.previewContainer) {
       this.previewRoot = this.previewContainer.nativeElement;
       // Apply initial theme to preview
-      this.applyThemeToPreview(this.currentTheme);
+      setTimeout(() => {
+        this.applyThemeToPreview(this.currentTheme);
+      }, 0);
     }
   }
 
@@ -304,6 +371,11 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
       warningColor: ['#F59E0B'],
       errorColor: ['#EF4444'],
       infoColor: ['#3B82F6'],
+
+      // Surface colors
+      surfaceCard: ['#FFFFFF'],
+      surfaceModal: ['#FFFFFF'],
+      surfaceHover: ['rgba(196, 247, 239, 0.3)'],
 
       // Typography
       fontFamily: ['Inter, system-ui, sans-serif'],
@@ -347,6 +419,17 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
       brandName: ['PraXelo Enterprise'],
       logoUrl: ['assets/logo.svg']
     });
+
+    // Subscribe to form changes
+    this.themeForm.valueChanges
+      .pipe(
+        debounceTime(100),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(values => {
+        this.currentTheme = { ...this.currentTheme, ...values };
+        this.themeChangeSubject.next(values);
+      });
   }
 
   private updateFormValues(theme: Partial<ThemeConfig>): void {
@@ -477,6 +560,9 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
     // Apply design style class
     root.setAttribute('data-theme-style', theme.designStyle);
     root.setAttribute('data-theme-mode', theme.mode);
+    root.setAttribute('data-navigation-style', theme.navigationStyle);
+    root.setAttribute('data-card-style', theme.cardStyle);
+    root.setAttribute('data-button-style', theme.buttonStyle);
 
     // Apply performance settings
     if (!theme.enableAnimations) {
@@ -491,6 +577,12 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
       root.classList.remove('no-shadows');
     }
 
+    if (!theme.enableBlur) {
+      root.classList.add('no-blur');
+    } else {
+      root.classList.remove('no-blur');
+    }
+
     // Apply accessibility settings
     if (theme.reducedMotion) {
       root.classList.add('motion-reduce');
@@ -503,17 +595,44 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
     } else {
       root.classList.remove('high-contrast');
     }
+
+    // Apply special styles based on design style
+    this.applyDesignStyleClasses(root, theme);
+
+    // Force change detection
+    this.cdr.detectChanges();
+  }
+
+  private applyDesignStyleClasses(root: HTMLElement, theme: ThemeConfig): void {
+    // Remove all design style classes
+    root.classList.remove('style-modern', 'style-minimal', 'style-glassmorphic', 'style-neumorphic', 'style-material');
+
+    // Add current design style class
+    root.classList.add(`style-${theme.designStyle}`);
+
+    // Apply navigation style
+    root.classList.remove('nav-elevated', 'nav-flat', 'nav-bordered');
+    root.classList.add(`nav-${theme.navigationStyle}`);
+
+    // Apply card style
+    root.classList.remove('card-elevated', 'card-flat', 'card-bordered', 'card-glass');
+    root.classList.add(`card-${theme.cardStyle}`);
+
+    // Apply button style
+    root.classList.remove('btn-primary', 'btn-secondary', 'btn-outline', 'btn-ghost');
+    root.classList.add(`btn-${theme.buttonStyle}`);
   }
 
   updateThemeProperty(property: keyof ThemeConfig, value: any): void {
     this.currentTheme = { ...this.currentTheme, [property]: value };
-    this.applyThemeToPreview(this.currentTheme);
+    this.themeForm.patchValue({ [property]: value }, { emitEvent: false });
+    this.themeChangeSubject.next({ [property]: value });
   }
 
   onThemeChange(changes: Partial<ThemeConfig>): void {
     this.currentTheme = { ...this.currentTheme, ...changes };
     this.updateFormValues(this.currentTheme);
-    this.applyThemeToPreview(this.currentTheme);
+    this.themeChangeSubject.next(changes);
   }
 
   async saveTheme(): Promise<void> {
@@ -557,7 +676,9 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `theme-${Date.now()}.json`;
+    const brandName = this.currentTheme.brandName || 'theme';
+    const sanitizedBrandName = brandName.replace(/\s+/g, '-').toLowerCase();
+    link.download = `theme-${sanitizedBrandName}-${Date.now()}.json`;
     link.click();
     window.URL.revokeObjectURL(url);
 
@@ -605,50 +726,29 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
     // You can implement a dialog here for advanced settings
   }
 
-  getCardElevation(): string {
-    if (!this.currentTheme.enableShadows) return '0';
-
-    switch (this.currentTheme.cardStyle) {
-      case 'elevated':
-        return '2';
-      case 'flat':
-        return '0';
-      case 'bordered':
-        return '0';
-      case 'glass':
-        return '1';
-      default:
-        return '1';
+  // Helper method for logo error handling
+  onLogoError(event: Event): void {
+    const target = event.target as HTMLImageElement;
+    if (target) {
+      target.style.display = 'none';
     }
   }
 
-  getButtonAppearance(style: string): 'flat' | 'raised' | 'stroked' | 'basic' {
-    switch (style) {
-      case 'primary':
-      case 'secondary':
-        return 'raised';
-      case 'outline':
-        return 'stroked';
-      case 'ghost':
-        return 'basic';
-      default:
-        return 'flat';
-    }
+  // Helper method for preview updates
+  refreshPreview(): void {
+    this.applyThemeToPreview(this.currentTheme);
   }
 
-  // Helper methods for preview
-  getSpacing(multiplier: number = 1): string {
-    return `${this.currentTheme.spacingUnit * multiplier}px`;
+  // Track by functions for performance
+  trackByMetric(index: number, metric: any): string {
+    return metric.title;
   }
 
-  getShadow(): string {
-    const intensity = this.currentTheme.shadowIntensity;
-    if (!this.currentTheme.enableShadows || intensity === 0) return 'none';
-
-    return `0 4px 6px rgba(0, 0, 0, ${intensity}), 0 1px 3px rgba(0, 0, 0, ${intensity * 0.8})`;
+  trackByFeature(index: number, feature: any): string {
+    return feature.title;
   }
 
-  getBorderRadius(): string {
-    return `${this.currentTheme.borderRadius}px`;
+  trackByNavItem(index: number, item: string): string {
+    return item;
   }
 }

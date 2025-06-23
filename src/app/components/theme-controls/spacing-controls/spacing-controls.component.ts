@@ -1,4 +1,4 @@
-// components/theme-controls/spacing-controls/spacing-controls.component.ts
+// src/app/components/theme-controls/spacing-controls/spacing-controls.component.ts
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -55,6 +55,12 @@ import { ThemeConfig } from '../../../models/theme.model';
           (input)="updateProperty('borderWidth', +$any($event.target).value)"
           class="slider"
         />
+        <div class="border-preview">
+          <div
+            class="border-box"
+            [style.border-width.px]="theme.borderWidth"
+          >Border Preview</div>
+        </div>
       </div>
 
       <div class="control-group">
@@ -66,7 +72,8 @@ import { ThemeConfig } from '../../../models/theme.model';
             [class.active]="theme.designStyle === style.value"
             (click)="updateProperty('designStyle', style.value)"
           >
-            {{ style.label }}
+            <span class="style-icon">{{ style.icon }}</span>
+            <span>{{ style.label }}</span>
           </button>
         </div>
       </div>
@@ -90,55 +97,86 @@ import { ThemeConfig } from '../../../models/theme.model';
     .spacing-controls {
       display: flex;
       flex-direction: column;
-      gap: var(--spacing-4);
+      gap: 24px;
     }
 
     .control-group {
       label {
         display: block;
-        margin-bottom: var(--spacing-2);
-        font-size: var(--text-sm);
-        color: var(--text-secondary);
+        margin-bottom: 8px;
+        font-size: 14px;
+        color: #6B7280;
+        font-weight: 500;
       }
     }
 
     .slider {
       width: 100%;
-      height: 4px;
-      border-radius: 2px;
+      height: 6px;
+      border-radius: 3px;
       outline: none;
       -webkit-appearance: none;
-      background: var(--border-default);
+      background: rgba(196, 247, 239, 0.3);
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(196, 247, 239, 0.5);
+      }
 
       &::-webkit-slider-thumb {
         -webkit-appearance: none;
         appearance: none;
-        width: 16px;
-        height: 16px;
+        width: 20px;
+        height: 20px;
         border-radius: 50%;
-        background: var(--color-primary-500);
+        background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
         cursor: pointer;
+        box-shadow: 0 2px 8px rgba(52, 197, 170, 0.3);
+        transition: all 0.2s ease;
+
+        &:hover {
+          transform: scale(1.1);
+          box-shadow: 0 3px 12px rgba(52, 197, 170, 0.4);
+        }
+      }
+
+      &::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+        cursor: pointer;
+        border: none;
+        box-shadow: 0 2px 8px rgba(52, 197, 170, 0.3);
+        transition: all 0.2s ease;
+
+        &:hover {
+          transform: scale(1.1);
+          box-shadow: 0 3px 12px rgba(52, 197, 170, 0.4);
+        }
       }
     }
 
     .spacing-preview {
       display: flex;
-      gap: var(--spacing-2);
-      margin-top: var(--spacing-2);
+      gap: 8px;
+      margin-top: 12px;
     }
 
     .spacing-box {
       flex: 1;
-      padding: var(--spacing-2);
-      background-color: var(--surface-hover);
-      border: 1px solid var(--border-default);
-      border-radius: var(--rounded-sm);
+      padding: 8px;
+      background-color: rgba(196, 247, 239, 0.2);
+      border: 1px solid rgba(52, 197, 170, 0.3);
+      border-radius: 6px;
       text-align: center;
-      font-size: var(--text-xs);
+      font-size: 12px;
+      font-weight: 500;
+      color: #2F4858;
     }
 
     .radius-preview {
-      margin-top: var(--spacing-2);
+      margin-top: 12px;
       display: flex;
       justify-content: center;
     }
@@ -146,35 +184,65 @@ import { ThemeConfig } from '../../../models/theme.model';
     .radius-box {
       width: 100px;
       height: 100px;
-      background-color: var(--color-primary-500);
-      transition: border-radius var(--duration-fast) var(--ease-out);
+      background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+      transition: border-radius 0.3s ease-out;
+      box-shadow: 0 4px 12px rgba(52, 197, 170, 0.3);
+    }
+
+    .border-preview {
+      margin-top: 12px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .border-box {
+      padding: 20px 40px;
+      background: white;
+      border: solid #34C5AA;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: 500;
+      color: #2F4858;
+      transition: border-width 0.3s ease-out;
     }
 
     .style-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: var(--spacing-2);
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 12px;
     }
 
     .style-button {
-      padding: var(--spacing-2) var(--spacing-3);
-      border: 1px solid var(--border-default);
-      border-radius: var(--rounded-sm);
-      background-color: var(--surface-background);
-      color: var(--text-primary);
-      font-size: var(--text-sm);
+      padding: 12px 16px;
+      border: 2px solid rgba(196, 247, 239, 0.5);
+      border-radius: 8px;
+      background-color: white;
+      color: #4B5563;
+      font-size: 14px;
+      font-weight: 500;
       cursor: pointer;
       text-transform: capitalize;
-      transition: all var(--duration-fast) var(--ease-out);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+
+      .style-icon {
+        font-size: 18px;
+      }
 
       &:hover {
-        background-color: var(--surface-hover);
+        background-color: rgba(196, 247, 239, 0.3);
+        border-color: #34C5AA;
+        transform: translateY(-1px);
       }
 
       &.active {
-        background-color: var(--color-primary-500);
+        background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
         color: white;
-        border-color: var(--color-primary-500);
+        border-color: transparent;
+        box-shadow: 0 4px 12px rgba(52, 197, 170, 0.3);
       }
     }
   `]
@@ -184,11 +252,11 @@ export class SpacingControlsComponent {
   @Output() themeChange = new EventEmitter<Partial<ThemeConfig>>();
 
   designStyles = [
-    { value: 'modern', label: 'Modern' },
-    { value: 'minimal', label: 'Minimal' },
-    { value: 'glassmorphic', label: 'Glass' },
-    { value: 'neumorphic', label: 'Neuro' },
-    { value: 'material', label: 'Material' }
+    { value: 'modern', label: 'Modern', icon: '✨' },
+    { value: 'minimal', label: 'Minimal', icon: '⚡' },
+    { value: 'glassmorphic', label: 'Glass', icon: '🔮' },
+    { value: 'neumorphic', label: 'Neuro', icon: '🎭' },
+    { value: 'material', label: 'Material', icon: '📐' }
   ];
 
   cardStyles = ['elevated', 'flat', 'bordered', 'glass'];
