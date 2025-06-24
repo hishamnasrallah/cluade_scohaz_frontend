@@ -238,6 +238,69 @@ export class ThemeImportExportUtil {
     lines.push(`${indent}${prefix}-border-focus:${space}${theme.borderFocusColor};`);
     lines.push(`${indent}${prefix}-border-hover:${space}${theme.borderHoverColor};`);
 
+    // Add this after the Borders section in generateSCSSContent
+
+    if (!minify) lines.push('');
+
+// Design & Style Properties
+    lines.push(`// Design & Style Properties`);
+    lines.push(`$density:${space}'${theme.density || 'comfortable'}';`);
+    lines.push(`$design-style:${space}'${theme.designStyle || 'modern'}';`);
+    lines.push(`$navigation-style:${space}'${theme.navigationStyle || 'elevated'}';`);
+    lines.push(`$card-style:${space}'${theme.cardStyle || 'elevated'}';`);
+    lines.push(`$button-style:${space}'${theme.buttonStyle || 'primary'}';`);
+    lines.push(`$icon-style:${space}'${theme.iconStyle || 'outlined'}';`);
+    lines.push(`$layout-type:${space}'${theme.layoutType || 'fluid'}';`);
+    lines.push(`$header-position:${space}'${theme.headerPosition || 'sticky'}';`);
+    lines.push(`$sidebar-position:${space}'${theme.sidebarPosition || 'left'}';`);
+
+    if (!minify) lines.push('');
+
+// Brand Properties
+    lines.push(`// Brand Properties`);
+    const escapedBrandNameScss = (theme.brandName || 'Brand').replace(/'/g, "\\'");
+    const escapedBrandSloganScss = (theme.brandSlogan || '').replace(/'/g, "\\'");
+    lines.push(`$brand-name:${space}'${escapedBrandNameScss}';`);
+    lines.push(`$brand-slogan:${space}'${escapedBrandSloganScss}';`);
+    lines.push(`$brand-font:${space}${theme.brandFont || theme.headingFontFamily};`);
+    if (theme.logoUrl) {
+      lines.push(`$logo-url:${space}'${theme.logoUrl}';`);
+    }
+    if (theme.faviconUrl) {
+      lines.push(`$favicon-url:${space}'${theme.faviconUrl}';`);
+    }
+
+    if (!minify) lines.push('');
+
+// Feature Flags
+    lines.push(`// Feature Flags`);
+    lines.push(`$enable-animations:${space}${theme.enableAnimations !== false};`);
+    lines.push(`$enable-transitions:${space}${theme.enableTransitions !== false};`);
+    lines.push(`$enable-shadows:${space}${theme.enableShadows !== false};`);
+    lines.push(`$enable-blur:${space}${theme.enableBlur !== false};`);
+    lines.push(`$enable-hover-effects:${space}${theme.enableHoverEffects !== false};`);
+    lines.push(`$enable-focus-effects:${space}${theme.enableFocusEffects !== false};`);
+    lines.push(`$enable-ripple:${space}${theme.enableRipple !== false};`);
+    lines.push(`$enable-gradients:${space}${theme.enableGradients || false};`);
+    lines.push(`$reduced-motion:${space}${theme.reducedMotion || false};`);
+    lines.push(`$high-contrast:${space}${theme.highContrast || false};`);
+    lines.push(`$focus-visible:${space}${theme.focusVisible !== false};`);
+
+// Maps for easier iteration
+    if (!minify) {
+      lines.push('');
+      lines.push(`// Style Maps`);
+      lines.push(`$styles: (`);
+      lines.push(`  density: $density,`);
+      lines.push(`  design: $design-style,`);
+      lines.push(`  navigation: $navigation-style,`);
+      lines.push(`  card: $card-style,`);
+      lines.push(`  button: $button-style,`);
+      lines.push(`  icon: $icon-style,`);
+      lines.push(`  layout: $layout-type`);
+      lines.push(`);`);
+    }
+
     if (!minify) lines.push('');
 
     // Effects
@@ -358,6 +421,62 @@ export class ThemeImportExportUtil {
     // Close root
     lines.push(`}`);
 
+    // Add this after the Grid System section, before closing the :root selector
+
+    if (!minify) lines.push('');
+
+// Design & Style Properties
+    if (includeComments && !minify) {
+      lines.push(`${indent}/* Design & Style Properties */`);
+    }
+    lines.push(`${indent}${prefix}-density:${space}'${theme.density || 'comfortable'}';`);
+    lines.push(`${indent}${prefix}-design-style:${space}'${theme.designStyle || 'modern'}';`);
+    lines.push(`${indent}${prefix}-navigation-style:${space}'${theme.navigationStyle || 'elevated'}';`);
+    lines.push(`${indent}${prefix}-card-style:${space}'${theme.cardStyle || 'elevated'}';`);
+    lines.push(`${indent}${prefix}-button-style:${space}'${theme.buttonStyle || 'primary'}';`);
+    lines.push(`${indent}${prefix}-icon-style:${space}'${theme.iconStyle || 'outlined'}';`);
+    lines.push(`${indent}${prefix}-layout-type:${space}'${theme.layoutType || 'fluid'}';`);
+    lines.push(`${indent}${prefix}-header-position:${space}'${theme.headerPosition || 'sticky'}';`);
+    lines.push(`${indent}${prefix}-sidebar-position:${space}'${theme.sidebarPosition || 'left'}';`);
+
+    if (!minify) lines.push('');
+
+// Brand Properties
+    if (includeComments && !minify) {
+      lines.push(`${indent}/* Brand Properties */`);
+    }
+// Escape quotes in brand name and slogan for CSS
+    const escapedBrandName = (theme.brandName || 'Brand').replace(/'/g, "\\'");
+    const escapedBrandSlogan = (theme.brandSlogan || '').replace(/'/g, "\\'");
+    lines.push(`${indent}${prefix}-brand-name:${space}'${escapedBrandName}';`);
+    lines.push(`${indent}${prefix}-brand-slogan:${space}'${escapedBrandSlogan}';`);
+    lines.push(`${indent}${prefix}-brand-font:${space}${theme.brandFont || theme.headingFontFamily};`);
+// Only add URLs if they exist
+    if (theme.logoUrl) {
+      lines.push(`${indent}${prefix}-logo-url:${space}url('${theme.logoUrl}');`);
+    }
+    if (theme.faviconUrl) {
+      lines.push(`${indent}${prefix}-favicon-url:${space}url('${theme.faviconUrl}');`);
+    }
+
+    if (!minify) lines.push('');
+
+// Performance & Accessibility Flags as CSS custom properties
+    if (includeComments && !minify) {
+      lines.push(`${indent}/* Feature Flags */`);
+    }
+    lines.push(`${indent}${prefix}-enable-animations:${space}${theme.enableAnimations ? '1' : '0'};`);
+    lines.push(`${indent}${prefix}-enable-transitions:${space}${theme.enableTransitions ? '1' : '0'};`);
+    lines.push(`${indent}${prefix}-enable-shadows:${space}${theme.enableShadows ? '1' : '0'};`);
+    lines.push(`${indent}${prefix}-enable-blur:${space}${theme.enableBlur ? '1' : '0'};`);
+    lines.push(`${indent}${prefix}-enable-hover-effects:${space}${theme.enableHoverEffects ? '1' : '0'};`);
+    lines.push(`${indent}${prefix}-enable-focus-effects:${space}${theme.enableFocusEffects ? '1' : '0'};`);
+    lines.push(`${indent}${prefix}-enable-ripple:${space}${theme.enableRipple ? '1' : '0'};`);
+    lines.push(`${indent}${prefix}-enable-gradients:${space}${theme.enableGradients ? '1' : '0'};`);
+    lines.push(`${indent}${prefix}-reduced-motion:${space}${theme.reducedMotion ? '1' : '0'};`);
+    lines.push(`${indent}${prefix}-high-contrast:${space}${theme.highContrast ? '1' : '0'};`);
+    lines.push(`${indent}${prefix}-focus-visible:${space}${theme.focusVisible ? '1' : '0'};`);
+
     // Additional helper classes
     if (!minify) {
       lines.push('');
@@ -391,6 +510,41 @@ export class ThemeImportExportUtil {
       lines.push(`/* Accessibility Classes */`);
       lines.push(`.high-contrast { filter: contrast(1.2); }`);
       lines.push(`.focus-visible *:focus { outline: 2px solid var(${prefix}-primary); }`);
+
+      // Update the Additional helper classes section to include:
+
+// Density classes
+      lines.push(`/* Density Classes */`);
+      lines.push(`[data-density="compact"] { --spacing-multiplier: 0.8; }`);
+      lines.push(`[data-density="comfortable"] { --spacing-multiplier: 1; }`);
+      lines.push(`[data-density="spacious"] { --spacing-multiplier: 1.2; }`);
+      lines.push('');
+
+// Design style classes
+      lines.push(`/* Design Style Classes */`);
+      lines.push(`[data-theme-style="modern"] { /* Modern style */ }`);
+      lines.push(`[data-theme-style="minimal"] { --radius-override: 0; --shadow-override: none; }`);
+      lines.push(`[data-theme-style="glassmorphic"] { --blur-override: 20px; --glass-opacity: 0.7; }`);
+      lines.push(`[data-theme-style="neumorphic"] { --shadow-style: inset; }`);
+      lines.push(`[data-theme-style="material"] { /* Material design */ }`);
+      lines.push(`[data-theme-style="flat"] { --shadow-override: none; }`);
+      lines.push(`[data-theme-style="gradient"] { --use-gradients: 1; }`);
+      lines.push('');
+
+// Component style classes
+      lines.push(`/* Component Style Classes */`);
+      lines.push(`[data-navigation-style="elevated"] { --nav-shadow: 0 2px 8px rgba(0,0,0,0.1); }`);
+      lines.push(`[data-navigation-style="flat"] { --nav-shadow: none; }`);
+      lines.push(`[data-navigation-style="bordered"] { --nav-border: 1px solid var(${prefix}-border-color); }`);
+      lines.push(`[data-card-style="elevated"] { --card-shadow: 0 4px 6px rgba(0,0,0,0.1); }`);
+      lines.push(`[data-card-style="flat"] { --card-shadow: none; }`);
+      lines.push(`[data-card-style="bordered"] { --card-border: 1px solid var(${prefix}-border-color); }`);
+      lines.push(`[data-button-style="primary"] { /* Primary button style */ }`);
+      lines.push(`[data-button-style="outline"] { --button-bg: transparent; }`);
+      lines.push(`[data-icon-style="outlined"] { font-family: 'Material Icons Outlined'; }`);
+      lines.push(`[data-icon-style="filled"] { font-family: 'Material Icons'; }`);
+      lines.push(`[data-icon-style="rounded"] { font-family: 'Material Icons Round'; }`);
+
     }
 
     return minify ? lines.join('') : lines.join('\n');
@@ -494,6 +648,68 @@ export class ThemeImportExportUtil {
     lines.push(`$border-width:${space}${theme.borderWidth}px;`);
     lines.push(`$border-color:${space}${theme.borderColor};`);
 
+    // Add this after the Borders section in generateSCSSContent
+
+    if (!minify) lines.push('');
+
+// Design & Style Properties
+    lines.push(`// Design & Style Properties`);
+    lines.push(`$density:${space}'${theme.density || 'comfortable'}';`);
+    lines.push(`$design-style:${space}'${theme.designStyle || 'modern'}';`);
+    lines.push(`$navigation-style:${space}'${theme.navigationStyle || 'elevated'}';`);
+    lines.push(`$card-style:${space}'${theme.cardStyle || 'elevated'}';`);
+    lines.push(`$button-style:${space}'${theme.buttonStyle || 'primary'}';`);
+    lines.push(`$icon-style:${space}'${theme.iconStyle || 'outlined'}';`);
+    lines.push(`$layout-type:${space}'${theme.layoutType || 'fluid'}';`);
+    lines.push(`$header-position:${space}'${theme.headerPosition || 'sticky'}';`);
+    lines.push(`$sidebar-position:${space}'${theme.sidebarPosition || 'left'}';`);
+
+    if (!minify) lines.push('');
+
+// Brand Properties
+    lines.push(`// Brand Properties`);
+    const escapedBrandNameScss = (theme.brandName || 'Brand').replace(/'/g, "\\'");
+    const escapedBrandSloganScss = (theme.brandSlogan || '').replace(/'/g, "\\'");
+    lines.push(`$brand-name:${space}'${escapedBrandNameScss}';`);
+    lines.push(`$brand-slogan:${space}'${escapedBrandSloganScss}';`);
+    lines.push(`$brand-font:${space}${theme.brandFont || theme.headingFontFamily};`);
+    if (theme.logoUrl) {
+      lines.push(`$logo-url:${space}'${theme.logoUrl}';`);
+    }
+    if (theme.faviconUrl) {
+      lines.push(`$favicon-url:${space}'${theme.faviconUrl}';`);
+    }
+
+    if (!minify) lines.push('');
+
+// Feature Flags
+    lines.push(`// Feature Flags`);
+    lines.push(`$enable-animations:${space}${theme.enableAnimations !== false};`);
+    lines.push(`$enable-transitions:${space}${theme.enableTransitions !== false};`);
+    lines.push(`$enable-shadows:${space}${theme.enableShadows !== false};`);
+    lines.push(`$enable-blur:${space}${theme.enableBlur !== false};`);
+    lines.push(`$enable-hover-effects:${space}${theme.enableHoverEffects !== false};`);
+    lines.push(`$enable-focus-effects:${space}${theme.enableFocusEffects !== false};`);
+    lines.push(`$enable-ripple:${space}${theme.enableRipple !== false};`);
+    lines.push(`$enable-gradients:${space}${theme.enableGradients || false};`);
+    lines.push(`$reduced-motion:${space}${theme.reducedMotion || false};`);
+    lines.push(`$high-contrast:${space}${theme.highContrast || false};`);
+    lines.push(`$focus-visible:${space}${theme.focusVisible !== false};`);
+
+// Maps for easier iteration
+    if (!minify) {
+      lines.push('');
+      lines.push(`// Style Maps`);
+      lines.push(`$styles: (`);
+      lines.push(`  density: $density,`);
+      lines.push(`  design: $design-style,`);
+      lines.push(`  navigation: $navigation-style,`);
+      lines.push(`  card: $card-style,`);
+      lines.push(`  button: $button-style,`);
+      lines.push(`  icon: $icon-style,`);
+      lines.push(`  layout: $layout-type`);
+      lines.push(`);`);
+    }
     if (!minify) lines.push('');
 
     // SCSS Mixins
