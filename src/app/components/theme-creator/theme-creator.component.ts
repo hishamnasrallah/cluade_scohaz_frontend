@@ -43,6 +43,7 @@ import { ColorPaletteDisplayComponent } from '../theme-controls/color-palette-di
 
 // Dialog Component
 import { ExportThemeDialogComponent } from '../theme-controls/dialogs/export-theme-dialog.component';
+import { ShowcaseDialogComponent } from '../theme-controls/dialogs/showcase-dialog.component';
 
 // Services and View Model
 import { ThemeService } from '../../services/theme.service';
