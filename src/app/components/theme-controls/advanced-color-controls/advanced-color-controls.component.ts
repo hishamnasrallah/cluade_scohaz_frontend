@@ -63,7 +63,7 @@ interface ColorGroup {
               <div class="color-preview-wrapper">
                 <div class="color-preview"
                      [style.background]="getColorValue(color.key)"
-                     (click)="colorInput.click()"
+                     (click)="onColorPreviewClick(color.key)"
                      [class.clickable]="!color.allowAlpha">
                   <div class="color-preview-content">
                     <mat-icon class="color-icon" *ngIf="!color.allowAlpha">palette</mat-icon>
@@ -74,10 +74,10 @@ interface ColorGroup {
                 <input
                   *ngIf="!color.allowAlpha"
                   type="color"
+                  [id]="'color-input-' + color.key"
                   [value]="convertToHex(theme[color.key])"
                   (input)="updateColor(color.key, $any($event.target).value)"
                   class="hidden-color-input"
-                  #colorInput
                 />
               </div>
 
@@ -127,7 +127,7 @@ interface ColorGroup {
 
             <!-- Color Variations -->
             <div *ngIf="showVariations[color.key]" class="color-variations">
-              <div *ngFor="let variation of getColorVariations(theme[color.key])"
+              <div *ngFor="let variation of getColorVariations(getColorValue(color.key))"
                    class="variation-chip"
                    [style.background]="variation.color"
                    (click)="updateColor(color.key, variation.color)"
@@ -164,16 +164,6 @@ interface ColorGroup {
     </div>
   `,
   styles: [`
-    .mini-btn {
-      width: 32px;
-      height: 32px;
-
-      mat-icon {
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
-      }
-    }
     .advanced-color-controls {
       display: flex;
       flex-direction: column;
@@ -193,6 +183,27 @@ interface ColorGroup {
       display: flex;
       align-items: center;
       gap: 8px;
+      padding: 10px 16px !important;
+      font-weight: 500;
+      font-size: 14px;
+      border: 2px solid rgba(52, 197, 170, 0.3) !important;
+      background: white !important;
+      border-radius: 10px !important;
+      transition: all 0.3s ease !important;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        color: #34C5AA;
+      }
+
+      &:hover {
+        background: rgba(196, 247, 239, 0.5) !important;
+        border-color: #34C5AA !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(52, 197, 170, 0.2);
+      }
     }
 
     .color-group {
@@ -218,15 +229,15 @@ interface ColorGroup {
 
     .colors-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 16px;
     }
 
     .color-control-item {
-      padding: 12px;
+      padding: 16px;
       background: white;
       border: 1px solid rgba(196, 247, 239, 0.5);
-      border-radius: 8px;
+      border-radius: 12px;
       transition: all 0.2s ease;
 
       &:hover {
@@ -239,13 +250,14 @@ interface ColorGroup {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
 
       label {
-        font-weight: 500;
+        font-weight: 600;
         color: #2F4858;
-        font-size: 13px;
+        font-size: 14px;
       }
+
       .color-description {
         display: flex;
         align-items: center;
@@ -262,18 +274,20 @@ interface ColorGroup {
 
     .color-input-group {
       display: flex;
-      gap: 8px;
+      gap: 12px;
       align-items: center;
+      width: 100%;
     }
 
     .color-preview-wrapper {
       position: relative;
+      flex-shrink: 0;
     }
 
     .color-preview {
-      width: 56px;
-      height: 56px;
-      border-radius: 12px;
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -305,6 +319,7 @@ interface ColorGroup {
 
           .color-icon {
             transform: scale(1.1);
+            opacity: 1;
           }
         }
 
@@ -321,7 +336,7 @@ interface ColorGroup {
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        background: var(--preview-color);
+        background: inherit;
         z-index: 1;
       }
 
@@ -331,17 +346,19 @@ interface ColorGroup {
         opacity: 0;
         transition: all 0.3s ease;
         text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        mix-blend-mode: difference;
       }
 
       .color-hex-label {
+        position: absolute;
+        bottom: -20px;
         font-size: 10px;
         font-weight: 600;
-        color: white;
-        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        color: #6B7280;
         font-family: 'JetBrains Mono', monospace;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        opacity: 0.9;
+        white-space: nowrap;
       }
 
       .color-preview-overlay {
@@ -354,10 +371,6 @@ interface ColorGroup {
         opacity: 0;
         transition: opacity 0.3s ease;
         pointer-events: none;
-      }
-
-      &:hover .color-icon {
-        opacity: 0.8;
       }
     }
 
@@ -392,6 +405,7 @@ interface ColorGroup {
         color: #2F4858;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         font-weight: 500;
+        height: 48px;
 
         &:hover {
           border-color: rgba(52, 197, 170, 0.3);
@@ -434,52 +448,159 @@ interface ColorGroup {
 
     .color-actions {
       display: flex;
-      gap: 4px;
+      gap: 8px;
+      flex-shrink: 0;
     }
 
-    .action-btn {
-      width: 36px;
-      height: 36px;
+    .copy-btn,
+    .copy-btn,
+    .variations-btn {
+      width: 52px;
+      height: 48px;
+      min-width: 52px;
       border-radius: 10px;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      background: white;
-      border: 2px solid rgba(196, 247, 239, 0.5);
+      background: white !important;
+      border: 2px solid rgba(196, 247, 239, 0.5) !important;
+      padding: 0 !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
 
-      mat-icon {
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
-        color: #6B7280;
-        transition: color 0.3s ease;
+      ::ng-deep .mat-mdc-button-persistent-ripple {
+        border-radius: 10px;
       }
 
-      &:hover {
-        background: rgba(196, 247, 239, 0.3);
-        border-color: #34C5AA;
-        transform: translateY(-1px);
+      ::ng-deep .mat-mdc-button-touch-target {
+        width: 100%;
+        height: 100%;
+      }
+
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+        color: #6B7280;
+        transition: color 0.3s ease;
+        line-height: 24px;
+      }
+    }
+
+    .contrast-indicator {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+
+      .contrast-ratio {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 12px;
+        border-radius: 6px;
+        background: rgba(239, 68, 68, 0.1);
+        color: #DC2626;
+        font-weight: 600;
+
+        &.pass {
+          background: rgba(34, 197, 94, 0.1);
+          color: #16A34A;
+        }
+
+        mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
+      }
+
+      .contrast-label {
+        color: #6B7280;
+      }
+    }
+
+    .color-variations {
+      margin-top: 12px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+
+      .variation-chip {
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+        font-size: 12px;
+        font-weight: 600;
+
+        &:hover {
+          transform: scale(1.05);
+          border-color: rgba(0, 0, 0, 0.2);
+        }
+
+        .variation-label {
+          color: white;
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+      }
+    }
+
+    .advanced-tools {
+      margin-top: 24px;
+      padding: 24px;
+      background: rgba(196, 247, 239, 0.1);
+      border-radius: 12px;
+
+      h4 {
+        margin: 0 0 16px;
+        font-size: 18px;
+        font-weight: 600;
+        color: #2F4858;
+        font-family: 'Poppins', sans-serif;
+      }
+
+      .tools-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+      }
+
+      .tool-btn {
+        padding: 12px 20px !important;
+        background: white !important;
+        border: 2px solid rgba(52, 197, 170, 0.3) !important;
+        border-radius: 10px !important;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease !important;
 
         mat-icon {
           color: #34C5AA;
         }
-      }
 
-      &.copy-btn {
-        mat-icon {
-          transition: all 0.3s ease;
-        }
-
-        &:hover mat-icon[icon="check"] {
-          color: #22C55E;
+        &:hover {
+          background: rgba(196, 247, 239, 0.5) !important;
+          border-color: #34C5AA !important;
+          transform: translateY(-1px);
         }
       }
+    }
 
-      &.variations-btn.active {
-        background: linear-gradient(135deg, #34C5AA, #2BA99B);
-        border-color: transparent;
+    @media (max-width: 768px) {
+      .colors-grid {
+        grid-template-columns: 1fr;
+      }
 
-        mat-icon {
-          color: white;
-        }
+      .color-input-group {
+        flex-wrap: wrap;
+      }
+
+      .color-controls {
+        width: 100%;
       }
     }
   `]
@@ -488,9 +609,9 @@ export class AdvancedColorControlsComponent implements OnInit {
   @Input() theme!: ThemeConfig;
   @Output() themeChange = new EventEmitter<Partial<ThemeConfig>>();
 
-  showVariations: Record<string, boolean> = {};
-  focusedInput: string | null = null;
-  copiedColor: string | null = null;
+  showVariations: Partial<Record<keyof ThemeConfig, boolean>> = {};
+  focusedInput: keyof ThemeConfig | null = null;
+  copiedColor: keyof ThemeConfig | null = null;
   colorGroups: ColorGroup[] = [
     {
       title: 'Primary Colors',
@@ -652,8 +773,8 @@ export class AdvancedColorControlsComponent implements OnInit {
   }
 
   convertToHex(value: any): string {
-    // Handle non-string values
-    if (typeof value !== 'string') {
+    // Handle non-string values or undefined/null
+    if (!value || typeof value !== 'string') {
       return '#000000';
     }
 
@@ -692,13 +813,20 @@ export class AdvancedColorControlsComponent implements OnInit {
     // For non-string values, return empty or default
     return '';
   }
-// Removed openColorPicker method - no longer needed
 
-  onColorInputFocus(key: string): void {
-    this.focusedInput = key;
+  onColorPreviewClick(key: keyof ThemeConfig): void {
+    // Find the color input element for this specific color
+    const colorInput = document.querySelector(`#color-input-${key}`) as HTMLInputElement;
+    if (colorInput) {
+      colorInput.click();
+    }
   }
 
-  onColorInputBlur(key: string): void {
+  onColorInputFocus(key: keyof ThemeConfig): void {
+    this.focusedInput = key as string;
+  }
+
+  onColorInputBlur(key: keyof ThemeConfig): void {
     if (this.focusedInput === key) {
       this.focusedInput = null;
     }
@@ -707,7 +835,7 @@ export class AdvancedColorControlsComponent implements OnInit {
   copyColor(key: keyof ThemeConfig): void {
     const color = this.getColorValue(key);
     navigator.clipboard.writeText(color).then(() => {
-      this.copiedColor = key as string;
+      this.copiedColor = key;
       setTimeout(() => {
         this.copiedColor = null;
       }, 2000);
@@ -720,10 +848,15 @@ export class AdvancedColorControlsComponent implements OnInit {
   }
 
   generateVariations(key: keyof ThemeConfig): void {
-    this.showVariations[key as string] = !this.showVariations[key as string];
+    this.showVariations[key] = !this.showVariations[key];
   }
 
   getColorVariations(color: string): Array<{color: string, name: string, label: string}> {
+    // Ensure we have a valid color string
+    if (!color || !this.isValidColor(color)) {
+      return [];
+    }
+
     const palette = generateColorPalette(color);
     return [
       { color: palette.shades['100'], name: 'Lighter', label: '100' },
