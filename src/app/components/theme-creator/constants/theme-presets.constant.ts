@@ -1,5 +1,5 @@
 // src/app/components/theme-creator/constants/theme-presets.constant.ts
-import { ThemePreset } from '../../../models/theme.model';
+import {ThemePreset} from '../../../models/theme.model';
 
 export const THEME_PRESETS: ThemePreset[] = [
   {
@@ -7,20 +7,61 @@ export const THEME_PRESETS: ThemePreset[] = [
     name: 'Ocean Mint',
     icon: '🌊',
     config: {
+      // Core colors
       primaryColor: '#34C5AA',
+      primaryLightColor: '#5FD3C4',
+      primaryDarkColor: '#2BA99B',
       secondaryColor: '#2BA99B',
+      secondaryLightColor: '#34C5AA',
+      secondaryDarkColor: '#238A7F',
       backgroundColor: '#F4FDFD',
+      backgroundPaperColor: '#FFFFFF',
+      backgroundDefaultColor: '#F8FAFB',
       textColor: '#2F4858',
+      textSecondaryColor: '#6B7280',
+      textDisabledColor: '#9CA3AF',
+      textHintColor: '#D1D5DB',
       accentColor: '#5FD3C4',
+      accentLightColor: '#A8E8DD',
+      accentDarkColor: '#34C5AA',
+
+      // Semantic colors
       successColor: '#22C55E',
+      successLightColor: '#86EFAC',
+      successDarkColor: '#16A34A',
       warningColor: '#F59E0B',
+      warningLightColor: '#FCD34D',
+      warningDarkColor: '#D97706',
       errorColor: '#EF4444',
+      errorLightColor: '#FCA5A5',
+      errorDarkColor: '#DC2626',
       infoColor: '#3B82F6',
+      infoLightColor: '#93BBFE',
+      infoDarkColor: '#2563EB',
+
+      // Surface colors
       surfaceCard: '#FFFFFF',
       surfaceModal: '#FFFFFF',
       surfaceHover: 'rgba(196, 247, 239, 0.3)',
+      surfaceFocus: 'rgba(52, 197, 170, 0.12)',
+      surfaceSelected: 'rgba(52, 197, 170, 0.08)',
+      surfaceDisabled: 'rgba(0, 0, 0, 0.04)',
+      dividerColor: 'rgba(0, 0, 0, 0.08)',
+      overlayColor: 'rgba(0, 0, 0, 0.5)',
+
+      // Border colors
+      borderColor: 'rgba(0, 0, 0, 0.08)',
+      borderFocusColor: '#34C5AA',
+      borderHoverColor: 'rgba(52, 197, 170, 0.3)',
+
+      // Shadow colors
+      shadowColor: 'rgba(0, 0, 0, 0.1)',
+
+      // Typography
       fontFamily: 'Inter, system-ui, sans-serif',
       headingFontFamily: 'Poppins, sans-serif',
+
+      // Other properties
       designStyle: 'modern',
       borderRadius: 12,
       shadowIntensity: 0.1
