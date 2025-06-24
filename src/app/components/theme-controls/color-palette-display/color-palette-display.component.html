@@ -1,0 +1,411 @@
+<!-- Color Palette Display -->
+<mat-card class="color-palette-display theme-card">
+  <mat-card-header>
+    <mat-card-title class="theme-heading">Complete Color Palette</mat-card-title>
+  </mat-card-header>
+
+  <mat-card-content>
+    <!-- Primary Color Family -->
+    <div class="color-section">
+      <h4 class="section-title">Primary Color Family</h4>
+      <div class="color-swatches">
+        <div class="color-swatch-item">
+          <div class="color-swatch" [style.background]="theme.primaryLightColor" (click)="copyColor(theme.primaryLightColor)">
+            <span class="color-label">Light</span>
+          </div>
+          <span class="color-value">{{ theme.primaryLightColor }}</span>
+        </div>
+        <div class="color-swatch-item main">
+          <div class="color-swatch" [style.background]="theme.primaryColor" (click)="copyColor(theme.primaryColor)">
+            <span class="color-label">Primary</span>
+          </div>
+          <span class="color-value">{{ theme.primaryColor }}</span>
+        </div>
+        <div class="color-swatch-item">
+          <div class="color-swatch" [style.background]="theme.primaryDarkColor" (click)="copyColor(theme.primaryDarkColor)">
+            <span class="color-label">Dark</span>
+          </div>
+          <span class="color-value">{{ theme.primaryDarkColor }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Secondary Color Family -->
+    <div class="color-section">
+      <h4 class="section-title">Secondary Color Family</h4>
+      <div class="color-swatches">
+        <div class="color-swatch-item">
+          <div class="color-swatch" [style.background]="theme.secondaryLightColor" (click)="copyColor(theme.secondaryLightColor)">
+            <span class="color-label">Light</span>
+          </div>
+          <span class="color-value">{{ theme.secondaryLightColor }}</span>
+        </div>
+        <div class="color-swatch-item main">
+          <div class="color-swatch" [style.background]="theme.secondaryColor" (click)="copyColor(theme.secondaryColor)">
+            <span class="color-label">Secondary</span>
+          </div>
+          <span class="color-value">{{ theme.secondaryColor }}</span>
+        </div>
+        <div class="color-swatch-item">
+          <div class="color-swatch" [style.background]="theme.secondaryDarkColor" (click)="copyColor(theme.secondaryDarkColor)">
+            <span class="color-label">Dark</span>
+          </div>
+          <span class="color-value">{{ theme.secondaryDarkColor }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Accent Color Family -->
+    <div class="color-section">
+      <h4 class="section-title">Accent Color Family</h4>
+      <div class="color-swatches">
+        <div class="color-swatch-item">
+          <div class="color-swatch" [style.background]="theme.accentLightColor" (click)="copyColor(theme.accentLightColor)">
+            <span class="color-label">Light</span>
+          </div>
+          <span class="color-value">{{ theme.accentLightColor }}</span>
+        </div>
+        <div class="color-swatch-item main">
+          <div class="color-swatch" [style.background]="theme.accentColor" (click)="copyColor(theme.accentColor)">
+            <span class="color-label">Accent</span>
+          </div>
+          <span class="color-value">{{ theme.accentColor }}</span>
+        </div>
+        <div class="color-swatch-item">
+          <div class="color-swatch" [style.background]="theme.accentDarkColor" (click)="copyColor(theme.accentDarkColor)">
+            <span class="color-label">Dark</span>
+          </div>
+          <span class="color-value">{{ theme.accentDarkColor }}</span>
+        </div>
+      </div>
+    </div>
+
+    <mat-divider class="palette-divider"></mat-divider>
+
+    <!-- Background & Text Colors -->
+    <div class="color-section">
+      <h4 class="section-title">Background & Text Colors</h4>
+      <div class="color-grid">
+        <div class="color-item">
+          <div class="color-box" [style.background]="theme.backgroundColor">
+            <span class="color-text" [style.color]="theme.textColor">Aa</span>
+          </div>
+          <div class="color-info">
+            <span class="color-name">Background</span>
+            <span class="color-hex">{{ theme.backgroundColor }}</span>
+          </div>
+        </div>
+        <div class="color-item">
+          <div class="color-box" [style.background]="theme.backgroundPaperColor">
+            <span class="color-text" [style.color]="theme.textColor">Aa</span>
+          </div>
+          <div class="color-info">
+            <span class="color-name">Paper</span>
+            <span class="color-hex">{{ theme.backgroundPaperColor }}</span>
+          </div>
+        </div>
+        <div class="color-item">
+          <div class="color-box" [style.background]="theme.backgroundDefaultColor">
+            <span class="color-text" [style.color]="theme.textColor">Aa</span>
+          </div>
+          <div class="color-info">
+            <span class="color-name">Default BG</span>
+            <span class="color-hex">{{ theme.backgroundDefaultColor }}</span>
+          </div>
+        </div>
+        <div class="color-item">
+          <div class="color-box" [style.background]="theme.surfaceCard">
+            <span class="color-text" [style.color]="theme.textColor">Aa</span>
+          </div>
+          <div class="color-info">
+            <span class="color-name">Card Surface</span>
+            <span class="color-hex">{{ theme.surfaceCard }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Text Color Variants -->
+      <div class="text-colors">
+        <div class="text-color-item">
+          <span class="text-sample" [style.color]="theme.textColor">Primary Text</span>
+          <span class="color-hex">{{ theme.textColor }}</span>
+        </div>
+        <div class="text-color-item">
+          <span class="text-sample" [style.color]="theme.textSecondaryColor">Secondary Text</span>
+          <span class="color-hex">{{ theme.textSecondaryColor }}</span>
+        </div>
+        <div class="text-color-item">
+          <span class="text-sample" [style.color]="theme.textDisabledColor">Disabled Text</span>
+          <span class="color-hex">{{ theme.textDisabledColor }}</span>
+        </div>
+        <div class="text-color-item">
+          <span class="text-sample" [style.color]="theme.textHintColor">Hint Text</span>
+          <span class="color-hex">{{ theme.textHintColor }}</span>
+        </div>
+      </div>
+    </div>
+
+    <mat-divider class="palette-divider"></mat-divider>
+
+    <!-- Semantic Colors with Context -->
+    <div class="color-section">
+      <h4 class="section-title">Semantic Colors in Context</h4>
+
+      <!-- Success States -->
+      <div class="semantic-group">
+        <h5>Success States</h5>
+        <div class="semantic-colors">
+          <div class="semantic-item">
+            <div class="semantic-swatch" [style.background]="theme.successLightColor" (click)="copyColor(theme.successLightColor)">
+              <mat-icon [style.color]="theme.successDarkColor">check_circle</mat-icon>
+            </div>
+            <span class="semantic-label">Light</span>
+            <span class="color-hex">{{ theme.successLightColor }}</span>
+          </div>
+          <div class="semantic-item main">
+            <div class="semantic-swatch" [style.background]="theme.successColor" (click)="copyColor(theme.successColor)">
+              <mat-icon style="color: white">check_circle</mat-icon>
+            </div>
+            <span class="semantic-label">Main</span>
+            <span class="color-hex">{{ theme.successColor }}</span>
+          </div>
+          <div class="semantic-item">
+            <div class="semantic-swatch" [style.background]="theme.successDarkColor" (click)="copyColor(theme.successDarkColor)">
+              <mat-icon style="color: white">check_circle</mat-icon>
+            </div>
+            <span class="semantic-label">Dark</span>
+            <span class="color-hex">{{ theme.successDarkColor }}</span>
+          </div>
+        </div>
+        <div class="semantic-example success">
+          <mat-icon>check_circle</mat-icon>
+          <span>Success! Your changes have been saved.</span>
+        </div>
+      </div>
+
+      <!-- Warning States -->
+      <div class="semantic-group">
+        <h5>Warning States</h5>
+        <div class="semantic-colors">
+          <div class="semantic-item">
+            <div class="semantic-swatch" [style.background]="theme.warningLightColor" (click)="copyColor(theme.warningLightColor)">
+              <mat-icon [style.color]="theme.warningDarkColor">warning</mat-icon>
+            </div>
+            <span class="semantic-label">Light</span>
+            <span class="color-hex">{{ theme.warningLightColor }}</span>
+          </div>
+          <div class="semantic-item main">
+            <div class="semantic-swatch" [style.background]="theme.warningColor" (click)="copyColor(theme.warningColor)">
+              <mat-icon style="color: white">warning</mat-icon>
+            </div>
+            <span class="semantic-label">Main</span>
+            <span class="color-hex">{{ theme.warningColor }}</span>
+          </div>
+          <div class="semantic-item">
+            <div class="semantic-swatch" [style.background]="theme.warningDarkColor" (click)="copyColor(theme.warningDarkColor)">
+              <mat-icon style="color: white">warning</mat-icon>
+            </div>
+            <span class="semantic-label">Dark</span>
+            <span class="color-hex">{{ theme.warningDarkColor }}</span>
+          </div>
+        </div>
+        <div class="semantic-example warning">
+          <mat-icon>warning</mat-icon>
+          <span>Warning: Please review before proceeding.</span>
+        </div>
+      </div>
+
+      <!-- Error States -->
+      <div class="semantic-group">
+        <h5>Error States</h5>
+        <div class="semantic-colors">
+          <div class="semantic-item">
+            <div class="semantic-swatch" [style.background]="theme.errorLightColor" (click)="copyColor(theme.errorLightColor)">
+              <mat-icon [style.color]="theme.errorDarkColor">error</mat-icon>
+            </div>
+            <span class="semantic-label">Light</span>
+            <span class="color-hex">{{ theme.errorLightColor }}</span>
+          </div>
+          <div class="semantic-item main">
+            <div class="semantic-swatch" [style.background]="theme.errorColor" (click)="copyColor(theme.errorColor)">
+              <mat-icon style="color: white">error</mat-icon>
+            </div>
+            <span class="semantic-label">Main</span>
+            <span class="color-hex">{{ theme.errorColor }}</span>
+          </div>
+          <div class="semantic-item">
+            <div class="semantic-swatch" [style.background]="theme.errorDarkColor" (click)="copyColor(theme.errorDarkColor)">
+              <mat-icon style="color: white">error</mat-icon>
+            </div>
+            <span class="semantic-label">Dark</span>
+            <span class="color-hex">{{ theme.errorDarkColor }}</span>
+          </div>
+        </div>
+        <div class="semantic-example error">
+          <mat-icon>error</mat-icon>
+          <span>Error: Unable to complete the operation.</span>
+        </div>
+      </div>
+
+      <!-- Info States -->
+      <div class="semantic-group">
+        <h5>Info States</h5>
+        <div class="semantic-colors">
+          <div class="semantic-item">
+            <div class="semantic-swatch" [style.background]="theme.infoLightColor" (click)="copyColor(theme.infoLightColor)">
+              <mat-icon [style.color]="theme.infoDarkColor">info</mat-icon>
+            </div>
+            <span class="semantic-label">Light</span>
+            <span class="color-hex">{{ theme.infoLightColor }}</span>
+          </div>
+          <div class="semantic-item main">
+            <div class="semantic-swatch" [style.background]="theme.infoColor" (click)="copyColor(theme.infoColor)">
+              <mat-icon style="color: white">info</mat-icon>
+            </div>
+            <span class="semantic-label">Main</span>
+            <span class="color-hex">{{ theme.infoColor }}</span>
+          </div>
+          <div class="semantic-item">
+            <div class="semantic-swatch" [style.background]="theme.infoDarkColor" (click)="copyColor(theme.infoDarkColor)">
+              <mat-icon style="color: white">info</mat-icon>
+            </div>
+            <span class="semantic-label">Dark</span>
+            <span class="color-hex">{{ theme.infoDarkColor }}</span>
+          </div>
+        </div>
+        <div class="semantic-example info">
+          <mat-icon>info</mat-icon>
+          <span>Info: New features are available.</span>
+        </div>
+      </div>
+    </div>
+
+    <mat-divider class="palette-divider"></mat-divider>
+
+    <!-- Color Relationships & Contrast -->
+    <div class="color-section">
+      <h4 class="section-title">Color Relationships & Contrast Ratios</h4>
+
+      <!-- Primary Relationships -->
+      <div class="color-relationships">
+        <div class="relationship-item">
+          <div class="color-pair">
+            <div class="color-a" [style.background]="theme.primaryColor"></div>
+            <div class="color-b" [style.background]="theme.backgroundColor"></div>
+          </div>
+          <div class="relationship-info">
+            <span class="relationship-name">Primary on Background</span>
+            <span class="contrast-ratio" [class.pass]="getContrastRatio('primaryColor', 'backgroundColor') >= 4.5">
+              {{ getContrastRatio('primaryColor', 'backgroundColor').toFixed(2) }}:1
+              <mat-icon>{{ getContrastRatio('primaryColor', 'backgroundColor') >= 4.5 ? 'check' : 'close' }}</mat-icon>
+            </span>
+          </div>
+        </div>
+
+        <div class="relationship-item">
+          <div class="color-pair">
+            <div class="color-a" [style.background]="theme.textColor"></div>
+            <div class="color-b" [style.background]="theme.backgroundColor"></div>
+          </div>
+          <div class="relationship-info">
+            <span class="relationship-name">Text on Background</span>
+            <span class="contrast-ratio" [class.pass]="getContrastRatio('textColor', 'backgroundColor') >= 4.5">
+              {{ getContrastRatio('textColor', 'backgroundColor').toFixed(2) }}:1
+              <mat-icon>{{ getContrastRatio('textColor', 'backgroundColor') >= 4.5 ? 'check' : 'close' }}</mat-icon>
+            </span>
+          </div>
+        </div>
+
+        <div class="relationship-item">
+          <div class="color-pair">
+            <div class="color-a" [style.background]="theme.textSecondaryColor"></div>
+            <div class="color-b" [style.background]="theme.backgroundColor"></div>
+          </div>
+          <div class="relationship-info">
+            <span class="relationship-name">Secondary Text on Background</span>
+            <span class="contrast-ratio" [class.pass]="getContrastRatio('textSecondaryColor', 'backgroundColor') >= 4.5">
+              {{ getContrastRatio('textSecondaryColor', 'backgroundColor').toFixed(2) }}:1
+              <mat-icon>{{ getContrastRatio('textSecondaryColor', 'backgroundColor') >= 4.5 ? 'check' : 'close' }}</mat-icon>
+            </span>
+          </div>
+        </div>
+
+        <div class="relationship-item">
+          <div class="color-pair">
+            <div class="color-a" [style.background]="'white'"></div>
+            <div class="color-b" [style.background]="theme.primaryColor"></div>
+          </div>
+          <div class="relationship-info">
+            <span class="relationship-name">White on Primary</span>
+            <span class="contrast-ratio" [class.pass]="getContrastRatioWithWhite('primaryColor') >= 4.5">
+              {{ getContrastRatioWithWhite('primaryColor').toFixed(2) }}:1
+              <mat-icon>{{ getContrastRatioWithWhite('primaryColor') >= 4.5 ? 'check' : 'close' }}</mat-icon>
+            </span>
+          </div>
+        </div>
+
+        <div class="relationship-item">
+          <div class="color-pair">
+            <div class="color-a" [style.background]="theme.textColor"></div>
+            <div class="color-b" [style.background]="theme.surfaceCard"></div>
+          </div>
+          <div class="relationship-info">
+            <span class="relationship-name">Text on Card</span>
+            <span class="contrast-ratio" [class.pass]="getContrastRatio('textColor', 'surfaceCard') >= 4.5">
+              {{ getContrastRatio('textColor', 'surfaceCard').toFixed(2) }}:1
+              <mat-icon>{{ getContrastRatio('textColor', 'surfaceCard') >= 4.5 ? 'check' : 'close' }}</mat-icon>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- WCAG Guidelines -->
+      <div class="wcag-info">
+        <h5>WCAG Accessibility Guidelines</h5>
+        <div class="wcag-levels">
+          <div class="wcag-level">
+            <span class="level-badge aa">AA</span>
+            <span>Normal text: 4.5:1 • Large text: 3:1</span>
+          </div>
+          <div class="wcag-level">
+            <span class="level-badge aaa">AAA</span>
+            <span>Normal text: 7:1 • Large text: 4.5:1</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <mat-divider class="palette-divider"></mat-divider>
+
+    <!-- Surface States -->
+    <div class="color-section">
+      <h4 class="section-title">Surface States & Overlays</h4>
+      <div class="surface-states">
+        <div class="surface-item">
+          <div class="surface-preview" [style.background]="theme.surfaceHover">
+            <span>Hover State</span>
+          </div>
+          <span class="color-hex">{{ theme.surfaceHover }}</span>
+        </div>
+        <div class="surface-item">
+          <div class="surface-preview" [style.background]="theme.surfaceFocus">
+            <span>Focus State</span>
+          </div>
+          <span class="color-hex">{{ theme.surfaceFocus }}</span>
+        </div>
+        <div class="surface-item">
+          <div class="surface-preview" [style.background]="theme.surfaceSelected">
+            <span>Selected State</span>
+          </div>
+          <span class="color-hex">{{ theme.surfaceSelected }}</span>
+        </div>
+        <div class="surface-item">
+          <div class="surface-preview" [style.background]="theme.surfaceDisabled">
+            <span>Disabled State</span>
+          </div>
+          <span class="color-hex">{{ theme.surfaceDisabled }}</span>
+        </div>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>

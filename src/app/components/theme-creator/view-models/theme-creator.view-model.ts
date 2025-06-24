@@ -48,6 +48,7 @@ export class ThemeCreatorViewModel {
     this.themeForm.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(values => {
+        // Update current theme immediately
         this.currentTheme = { ...this.currentTheme, ...values };
       });
   }
@@ -63,13 +64,17 @@ export class ThemeCreatorViewModel {
   }
 
   updateThemeProperty(property: keyof ThemeConfig, value: any): void {
+    // Update current theme immediately
     this.currentTheme = { ...this.currentTheme, [property]: value };
+    // Update form without emitting to avoid circular updates
     this.themeForm.patchValue({ [property]: value }, { emitEvent: false });
   }
 
   onThemeChange(changes: Partial<ThemeConfig>): void {
+    // Update current theme immediately
     this.currentTheme = { ...this.currentTheme, ...changes };
-    this.themeFormService.updateFormValues(this.themeForm, this.currentTheme);
+    // Update form without emitting to avoid circular updates
+    this.themeForm.patchValue(changes, { emitEvent: false });
   }
 
   applyThemeToPreview(previewRoot: HTMLElement): void {
@@ -87,7 +92,7 @@ export class ThemeCreatorViewModel {
   }
 
   resetTheme(): void {
-    const defaultTheme = this.getDefaultTheme();
+    const defaultTheme = { ...ThemeDefaults.DEFAULT_THEME };
     this.currentTheme = defaultTheme;
     this.themeFormService.updateFormValues(this.themeForm, defaultTheme);
   }

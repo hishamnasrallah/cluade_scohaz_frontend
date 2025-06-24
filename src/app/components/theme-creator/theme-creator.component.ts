@@ -39,6 +39,7 @@ import { AccessibilityControlsComponent } from '../theme-controls/accessibility-
 import { GradientEditorComponent } from '../theme-controls/gradient-editor/gradient-editor.component';
 import { IconStyleSelectorComponent } from '../theme-controls/icon-style-selector/icon-style-selector.component';
 import { DensityControlsComponent } from '../theme-controls/density-controls/density-controls.component';
+import { ColorPaletteDisplayComponent } from '../theme-controls/color-palette-display/color-palette-display.component';
 
 // Services and View Model
 import { ThemeService } from '../../services/theme.service';
@@ -62,7 +63,7 @@ import {
 } from './constants/style-options.constant';
 
 // Models
-import { ThemePreset } from '../../models/theme.model';
+import { ThemePreset, getContrastRatio } from '../../models/theme.model';
 
 @Component({
   selector: 'app-theme-creator',
@@ -101,13 +102,11 @@ import { ThemePreset } from '../../models/theme.model';
     AnimationControlsComponent,
     BrandControlsComponent,
     AccessibilityControlsComponent,
-    // GradientEditorComponent,
-    DensityControlsComponent,
-    IconStyleSelectorComponent,
-    // NEW ADVANCED COMPONENTS
     GradientEditorComponent,
     IconStyleSelectorComponent,
-    DensityControlsComponent
+    DensityControlsComponent,
+    ColorPaletteDisplayComponent,
+    // ColorPaletteDisplayComponent
   ],
   providers: [
     ThemeFormService,
@@ -121,7 +120,6 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('previewContainer', { read: ElementRef }) previewContainer!: ElementRef;
 
   private previewRoot!: HTMLElement;
-  private updatePreviewDebounceTimer: any;
 
   // Constants exposed to template
   readonly themePresets: ThemePreset[] = THEME_PRESETS;
@@ -149,7 +147,10 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
-    // View model handles initialization
+    // Subscribe to theme changes to update preview immediately
+    this.vm.themeForm.valueChanges.subscribe(() => {
+      this.updatePreviewImmediate();
+    });
   }
 
   ngAfterViewInit(): void {
@@ -163,10 +164,19 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnDestroy(): void {
-    if (this.updatePreviewDebounceTimer) {
-      clearTimeout(this.updatePreviewDebounceTimer);
-    }
     this.vm.destroy();
+  }
+
+  // Add the contrast ratio methods
+  getContrastRatio(color1Key: keyof typeof this.currentTheme, color2Key: keyof typeof this.currentTheme): number {
+    const color1 = this.currentTheme[color1Key] as string;
+    const color2 = this.currentTheme[color2Key] as string;
+    return getContrastRatio(color1, color2);
+  }
+
+  getContrastRatioWithWhite(colorKey: keyof typeof this.currentTheme): number {
+    const color = this.currentTheme[colorKey] as string;
+    return getContrastRatio(color, '#FFFFFF');
   }
 
   applyPreset(preset: ThemePreset): void {
@@ -181,12 +191,12 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
 
   updateThemeProperty(property: keyof typeof this.currentTheme, value: any): void {
     this.vm.updateThemeProperty(property, value);
-    this.updatePreviewImmediate(); // Changed from debounced to immediate
+    this.updatePreviewImmediate();
   }
 
   onThemeChange(changes: Partial<typeof this.currentTheme>): void {
     this.vm.onThemeChange(changes);
-    this.updatePreviewImmediate(); // Changed from debounced to immediate
+    this.updatePreviewImmediate();
   }
 
   private updatePreviewImmediate(): void {
@@ -195,21 +205,6 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
       // Force change detection to ensure Angular updates the view
       this.cdr.detectChanges();
     }
-  }
-
-  private updatePreviewDebounced(): void {
-    // Clear any existing timer
-    if (this.updatePreviewDebounceTimer) {
-      clearTimeout(this.updatePreviewDebounceTimer);
-    }
-
-    // Update immediately for better user experience
-    this.updatePreviewImmediate();
-
-    // Also set a debounced update in case of rapid changes
-    this.updatePreviewDebounceTimer = setTimeout(() => {
-      this.updatePreviewImmediate();
-    }, 50);
   }
 
   async saveTheme(): Promise<void> {
@@ -273,7 +268,6 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
 
   openAdvancedSettings(): void {
     this.showAdvancedSettings = true;
-    // You can implement a dialog here for advanced settings
   }
 
   refreshPreview(): void {
