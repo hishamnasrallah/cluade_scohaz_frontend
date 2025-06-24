@@ -6,7 +6,7 @@ import { ThemeConfig, ThemeDefaults, ThemePreset } from '../../../models/theme.m
 import { ThemeService } from '../../../services/theme.service';
 import { ThemeFormService } from '../services/theme-form.service';
 import { ThemePreviewService } from '../services/theme-preview.service';
-import { ThemeImportExportUtil } from '../utils/theme-import-export.util';
+import { ThemeImportExportUtil, ExportOptions } from '../utils/theme-import-export.util';
 
 @Injectable()
 export class ThemeCreatorViewModel {
@@ -97,8 +97,19 @@ export class ThemeCreatorViewModel {
     this.themeFormService.updateFormValues(this.themeForm, defaultTheme);
   }
 
-  exportTheme(): void {
-    ThemeImportExportUtil.exportTheme(this.currentTheme);
+  // Updated export method with options
+  exportTheme(options?: ExportOptions): void {
+    if (options) {
+      ThemeImportExportUtil.exportTheme(this.currentTheme, options);
+    } else {
+      // Default to JSON export
+      ThemeImportExportUtil.exportTheme(this.currentTheme, { format: 'json' });
+    }
+  }
+
+  // Export all formats
+  async exportAllFormats(): Promise<void> {
+    await ThemeImportExportUtil.exportAllFormats(this.currentTheme);
   }
 
   async importTheme(file: File): Promise<void> {

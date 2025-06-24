@@ -1,0 +1,179 @@
+// Example: How to add new properties to your theme configuration
+
+// 1. First, extend your ThemeConfig interface in theme.model.ts
+export interface ThemeConfig {
+  // ... existing properties ...
+
+  // Example: Adding new animation properties
+  animationStagger?: number;
+  animationSpringDamping?: number;
+  animationSpringStiffness?: number;
+  animationBounce?: number;
+
+  // Example: Adding new layout properties
+  headerHeight?: number;
+  footerHeight?: number;
+  contentMaxWidth?: number;
+  sidebarCollapsedWidth?: number;
+
+  // Example: Adding new component properties
+  tabHeight?: number;
+  tabPaddingX?: number;
+  tabPaddingY?: number;
+  tabBorderRadius?: number;
+
+  chipHeight?: number;
+  chipPaddingX?: number;
+  chipBorderRadius?: number;
+
+  avatarSizeSmall?: number;
+  avatarSizeMedium?: number;
+  avatarSizeLarge?: number;
+
+  // Example: Adding new effect properties
+  glowIntensity?: number;
+  glowColor?: string;
+  glowSpread?: number;
+
+  neonEffect?: boolean;
+  neonColor?: string;
+  neonIntensity?: number;
+
+  // Example: Adding new gradient properties
+  gradientStops?: number;
+  gradientType?: 'linear' | 'radial' | 'conic';
+  gradientRepeat?: boolean;
+
+  // Example: Adding pattern/texture properties
+  backgroundPattern?: 'none' | 'dots' | 'grid' | 'lines' | 'waves';
+  patternColor?: string;
+  patternOpacity?: number;
+  patternSize?: number;
+}
+
+// 2. Add default values to ThemeDefaults
+export const ThemeDefaults = {
+  DEFAULT_THEME: {
+    // ... existing defaults ...
+
+    // Animation defaults
+    animationStagger: 50,
+    animationSpringDamping: 0.8,
+    animationSpringStiffness: 100,
+    animationBounce: 0.3,
+
+    // Layout defaults
+    headerHeight: 64,
+    footerHeight: 48,
+    contentMaxWidth: 1200,
+
+    // Component defaults
+    tabHeight: 48,
+    tabPaddingX: 24,
+    tabPaddingY: 12,
+    tabBorderRadius: 8,
+
+    chipHeight: 32,
+    chipPaddingX: 16,
+    chipBorderRadius: 16,
+
+    avatarSizeSmall: 32,
+    avatarSizeMedium: 48,
+    avatarSizeLarge: 64,
+
+    // Effect defaults
+    glowIntensity: 0.5,
+    glowColor: '#34C5AA',
+    glowSpread: 10,
+
+    neonEffect: false,
+    neonColor: '#FF00FF',
+    neonIntensity: 1,
+
+    // Gradient defaults
+    gradientStops: 2,
+    gradientType: 'linear' as const,
+    gradientRepeat: false,
+
+    // Pattern defaults
+    backgroundPattern: 'none' as const,
+    patternColor: 'rgba(0, 0, 0, 0.05)',
+    patternOpacity: 0.1,
+    patternSize: 20,
+  }
+};
+
+// 3. Update the theme form service to include new controls
+// In theme-form.service.ts, add to createThemeForm():
+animationStagger: [50],
+animationSpringDamping: [0.8],
+animationSpringStiffness: [100],
+animationBounce: [0.3],
+
+headerHeight: [64],
+footerHeight: [48],
+contentMaxWidth: [1200],
+
+tabHeight: [48],
+tabPaddingX: [24],
+tabPaddingY: [12],
+tabBorderRadius: [8],
+
+// ... etc
+
+// 4. The ThemeImportExportUtil will automatically include these new properties
+// in the export without any changes needed!
+
+// 5. Update the preview service to apply new properties
+// In theme-preview.service.ts, add methods like:
+private applyNewAnimationProperties(root: HTMLElement, theme: ThemeConfig): void {
+  root.style.setProperty(`${this.CSS_PREFIX}-animation-stagger`, `${theme.animationStagger || 50}ms`);
+  root.style.setProperty(`${this.CSS_PREFIX}-animation-spring-damping`, (theme.animationSpringDamping || 0.8).toString());
+  root.style.setProperty(`${this.CSS_PREFIX}-animation-spring-stiffness`, (theme.animationSpringStiffness || 100).toString());
+  root.style.setProperty(`${this.CSS_PREFIX}-animation-bounce`, (theme.animationBounce || 0.3).toString());
+}
+
+private applyNewLayoutProperties(root: HTMLElement, theme: ThemeConfig): void {
+  root.style.setProperty(`${this.CSS_PREFIX}-header-height`, `${theme.headerHeight || 64}px`);
+  root.style.setProperty(`${this.CSS_PREFIX}-footer-height`, `${theme.footerHeight || 48}px`);
+  root.style.setProperty(`${this.CSS_PREFIX}-content-max-width`, `${theme.contentMaxWidth || 1200}px`);
+}
+
+// 6. Create a new control component for the new properties
+// Example: animation-advanced-controls.component.ts
+@Component({
+  selector: 'app-animation-advanced-controls',
+  template: `
+    <div class="control-group">
+      <h4>Advanced Animation Properties</h4>
+
+      <div class="control-item">
+        <label>Stagger Delay: {{ theme.animationStagger }}ms</label>
+        <mat-slider [min]="0" [max]="200" [step]="10" [discrete]="true">
+          <input matSliderThumb
+                 [value]="theme.animationStagger"
+                 (valueChange)="updateProperty('animationStagger', $event)">
+        </mat-slider>
+      </div>
+
+      <div class="control-item">
+        <label>Spring Damping: {{ theme.animationSpringDamping }}</label>
+        <mat-slider [min]="0" [max]="1" [step]="0.05" [discrete]="true">
+          <input matSliderThumb
+                 [value]="theme.animationSpringDamping"
+                 (valueChange)="updateProperty('animationSpringDamping', $event)">
+        </mat-slider>
+      </div>
+
+      <!-- Add more controls for other properties -->
+    </div>
+  `
+})
+export class AnimationAdvancedControlsComponent {
+  @Input() theme!: ThemeConfig;
+  @Output() themeChange = new EventEmitter<Partial<ThemeConfig>>();
+
+  updateProperty(key: keyof ThemeConfig, value: any): void {
+    this.themeChange.emit({ [key]: value });
+  }
+}

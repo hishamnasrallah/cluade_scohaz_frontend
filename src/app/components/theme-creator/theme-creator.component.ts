@@ -1,4 +1,4 @@
-// src/app/components/theme-creator/theme-creator.component.ts (COMPLETE FULL FILE - UPDATED)
+// src/app/components/theme-creator/theme-creator.component.ts (Updated export functionality)
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -15,7 +15,7 @@ import { MatSliderModule } from '@angular/material/slider';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialogModule } from '@angular/material/dialog';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatChipsModule } from '@angular/material/chips';
@@ -41,11 +41,17 @@ import { IconStyleSelectorComponent } from '../theme-controls/icon-style-selecto
 import { DensityControlsComponent } from '../theme-controls/density-controls/density-controls.component';
 import { ColorPaletteDisplayComponent } from '../theme-controls/color-palette-display/color-palette-display.component';
 
+// Dialog Component
+import { ExportThemeDialogComponent } from '../theme-controls/dialogs/export-theme-dialog.component';
+
 // Services and View Model
 import { ThemeService } from '../../services/theme.service';
 import { ThemeFormService } from './services/theme-form.service';
 import { ThemePreviewService } from './services/theme-preview.service';
 import { ThemeCreatorViewModel } from './view-models/theme-creator.view-model';
+
+// Utils
+import { ThemeImportExportUtil } from './utils/theme-import-export.util';
 
 // Constants
 import { THEME_PRESETS } from './constants/theme-presets.constant';
@@ -106,7 +112,8 @@ import { ThemePreset, getContrastRatio } from '../../models/theme.model';
     IconStyleSelectorComponent,
     DensityControlsComponent,
     ColorPaletteDisplayComponent,
-    // ColorPaletteDisplayComponent
+    // Dialog
+    // ExportThemeDialogComponent
   ],
   providers: [
     ThemeFormService,
@@ -143,6 +150,7 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
   constructor(
     public vm: ThemeCreatorViewModel,
     private snackBar: MatSnackBar,
+    private dialog: MatDialog,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -231,11 +239,33 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
+  // Updated export method to use dialog
   exportTheme(): void {
-    this.vm.exportTheme();
-    this.snackBar.open('Theme exported successfully!', 'Close', {
-      duration: 3000,
-      panelClass: ['success-snackbar']
+    const dialogRef = this.dialog.open(ExportThemeDialogComponent, {
+      width: '600px',
+      data: { theme: this.currentTheme }
+    });
+
+    dialogRef.afterClosed().subscribe(exportOptions => {
+      if (exportOptions) {
+        try {
+          ThemeImportExportUtil.exportTheme(this.currentTheme, exportOptions);
+
+          this.snackBar.open(
+            `Theme exported as ${exportOptions.format.toUpperCase()}!`,
+            'Close',
+            {
+              duration: 3000,
+              panelClass: ['success-snackbar']
+            }
+          );
+        } catch (error) {
+          this.snackBar.open('Failed to export theme', 'Close', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
+        }
+      }
     });
   }
 
@@ -245,6 +275,15 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
 
     if (file) {
       try {
+        // Check file extension
+        if (!file.name.endsWith('.json')) {
+          this.snackBar.open('Please select a JSON theme file', 'Close', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
+          return;
+        }
+
         await this.vm.importTheme(file);
         this.updatePreviewImmediate();
 
@@ -252,8 +291,8 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
           duration: 3000,
           panelClass: ['success-snackbar']
         });
-      } catch (error) {
-        this.snackBar.open('Invalid theme file', 'Close', {
+      } catch (error: any) {
+        this.snackBar.open(error.message || 'Invalid theme file', 'Close', {
           duration: 3000,
           panelClass: ['error-snackbar']
         });
