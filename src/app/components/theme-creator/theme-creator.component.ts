@@ -190,7 +190,9 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
       width: '90vw',
       maxWidth: '1200px',
       height: '80vh',
-      data: { theme: this.currentTheme }
+      data: { theme: this.currentTheme },
+      panelClass: 'showcase-dialog-panel' // Add panel class for overflow control
+
     });
 
     dialogRef.afterClosed().subscribe(result => {

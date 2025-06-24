@@ -290,7 +290,7 @@ export interface ShowcaseDialogData {
     mat-dialog-actions {
       height: 56px;  // Fixed height
       padding: 12px 24px;
-      margin: 0;
+      margin-top: -20px;
       border-top: 1px solid rgba(0, 0, 0, 0.08);
       flex-shrink: 0;
 

@@ -95,6 +95,8 @@ export interface ThemePreviewData {
       flex: 1;
       padding: 0 !important;
       overflow: hidden;
+      height: calc(90vh - 120px);  // Account for header and actions
+
     }
 
     .preview-container {

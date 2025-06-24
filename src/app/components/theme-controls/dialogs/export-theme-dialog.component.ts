@@ -1,4 +1,4 @@
-// src/app/components/theme-creator/dialogs/export-theme-dialog.component.ts
+// src/app/components/theme-controls/dialogs/export-theme-dialog.component.ts
 import { Component, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -9,13 +9,10 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ThemeConfig } from '../../../models/theme.model';
-import { ExportFormat, ExportOptions } from '../../theme-creator';
-
-export interface ExportDialogData {
-  theme: ThemeConfig;
-}
+import { ExportOptions } from '../../theme-creator/utils/theme-import-export.util';
 
 @Component({
   selector: 'app-export-theme-dialog',
@@ -30,339 +27,337 @@ export interface ExportDialogData {
     MatFormFieldModule,
     MatInputModule,
     MatIconModule,
+    MatDividerModule,
     MatTooltipModule
   ],
   template: `
-    <h2 mat-dialog-title>
-      <mat-icon>download</mat-icon>
-      Export Theme
-    </h2>
+    <div class="export-dialog-container">
+      <h2 mat-dialog-title>
+        <mat-icon>download</mat-icon>
+        Export Theme
+      </h2>
 
-    <mat-dialog-content>
-      <div class="export-options">
-        <h3>Export Format</h3>
-        <mat-radio-group [(ngModel)]="selectedFormat" class="format-group">
-          <mat-radio-button value="json" class="format-option">
-            <div class="format-content">
-              <div class="format-header">
-                <mat-icon>code</mat-icon>
-                <span class="format-name">JSON</span>
+      <mat-dialog-content>
+        <div class="export-options">
+          <div class="format-section">
+            <h3>Export Format</h3>
+            <mat-radio-group [(ngModel)]="exportOptions.format" class="format-radio-group">
+              <mat-radio-button value="json" class="format-option">
+                <div class="format-info">
+                  <strong>JSON</strong>
+                  <span class="format-description">Complete theme configuration for import</span>
+                </div>
+              </mat-radio-button>
+
+              <mat-radio-button value="css" class="format-option">
+                <div class="format-info">
+                  <strong>CSS</strong>
+                  <span class="format-description">CSS custom properties for web projects</span>
+                </div>
+              </mat-radio-button>
+
+              <mat-radio-button value="scss" class="format-option">
+                <div class="format-info">
+                  <strong>SCSS</strong>
+                  <span class="format-description">SCSS variables and mixins</span>
+                </div>
+              </mat-radio-button>
+
+              <mat-radio-button value="both" class="format-option">
+                <div class="format-info">
+                  <strong>All Formats</strong>
+                  <span class="format-description">Export JSON and CSS files</span>
+                </div>
+              </mat-radio-button>
+            </mat-radio-group>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <div class="options-section" *ngIf="exportOptions.format !== 'json'">
+            <h3>Export Options</h3>
+
+            <mat-checkbox [(ngModel)]="exportOptions.includeComments" class="option-checkbox">
+              <div class="option-info">
+                <strong>Include Comments</strong>
+                <span class="option-description">Add helpful comments to the output</span>
               </div>
-              <p class="format-description">Complete theme configuration for re-importing</p>
-            </div>
-          </mat-radio-button>
+            </mat-checkbox>
 
-          <mat-radio-button value="css" class="format-option">
-            <div class="format-content">
-              <div class="format-header">
-                <mat-icon>style</mat-icon>
-                <span class="format-name">CSS</span>
+            <mat-checkbox [(ngModel)]="exportOptions.minify" class="option-checkbox">
+              <div class="option-info">
+                <strong>Minify Output</strong>
+                <span class="option-description">Remove whitespace for smaller file size</span>
               </div>
-              <p class="format-description">CSS custom properties for web projects</p>
-            </div>
-          </mat-radio-button>
+            </mat-checkbox>
 
-          <mat-radio-button value="scss" class="format-option">
-            <div class="format-content">
-              <div class="format-header">
-                <mat-icon>sass</mat-icon>
-                <span class="format-name">SCSS</span>
+            <mat-form-field appearance="outline" class="prefix-field">
+              <mat-label>CSS Variable Prefix</mat-label>
+              <input matInput
+                     [(ngModel)]="exportOptions.cssPrefix"
+                     placeholder="--theme">
+              <mat-hint>Prefix for CSS custom properties</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <div class="preview-section">
+            <h3>Theme Information</h3>
+            <div class="theme-info">
+              <div class="info-row">
+                <span class="info-label">Theme Name:</span>
+                <span class="info-value">{{ theme.brandName || 'Custom Theme' }}</span>
               </div>
-              <p class="format-description">SCSS variables and mixins for Sass projects</p>
-            </div>
-          </mat-radio-button>
-
-          <mat-radio-button value="both" class="format-option">
-            <div class="format-content">
-              <div class="format-header">
-                <mat-icon>folder_zip</mat-icon>
-                <span class="format-name">All Formats</span>
+              <div class="info-row">
+                <span class="info-label">Mode:</span>
+                <span class="info-value">{{ theme.mode || 'light' }}</span>
               </div>
-              <p class="format-description">Export all formats separately</p>
-            </div>
-          </mat-radio-button>
-        </mat-radio-group>
-
-        <div class="additional-options" *ngIf="selectedFormat === 'css' || selectedFormat === 'scss'">
-          <h3>Additional Options</h3>
-
-          <mat-checkbox [(ngModel)]="includeComments" class="option-checkbox">
-            <span class="option-label">Include comments</span>
-            <mat-icon class="info-icon"
-                      matTooltip="Add helpful comments to explain sections">
-              info_outline
-            </mat-icon>
-          </mat-checkbox>
-
-          <mat-checkbox [(ngModel)]="minify" class="option-checkbox">
-            <span class="option-label">Minify output</span>
-            <mat-icon class="info-icon"
-                      matTooltip="Remove whitespace and comments for smaller file size">
-              info_outline
-            </mat-icon>
-          </mat-checkbox>
-
-          <mat-form-field appearance="outline" class="prefix-field">
-            <mat-label>CSS Variable Prefix</mat-label>
-            <input matInput
-                   [(ngModel)]="cssPrefix"
-                   placeholder="--theme"
-                   [disabled]="selectedFormat === 'scss'">
-            <mat-hint>Prefix for CSS custom properties</mat-hint>
-          </mat-form-field>
-        </div>
-
-        <div class="preview-section">
-          <h3>Preview</h3>
-          <div class="preview-content">
-            <div class="file-preview">
-              <mat-icon>description</mat-icon>
-              <div class="file-info">
-                <span class="file-name">theme-{{ sanitizedBrandName }}-{{ timestamp }}.{{ getFileExtension() }}</span>
-                <span class="file-details">{{ getFormatDescription() }}</span>
+              <div class="info-row">
+                <span class="info-label">Design Style:</span>
+                <span class="info-value">{{ theme.designStyle || 'modern' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Primary Color:</span>
+                <span class="info-value color-preview">
+                  <span class="color-swatch" [style.background]="theme.primaryColor"></span>
+                  {{ theme.primaryColor }}
+                </span>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </mat-dialog-content>
+      </mat-dialog-content>
 
-    <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close>Cancel</button>
-      <button mat-raised-button
-              color="primary"
-              (click)="export()"
-              [disabled]="!selectedFormat">
-        <mat-icon>download</mat-icon>
-        Export
-      </button>
-    </mat-dialog-actions>
+      <mat-dialog-actions align="end">
+        <button mat-button (click)="onCancel()">Cancel</button>
+        <button mat-raised-button
+                color="primary"
+                (click)="onExport()"
+                [disabled]="!exportOptions.format">
+          <mat-icon>download</mat-icon>
+          Export Theme
+        </button>
+      </mat-dialog-actions>
+    </div>
   `,
   styles: [`
-    :host {
-      display: block;
-    }
-
-    mat-dialog-content {
-      min-width: 500px;
+    /* Container with overflow prevention */
+    .export-dialog-container {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
       max-width: 600px;
-      max-height: 70vh;
-      overflow-y: auto;
+      overflow: hidden;
     }
 
-    h2 {
+    /* Dialog title */
+    h2[mat-dialog-title] {
       display: flex;
       align-items: center;
       gap: 12px;
       margin: 0;
-      font-family: 'Poppins', sans-serif;
-
-      mat-icon {
-        color: #34C5AA;
-      }
+      padding: 24px 24px 20px;
+      font-size: 24px;
+      font-weight: 500;
+      color: #2F4858;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
     }
 
+    h2[mat-dialog-title] mat-icon {
+      color: #34C5AA;
+    }
+
+    /* Dialog content - prevent horizontal scroll */
+    mat-dialog-content {
+      padding: 0 !important;
+      margin: 0 !important;
+      height: calc(90vh - 120px);  // Account for header and actions
+
+      overflow-x: hidden !important;
+      overflow-y: auto;
+      max-height: 60vh;
+    }
+
+    /* Export options container */
+    .export-options {
+      padding: 24px;
+    }
+
+    /* Section headings */
     h3 {
-      margin: 24px 0 16px;
+      margin: 0 0 16px;
       font-size: 16px;
       font-weight: 600;
       color: #2F4858;
-      font-family: 'Poppins', sans-serif;
-
-      &:first-child {
-        margin-top: 0;
-      }
     }
 
-    .format-group {
+    /* Format section */
+    .format-section {
+      margin-bottom: 24px;
+    }
+
+    .format-radio-group {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 12px;
     }
 
     .format-option {
-      ::ng-deep .mdc-radio {
-        margin-right: 12px;
-      }
-
-      .format-content {
-        flex: 1;
-        padding: 16px;
-        background: rgba(196, 247, 239, 0.1);
-        border-radius: 12px;
-        border: 2px solid transparent;
-        transition: all 0.3s ease;
-
-        &:hover {
-          background: rgba(196, 247, 239, 0.2);
-          border-color: rgba(52, 197, 170, 0.3);
-        }
-      }
-
-      &.mat-mdc-radio-checked .format-content {
-        background: rgba(196, 247, 239, 0.3);
-        border-color: #34C5AA;
-      }
+      margin: 0;
     }
 
-    .format-header {
+    ::ng-deep .format-option .mat-mdc-radio-button-label {
+      width: 100%;
+    }
+
+    .format-info {
       display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 4px;
+      flex-direction: column;
+      gap: 4px;
+      padding: 8px 0;
+    }
 
-      mat-icon {
-        font-size: 20px;
-        width: 20px;
-        height: 20px;
-        color: #34C5AA;
-      }
-
-      .format-name {
-        font-weight: 600;
-        font-size: 15px;
-        color: #2F4858;
-      }
+    .format-info strong {
+      font-size: 14px;
+      color: #2F4858;
     }
 
     .format-description {
-      margin: 0;
-      font-size: 13px;
+      font-size: 12px;
       color: #6B7280;
-      line-height: 1.4;
     }
 
-    .additional-options {
-      margin-top: 24px;
-      padding: 20px;
-      background: rgba(196, 247, 239, 0.1);
-      border-radius: 12px;
+    /* Divider */
+    mat-divider {
+      margin: 24px 0;
+    }
+
+    /* Options section */
+    .options-section {
+      margin: 24px 0;
     }
 
     .option-checkbox {
-      display: flex;
-      align-items: center;
+      display: block;
       margin-bottom: 16px;
-
-      .option-label {
-        margin-right: 8px;
-      }
-
-      .info-icon {
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
-        color: #9CA3AF;
-        cursor: help;
-      }
     }
 
+    .option-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .option-info strong {
+      font-size: 14px;
+      color: #2F4858;
+    }
+
+    .option-description {
+      font-size: 12px;
+      color: #6B7280;
+    }
+
+    /* Prefix field */
     .prefix-field {
       width: 100%;
-      margin-top: 8px;
+      margin-top: 16px;
     }
 
+    /* Preview section */
     .preview-section {
       margin-top: 24px;
-    }
-
-    .preview-content {
-      padding: 16px;
-      background: #F9FAFB;
+      padding: 20px;
+      background: #F8FAFB;
       border-radius: 8px;
-      border: 1px solid #E5E7EB;
     }
 
-    .file-preview {
+    .theme-info {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+    }
+
+    .info-label {
+      color: #6B7280;
+      font-weight: 500;
+    }
+
+    .info-value {
+      color: #2F4858;
+      font-weight: 500;
+    }
+
+    .color-preview {
       display: flex;
       align-items: center;
-      gap: 12px;
-
-      mat-icon {
-        font-size: 32px;
-        width: 32px;
-        height: 32px;
-        color: #34C5AA;
-      }
-
-      .file-info {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-      }
-
-      .file-name {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 14px;
-        font-weight: 500;
-        color: #2F4858;
-      }
-
-      .file-details {
-        font-size: 12px;
-        color: #6B7280;
-      }
+      gap: 8px;
     }
 
-    mat-dialog-actions {
-      padding: 16px 24px;
-      margin: 0 -24px -24px;
-      border-top: 1px solid rgba(196, 247, 239, 0.3);
+    .color-swatch {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
 
-      button {
-        mat-icon {
-          margin-right: 4px;
-        }
+    /* Dialog actions */
+    mat-dialog-actions {
+      padding: 16px 24px !important;
+      margin: 0 !important;
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
+      gap: 12px;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .export-dialog-container {
+        max-width: 100vw;
+      }
+
+      .export-options {
+        padding: 16px;
+      }
+
+      h2[mat-dialog-title] {
+        padding: 20px 16px 16px;
+        font-size: 20px;
+      }
+
+      mat-dialog-actions {
+        padding: 12px 16px !important;
       }
     }
   `]
 })
 export class ExportThemeDialogComponent {
-  selectedFormat: ExportFormat = 'json';
-  includeComments = true;
-  minify = false;
-  cssPrefix = '--theme';
-
-  sanitizedBrandName: string;
-  timestamp = Date.now();
+  exportOptions: ExportOptions = {
+    format: 'json',
+    includeComments: true,
+    minify: false,
+    cssPrefix: '--theme'
+  };
 
   constructor(
     public dialogRef: MatDialogRef<ExportThemeDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: ExportDialogData
-  ) {
-    const brandName = data.theme.brandName || 'theme';
-    this.sanitizedBrandName = brandName.replace(/\s+/g, '-').toLowerCase();
+    @Inject(MAT_DIALOG_DATA) public data: { theme: ThemeConfig }
+  ) {}
+
+  get theme(): ThemeConfig {
+    return this.data.theme;
   }
 
-  getFileExtension(): string {
-    switch (this.selectedFormat) {
-      case 'json': return 'json';
-      case 'css': return 'css';
-      case 'scss': return 'scss';
-      case 'both': return 'zip';
-      default: return 'json';
-    }
+  onCancel(): void {
+    this.dialogRef.close();
   }
 
-  getFormatDescription(): string {
-    switch (this.selectedFormat) {
-      case 'json': return 'Theme configuration file';
-      case 'css': return 'CSS custom properties';
-      case 'scss': return 'SCSS variables and mixins';
-      case 'both': return 'All formats in separate files';
-      default: return '';
-    }
-  }
-
-  export(): void {
-    const options: ExportOptions = {
-      format: this.selectedFormat,
-      includeComments: this.includeComments,
-      minify: this.minify,
-      cssPrefix: this.cssPrefix
-    };
-
-    this.dialogRef.close(options);
+  onExport(): void {
+    this.dialogRef.close(this.exportOptions);
   }
 }
