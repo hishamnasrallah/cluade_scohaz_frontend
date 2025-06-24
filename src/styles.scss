@@ -548,3 +548,17 @@ h1, h2, h3, h4, h5, h6 {
     color: black !important;
   }
 }
+
+// Prevent dialog scrollbar
+.showcase-dialog-panel {
+  .mat-mdc-dialog-container {
+    padding: 0 !important;
+    overflow: hidden !important;
+
+    .mat-mdc-dialog-surface {
+      padding: 0 !important;
+      overflow: hidden !important;
+      max-height: 90vh !important;
+    }
+  }
+}

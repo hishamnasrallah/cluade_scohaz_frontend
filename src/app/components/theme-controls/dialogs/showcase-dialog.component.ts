@@ -51,14 +51,19 @@ export interface ShowcaseDialogData {
                   <mat-icon>open_in_new</mat-icon>
                 </button>
               </div>
-              <iframe #previewFrame
-                      class="preview-iframe"
-                      [srcdoc]="showcaseHtml"
-                      sandbox="allow-same-origin allow-scripts">
-              </iframe>
+              <div class="iframe-wrapper">
+                <iframe #previewFrame
+                        class="preview-iframe"
+                        [srcdoc]="showcaseHtml"
+                        sandbox="allow-same-origin allow-scripts"
+                        (load)="onIframeLoad()">
+                </iframe>
+                <div class="loading-overlay" *ngIf="isLoading">
+                  <mat-spinner diameter="40"></mat-spinner>
+                </div>
+              </div>
             </div>
           </mat-tab>
-
           <!-- Code Tab -->
           <mat-tab label="HTML Code">
             <div class="code-container">
@@ -131,6 +136,7 @@ export interface ShowcaseDialogData {
       width: 90vw;
       max-width: 1200px;
       height: 80vh;
+      overflow: hidden;
     }
 
     h2 {
@@ -138,6 +144,7 @@ export interface ShowcaseDialogData {
       align-items: center;
       gap: 12px;
       margin: 0;
+      padding: 16px 24px;
       font-family: 'Poppins', sans-serif;
       color: #2F4858;
 
@@ -149,12 +156,25 @@ export interface ShowcaseDialogData {
     mat-dialog-content {
       padding: 0;
       margin: 0;
-      height: calc(80vh - 120px);
+      height: calc(100% - 56px - 56px);  // Subtract header and footer heights exactly
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    ::ng-deep .mat-mdc-tab-group {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    ::ng-deep .mat-mdc-tab-header {
+      flex-shrink: 0;
     }
 
     ::ng-deep .mat-mdc-tab-body-wrapper {
-      height: 100%;
+      flex: 1;
+      overflow: hidden;
     }
 
     ::ng-deep .mat-mdc-tab-body {
@@ -165,15 +185,24 @@ export interface ShowcaseDialogData {
     ::ng-deep .mat-mdc-tab-body-content {
       height: 100%;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
-    .preview-container,
+    .preview-container {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      box-sizing: border-box;
+    }
+
     .code-container,
     .settings-container {
       height: 100%;
       display: flex;
       flex-direction: column;
-      padding: 16px;
+      padding: 12px;
     }
 
     .preview-toolbar,
@@ -182,16 +211,42 @@ export interface ShowcaseDialogData {
       align-items: center;
       justify-content: space-between;
       padding: 8px 0;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
       border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+      flex-shrink: 0;
+    }
+
+    .iframe-wrapper {
+      position: relative;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      height: 100%;
     }
 
     .preview-iframe {
       flex: 1;
       width: 100%;
+      height: 100%;
       border: 1px solid rgba(0, 0, 0, 0.08);
       border-radius: 8px;
       background: white;
+      display: block;
+
+    }
+
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
     }
 
     .code-preview {
@@ -205,6 +260,7 @@ export interface ShowcaseDialogData {
       font-family: 'JetBrains Mono', 'Consolas', monospace;
       font-size: 13px;
       line-height: 1.5;
+      min-height: 0;
 
       code {
         white-space: pre;
@@ -217,6 +273,8 @@ export interface ShowcaseDialogData {
     }
 
     .settings-container {
+      overflow-y: auto;
+
       h4 {
         margin: 0 0 24px;
         font-size: 18px;
@@ -230,9 +288,17 @@ export interface ShowcaseDialogData {
     }
 
     mat-dialog-actions {
-      padding: 16px 24px;
+      height: 56px;  // Fixed height
+      padding: 12px 24px;
       margin: 0;
       border-top: 1px solid rgba(0, 0, 0, 0.08);
+      flex-shrink: 0;
+
+      button {
+        mat-icon {
+          margin-right: 4px;
+        }
+      }
     }
 
     // Syntax highlighting
@@ -257,6 +323,7 @@ export class ShowcaseDialogComponent implements AfterViewInit {
   highlightedCode: SafeHtml = '';
   codeSize: string = '0 KB';
   lineCount: number = 0;
+  isLoading: boolean = true;
 
   options = {
     includeMetadata: true,
@@ -275,12 +342,70 @@ export class ShowcaseDialogComponent implements AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // Additional iframe setup if needed
+    // Initialize the preview iframe
+    if (this.previewFrame && this.previewFrame.nativeElement) {
+      const iframe = this.previewFrame.nativeElement;
+
+      // Wait for iframe to load
+      iframe.onload = () => {
+        this.applyIframeStyles(iframe);
+      };
+
+      // If already loaded (when srcdoc is used)
+      setTimeout(() => {
+        if (iframe.contentDocument) {
+          this.applyIframeStyles(iframe);
+        }
+      }, 100);
+    }
+  }
+  onIframeLoad(): void {
+    this.isLoading = false;
+    if (this.previewFrame && this.previewFrame.nativeElement) {
+      this.applyIframeStyles(this.previewFrame.nativeElement);
+    }
+  }
+
+  refreshPreview(): void {
+    this.isLoading = true;
+    this.generateShowcase();
+  }
+  private applyIframeStyles(iframe: HTMLIFrameElement): void {
+    try {
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDoc) return;
+
+      // Ensure the iframe has proper viewport settings
+      const viewport = iframeDoc.querySelector('meta[name="viewport"]');
+      if (!viewport) {
+        const meta = iframeDoc.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, initial-scale=1.0';
+        iframeDoc.head.appendChild(meta);
+      }
+
+      // Force a reflow to ensure styles are applied
+      iframeDoc.body.style.display = 'none';
+      iframeDoc.body.offsetHeight; // Force reflow
+      iframeDoc.body.style.display = 'block';
+    } catch (error) {
+      console.error('Error applying iframe styles:', error);
+    }
   }
 
   generateShowcase(): void {
     this.showcaseHtml = ThemeShowcaseUtil.generateShowcase(this.data.theme, this.options);
     this.updateCodeView();
+
+    // Force refresh of iframe after content update
+    if (this.previewFrame && this.previewFrame.nativeElement) {
+      const iframe = this.previewFrame.nativeElement;
+      // Reset srcdoc to force reload
+      iframe.srcdoc = '';
+      setTimeout(() => {
+        iframe.srcdoc = this.showcaseHtml;
+      }, 10);
+    }
   }
 
   updateCodeView(): void {
@@ -338,9 +463,6 @@ export class ShowcaseDialogComponent implements AfterViewInit {
     else return Math.round(bytes / 1048576) + ' MB';
   }
 
-  refreshPreview(): void {
-    this.generateShowcase();
-  }
 
   regenerateShowcase(): void {
     this.generateShowcase();

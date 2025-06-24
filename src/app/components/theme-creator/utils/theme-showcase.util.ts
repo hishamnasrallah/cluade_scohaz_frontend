@@ -366,6 +366,8 @@ export class ThemeShowcaseUtil {
   private static generateBaseStyles(theme: ThemeConfig, minify: boolean): string {
     return `
         /* Base Styles */
+        /* CSS Custom Properties are defined dynamically in :root */
+        /* stylelint-disable custom-property-pattern */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -645,31 +647,31 @@ export class ThemeShowcaseUtil {
             <h3>Core Colors</h3>
             <div class="color-grid">
                 <div class="color-card">
-                    <div class="color-preview" style="background-color: var(--theme-primary);">Primary</div>
+                    <div class="color-preview" style="background-color: ${theme.primaryColor};">Primary</div>
                     <div class="color-info">
                         <strong>Primary:</strong> ${theme.primaryColor}
                     </div>
                 </div>
                 <div class="color-card">
-                    <div class="color-preview" style="background-color: var(--theme-primary-light);">Primary Light</div>
+                    <div class="color-preview" style="background-color: ${theme.primaryLightColor || '#5FD3C4'};">Primary Light</div>
                     <div class="color-info">
                         <strong>Primary Light:</strong> ${theme.primaryLightColor || '#5FD3C4'}
                     </div>
                 </div>
                 <div class="color-card">
-                    <div class="color-preview" style="background-color: var(--theme-primary-dark);">Primary Dark</div>
+                    <div class="color-preview" style="background-color: ${theme.primaryDarkColor || '#2BA99B'};">Primary Dark</div>
                     <div class="color-info">
                         <strong>Primary Dark:</strong> ${theme.primaryDarkColor || '#2BA99B'}
                     </div>
                 </div>
                 <div class="color-card">
-                    <div class="color-preview" style="background-color: var(--theme-secondary);">Secondary</div>
+                    <div class="color-preview" style="background-color: ${theme.secondaryColor};">Secondary</div>
                     <div class="color-info">
                         <strong>Secondary:</strong> ${theme.secondaryColor}
                     </div>
                 </div>
                 <div class="color-card">
-                    <div class="color-preview" style="background-color: var(--theme-accent);">Accent</div>
+                    <div class="color-preview" style="background-color: ${theme.accentColor};">Accent</div>
                     <div class="color-info">
                         <strong>Accent:</strong> ${theme.accentColor}
                     </div>
@@ -679,25 +681,25 @@ export class ThemeShowcaseUtil {
             <h3>Semantic Colors</h3>
             <div class="color-grid">
                 <div class="color-card">
-                    <div class="color-preview" style="background-color: var(--theme-success);">Success</div>
+                    <div class="color-preview" style="background-color: ${theme.successColor};">Success</div>
                     <div class="color-info">
                         <strong>Success:</strong> ${theme.successColor}
                     </div>
                 </div>
                 <div class="color-card">
-                    <div class="color-preview" style="background-color: var(--theme-warning);">Warning</div>
+                    <div class="color-preview" style="background-color: ${theme.warningColor};">Warning</div>
                     <div class="color-info">
                         <strong>Warning:</strong> ${theme.warningColor}
                     </div>
                 </div>
                 <div class="color-card">
-                    <div class="color-preview" style="background-color: var(--theme-error);">Error</div>
+                    <div class="color-preview" style="background-color: ${theme.errorColor};">Error</div>
                     <div class="color-info">
                         <strong>Error:</strong> ${theme.errorColor}
                     </div>
                 </div>
                 <div class="color-card">
-                    <div class="color-preview" style="background-color: var(--theme-info);">Info</div>
+                    <div class="color-preview" style="background-color: ${theme.infoColor};">Info</div>
                     <div class="color-info">
                         <strong>Info:</strong> ${theme.infoColor}
                     </div>
@@ -705,8 +707,13 @@ export class ThemeShowcaseUtil {
             </div>
         </section>`;
   }
-
   private static generateTypography(theme: ThemeConfig): string {
+    // Build font weight styles
+    const lightWeight = `font-weight: ${theme.fontWeightLight || 300};`;
+    const regularWeight = `font-weight: ${theme.fontWeight || 400};`;
+    const mediumWeight = `font-weight: ${theme.fontWeightMedium || 500};`;
+    const boldWeight = `font-weight: ${theme.fontWeightBold || 700};`;
+
     return `
         <!-- Typography Section -->
         <section class="section">
@@ -729,15 +736,17 @@ export class ThemeShowcaseUtil {
             </div>
 
             <div style="margin-top: 32px;">
-                <p style="font-weight: var(--theme-font-weight-light);">Light Weight (${theme.fontWeightLight || 300}) - The quick brown fox jumps over the lazy dog</p>
-                <p style="font-weight: var(--theme-font-weight);">Regular Weight (${theme.fontWeight || 400}) - The quick brown fox jumps over the lazy dog</p>
-                <p style="font-weight: var(--theme-font-weight-medium);">Medium Weight (${theme.fontWeightMedium || 500}) - The quick brown fox jumps over the lazy dog</p>
-                <p style="font-weight: var(--theme-font-weight-bold);">Bold Weight (${theme.fontWeightBold || 700}) - The quick brown fox jumps over the lazy dog</p>
+                <p style="${lightWeight}">Light Weight (${theme.fontWeightLight || 300}) - The quick brown fox jumps over the lazy dog</p>
+                <p style="${regularWeight}">Regular Weight (${theme.fontWeight || 400}) - The quick brown fox jumps over the lazy dog</p>
+                <p style="${mediumWeight}">Medium Weight (${theme.fontWeightMedium || 500}) - The quick brown fox jumps over the lazy dog</p>
+                <p style="${boldWeight}">Bold Weight (${theme.fontWeightBold || 700}) - The quick brown fox jumps over the lazy dog</p>
             </div>
         </section>`;
   }
 
   private static generateComponents(theme: ThemeConfig): string {
+    const hoverBackground = `background: ${theme.surfaceHover || 'rgba(196, 247, 239, 0.3)'};`;
+
     return `
         <!-- Components Section -->
         <section class="section">
@@ -774,7 +783,7 @@ export class ThemeShowcaseUtil {
                     <h4>Elevated Card</h4>
                     <p class="text-secondary">This card has higher elevation for more prominence.</p>
                 </div>
-                <div class="card" style="background: var(--theme-surface-hover);">
+                <div class="card" style="${hoverBackground}">
                     <h4>Hover State Card</h4>
                     <p class="text-secondary">This shows the hover surface color.</p>
                 </div>
@@ -804,21 +813,27 @@ export class ThemeShowcaseUtil {
   }
 
   private static generateSpacing(theme: ThemeConfig): string {
+    // Pre-calculate spacing styles
+    const xsmallStyle = `width: ${theme.spacingXSmall || 4}px; height: ${theme.spacingXSmall || 4}px;`;
+    const smallStyle = `width: ${theme.spacingSmall || 8}px; height: ${theme.spacingSmall || 8}px;`;
+    const mediumStyle = `width: ${theme.spacingMedium || 16}px; height: ${theme.spacingMedium || 16}px;`;
+    const largeStyle = `width: ${theme.spacingLarge || 24}px; height: ${theme.spacingLarge || 24}px;`;
+    const xlargeStyle = `width: ${theme.spacingXLarge || 32}px; height: ${theme.spacingXLarge || 32}px;`;
+
     return `
         <!-- Spacing Section -->
         <section class="section">
             <h2 class="section-title">Spacing System</h2>
 
             <div class="spacing-demo">
-                <div class="spacing-box" style="width: var(--theme-spacing-xsmall); height: var(--theme-spacing-xsmall);">${theme.spacingXSmall || 4}px</div>
-                <div class="spacing-box" style="width: var(--theme-spacing-small); height: var(--theme-spacing-small);">${theme.spacingSmall || 8}px</div>
-                <div class="spacing-box" style="width: var(--theme-spacing-medium); height: var(--theme-spacing-medium);">${theme.spacingMedium || 16}px</div>
-                <div class="spacing-box" style="width: var(--theme-spacing-large); height: var(--theme-spacing-large);">${theme.spacingLarge || 24}px</div>
-                <div class="spacing-box" style="width: var(--theme-spacing-xlarge); height: var(--theme-spacing-xlarge);">${theme.spacingXLarge || 32}px</div>
+                <div class="spacing-box" style="${xsmallStyle}">${theme.spacingXSmall || 4}px</div>
+                <div class="spacing-box" style="${smallStyle}">${theme.spacingSmall || 8}px</div>
+                <div class="spacing-box" style="${mediumStyle}">${theme.spacingMedium || 16}px</div>
+                <div class="spacing-box" style="${largeStyle}">${theme.spacingLarge || 24}px</div>
+                <div class="spacing-box" style="${xlargeStyle}">${theme.spacingXLarge || 32}px</div>
             </div>
         </section>`;
   }
-
   private static generateShadows(theme: ThemeConfig): string {
     if (!theme.enableShadows) return '';
 
@@ -850,25 +865,31 @@ export class ThemeShowcaseUtil {
   }
 
   private static generateBorders(theme: ThemeConfig): string {
+    // Pre-calculate border radius values
+    const smallRadius = `border-radius: ${theme.borderRadiusSmall || 8}px;`;
+    const mediumRadius = `border-radius: ${theme.borderRadiusMedium || 12}px;`;
+    const largeRadius = `border-radius: ${theme.borderRadiusLarge || 16}px;`;
+    const circleRadius = `border-radius: ${theme.borderRadiusCircle || 9999}px; text-align: center;`;
+
     return `
         <!-- Border Radius Section -->
         <section class="section">
             <h2 class="section-title">Border Radius</h2>
 
             <div class="grid-4">
-                <div class="card" style="border-radius: var(--theme-radius-small);">
+                <div class="card" style="${smallRadius}">
                     <h5>Small Radius</h5>
                     <p class="text-secondary">${theme.borderRadiusSmall || 8}px</p>
                 </div>
-                <div class="card" style="border-radius: var(--theme-radius-medium);">
+                <div class="card" style="${mediumRadius}">
                     <h5>Medium Radius</h5>
                     <p class="text-secondary">${theme.borderRadiusMedium || 12}px</p>
                 </div>
-                <div class="card" style="border-radius: var(--theme-radius-large);">
+                <div class="card" style="${largeRadius}">
                     <h5>Large Radius</h5>
                     <p class="text-secondary">${theme.borderRadiusLarge || 16}px</p>
                 </div>
-                <div class="card" style="border-radius: var(--theme-radius-circle); text-align: center;">
+                <div class="card" style="${circleRadius}">
                     <h5>Circle</h5>
                     <p class="text-secondary">${theme.borderRadiusCircle || 9999}px</p>
                 </div>

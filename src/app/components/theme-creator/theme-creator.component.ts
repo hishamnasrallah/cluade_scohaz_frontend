@@ -177,10 +177,25 @@ export class ThemeCreatorComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   // Add the contrast ratio methods
+// Add the contrast ratio methods
   getContrastRatio(color1Key: keyof typeof this.currentTheme, color2Key: keyof typeof this.currentTheme): number {
     const color1 = this.currentTheme[color1Key] as string;
     const color2 = this.currentTheme[color2Key] as string;
     return getContrastRatio(color1, color2);
+  }
+
+  // Show the theme showcase dialog
+  showShowcase(): void {
+    const dialogRef = this.dialog.open(ShowcaseDialogComponent, {
+      width: '90vw',
+      maxWidth: '1200px',
+      height: '80vh',
+      data: { theme: this.currentTheme }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      // Handle any result if needed
+    });
   }
 
   getContrastRatioWithWhite(colorKey: keyof typeof this.currentTheme): number {
