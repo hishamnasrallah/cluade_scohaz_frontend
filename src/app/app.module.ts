@@ -32,6 +32,7 @@ import { LoginComponent } from './components/login/login.component';
 import { ConfigComponent } from './components/config/config.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { ApplicationDetailComponent } from './components/application-detail/application-detail.component';
+import { LogoComponent } from './components/logo/logo.component';
 
 // Guards & Interceptors
 import { AuthInterceptor } from './interceptors/auth.interceptor';
@@ -42,6 +43,7 @@ const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'config', component: ConfigComponent },
   { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] },
+  { path: 'logo', component: LogoComponent, canActivate: [AuthGuard] },
   { path: 'app/:appName', component: ApplicationDetailComponent, canActivate: [AuthGuard] },
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
   { path: '**', redirectTo: '/dashboard' }

@@ -9,6 +9,7 @@ import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { ApplicationDetailComponent } from './components/application-detail/application-detail.component';
 import { ApplicationsInboxComponent } from './components/applications-inbox/applications-inbox.component';
 import { ThemeCreatorComponent } from './components/theme-creator/theme-creator.component';
+import {LogoComponent} from './components/logo/logo.component';
 
 export const routes: Routes = [
   // Default route - redirect to dashboard
@@ -32,6 +33,10 @@ export const routes: Routes = [
   {
     path: 'theme-creator',
     component: ThemeCreatorComponent
+  },
+  {
+    path: 'logo-info',
+    component: LogoComponent
   },
   // Authentication required routes
   {
@@ -94,10 +99,20 @@ export const routes: Routes = [
         redirectTo: 'overview',
         pathMatch: 'full'
       },
+      // {
+      //   path: 'builder',
+      //   loadChildren: () =>
+      //     import('./builder/builder.routes').then((m) => m.BUILDER_ROUTES)
+      // },
       {
-        path: 'builder',
-        loadChildren: () =>
-          import('./builder/builder.routes').then((m) => m.BUILDER_ROUTES)
+        path: 'theme-creator',
+        loadComponent: () => import('./components/theme-creator/index').then(m => m.ThemeCreatorComponent),
+        data: { title: 'Theme Creator', icon: 'theme' }
+      },
+      {
+        path: 'logo-info',
+        loadComponent: () => import('./components/logo/logo.component').then(m => m.LogoComponent),
+        data: { title: 'Logo', icon: 'theme' }
       },
       {
         path: 'overview',

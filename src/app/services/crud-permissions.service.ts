@@ -185,22 +185,53 @@ export class CrudPermissionsService {
   /**
    * Bulk create permissions
    */
-  bulkCreatePermissions(permissions: Omit<CRUDPermission, 'id'>[]): Observable<CRUDPermission[]> {
-    return this.http.post<CRUDPermission[]>(this.getApiUrl('/auth/crud-permissions/bulk/'), { permissions });
+  bulkCreatePermissions(data: {
+    group: number;
+    content_types: number[];
+    contexts: string[];
+    can_create: boolean;
+    can_read: boolean;
+    can_update: boolean;
+    can_delete: boolean;
+  }): Observable<{
+    created: CRUDPermission[];
+    errors: string[];
+    created_count: number;
+  }> {
+    return this.http.post<{
+      created: CRUDPermission[];
+      errors: string[];
+      created_count: number;
+    }>(this.getApiUrl('/auth/crud-permissions/bulk-create/'), data);
   }
 
   /**
    * Bulk update permissions
    */
-  bulkUpdatePermissions(permissions: CRUDPermission[]): Observable<CRUDPermission[]> {
-    return this.http.put<CRUDPermission[]>(this.getApiUrl('/auth/crud-permissions/bulk/'), { permissions });
+  bulkUpdatePermissions(data: {
+    permission_ids: number[];
+    can_create?: boolean;
+    can_read?: boolean;
+    can_update?: boolean;
+    can_delete?: boolean;
+  }): Observable<{
+    updated: CRUDPermission[];
+    updated_count: number;
+  }> {
+    return this.http.put<{
+      updated: CRUDPermission[];
+      updated_count: number;
+    }>(this.getApiUrl('/auth/crud-permissions/bulk-update/'), data);
   }
 
   /**
    * Bulk delete permissions
    */
-  bulkDeletePermissions(ids: number[]): Observable<void> {
-    return this.http.delete<void>(this.getApiUrl('/auth/crud-permissions/bulk/'), { body: { ids } });
+  bulkDeletePermissions(permission_ids: number[]): Observable<{ deleted_count: number }> {
+    return this.http.delete<{ deleted_count: number }>(
+      this.getApiUrl('/auth/crud-permissions/bulk-delete/'),
+      { body: { permission_ids } }
+    );
   }
 
   /**

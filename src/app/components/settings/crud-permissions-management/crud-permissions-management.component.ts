@@ -63,12 +63,28 @@ import { CrudPermissionsService, CRUDPermission, Group, ContentTypeApp, ContentT
                     [disabled]="isLoading">
               <mat-icon [class.spinning]="isLoading">refresh</mat-icon>
             </button>
+            <button mat-button
+                    (click)="toggleBulkMode()"
+                    class="bulk-mode-btn"
+                    *ngIf="permissions.length > 0">
+              <mat-icon>{{ bulkModeEnabled ? 'close' : 'checklist' }}</mat-icon>
+              {{ bulkModeEnabled ? 'Exit Bulk Mode' : 'Bulk Mode' }}
+            </button>
             <button mat-raised-button
                     color="primary"
                     (click)="openCreateDialog()"
-                    class="create-btn">
+                    class="create-btn"
+                    *ngIf="!bulkModeEnabled">
               <mat-icon>add</mat-icon>
               Add Permission
+            </button>
+            <button mat-raised-button
+                    color="primary"
+                    (click)="openBulkCreateDialog()"
+                    class="create-btn"
+                    *ngIf="!bulkModeEnabled">
+              <mat-icon>add_circle_outline</mat-icon>
+              Bulk Add
             </button>
           </div>
         </div>
@@ -124,7 +140,19 @@ import { CrudPermissionsService, CRUDPermission, Group, ContentTypeApp, ContentT
       <div class="permissions-container" *ngIf="!isLoading">
         <div class="permissions-list">
           <div *ngFor="let permission of permissions"
-               class="permission-item">
+               class="permission-item"
+               [class.selectable]="bulkModeEnabled"
+               [class.selected]="isPermissionSelected(permission.id!)"
+               (click)="bulkModeEnabled && permission.id && togglePermissionSelection(permission.id)">
+
+            <!-- Bulk Selection Checkbox -->
+            <mat-checkbox
+              *ngIf="bulkModeEnabled && permission.id"
+              class="bulk-selection-checkbox"
+              [checked]="isPermissionSelected(permission.id)"
+              (click)="$event.stopPropagation()"
+              (change)="togglePermissionSelection(permission.id)">
+            </mat-checkbox>
 
             <!-- Permission Header -->
             <div class="permission-header">
@@ -142,7 +170,7 @@ import { CrudPermissionsService, CRUDPermission, Group, ContentTypeApp, ContentT
                   <mat-chip class="context-chip">{{ permission.context }}</mat-chip>
                   <mat-chip class="crud-chip">{{ getPermissionsSummary(permission) }}</mat-chip>
                 </div>
-                <div class="permission-actions">
+                <div class="permission-actions" *ngIf="!bulkModeEnabled">
                   <button mat-icon-button
                           (click)="editPermission(permission)"
                           class="action-btn"
@@ -210,13 +238,28 @@ import { CrudPermissionsService, CRUDPermission, Group, ContentTypeApp, ContentT
           </div>
         </div>
       </div>
+
+      <!-- Bulk Controls -->
+      <div class="bulk-controls" *ngIf="bulkModeEnabled && selectedPermissionIds.size > 0">
+        <span class="selected-count">{{ selectedPermissionIds.size }} selected</span>
+        <button mat-button (click)="selectAllPermissionsInList()">Select All</button>
+        <button mat-button (click)="deselectAllPermissionsInList()">Clear</button>
+        <button mat-raised-button color="primary" (click)="bulkUpdateSelectedPermissions()">
+          <mat-icon>edit</mat-icon>
+          Bulk Update
+        </button>
+        <button mat-raised-button color="warn" (click)="bulkDeleteSelectedPermissions()">
+          <mat-icon>delete</mat-icon>
+          Bulk Delete
+        </button>
+      </div>
     </div>
 
     <!-- Compact Dialog -->
     <ng-template #editDialog>
       <h2 mat-dialog-title>
         <mat-icon>{{ editingPermission?.id ? 'edit' : 'add' }}</mat-icon>
-        {{ editingPermission?.id ? 'Edit' : 'Create' }} Permission
+        {{ editingPermission?.id ? 'Edit' : (isBulkMode ? 'Bulk Create' : 'Create') }} Permission
       </h2>
 
       <mat-dialog-content class="dialog-content">
@@ -247,7 +290,7 @@ import { CrudPermissionsService, CRUDPermission, Group, ContentTypeApp, ContentT
           </mat-form-field>
 
           <!-- Model Selection -->
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" *ngIf="!isBulkMode">
             <mat-label>Model</mat-label>
             <mat-select formControlName="content_type" [disabled]="!selectedAppModels.length">
               <mat-option *ngFor="let model of selectedAppModels; trackBy: trackByModelId" [value]="model.id">
@@ -262,6 +305,27 @@ import { CrudPermissionsService, CRUDPermission, Group, ContentTypeApp, ContentT
               Please select an application first
             </mat-hint>
           </mat-form-field>
+
+          <!-- Bulk Model Selection -->
+          <div class="bulk-model-selection" *ngIf="isBulkMode && selectedAppModels.length > 0">
+            <label class="bulk-label">
+              <mat-icon>api</mat-icon>
+              Select Models
+            </label>
+            <div class="model-checkboxes">
+              <mat-checkbox
+                *ngFor="let model of selectedAppModels"
+                [checked]="isModelSelected(model.id)"
+                (change)="toggleModelSelection(model.id)"
+                class="model-checkbox">
+                {{ formatSingleModelName(model.model) }}
+              </mat-checkbox>
+            </div>
+            <div class="bulk-actions">
+              <button mat-button (click)="selectAllModels()">Select All</button>
+              <button mat-button (click)="deselectAllModels()">Clear</button>
+            </div>
+          </div>
 
           <!-- Context Selection -->
           <mat-form-field appearance="outline">
@@ -324,9 +388,9 @@ import { CrudPermissionsService, CRUDPermission, Group, ContentTypeApp, ContentT
         <button mat-raised-button
                 color="primary"
                 (click)="savePermission()"
-                [disabled]="!permissionForm.valid || isSaving">
+                [disabled]="!permissionForm.valid || isSaving || (isBulkMode && selectedModelIds.size === 0)">
           <mat-spinner diameter="16" *ngIf="isSaving"></mat-spinner>
-          {{ editingPermission?.id ? 'Update' : 'Create' }}
+          {{ editingPermission?.id ? 'Update' : (isBulkMode ? 'Bulk Create' : 'Create') }}
         </button>
       </mat-dialog-actions>
     </ng-template>
@@ -850,6 +914,123 @@ import { CrudPermissionsService, CRUDPermission, Group, ContentTypeApp, ContentT
       }
     }
 
+    /* Bulk Mode Styles */
+    .bulk-mode-btn {
+      background: rgba(102, 126, 234, 0.1);
+      color: #667EEA;
+
+      &:hover {
+        background: rgba(102, 126, 234, 0.2);
+      }
+    }
+
+    .bulk-model-selection {
+      width: 100%;
+      margin-top: 16px;
+      padding: 16px;
+      background: #F9FAFB;
+      border-radius: 8px;
+      border: 1px solid #E5E7EB;
+    }
+
+    .bulk-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      color: #2F4858;
+      margin-bottom: 12px;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #34C5AA;
+      }
+    }
+
+    .model-checkboxes {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 8px;
+      background: white;
+      border-radius: 6px;
+      border: 1px solid #F3F4F6;
+
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: #F3F4F6;
+        border-radius: 3px;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: rgba(52, 197, 170, 0.3);
+        border-radius: 3px;
+
+        &:hover {
+          background: rgba(52, 197, 170, 0.5);
+        }
+      }
+    }
+
+    .model-checkbox {
+      padding: 4px 8px;
+      font-size: 0.875rem;
+    }
+
+    .bulk-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+
+      button {
+        font-size: 0.8rem;
+        color: #34C5AA;
+      }
+    }
+
+    .permission-item.selectable {
+      cursor: pointer;
+      position: relative;
+
+      &.selected {
+        background: rgba(102, 126, 234, 0.05);
+        border-color: rgba(102, 126, 234, 0.3);
+      }
+    }
+
+    .bulk-selection-checkbox {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+    }
+
+    .bulk-controls {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: white;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 1000;
+
+      .selected-count {
+        font-weight: 600;
+        color: #2F4858;
+        margin-right: 12px;
+      }
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .crud-permissions-management {
@@ -887,6 +1068,10 @@ import { CrudPermissionsService, CRUDPermission, Group, ContentTypeApp, ContentT
       .crud-grid {
         grid-template-columns: 1fr;
       }
+
+      .model-checkboxes {
+        grid-template-columns: 1fr;
+      }
     }
   `]
 })
@@ -899,6 +1084,12 @@ export class CrudPermissionsManagementComponent implements OnInit {
   groups: Group[] = [];
   contentTypeApps: ContentTypeApp[] = [];
   selectedAppModels: ContentTypeModel[] = [];
+
+  // Bulk mode properties
+  bulkModeEnabled = false;
+  selectedPermissionIds: Set<number> = new Set();
+  selectedModelIds: Set<number> = new Set();
+  isBulkMode = false;
 
   // Loading state tracking
   private loadingStates = {
@@ -1086,6 +1277,7 @@ export class CrudPermissionsManagementComponent implements OnInit {
   }
 
   openCreateDialog(): void {
+    this.isBulkMode = false; // Ensure bulk mode is off
     this.editingPermission = null;
     this.selectedAppModels = []; // Clear selected models
     this.permissionForm.reset({
@@ -1095,13 +1287,23 @@ export class CrudPermissionsManagementComponent implements OnInit {
       can_delete: false,
       contextArray: []
     });
+
+    // Restore content_type requirement for single mode
+    this.permissionForm.get('content_type')?.setValidators([Validators.required]);
+    this.permissionForm.get('content_type')?.updateValueAndValidity();
+
     console.log('Opening create dialog with clean form');
     this.openDialog();
   }
 
   editPermission(permission: CRUDPermission): void {
+    this.isBulkMode = false; // Ensure bulk mode is off
     this.editingPermission = permission;
     console.log('Editing permission:', permission);
+
+    // Restore content_type requirement for edit mode
+    this.permissionForm.get('content_type')?.setValidators([Validators.required]);
+    this.permissionForm.get('content_type')?.updateValueAndValidity();
 
     // Extract app and model from content_type_name
     const [appLabel, modelName] = permission.content_type_name?.split('.') || ['', ''];
@@ -1209,51 +1411,6 @@ export class CrudPermissionsManagementComponent implements OnInit {
     });
   }
 
-  savePermission(): void {
-    if (!this.permissionForm.valid) return;
-
-    this.isSaving = true;
-    const formData = this.permissionForm.value;
-
-    // Convert contextArray to comma-separated string
-    const permissionData: any = {
-      group: formData.group,
-      content_type: formData.content_type,
-      context: formData.contextArray.join(', '),
-      can_create: formData.can_create,
-      can_read: formData.can_read,
-      can_update: formData.can_update,
-      can_delete: formData.can_delete
-    };
-
-    const request = this.editingPermission?.id
-      ? this.crudPermissionsService.updatePermission(this.editingPermission.id, permissionData)
-      : this.crudPermissionsService.createPermission(permissionData);
-
-    request.subscribe({
-      next: (response) => {
-        this.snackBar.open(
-          `Permission ${this.editingPermission?.id ? 'updated' : 'created'} successfully`,
-          'Close',
-          {
-            duration: 3000,
-            panelClass: ['success-snackbar']
-          }
-        );
-        this.loadPermissions();
-        this.dialog.closeAll();
-        this.isSaving = false;
-      },
-      error: (err) => {
-        console.error('Error saving permission:', err);
-        this.snackBar.open('Error saving permission', 'Close', {
-          duration: 3000,
-          panelClass: ['error-snackbar']
-        });
-        this.isSaving = false;
-      }
-    });
-  }
 
   deletePermission(permission: CRUDPermission): void {
     if (confirm(`Are you sure you want to delete this permission for "${permission.group_name}"?`)) {
@@ -1444,5 +1601,227 @@ export class CrudPermissionsManagementComponent implements OnInit {
     const appName = permission.content_type_name?.split('.')[0] || '';
     const hashCode = appName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return this.gradients[hashCode % this.gradients.length];
+  }
+
+  // Bulk mode methods
+  toggleBulkMode(): void {
+    this.bulkModeEnabled = !this.bulkModeEnabled;
+    if (!this.bulkModeEnabled) {
+      this.selectedPermissionIds.clear();
+    }
+  }
+
+  togglePermissionSelection(permissionId: number): void {
+    if (this.selectedPermissionIds.has(permissionId)) {
+      this.selectedPermissionIds.delete(permissionId);
+    } else {
+      this.selectedPermissionIds.add(permissionId);
+    }
+  }
+
+  isPermissionSelected(permissionId: number): boolean {
+    return this.selectedPermissionIds.has(permissionId);
+  }
+
+  selectAllPermissionsInList(): void {
+    this.permissions.forEach(p => {
+      if (p.id) this.selectedPermissionIds.add(p.id);
+    });
+  }
+
+  deselectAllPermissionsInList(): void {
+    this.selectedPermissionIds.clear();
+  }
+
+  // Model selection methods for bulk create
+  toggleModelSelection(modelId: number): void {
+    if (this.selectedModelIds.has(modelId)) {
+      this.selectedModelIds.delete(modelId);
+    } else {
+      this.selectedModelIds.add(modelId);
+    }
+  }
+
+  isModelSelected(modelId: number): boolean {
+    return this.selectedModelIds.has(modelId);
+  }
+
+  selectAllModels(): void {
+    this.selectedAppModels.forEach(model => {
+      if (model.id) this.selectedModelIds.add(model.id);
+    });
+  }
+
+  deselectAllModels(): void {
+    this.selectedModelIds.clear();
+  }
+
+  openBulkCreateDialog(): void {
+    this.isBulkMode = true;
+    this.editingPermission = null;
+    this.selectedModelIds.clear();
+    this.selectedAppModels = [];
+    this.permissionForm.reset({
+      can_create: false,
+      can_read: false,
+      can_update: false,
+      can_delete: false,
+      contextArray: []
+    });
+
+    // Remove content_type requirement for bulk mode
+    this.permissionForm.get('content_type')?.clearValidators();
+    this.permissionForm.get('content_type')?.updateValueAndValidity();
+
+    this.openDialog();
+  }
+
+  bulkUpdateSelectedPermissions(): void {
+    if (this.selectedPermissionIds.size === 0) {
+      this.snackBar.open('Please select permissions to update', 'Close', {
+        duration: 3000,
+        panelClass: ['warning-snackbar']
+      });
+      return;
+    }
+
+    // Open dialog to get new permission values
+    const dialogRef = this.dialog.open(this.editDialog, {
+      width: '400px',
+      data: { bulkUpdate: true }
+    });
+  }
+
+  bulkDeleteSelectedPermissions(): void {
+    if (this.selectedPermissionIds.size === 0) {
+      this.snackBar.open('Please select permissions to delete', 'Close', {
+        duration: 3000,
+        panelClass: ['warning-snackbar']
+      });
+      return;
+    }
+
+    if (confirm(`Are you sure you want to delete ${this.selectedPermissionIds.size} permissions?`)) {
+      const ids = Array.from(this.selectedPermissionIds);
+      this.crudPermissionsService.bulkDeletePermissions(ids).subscribe({
+        next: (response) => {
+          this.snackBar.open(
+            `${response.deleted_count} permissions deleted successfully`,
+            'Close',
+            {
+              duration: 3000,
+              panelClass: ['success-snackbar']
+            }
+          );
+          this.selectedPermissionIds.clear();
+          this.toggleBulkMode();
+          this.loadPermissions();
+        },
+        error: (err) => {
+          console.error('Error deleting permissions:', err);
+          this.snackBar.open('Error deleting permissions', 'Close', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
+        }
+      });
+    }
+  }
+
+  savePermission(): void {
+    if (!this.permissionForm.valid) return;
+
+    this.isSaving = true;
+    const formData = this.permissionForm.value;
+
+    if (this.isBulkMode) {
+      // Bulk create
+      if (this.selectedModelIds.size === 0) {
+        this.snackBar.open('Please select at least one model', 'Close', {
+          duration: 3000,
+          panelClass: ['warning-snackbar']
+        });
+        this.isSaving = false;
+        return;
+      }
+
+      const bulkData = {
+        group: formData.group,
+        content_types: Array.from(this.selectedModelIds),
+        contexts: formData.contextArray,
+        can_create: formData.can_create,
+        can_read: formData.can_read,
+        can_update: formData.can_update,
+        can_delete: formData.can_delete
+      };
+
+      this.crudPermissionsService.bulkCreatePermissions(bulkData).subscribe({
+        next: (response) => {
+          this.snackBar.open(
+            `${response.created_count} permissions created successfully`,
+            'Close',
+            {
+              duration: 3000,
+              panelClass: ['success-snackbar']
+            }
+          );
+          if (response.errors.length > 0) {
+            console.warn('Bulk create errors:', response.errors);
+          }
+          this.loadPermissions();
+          this.dialog.closeAll();
+          this.isSaving = false;
+          this.isBulkMode = false;
+          this.selectedModelIds.clear();
+        },
+        error: (err) => {
+          console.error('Error creating permissions:', err);
+          this.snackBar.open('Error creating permissions', 'Close', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
+          this.isSaving = false;
+        }
+      });
+    } else {
+      // Single create/update (existing code)
+      const permissionData: any = {
+        group: formData.group,
+        content_type: formData.content_type,
+        context: formData.contextArray.join(', '),
+        can_create: formData.can_create,
+        can_read: formData.can_read,
+        can_update: formData.can_update,
+        can_delete: formData.can_delete
+      };
+
+      const request = this.editingPermission?.id
+        ? this.crudPermissionsService.updatePermission(this.editingPermission.id, permissionData)
+        : this.crudPermissionsService.createPermission(permissionData);
+
+      request.subscribe({
+        next: (response) => {
+          this.snackBar.open(
+            `Permission ${this.editingPermission?.id ? 'updated' : 'created'} successfully`,
+            'Close',
+            {
+              duration: 3000,
+              panelClass: ['success-snackbar']
+            }
+          );
+          this.loadPermissions();
+          this.dialog.closeAll();
+          this.isSaving = false;
+        },
+        error: (err) => {
+          console.error('Error saving permission:', err);
+          this.snackBar.open('Error saving permission', 'Close', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
+          this.isSaving = false;
+        }
+      });
+    }
   }
 }
