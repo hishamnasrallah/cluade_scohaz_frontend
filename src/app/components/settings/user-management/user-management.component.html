@@ -1613,3 +1613,116 @@
     <button mat-raised-button color="primary" mat-dialog-close>Done</button>
   </mat-dialog-actions>
 </ng-template>
+
+<!-- Groups Overview Dialog -->
+<ng-template #groupsOverviewDialog>
+  <h2 mat-dialog-title class="dialog-title">
+    <mat-icon>groups</mat-icon>
+    Groups Overview
+    <button mat-icon-button class="dialog-close" mat-dialog-close>
+      <mat-icon>close</mat-icon>
+    </button>
+  </h2>
+
+  <mat-dialog-content class="dialog-content">
+    <div class="groups-overview">
+      <!-- Groups Statistics -->
+      <div class="groups-stats-container">
+        <div class="stat-card compact">
+          <div class="stat-icon groups-icon">
+            <mat-icon>groups</mat-icon>
+          </div>
+          <div class="stat-content">
+            <h3>{{ userGroups.length }}</h3>
+            <p>Total Groups</p>
+          </div>
+        </div>
+
+        <div class="stat-card compact">
+          <div class="stat-icon active-icon">
+            <mat-icon>people</mat-icon>
+          </div>
+          <div class="stat-content">
+            <h3>{{ getTotalUsersInGroups() }}</h3>
+            <p>Assigned Users</p>
+          </div>
+        </div>
+
+        <div class="stat-card compact">
+          <div class="stat-icon admin-icon">
+            <mat-icon>security</mat-icon>
+          </div>
+          <div class="stat-content">
+            <h3>{{ getTotalPermissions() }}</h3>
+            <p>Total Permissions</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Groups List -->
+      <div class="groups-list-container">
+        <h4 class="section-title">All Groups</h4>
+
+        <div class="groups-grid-overview">
+          <mat-card *ngFor="let group of userGroups" class="group-overview-card">
+            <mat-card-header>
+              <mat-icon mat-card-avatar class="group-icon">group</mat-icon>
+              <mat-card-title>{{ group.name }}</mat-card-title>
+              <mat-card-subtitle>
+                {{ getUserCountInGroup(group.id) }} users
+              </mat-card-subtitle>
+            </mat-card-header>
+
+            <mat-card-content>
+              <div class="group-details">
+                <div class="permissions-section" *ngIf="group.permissions && group.permissions.length > 0">
+                  <p class="permissions-label">Permissions ({{ group.permissions.length }}):</p>
+                  <div class="permissions-chips">
+                    <mat-chip *ngFor="let perm of group.permissions.slice(0, 5)" class="permission-chip small">
+                      {{ perm.name }}
+                    </mat-chip>
+                    <span *ngIf="group.permissions.length > 5" class="more-permissions">
+                      +{{ group.permissions.length - 5 }} more
+                    </span>
+                  </div>
+                </div>
+
+                <p class="no-permissions" *ngIf="!group.permissions || group.permissions.length === 0">
+                  No permissions assigned
+                </p>
+              </div>
+            </mat-card-content>
+
+            <mat-card-actions>
+              <button mat-button (click)="viewGroupDetails(group)">
+                <mat-icon>visibility</mat-icon>
+                View Details
+              </button>
+              <button mat-button (click)="editGroup(group)">
+                <mat-icon>edit</mat-icon>
+                Edit
+              </button>
+            </mat-card-actions>
+          </mat-card>
+        </div>
+
+        <div class="empty-groups" *ngIf="userGroups.length === 0">
+          <mat-icon>group_off</mat-icon>
+          <p>No groups available</p>
+          <button mat-raised-button color="primary" (click)="createGroup()">
+            <mat-icon>add</mat-icon>
+            Create First Group
+          </button>
+        </div>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Close</button>
+    <button mat-raised-button color="primary" (click)="createGroup()">
+      <mat-icon>add</mat-icon>
+      Create New Group
+    </button>
+  </mat-dialog-actions>
+</ng-template>

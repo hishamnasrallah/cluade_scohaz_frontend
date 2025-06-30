@@ -152,6 +152,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   @ViewChild('compareUsersDialog') compareUsersDialog!: TemplateRef<any>;
   @ViewChild('batchEditDialog') batchEditDialog!: TemplateRef<any>;
   @ViewChild('columnSettingsDialog') columnSettingsDialog!: TemplateRef<any>;
+  @ViewChild('groupsOverviewDialog') groupsOverviewDialog!: TemplateRef<any>;
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
@@ -449,10 +450,10 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   }
 
   openGroupsOverview(): void {
-    // Navigate to groups management or open dialog
-    this.snackBar.open('Groups overview feature coming soon', 'Close', {
-      duration: 2000,
-      panelClass: 'info-snackbar'
+    this.dialog.open(this.groupsOverviewDialog, {
+      width: '800px',
+      maxHeight: '90vh',
+      panelClass: 'ocean-mint-dialog'
     });
   }
 
@@ -462,6 +463,62 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       duration: 2000,
       panelClass: 'info-snackbar'
     });
+  }
+
+  // Groups Overview Methods
+  getTotalUsersInGroups(): number {
+    // Calculate total unique users across all groups
+    const uniqueUserIds = new Set<number>();
+    this.users.forEach(user => {
+      if (user.groups && user.groups.length > 0) {
+        uniqueUserIds.add(user.id!);
+      }
+    });
+    return uniqueUserIds.size;
+  }
+
+  getTotalPermissions(): number {
+    // Calculate total unique permissions across all groups
+    const uniquePermissions = new Set<string>();
+    this.userGroups.forEach(group => {
+      if (group.permissions) {
+        group.permissions.forEach(perm => {
+          uniquePermissions.add(perm.codename);
+        });
+      }
+    });
+    return uniquePermissions.size;
+  }
+
+  getUserCountInGroup(groupId: number): number {
+    return this.users.filter(user =>
+      user.groups && user.groups.some(g => g.id === groupId)
+    ).length;
+  }
+
+  viewGroupDetails(group: Group): void {
+    // Navigate to group details or open detailed view
+    this.snackBar.open(`Viewing details for ${group.name}`, 'Close', {
+      duration: 2000,
+      panelClass: 'info-snackbar'
+    });
+  }
+
+  editGroup(group: Group): void {
+    // Open group edit dialog
+    this.snackBar.open(`Editing ${group.name}`, 'Close', {
+      duration: 2000,
+      panelClass: 'info-snackbar'
+    });
+  }
+
+  createGroup(): void {
+    // Open create group dialog
+    this.snackBar.open('Create group functionality would open here', 'Close', {
+      duration: 2000,
+      panelClass: 'info-snackbar'
+    });
+    this.dialog.closeAll();
   }
 
   bulkExport(): void {
