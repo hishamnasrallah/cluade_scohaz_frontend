@@ -5,6 +5,14 @@ import { Observable, BehaviorSubject, throwError } from 'rxjs';
 import { map, tap, catchError } from 'rxjs/operators';
 import { ConfigService } from './config.service';
 
+export interface UserProfile {
+  phone?: string;
+  department?: string;
+  position?: string;
+  timezone?: string;
+  bio?: string;
+}
+
 // Interfaces matching backend models
 export interface CustomUser {
   id?: number;
@@ -28,6 +36,8 @@ export interface CustomUser {
   preference?: UserPreference;
   phone_numbers?: PhoneNumber[];
   password?: string; // Only for creation
+  profile?: UserProfile;
+
 }
 
 export interface UserType {

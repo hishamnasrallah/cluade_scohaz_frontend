@@ -1,4 +1,4 @@
-// components/settings/user-management/user-management.component.ts - COMPLETE IMPLEMENTATION
+// components/settings/user-management/user-management.component.ts
 import { Component, OnInit, ViewChild, TemplateRef, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, FormsModule } from '@angular/forms';
@@ -23,7 +23,6 @@ import { MatListModule } from '@angular/material/list';
 import { MatDividerModule } from '@angular/material/divider';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged, forkJoin } from 'rxjs';
 import { UserService, CustomUser, Group, UserType, PhoneNumber, UserFilters } from '../../../services/user.service';
-import { CrudPermissionsService } from '../../../services/crud-permissions.service';
 import { AuthService } from '../../../services/auth.service';
 
 interface PhoneNumberForm {
@@ -31,6 +30,11 @@ interface PhoneNumberForm {
   number_type: number;
   is_default: boolean;
   main: boolean;
+}
+
+interface PasswordStrength {
+  score: number;
+  text: string;
 }
 
 @Component({
@@ -61,7 +65,7 @@ interface PhoneNumberForm {
     MatDividerModule
   ],
   templateUrl: './user-management.component.html',
-  styleUrl: './user-management.component.css'
+  styleUrls: ['./user-management.component.scss']
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
   @ViewChild('editUserDialog') editUserDialog!: TemplateRef<any>;
@@ -69,6 +73,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   @ViewChild('resetPasswordDialog') resetPasswordDialog!: TemplateRef<any>;
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
+  @ViewChild('viewUserDialog') viewUserDialog!: TemplateRef<any>;
 
   // State management
   isLoading = false;
@@ -116,6 +121,10 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   editingPhone: PhoneNumber | null = null;
   addingPhone = false;
   dialogRef: MatDialogRef<any> | null = null;
+
+  // Password strength
+  passwordStrength: PasswordStrength = { score: 0, text: 'Weak' };
+  profileForm!: FormGroup;
 
   // Subjects for cleanup
   private destroy$ = new Subject<void>();
@@ -180,6 +189,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       number_type: [2, Validators.required],
       is_default: [false],
       main: [false]
+    });
+
+    this.profileForm = this.fb.group({
+      phone: [''],
+      department: [''],
+      position: [''],
+      timezone: ['UTC'],
+      bio: ['']
     });
 
     // Reset password form
@@ -341,6 +358,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       is_superuser: false
     });
     this.selectedGroups = [];
+    this.passwordStrength = { score: 0, text: 'Weak' };
 
     // Password is required for new users
     this.userForm.get('password')?.setValidators([
@@ -353,42 +371,12 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     this.openDialog();
   }
 
-  editUser(user: CustomUser): void {
-    this.editingUser = user;
-    this.userForm.patchValue({
-      username: user.username,
-      email: user.email,
-      first_name: user.first_name,
-      second_name: user.second_name,
-      third_name: user.third_name,
-      last_name: user.last_name,
-      user_type_id: user.user_type?.id || null,
-      is_active: user.is_active,
-      activated_account: user.activated_account,
-      is_staff: user.is_staff,
-      is_developer: user.is_developer,
-      is_superuser: user.is_superuser
-    });
-
-    this.selectedGroups = user.groups?.map(g => g.id) || [];
-
-    // Password is not required for existing users
-    this.userForm.get('password')?.clearValidators();
-    this.userForm.get('password')?.updateValueAndValidity();
-
-    this.openDialog();
-  }
-
-  viewUser(user: CustomUser): void {
-    // Navigate to user detail view or open a read-only dialog
-    this.snackBar.open(`Viewing ${user.first_name} ${user.last_name}`, 'Close', { duration: 2000 });
-  }
-
   private openDialog(): void {
     this.dialogRef = this.dialog.open(this.editUserDialog, {
       width: '800px',
       maxHeight: '90vh',
-      disableClose: true
+      disableClose: true,
+      panelClass: 'ocean-mint-dialog'
     });
   }
 
@@ -399,51 +387,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
   }
 
-  saveUser(): void {
-    if (!this.userForm.valid) {
-      Object.keys(this.userForm.controls).forEach(key => {
-        this.userForm.get(key)?.markAsTouched();
-      });
-      return;
-    }
-
-    this.isSaving = true;
-    const userData = {
-      ...this.userForm.value,
-      group_ids: this.selectedGroups
-    };
-
-    // Remove password if empty (for updates)
-    if (!userData.password) {
-      delete userData.password;
-    }
-
-    const request = this.editingUser?.id
-      ? this.userService.updateUser(this.editingUser.id, userData)
-      : this.userService.createUser(userData);
-
-    request.pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (user) => {
-          this.snackBar.open(
-            `User ${this.editingUser?.id ? 'updated' : 'created'} successfully`,
-            'Close',
-            { duration: 3000, panelClass: 'success-snackbar' }
-          );
-          this.loadUsers();
-          this.closeDialog();
-          this.isSaving = false;
-        },
-        error: (error) => {
-          this.snackBar.open(
-            error.error?.detail || 'Error saving user',
-            'Close',
-            { duration: 5000, panelClass: 'error-snackbar' }
-          );
-          this.isSaving = false;
-        }
-      });
-  }
 
   toggleUserStatus(user: CustomUser): void {
     const action = user.is_active ? 'deactivate' : 'activate';
@@ -547,7 +490,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     this.selectedUser = user;
     this.resetPasswordForm.reset();
     this.dialog.open(this.resetPasswordDialog, {
-      width: '500px'
+      width: '500px',
+      panelClass: 'ocean-mint-dialog'
     });
   }
 
@@ -589,7 +533,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     this.selectedUser = user;
     this.loadPhoneNumbers(user.id!);
     this.dialog.open(this.phoneNumbersDialog, {
-      width: '600px'
+      width: '600px',
+      panelClass: 'ocean-mint-dialog'
     });
   }
 
@@ -724,6 +669,24 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       });
   }
 
+  // Password Strength Check
+  checkPasswordStrength(): void {
+    const password = this.userForm.get('password')?.value || '';
+    let score = 0;
+
+    if (password.length >= 8) score++;
+    if (password.length >= 12) score++;
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
+    if (/\d/.test(password)) score++;
+    if (/[@$!%*?&]/.test(password)) score++;
+
+    const strengths = ['Weak', 'Fair', 'Good', 'Strong', 'Very Strong'];
+    this.passwordStrength = {
+      score: Math.min(score, 4),
+      text: strengths[Math.min(score, 4)]
+    };
+  }
+
   // Export
   exportUsers(): void {
     const filters: UserFilters = {
@@ -809,5 +772,105 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     return null;
+  }
+
+
+  viewUser(user: CustomUser): void {
+    this.selectedUser = user;
+    this.dialog.open(this.viewUserDialog, {
+      width: '600px',
+      panelClass: 'ocean-mint-dialog'
+    });
+  }
+
+  closeViewDialog(): void {
+    this.dialog.closeAll();
+    this.selectedUser = null;
+  }
+
+// Update the editUser method to also populate profile form if needed:
+  editUser(user: CustomUser): void {
+    this.editingUser = user;
+    this.userForm.patchValue({
+      username: user.username,
+      email: user.email,
+      first_name: user.first_name,
+      second_name: user.second_name,
+      third_name: user.third_name,
+      last_name: user.last_name,
+      user_type_id: user.user_type?.id || null,
+      is_active: user.is_active,
+      activated_account: user.activated_account,
+      is_staff: user.is_staff,
+      is_developer: user.is_developer,
+      is_superuser: user.is_superuser
+    });
+
+    // Populate profile form if user has profile data
+    if (user.profile) {
+      this.profileForm.patchValue({
+        phone: user.profile.phone || '',
+        department: user.profile.department || '',
+        position: user.profile.position || '',
+        timezone: user.profile.timezone || 'UTC',
+        bio: user.profile.bio || ''
+      });
+    }
+
+    this.selectedGroups = user.groups?.map(g => g.id) || [];
+
+    // Password is not required for existing users
+    this.userForm.get('password')?.clearValidators();
+    this.userForm.get('password')?.updateValueAndValidity();
+
+    this.openDialog();
+  }
+
+// Update saveUser method to include profile data:
+  saveUser(): void {
+    if (!this.userForm.valid) {
+      Object.keys(this.userForm.controls).forEach(key => {
+        this.userForm.get(key)?.markAsTouched();
+      });
+      return;
+    }
+
+    this.isSaving = true;
+    const userData = {
+      ...this.userForm.value,
+      group_ids: this.selectedGroups,
+      profile: this.profileForm.value // Include profile data
+    };
+
+    // Remove password if empty (for updates)
+    if (!userData.password) {
+      delete userData.password;
+    }
+
+    const request = this.editingUser?.id
+      ? this.userService.updateUser(this.editingUser.id, userData)
+      : this.userService.createUser(userData);
+
+    request.pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (user) => {
+          this.snackBar.open(
+            `User ${this.editingUser?.id ? 'updated' : 'created'} successfully`,
+            'Close',
+            { duration: 3000, panelClass: 'success-snackbar' }
+          );
+          this.loadUsers();
+          this.closeDialog();
+          this.isSaving = false;
+        },
+        error: (error) => {
+          this.snackBar.open(
+            error.error?.detail || 'Error saving user',
+            'Close',
+            { duration: 5000, panelClass: 'error-snackbar' }
+          );
+          this.isSaving = false;
+        }
+      });
   }
 }
