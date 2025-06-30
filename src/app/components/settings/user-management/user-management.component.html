@@ -1,84 +1,165 @@
+<!-- Enhanced user-management.component.html -->
 <div class="user-management">
-  <!-- Compact Header with Ocean Mint Theme -->
+  <!-- Enhanced Header with Stats Summary -->
   <div class="page-header">
     <div class="header-content">
       <div class="header-text">
-        <div class="header-icon">
+        <div class="header-icon pulse-animation">
           <mat-icon>people</mat-icon>
         </div>
         <div>
           <h1>User Management</h1>
-          <p>Manage user accounts, roles, and permissions</p>
+          <p>{{ totalUsers }} total users • {{ activeUsers }} active • {{ userStatistics.newUsersThisMonth }} new this month</p>
         </div>
       </div>
       <div class="header-actions">
+        <!-- Quick Stats Badge -->
+        <div class="quick-stats">
+          <mat-chip-set>
+            <mat-chip class="stat-chip active">
+              <mat-icon>check_circle</mat-icon>
+              {{ ((activeUsers / totalUsers) * 100).toFixed(0) }}% Active
+            </mat-chip>
+            <mat-chip class="stat-chip admin" *ngIf="adminUsers > 0">
+              <mat-icon>admin_panel_settings</mat-icon>
+              {{ adminUsers }} Admins
+            </mat-chip>
+          </mat-chip-set>
+        </div>
+
         <button mat-icon-button
                 (click)="refreshData()"
                 class="refresh-btn"
-                matTooltip="Refresh"
+                matTooltip="Refresh (Ctrl+R)"
+                matTooltipPosition="below"
                 [disabled]="isLoading">
           <mat-icon [class.spinning]="isLoading">refresh</mat-icon>
         </button>
+
+        <!-- Enhanced Export Menu -->
         <button mat-button
+                [matMenuTriggerFor]="exportMenu"
                 class="export-btn"
-                (click)="exportUsers()"
                 [disabled]="isLoading">
           <mat-icon>download</mat-icon>
           Export
         </button>
+        <mat-menu #exportMenu="matMenu">
+          <button mat-menu-item (click)="exportToCSV()">
+            <mat-icon>description</mat-icon>
+            <span>Export as CSV</span>
+          </button>
+          <button mat-menu-item (click)="exportToExcel()">
+            <mat-icon>table_chart</mat-icon>
+            <span>Export as Excel</span>
+          </button>
+          <button mat-menu-item (click)="exportToPDF()">
+            <mat-icon>picture_as_pdf</mat-icon>
+            <span>Export as PDF</span>
+          </button>
+          <mat-divider></mat-divider>
+          <button mat-menu-item (click)="printUsers()">
+            <mat-icon>print</mat-icon>
+            <span>Print (Ctrl+P)</span>
+          </button>
+        </mat-menu>
+
         <button mat-raised-button
                 color="primary"
                 (click)="openCreateUserDialog()"
-                class="create-btn">
+                class="create-btn"
+                matTooltip="Create New User (Ctrl+N)"
+                matTooltipPosition="below">
           <mat-icon>person_add</mat-icon>
           Add User
         </button>
       </div>
     </div>
+
+    <!-- Progress bar for loading -->
+    <mat-progress-bar *ngIf="isLoading" mode="indeterminate" class="header-progress"></mat-progress-bar>
   </div>
 
-  <!-- Compact Stats Cards -->
-  <div class="stats-section">
-    <div class="stat-card">
+  <!-- Enhanced Stats Cards with animations -->
+  <div class="stats-section" *ngIf="!isLoadingSkeleton">
+    <div class="stat-card hover-lift" (click)="statusFilter = 'all'; applyFilters()">
       <div class="stat-icon total-icon">
         <mat-icon>people</mat-icon>
       </div>
       <div class="stat-content">
-        <h3>{{ totalUsers }}</h3>
+        <h3 class="count-animation">{{ totalUsers }}</h3>
         <p>Total Users</p>
+        <div class="stat-trend">
+          <mat-icon class="trend-up">trending_up</mat-icon>
+          <span>+{{ userStatistics.newUsersThisMonth }} this month</span>
+        </div>
       </div>
     </div>
-    <div class="stat-card">
+
+    <div class="stat-card hover-lift" (click)="statusFilter = 'active'; applyFilters()">
       <div class="stat-icon active-icon">
         <mat-icon>person</mat-icon>
       </div>
       <div class="stat-content">
-        <h3>{{ activeUsers }}</h3>
+        <h3 class="count-animation">{{ activeUsers }}</h3>
         <p>Active</p>
+        <div class="stat-percentage">
+          <div class="percentage-bar">
+            <div class="percentage-fill" [style.width.%]="(activeUsers / totalUsers) * 100"></div>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="stat-card">
+
+    <div class="stat-card hover-lift" (click)="statusFilter = 'admin'; applyFilters()">
       <div class="stat-icon admin-icon">
         <mat-icon>admin_panel_settings</mat-icon>
       </div>
       <div class="stat-content">
-        <h3>{{ adminUsers }}</h3>
-        <p>Admins</p>
+        <h3 class="count-animation">{{ adminUsers }}</h3>
+        <p>Administrators</p>
+        <mat-chip-set class="mini-chips">
+          <mat-chip class="mini-chip">{{ userStatistics.adminUsers }} Super</mat-chip>
+          <mat-chip class="mini-chip">{{ userStatistics.staffUsers }} Staff</mat-chip>
+        </mat-chip-set>
       </div>
     </div>
-    <div class="stat-card">
+
+    <div class="stat-card hover-lift">
       <div class="stat-icon groups-icon">
         <mat-icon>groups</mat-icon>
       </div>
       <div class="stat-content">
-        <h3>{{ userGroups.length }}</h3>
+        <h3 class="count-animation">{{ userGroups.length }}</h3>
         <p>Groups</p>
+        <button mat-button class="view-details-btn" (click)="openGroupsOverview()">
+          View Details
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- Error Message -->
-  <div class="error-banner" *ngIf="errorMessage">
+  <!-- Skeleton Stats -->
+  <div class="stats-section skeleton-stats" *ngIf="isLoadingSkeleton">
+    <div class="stat-card skeleton" *ngFor="let item of getSkeletonArray(4)">
+      <div class="skeleton-icon loading-shimmer"></div>
+      <div class="stat-content">
+        <div class="skeleton-text loading-shimmer" style="width: 60px; height: 24px;"></div>
+        <div class="skeleton-text loading-shimmer" style="width: 80px; height: 14px; margin-top: 8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success/Error Messages -->
+  <div class="message-banner success-banner" *ngIf="successMessage" @fadeInUp>
+    <mat-icon>check_circle</mat-icon>
+    <span>{{ successMessage }}</span>
+    <button mat-icon-button (click)="successMessage = ''">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="message-banner error-banner" *ngIf="errorMessage" @fadeInUp>
     <mat-icon>error</mat-icon>
     <span>{{ errorMessage }}</span>
     <button mat-icon-button (click)="clearError()">
@@ -86,93 +167,223 @@
     </button>
   </div>
 
-  <!-- Loading State -->
-  <div class="loading-section" *ngIf="isLoading && !users.length">
-    <mat-spinner diameter="40" color="primary"></mat-spinner>
-    <p>Loading users...</p>
-  </div>
+  <!-- Main Content Container -->
+  <div class="users-container" *ngIf="!isLoadingSkeleton">
+    <!-- Enhanced Filters Section -->
+    <div class="filters-header">
+      <div class="filters-section">
+        <!-- Enhanced Search with suggestions -->
+        <mat-form-field appearance="outline" class="search-field ocean-mint-field">
+          <mat-label>Search users</mat-label>
+          <mat-icon matPrefix>search</mat-icon>
+          <input matInput
+                 [(ngModel)]="searchQuery"
+                 (ngModelChange)="onSearchChange()"
+                 placeholder="Name, email, username..."
+                 [matAutocomplete]="searchAuto">
+          <button mat-icon-button matSuffix *ngIf="searchQuery" (click)="searchQuery = ''; onSearchChange()">
+            <mat-icon>clear</mat-icon>
+          </button>
+          <mat-autocomplete #searchAuto="matAutocomplete">
+            <mat-option value="active:true">Active users only</mat-option>
+            <mat-option value="role:admin">Administrators</mat-option>
+            <mat-option value="recent:7">Recently joined (7 days)</mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
 
-  <!-- Users Content -->
-  <div class="users-container" *ngIf="!isLoading || users.length > 0">
-    <!-- Compact Filters -->
-    <div class="filters-section">
-      <mat-form-field appearance="outline" class="search-field ocean-mint-field">
-        <mat-label>Search users</mat-label>
-        <input matInput
-               [(ngModel)]="searchQuery"
-               (ngModelChange)="onSearchChange()"
-               placeholder="Name, email, username...">
-        <mat-icon matSuffix>search</mat-icon>
-      </mat-form-field>
+        <mat-form-field appearance="outline" class="filter-field ocean-mint-field">
+          <mat-label>Status</mat-label>
+          <mat-select [(value)]="statusFilter" (selectionChange)="applyFilters()">
+            <mat-option value="all">
+              <mat-icon>all_inclusive</mat-icon>
+              All Users
+            </mat-option>
+            <mat-option value="active">
+              <mat-icon class="status-icon active">check_circle</mat-icon>
+              Active Only
+            </mat-option>
+            <mat-option value="inactive">
+              <mat-icon class="status-icon inactive">cancel</mat-icon>
+              Inactive Only
+            </mat-option>
+            <mat-option value="admin">
+              <mat-icon class="status-icon admin">admin_panel_settings</mat-icon>
+              Administrators
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
 
-      <mat-form-field appearance="outline" class="filter-field ocean-mint-field">
-        <mat-label>Status</mat-label>
-        <mat-select [(value)]="statusFilter" (selectionChange)="applyFilters()">
-          <mat-option value="all">All Users</mat-option>
-          <mat-option value="active">Active Only</mat-option>
-          <mat-option value="inactive">Inactive Only</mat-option>
-          <mat-option value="admin">Administrators</mat-option>
-        </mat-select>
-      </mat-form-field>
+        <mat-form-field appearance="outline" class="filter-field ocean-mint-field">
+          <mat-label>User Type</mat-label>
+          <mat-select [(value)]="userTypeFilter" (selectionChange)="applyFilters()">
+            <mat-option value="">All Types</mat-option>
+            <mat-option *ngFor="let type of userTypes" [value]="type.code">
+              <span class="type-option">
+                <mat-icon>label</mat-icon>
+                {{ type.name }}
+              </span>
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
 
-      <mat-form-field appearance="outline" class="filter-field ocean-mint-field">
-        <mat-label>User Type</mat-label>
-        <mat-select [(value)]="userTypeFilter" (selectionChange)="applyFilters()">
-          <mat-option value="">All Types</mat-option>
-          <mat-option *ngFor="let type of userTypes" [value]="type.code">
-            {{ type.name }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
+        <mat-form-field appearance="outline" class="filter-field ocean-mint-field">
+          <mat-label>Group</mat-label>
+          <mat-select [(value)]="groupFilter" (selectionChange)="applyFilters()">
+            <mat-option [value]="null">All Groups</mat-option>
+            <mat-option *ngFor="let group of userGroups" [value]="group.id">
+              <span class="group-option">
+                <mat-icon>group</mat-icon>
+                {{ group.name }}
+              </span>
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
 
-      <mat-form-field appearance="outline" class="filter-field ocean-mint-field">
-        <mat-label>Group</mat-label>
-        <mat-select [(value)]="groupFilter" (selectionChange)="applyFilters()">
-          <mat-option [value]="null">All Groups</mat-option>
-          <mat-option *ngFor="let group of userGroups" [value]="group.id">
-            {{ group.name }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
+        <!-- Filter Actions -->
+        <div class="filter-actions">
+          <button mat-icon-button
+                  class="filter-preset-btn"
+                  (click)="openFilterPresets()"
+                  matTooltip="Saved Filters"
+                  [matBadge]="filterPresets.length"
+                  matBadgeColor="accent"
+                  [matBadgeHidden]="filterPresets.length === 0">
+            <mat-icon>bookmark</mat-icon>
+          </button>
 
+          <button mat-icon-button
+                  class="clear-filters-btn"
+                  (click)="clearFilters()"
+                  matTooltip="Clear all filters"
+                  *ngIf="searchQuery || statusFilter !== 'all' || userTypeFilter || groupFilter">
+            <mat-icon>clear_all</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- View Mode Toggle -->
+      <mat-button-toggle-group [(value)]="viewMode" (change)="toggleViewMode($event.value)" class="view-toggle">
+        <mat-button-toggle value="table" matTooltip="Table View">
+          <mat-icon>view_list</mat-icon>
+        </mat-button-toggle>
+        <mat-button-toggle value="grid" matTooltip="Grid View">
+          <mat-icon>grid_view</mat-icon>
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+
+    <!-- Filter Chips -->
+    <div class="filter-chips-container" *ngIf="filterChips.length > 0" @fadeInUp>
+      <mat-chip-set>
+        <mat-chip *ngFor="let chip of filterChips"
+                  [removable]="true"
+                  (removed)="removeFilterChip(chip)"
+                  class="filter-chip">
+          <mat-icon matChipAvatar>filter_alt</mat-icon>
+          {{ chip }}
+          <mat-icon matChipRemove>cancel</mat-icon>
+        </mat-chip>
+      </mat-chip-set>
+    </div>
+
+    <!-- Enhanced Bulk Actions Bar -->
+    <div class="bulk-actions enhanced" *ngIf="selection.length > 0" @slideInLeft>
+      <div class="selection-info">
+        <mat-checkbox [checked]="isAllSelected()"
+                      [indeterminate]="isSomeSelected()"
+                      (change)="toggleAllSelection($event)">
+        </mat-checkbox>
+        <span class="selection-count">{{ selection.length }} selected</span>
+      </div>
+
+      <div class="bulk-action-buttons">
+        <button mat-button (click)="bulkActivate()" class="bulk-action-btn">
+          <mat-icon>check_circle</mat-icon>
+          Activate
+        </button>
+        <button mat-button (click)="bulkDeactivate()" class="bulk-action-btn">
+          <mat-icon>cancel</mat-icon>
+          Deactivate
+        </button>
+        <button mat-button (click)="openBatchEdit()" class="bulk-action-btn">
+          <mat-icon>edit</mat-icon>
+          Batch Edit
+        </button>
+        <button mat-button [matMenuTriggerFor]="bulkMenu" class="bulk-action-btn">
+          <mat-icon>more_horiz</mat-icon>
+          More
+        </button>
+        <mat-menu #bulkMenu="matMenu">
+          <button mat-menu-item (click)="bulkAssignGroup()">
+            <mat-icon>group_add</mat-icon>
+            Assign to Group
+          </button>
+          <button mat-menu-item (click)="bulkExport()">
+            <mat-icon>download</mat-icon>
+            Export Selected
+          </button>
+          <mat-divider></mat-divider>
+          <button mat-menu-item (click)="bulkDelete()" class="danger-item">
+            <mat-icon>delete</mat-icon>
+            Delete Selected
+          </button>
+        </mat-menu>
+
+        <button mat-icon-button (click)="clearSelection()" class="clear-selection-btn">
+          <mat-icon>clear</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Comparison Bar -->
+    <div class="comparison-bar" *ngIf="compareUsers.length > 0" @slideInLeft>
+      <div class="comparison-info">
+        <mat-icon>compare_arrows</mat-icon>
+        <span>Comparing {{ compareUsers.length }} users</span>
+      </div>
+      <div class="comparison-users">
+        <mat-chip *ngFor="let user of compareUsers"
+                  [removable]="true"
+                  (removed)="removeFromComparison(user)"
+                  class="compare-chip">
+          <div class="chip-avatar" [style.background]="getUserAvatarColor(user)">
+            {{ getUserInitials(user) }}
+          </div>
+          {{ user.first_name }} {{ user.last_name }}
+          <mat-icon matChipRemove>cancel</mat-icon>
+        </mat-chip>
+      </div>
+      <div class="comparison-actions">
+        <button mat-button (click)="openComparisonView()" [disabled]="compareUsers.length < 2">
+          <mat-icon>visibility</mat-icon>
+          View Comparison
+        </button>
+        <button mat-icon-button (click)="clearComparison()">
+          <mat-icon>clear</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Table View -->
+    <div class="table-container" *ngIf="viewMode === 'table'">
+      <!-- Column Settings Button -->
       <button mat-icon-button
-              class="clear-filters-btn"
-              (click)="clearFilters()"
-              matTooltip="Clear filters"
-              *ngIf="searchQuery || statusFilter !== 'all' || userTypeFilter || groupFilter">
-        <mat-icon>clear</mat-icon>
+              class="column-settings-btn"
+              (click)="openColumnSettings()"
+              matTooltip="Configure Columns">
+        <mat-icon>view_column</mat-icon>
       </button>
-    </div>
 
-    <!-- Bulk Actions -->
-    <div class="bulk-actions" *ngIf="selection.length > 0">
-      <span class="selection-count">{{ selection.length }} selected</span>
-      <button mat-button (click)="bulkActivate()">
-        <mat-icon>check_circle</mat-icon>
-        Activate
-      </button>
-      <button mat-button (click)="bulkDeactivate()">
-        <mat-icon>cancel</mat-icon>
-        Deactivate
-      </button>
-      <button mat-button (click)="clearSelection()">
-        <mat-icon>clear</mat-icon>
-        Clear
-      </button>
-    </div>
-
-    <!-- Compact Users Table -->
-    <div class="table-container">
-      <table mat-table [dataSource]="dataSource" matSort class="users-table">
-        <!-- Selection Column -->
+      <table mat-table [dataSource]="dataSource" matSort class="users-table enhanced-table">
+        <!-- Enhanced Selection Column -->
         <ng-container matColumnDef="select">
-          <th mat-header-cell *matHeaderCellDef>
+          <th mat-header-cell *matHeaderCellDef class="select-header">
             <mat-checkbox (change)="toggleAllSelection($event)"
                           [checked]="isAllSelected()"
                           [indeterminate]="isSomeSelected()">
             </mat-checkbox>
           </th>
-          <td mat-cell *matCellDef="let user">
+          <td mat-cell *matCellDef="let user" class="select-cell">
             <mat-checkbox (change)="toggleSelection(user)"
                           [checked]="isSelected(user)"
                           (click)="$event.stopPropagation()">
@@ -180,19 +391,38 @@
           </td>
         </ng-container>
 
-        <!-- User Column -->
+        <!-- Enhanced User Column with hover preview -->
         <ng-container matColumnDef="user">
           <th mat-header-cell *matHeaderCellDef mat-sort-header="username">User</th>
           <td mat-cell *matCellDef="let user" class="user-cell">
-            <div class="user-info">
-              <div class="user-avatar" [style.background]="getUserAvatarColor(user)">
+            <div class="user-info enhanced">
+              <div class="user-avatar hover-scale"
+                   [style.background]="getUserAvatarColor(user)"
+                   [matTooltip]="'Last seen: ' + formatDate(user.last_login)"
+                   matTooltipPosition="right">
                 <span>{{ getUserInitials(user) }}</span>
+                <div class="avatar-status" [class.active]="user.is_active"></div>
               </div>
               <div class="user-details">
                 <div class="user-name">
                   {{ user.first_name }} {{ user.second_name || '' }} {{ user.third_name || '' }} {{ user.last_name }}
+                  <mat-icon class="verified-icon" *ngIf="user.activated_account" matTooltip="Verified Account">
+                    verified
+                  </mat-icon>
                 </div>
-                <div class="user-username">&#64;{{ user.username }}</div>
+                <div class="user-username">@{{ user.username }}</div>
+                <!-- Quick Actions on Hover -->
+                <div class="quick-actions">
+                  <button mat-icon-button
+                          *ngFor="let action of quickActions"
+                          (click)="executeQuickAction(action, user, $event)"
+                          [matTooltip]="action.label"
+                          [color]="action.color"
+                          [disabled]="action.disabled && action.disabled(user)"
+                          class="quick-action-btn">
+                    <mat-icon>{{ action.icon }}</mat-icon>
+                  </button>
+                </div>
               </div>
             </div>
           </td>
@@ -202,7 +432,10 @@
         <ng-container matColumnDef="email">
           <th mat-header-cell *matHeaderCellDef mat-sort-header="email">Email</th>
           <td mat-cell *matCellDef="let user" class="email-cell">
-            <a [href]="'mailto:' + user.email">{{ user.email }}</a>
+            <a [href]="'mailto:' + user.email" class="email-link">
+              <mat-icon>email</mat-icon>
+              {{ user.email }}
+            </a>
           </td>
         </ng-container>
 
@@ -210,44 +443,50 @@
         <ng-container matColumnDef="userType">
           <th mat-header-cell *matHeaderCellDef>Type</th>
           <td mat-cell *matCellDef="let user">
-            <mat-chip *ngIf="user.user_type" class="type-chip">
+            <mat-chip *ngIf="user.user_type" class="type-chip animated-chip">
+              <mat-icon>label</mat-icon>
               {{ user.user_type.name }}
             </mat-chip>
             <span *ngIf="!user.user_type" class="no-type">-</span>
           </td>
         </ng-container>
 
-        <!-- Role Column -->
+        <!-- Enhanced Role Column -->
         <ng-container matColumnDef="role">
           <th mat-header-cell *matHeaderCellDef>Role</th>
           <td mat-cell *matCellDef="let user">
             <div class="role-chips">
-              <mat-chip *ngIf="user.is_superuser" class="role-chip superuser">
+              <mat-chip *ngIf="user.is_superuser" class="role-chip superuser glow-effect">
+                <mat-icon>stars</mat-icon>
                 Super Admin
               </mat-chip>
               <mat-chip *ngIf="user.is_staff && !user.is_superuser" class="role-chip staff">
+                <mat-icon>badge</mat-icon>
                 Staff
               </mat-chip>
               <mat-chip *ngIf="user.is_developer" class="role-chip developer">
+                <mat-icon>code</mat-icon>
                 Developer
               </mat-chip>
               <mat-chip *ngFor="let group of user.groups" class="role-chip group">
+                <mat-icon>group</mat-icon>
                 {{ group.name }}
               </mat-chip>
               <mat-chip *ngIf="!user.is_staff && !user.is_superuser && !user.is_developer && (!user.groups || user.groups.length === 0)"
                         class="role-chip user">
+                <mat-icon>person</mat-icon>
                 User
               </mat-chip>
             </div>
           </td>
         </ng-container>
 
-        <!-- Status Column -->
+        <!-- Enhanced Status Column -->
         <ng-container matColumnDef="status">
           <th mat-header-cell *matHeaderCellDef mat-sort-header="is_active">Status</th>
           <td mat-cell *matCellDef="let user">
-            <div class="status-indicator" [class]="user.is_active ? 'active' : 'inactive'">
-              <span class="status-dot"></span>
+            <div class="status-indicator enhanced" [class]="user.is_active ? 'active' : 'inactive'">
+              <span class="status-dot pulse-animation"></span>
               <span class="status-text">{{ user.is_active ? 'Active' : 'Inactive' }}</span>
             </div>
             <div class="account-status" *ngIf="!user.activated_account">
@@ -261,27 +500,64 @@
         <ng-container matColumnDef="lastLogin">
           <th mat-header-cell *matHeaderCellDef mat-sort-header="last_login">Last Login</th>
           <td mat-cell *matCellDef="let user" class="last-login-cell">
-            {{ formatDate(user.last_login) }}
+            <span [matTooltip]="user.last_login ? (user.last_login | date:'full') : 'Never logged in'">
+              {{ formatDate(user.last_login) }}
+            </span>
           </td>
         </ng-container>
 
-        <!-- Actions Column -->
+        <!-- Date Joined Column (Hidden by default) -->
+        <ng-container matColumnDef="dateJoined">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="date_joined">Date Joined</th>
+          <td mat-cell *matCellDef="let user" class="date-joined-cell">
+            {{ user.date_joined | date:'mediumDate' }}
+          </td>
+        </ng-container>
+
+        <!-- Enhanced Actions Column -->
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef>Actions</th>
           <td mat-cell *matCellDef="let user" class="actions-cell">
-            <button mat-icon-button [matMenuTriggerFor]="actionMenu" class="action-btn">
+            <button mat-icon-button
+                    [matMenuTriggerFor]="actionMenu"
+                    class="action-btn"
+                    matTooltip="More Actions">
               <mat-icon>more_vert</mat-icon>
             </button>
 
-            <mat-menu #actionMenu="matMenu">
+            <mat-menu #actionMenu="matMenu" class="enhanced-menu">
+              <div class="menu-header">
+                <div class="menu-user-info">
+                  <div class="menu-avatar" [style.background]="getUserAvatarColor(user)">
+                    {{ getUserInitials(user) }}
+                  </div>
+                  <div>
+                    <div class="menu-user-name">{{ user.first_name }} {{ user.last_name }}</div>
+                    <div class="menu-user-email">{{ user.email }}</div>
+                  </div>
+                </div>
+              </div>
+              <mat-divider></mat-divider>
+
               <button mat-menu-item (click)="viewUser(user)">
                 <mat-icon>visibility</mat-icon>
                 <span>View Details</span>
               </button>
               <button mat-menu-item (click)="editUser(user)">
                 <mat-icon>edit</mat-icon>
-                <span>Edit</span>
+                <span>Edit User</span>
               </button>
+              <button mat-menu-item (click)="copyUserDetails(user)">
+                <mat-icon>content_copy</mat-icon>
+                <span>Copy Details</span>
+              </button>
+              <button mat-menu-item (click)="addToComparison(user)" [disabled]="compareUsers.length >= 3">
+                <mat-icon>compare_arrows</mat-icon>
+                <span>Add to Compare</span>
+              </button>
+
+              <mat-divider></mat-divider>
+
               <button mat-menu-item (click)="toggleUserStatus(user)">
                 <mat-icon>{{ user.is_active ? 'visibility_off' : 'visibility' }}</mat-icon>
                 <span>{{ user.is_active ? 'Deactivate' : 'Activate' }}</span>
@@ -294,63 +570,186 @@
                 <mat-icon>phone</mat-icon>
                 <span>Phone Numbers</span>
               </button>
+              <button mat-menu-item (click)="viewUserActivity(user)">
+                <mat-icon>history</mat-icon>
+                <span>Activity Log</span>
+              </button>
+
               <mat-divider></mat-divider>
+
               <button mat-menu-item
                       (click)="deleteUser(user)"
                       [disabled]="user.is_superuser || currentUser?.id === user.id"
                       class="delete-item">
                 <mat-icon>delete</mat-icon>
-                <span>Delete</span>
+                <span>Delete User</span>
               </button>
             </mat-menu>
           </td>
         </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns;"
             class="user-row"
             [class.selected]="isSelected(row)"
-            (click)="viewUser(row)"></tr>
+            (click)="viewUser(row)"
+            @fadeInUp></tr>
       </table>
 
+      <!-- Enhanced Paginator -->
       <mat-paginator [length]="totalUsers"
                      [pageSize]="pageSize"
-                     [pageSizeOptions]="[10, 25, 50, 100]"
+                     [pageSizeOptions]="pageSizeOptions"
                      [pageIndex]="currentPage"
                      (page)="onPageChange($event)"
                      showFirstLastButtons
-                     class="table-paginator">
+                     class="table-paginator enhanced">
       </mat-paginator>
     </div>
 
-    <!-- Empty State -->
-    <div class="empty-state" *ngIf="users.length === 0 && !isLoading">
-      <mat-icon>people</mat-icon>
+    <!-- Grid View -->
+    <div class="grid-container" *ngIf="viewMode === 'grid'">
+      <div class="users-grid">
+        <div *ngFor="let user of users"
+             class="user-card hover-lift"
+             [class.selected]="isSelected(user)"
+             @fadeInScale>
+          <div class="card-header">
+            <mat-checkbox (change)="toggleSelection(user)"
+                          [checked]="isSelected(user)"
+                          (click)="$event.stopPropagation()"
+                          class="card-checkbox">
+            </mat-checkbox>
+            <button mat-icon-button
+                    [matMenuTriggerFor]="cardMenu"
+                    class="card-menu-btn">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #cardMenu="matMenu">
+              <!-- Same menu items as table view -->
+            </mat-menu>
+          </div>
+
+          <div class="card-body" (click)="viewUser(user)">
+            <div class="user-avatar-large" [style.background]="getUserAvatarColor(user)">
+              <span>{{ getUserInitials(user) }}</span>
+              <div class="avatar-status-large" [class.active]="user.is_active"></div>
+            </div>
+
+            <h3 class="user-card-name">
+              {{ user.first_name }} {{ user.last_name }}
+              <mat-icon class="verified-icon" *ngIf="user.activated_account">verified</mat-icon>
+            </h3>
+
+            <p class="user-card-username">@{{ user.username }}</p>
+            <p class="user-card-email">{{ user.email }}</p>
+
+            <div class="user-card-badges">
+              <mat-chip *ngIf="user.user_type" class="type-chip small">
+                {{ user.user_type.name }}
+              </mat-chip>
+              <mat-chip *ngIf="user.is_superuser" class="role-chip superuser small">
+                Super Admin
+              </mat-chip>
+              <mat-chip *ngIf="user.is_staff && !user.is_superuser" class="role-chip staff small">
+                Staff
+              </mat-chip>
+            </div>
+
+            <div class="user-card-stats">
+              <div class="stat">
+                <mat-icon>event</mat-icon>
+                <span>Joined {{ formatDate(user.date_joined) }}</span>
+              </div>
+              <div class="stat">
+                <mat-icon>access_time</mat-icon>
+                <span>{{ formatDate(user.last_login) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-actions">
+            <button mat-button (click)="editUser(user); $event.stopPropagation()">
+              <mat-icon>edit</mat-icon>
+              Edit
+            </button>
+            <button mat-button (click)="addToComparison(user); $event.stopPropagation()"
+                    [disabled]="compareUsers.length >= 3">
+              <mat-icon>compare_arrows</mat-icon>
+              Compare
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid Paginator -->
+      <mat-paginator [length]="totalUsers"
+                     [pageSize]="pageSize"
+                     [pageSizeOptions]="[12, 24, 48, 96]"
+                     [pageIndex]="currentPage"
+                     (page)="onPageChange($event)"
+                     showFirstLastButtons
+                     class="grid-paginator">
+      </mat-paginator>
+    </div>
+
+    <!-- Enhanced Empty State -->
+    <div class="empty-state enhanced" *ngIf="users.length === 0 && !isLoading" @fadeInScale>
+      <div class="empty-illustration">
+        <mat-icon>people_outline</mat-icon>
+      </div>
       <h3>No users found</h3>
       <p>
         {{ searchQuery || statusFilter !== 'all' || userTypeFilter || groupFilter ?
-        'Try adjusting your filters' :
-        'Create your first user' }}
+        'Try adjusting your filters or search criteria' :
+        'Get started by creating your first user' }}
       </p>
-      <button mat-raised-button
-              class="create-btn"
-              (click)="searchQuery || statusFilter !== 'all' || userTypeFilter || groupFilter ? clearFilters() : openCreateUserDialog()">
-        <mat-icon>{{ searchQuery || statusFilter !== 'all' || userTypeFilter || groupFilter ? 'clear' : 'person_add' }}</mat-icon>
-        {{ searchQuery || statusFilter !== 'all' || userTypeFilter || groupFilter ? 'Clear Filters' : 'Create User' }}
-      </button>
+      <div class="empty-actions">
+        <button mat-raised-button
+                class="create-btn"
+                (click)="searchQuery || statusFilter !== 'all' || userTypeFilter || groupFilter ? clearFilters() : openCreateUserDialog()">
+          <mat-icon>{{ searchQuery || statusFilter !== 'all' || userTypeFilter || groupFilter ? 'clear' : 'person_add' }}</mat-icon>
+          {{ searchQuery || statusFilter !== 'all' || userTypeFilter || groupFilter ? 'Clear Filters' : 'Create User' }}
+        </button>
+        <button mat-button (click)="importUsers()" class="import-btn">
+          <mat-icon>upload_file</mat-icon>
+          Import Users
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Skeleton for Table -->
+  <div class="skeleton-container" *ngIf="isLoadingSkeleton">
+    <div class="skeleton-filters">
+      <div class="skeleton-field loading-shimmer"></div>
+      <div class="skeleton-field loading-shimmer"></div>
+      <div class="skeleton-field loading-shimmer"></div>
+    </div>
+
+    <div class="skeleton-table">
+      <div class="skeleton-header">
+        <div class="skeleton-cell loading-shimmer" *ngFor="let col of [1,2,3,4,5,6]"></div>
+      </div>
+      <div class="skeleton-row" *ngFor="let row of getSkeletonArray(10)">
+        <div class="skeleton-cell loading-shimmer" *ngFor="let col of [1,2,3,4,5,6]"></div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- Compact Edit User Dialog -->
+<!-- Enhanced Edit User Dialog -->
 <ng-template #editUserDialog>
-  <h2 mat-dialog-title>
+  <h2 mat-dialog-title class="dialog-title">
     <mat-icon>{{ editingUser?.id ? 'edit' : 'person_add' }}</mat-icon>
     {{ editingUser?.id ? 'Edit' : 'Create' }} User
+    <button mat-icon-button class="dialog-close" mat-dialog-close>
+      <mat-icon>close</mat-icon>
+    </button>
   </h2>
 
-  <mat-dialog-content class="dialog-content">
-    <mat-tab-group class="user-tabs" animationDuration="300ms">
+  <mat-dialog-content class="dialog-content enhanced-dialog">
+    <mat-tab-group class="user-tabs enhanced" animationDuration="300ms">
       <!-- Basic Information Tab -->
       <mat-tab>
         <ng-template mat-tab-label>
@@ -358,61 +757,93 @@
           <span class="tab-label">Basic Info</span>
         </ng-template>
 
-        <form [formGroup]="userForm" class="compact-form">
-          <div class="form-row">
-            <mat-form-field appearance="outline" class="ocean-mint-field">
-              <mat-label>First Name</mat-label>
-              <input matInput formControlName="first_name">
-              <mat-icon matPrefix>person</mat-icon>
-              <mat-error *ngIf="userForm.get('first_name')?.hasError('required')">
-                First name is required
-              </mat-error>
-            </mat-form-field>
+        <form [formGroup]="userForm" class="compact-form enhanced-form">
+          <!-- Name Fields -->
+          <div class="form-section">
+            <h4 class="section-title">Personal Information</h4>
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="ocean-mint-field">
+                <mat-label>First Name</mat-label>
+                <input matInput formControlName="first_name" (blur)="generateUsernameSuggestions()">
+                <mat-icon matPrefix>person</mat-icon>
+                <mat-error *ngIf="userForm.get('first_name')?.hasError('required')">
+                  First name is required
+                </mat-error>
+                <mat-error *ngIf="userForm.get('first_name')?.hasError('minlength')">
+                  Minimum 2 characters required
+                </mat-error>
+              </mat-form-field>
 
-            <mat-form-field appearance="outline" class="ocean-mint-field">
-              <mat-label>Second Name</mat-label>
-              <input matInput formControlName="second_name">
-              <mat-icon matPrefix>person</mat-icon>
-            </mat-form-field>
+              <mat-form-field appearance="outline" class="ocean-mint-field">
+                <mat-label>Second Name</mat-label>
+                <input matInput formControlName="second_name">
+                <mat-icon matPrefix>person</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="ocean-mint-field">
+                <mat-label>Third Name</mat-label>
+                <input matInput formControlName="third_name">
+                <mat-icon matPrefix>person</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="ocean-mint-field">
+                <mat-label>Last Name</mat-label>
+                <input matInput formControlName="last_name" (blur)="generateUsernameSuggestions()">
+                <mat-icon matPrefix>person</mat-icon>
+                <mat-error *ngIf="userForm.get('last_name')?.hasError('required')">
+                  Last name is required
+                </mat-error>
+                <mat-error *ngIf="userForm.get('last_name')?.hasError('minlength')">
+                  Minimum 2 characters required
+                </mat-error>
+              </mat-form-field>
+            </div>
           </div>
 
-          <div class="form-row">
-            <mat-form-field appearance="outline" class="ocean-mint-field">
-              <mat-label>Third Name</mat-label>
-              <input matInput formControlName="third_name">
-              <mat-icon matPrefix>person</mat-icon>
-            </mat-form-field>
+          <!-- Account Information -->
+          <div class="form-section">
+            <h4 class="section-title">Account Information</h4>
 
-            <mat-form-field appearance="outline" class="ocean-mint-field">
-              <mat-label>Last Name</mat-label>
-              <input matInput formControlName="last_name">
-              <mat-icon matPrefix>person</mat-icon>
-              <mat-error *ngIf="userForm.get('last_name')?.hasError('required')">
-                Last name is required
-              </mat-error>
-            </mat-form-field>
-          </div>
-
-          <div class="form-row">
+            <!-- Username with suggestions -->
             <mat-form-field appearance="outline" class="ocean-mint-field">
               <mat-label>Username</mat-label>
               <input matInput formControlName="username" (blur)="checkUsernameAvailability()">
               <mat-icon matPrefix>alternate_email</mat-icon>
+              <mat-icon matSuffix *ngIf="checkingUsername" class="checking-icon">
+                <mat-spinner diameter="16"></mat-spinner>
+              </mat-icon>
+              <mat-icon matSuffix *ngIf="!checkingUsername && userForm.get('username')?.valid && userForm.get('username')?.value" class="valid-icon">
+                check_circle
+              </mat-icon>
               <mat-error *ngIf="userForm.get('username')?.hasError('required')">
                 Username is required
               </mat-error>
               <mat-error *ngIf="userForm.get('username')?.hasError('pattern')">
-                Only letters, numbers, and underscores
+                Only letters, numbers, and underscores (3-30 characters)
+              </mat-error>
+              <mat-error *ngIf="userForm.get('username')?.hasError('reserved')">
+                This username is reserved
               </mat-error>
               <mat-error *ngIf="userForm.get('username')?.hasError('notAvailable')">
                 Username is already taken
               </mat-error>
-              <mat-hint *ngIf="checkingUsername">
-                <mat-spinner diameter="16" style="display: inline-block; margin-right: 4px;"></mat-spinner>
-                Checking availability...
-              </mat-hint>
             </mat-form-field>
 
+            <!-- Username suggestions -->
+            <div class="username-suggestions" *ngIf="suggestedUsernames.length > 0">
+              <p>Suggested usernames:</p>
+              <mat-chip-set>
+                <mat-chip *ngFor="let suggestion of suggestedUsernames"
+                          (click)="selectSuggestedUsername(suggestion)"
+                          class="suggestion-chip">
+                  {{ suggestion }}
+                </mat-chip>
+              </mat-chip-set>
+            </div>
+
+            <!-- Email -->
             <mat-form-field appearance="outline" class="ocean-mint-field">
               <mat-label>Email</mat-label>
               <input matInput type="email" formControlName="email">
@@ -423,81 +854,144 @@
               <mat-error *ngIf="userForm.get('email')?.hasError('email')">
                 Please enter a valid email
               </mat-error>
+              <mat-error *ngIf="userForm.get('email')?.hasError('disposableEmail')">
+                Disposable email addresses are not allowed
+              </mat-error>
             </mat-form-field>
-          </div>
 
-          <mat-form-field appearance="outline" class="ocean-mint-field">
-            <mat-label>User Type</mat-label>
-            <mat-select formControlName="user_type_id">
-              <mat-option [value]="null">No type assigned</mat-option>
-              <mat-option *ngFor="let type of userTypes" [value]="type.id">
-                {{ type.name }} ({{ type.code }})
-              </mat-option>
-            </mat-select>
-            <mat-icon matPrefix>category</mat-icon>
-          </mat-form-field>
+            <!-- User Type -->
+            <mat-form-field appearance="outline" class="ocean-mint-field">
+              <mat-label>User Type</mat-label>
+              <mat-select formControlName="user_type_id">
+                <mat-option [value]="null">
+                  <mat-icon>remove</mat-icon>
+                  No type assigned
+                </mat-option>
+                <mat-option *ngFor="let type of userTypes" [value]="type.id">
+                  <mat-icon>label</mat-icon>
+                  {{ type.name }} ({{ type.code }})
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>category</mat-icon>
+            </mat-form-field>
 
-          <mat-form-field appearance="outline" class="ocean-mint-field" *ngIf="!editingUser?.id">
-            <mat-label>Password</mat-label>
-            <input matInput [type]="showPassword ? 'text' : 'password'" formControlName="password" (input)="checkPasswordStrength()">
-            <mat-icon matPrefix>lock</mat-icon>
-            <button mat-icon-button matSuffix (click)="showPassword = !showPassword" type="button">
-              <mat-icon>{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
-            </button>
-            <mat-error *ngIf="userForm.get('password')?.hasError('required')">
-              Password is required
-            </mat-error>
-            <mat-error *ngIf="userForm.get('password')?.hasError('minlength')">
-              Password must be at least 8 characters
-            </mat-error>
-            <mat-error *ngIf="userForm.get('password')?.hasError('pattern')">
-              Must contain upper, lower, number & special char
-            </mat-error>
-            <mat-hint>Min 8 chars with upper, lower, number & special char</mat-hint>
-          </mat-form-field>
+            <!-- Password (for new users) -->
+            <div class="password-section" *ngIf="!editingUser?.id">
+              <mat-form-field appearance="outline" class="ocean-mint-field">
+                <mat-label>Password</mat-label>
+                <input matInput
+                       [type]="showPassword ? 'text' : 'password'"
+                       formControlName="password"
+                       (input)="checkPasswordStrength()">
+                <mat-icon matPrefix>lock</mat-icon>
+                <button mat-icon-button matSuffix (click)="showPassword = !showPassword" type="button">
+                  <mat-icon>{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
+                <button mat-icon-button matSuffix (click)="generatePassword()" type="button" matTooltip="Generate Password">
+                  <mat-icon>auto_fix_high</mat-icon>
+                </button>
+                <mat-error *ngIf="userForm.get('password')?.hasError('required')">
+                  Password is required
+                </mat-error>
+                <mat-error *ngIf="userForm.get('password')?.hasError('minlength')">
+                  Password must be at least 8 characters
+                </mat-error>
+                <mat-error *ngIf="userForm.get('password')?.hasError('pattern')">
+                  Must contain upper, lower, number & special character
+                </mat-error>
+                <mat-hint>Min 8 chars with upper, lower, number & special character</mat-hint>
+              </mat-form-field>
 
-          <!-- Password Strength Indicator -->
-          <div class="password-strength" *ngIf="!editingUser?.id && userForm.get('password')?.value">
-            <div class="strength-label">Password Strength:</div>
-            <div class="strength-bar">
-              <div class="strength-progress"
-                   [style.width.%]="passwordStrength.score * 25"
-                   [class.weak]="passwordStrength.score <= 1"
-                   [class.fair]="passwordStrength.score === 2"
-                   [class.good]="passwordStrength.score === 3"
-                   [class.strong]="passwordStrength.score === 4">
+              <!-- Generated Password Display -->
+              <div class="generated-password-display" *ngIf="showGeneratedPassword && generatedPassword">
+                <div class="password-value">
+                  <code>{{ generatedPassword }}</code>
+                  <button mat-icon-button (click)="copyGeneratedPassword()" matTooltip="Copy Password">
+                    <mat-icon>content_copy</mat-icon>
+                  </button>
+                </div>
+                <mat-hint>Save this password - it won't be shown again!</mat-hint>
+              </div>
+
+              <!-- Enhanced Password Strength Indicator -->
+              <div class="password-strength enhanced" *ngIf="userForm.get('password')?.value">
+                <div class="strength-header">
+                  <span class="strength-label">Password Strength:</span>
+                  <span class="strength-text"
+                        [class.weak]="passwordStrength.score <= 1"
+                        [class.fair]="passwordStrength.score === 2"
+                        [class.good]="passwordStrength.score === 3"
+                        [class.strong]="passwordStrength.score >= 4">
+                    {{ passwordStrength.text }}
+                  </span>
+                </div>
+                <div class="strength-bar-container">
+                  <div class="strength-bar">
+                    <div class="strength-progress"
+                         [style.width.%]="(passwordStrength.score / 6) * 100"
+                         [class.weak]="passwordStrength.score <= 1"
+                         [class.fair]="passwordStrength.score === 2"
+                         [class.good]="passwordStrength.score === 3"
+                         [class.strong]="passwordStrength.score >= 4">
+                    </div>
+                  </div>
+                </div>
+                <div class="strength-feedback" *ngIf="passwordStrength.feedback && passwordStrength.feedback.length > 0">
+                  <mat-chip-set>
+                    <mat-chip *ngFor="let tip of passwordStrength.feedback" class="feedback-chip">
+                      <mat-icon>info</mat-icon>
+                      {{ tip }}
+                    </mat-chip>
+                  </mat-chip-set>
+                </div>
               </div>
             </div>
-            <div class="strength-text"
-                 [class.weak]="passwordStrength.score <= 1"
-                 [class.fair]="passwordStrength.score === 2"
-                 [class.good]="passwordStrength.score === 3"
-                 [class.strong]="passwordStrength.score === 4">
-              {{ passwordStrength.text }}
-            </div>
           </div>
 
-          <div class="checkbox-section">
-            <mat-checkbox formControlName="is_active" class="styled-checkbox">
-              <span class="checkbox-label">Active User</span>
-              <span class="checkbox-description">User can log in and access the system</span>
-            </mat-checkbox>
-            <mat-checkbox formControlName="activated_account" class="styled-checkbox">
-              <span class="checkbox-label">Account Verified</span>
-              <span class="checkbox-description">User has verified their email/phone</span>
-            </mat-checkbox>
-            <mat-checkbox formControlName="is_staff" class="styled-checkbox">
-              <span class="checkbox-label">Staff Status</span>
-              <span class="checkbox-description">User can access the admin interface</span>
-            </mat-checkbox>
-            <mat-checkbox formControlName="is_developer" class="styled-checkbox">
-              <span class="checkbox-label">Developer Status</span>
-              <span class="checkbox-description">User has developer privileges</span>
-            </mat-checkbox>
-            <mat-checkbox formControlName="is_superuser" class="styled-checkbox">
-              <span class="checkbox-label">Superuser Status</span>
-              <span class="checkbox-description">User has all permissions without explicitly assigning them</span>
-            </mat-checkbox>
+          <!-- Account Settings -->
+          <div class="form-section">
+            <h4 class="section-title">Account Settings</h4>
+            <div class="checkbox-section enhanced">
+              <mat-slide-toggle formControlName="is_active" class="styled-toggle">
+                <span class="toggle-label">
+                  <mat-icon>power_settings_new</mat-icon>
+                  Active User
+                </span>
+                <span class="toggle-description">User can log in and access the system</span>
+              </mat-slide-toggle>
+
+              <mat-slide-toggle formControlName="activated_account" class="styled-toggle">
+                <span class="toggle-label">
+                  <mat-icon>verified_user</mat-icon>
+                  Account Verified
+                </span>
+                <span class="toggle-description">User has verified their email/phone</span>
+              </mat-slide-toggle>
+
+              <mat-slide-toggle formControlName="is_staff" class="styled-toggle">
+                <span class="toggle-label">
+                  <mat-icon>badge</mat-icon>
+                  Staff Status
+                </span>
+                <span class="toggle-description">User can access the admin interface</span>
+              </mat-slide-toggle>
+
+              <mat-slide-toggle formControlName="is_developer" class="styled-toggle">
+                <span class="toggle-label">
+                  <mat-icon>code</mat-icon>
+                  Developer Status
+                </span>
+                <span class="toggle-description">User has developer privileges</span>
+              </mat-slide-toggle>
+
+              <mat-slide-toggle formControlName="is_superuser" class="styled-toggle warning">
+                <span class="toggle-label">
+                  <mat-icon>admin_panel_settings</mat-icon>
+                  Superuser Status
+                </span>
+                <span class="toggle-description">User has all permissions without explicitly assigning them</span>
+              </mat-slide-toggle>
+            </div>
           </div>
         </form>
       </mat-tab>
@@ -506,24 +1000,46 @@
       <mat-tab>
         <ng-template mat-tab-label>
           <mat-icon class="tab-icon">security</mat-icon>
-          <span class="tab-label">Groups</span>
+          <span class="tab-label">Groups & Permissions</span>
         </ng-template>
 
-        <div class="permissions-content">
+        <div class="permissions-content enhanced">
           <div class="groups-section">
-            <h4 class="section-title">User Groups</h4>
+            <div class="section-header">
+              <h4 class="section-title">User Groups</h4>
+              <button mat-icon-button (click)="selectAllGroups()" matTooltip="Select All">
+                <mat-icon>select_all</mat-icon>
+              </button>
+            </div>
             <p class="section-description">Assign user to groups to manage permissions collectively</p>
-            <div class="groups-list">
-              <div *ngFor="let group of userGroups" class="permission-item">
-                <mat-checkbox [checked]="isUserInGroup(group.id)"
-                              (change)="toggleUserGroup(group.id, $event.checked)"
-                              class="styled-checkbox">
-                  <span class="checkbox-label">{{ group.name }}</span>
-                  <span class="permission-count" *ngIf="group.permissions">
-                    ({{ group.permissions.length }} permissions)
-                  </span>
-                </mat-checkbox>
-              </div>
+
+            <div class="groups-grid">
+              <mat-card *ngFor="let group of userGroups"
+                        class="group-card"
+                        [class.selected]="isUserInGroup(group.id)"
+                        (click)="toggleUserGroup(group.id, !isUserInGroup(group.id))">
+                <mat-card-header>
+                  <mat-checkbox [checked]="isUserInGroup(group.id)"
+                                (change)="toggleUserGroup(group.id, $event.checked)"
+                                (click)="$event.stopPropagation()"
+                                class="group-checkbox">
+                  </mat-checkbox>
+                  <mat-card-title>{{ group.name }}</mat-card-title>
+                  <mat-chip class="permission-count-chip" *ngIf="group.permissions">
+                    {{ group.permissions.length }} permissions
+                  </mat-chip>
+                </mat-card-header>
+                <mat-card-content>
+                  <div class="group-permissions-preview" *ngIf="group.permissions && group.permissions.length > 0">
+                    <mat-chip *ngFor="let perm of group.permissions.slice(0, 3)" class="mini-permission-chip">
+                      {{ perm.name }}
+                    </mat-chip>
+                    <span *ngIf="group.permissions.length > 3" class="more-permissions">
+                      +{{ group.permissions.length - 3 }} more
+                    </span>
+                  </div>
+                </mat-card-content>
+              </mat-card>
             </div>
           </div>
         </div>
@@ -533,278 +1049,308 @@
       <mat-tab>
         <ng-template mat-tab-label>
           <mat-icon class="tab-icon">account_circle</mat-icon>
-          <span class="tab-label">Profile</span>
+          <span class="tab-label">Profile & Preferences</span>
         </ng-template>
 
-        <form [formGroup]="profileForm" class="profile-form">
-          <div class="form-row">
-            <mat-form-field appearance="outline" class="ocean-mint-field">
-              <mat-label>Phone</mat-label>
-              <input matInput formControlName="phone">
-              <mat-icon matPrefix>phone</mat-icon>
-            </mat-form-field>
+        <form [formGroup]="profileForm" class="profile-form enhanced">
+          <div class="form-section">
+            <h4 class="section-title">Contact Information</h4>
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="ocean-mint-field">
+                <mat-label>Phone</mat-label>
+                <input matInput formControlName="phone" placeholder="+1 (555) 123-4567">
+                <mat-icon matPrefix>phone</mat-icon>
+              </mat-form-field>
 
-            <mat-form-field appearance="outline" class="ocean-mint-field">
-              <mat-label>Department</mat-label>
-              <input matInput formControlName="department">
-              <mat-icon matPrefix>business</mat-icon>
-            </mat-form-field>
+              <mat-form-field appearance="outline" class="ocean-mint-field">
+                <mat-label>Department</mat-label>
+                <input matInput formControlName="department">
+                <mat-icon matPrefix>business</mat-icon>
+              </mat-form-field>
+            </div>
           </div>
 
-          <div class="form-row">
-            <mat-form-field appearance="outline" class="ocean-mint-field">
-              <mat-label>Position</mat-label>
-              <input matInput formControlName="position">
-              <mat-icon matPrefix>work</mat-icon>
-            </mat-form-field>
+          <div class="form-section">
+            <h4 class="section-title">Professional Information</h4>
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="ocean-mint-field">
+                <mat-label>Position</mat-label>
+                <input matInput formControlName="position">
+                <mat-icon matPrefix>work</mat-icon>
+              </mat-form-field>
 
-            <mat-form-field appearance="outline" class="ocean-mint-field">
-              <mat-label>Timezone</mat-label>
-              <mat-select formControlName="timezone">
-                <mat-option value="UTC">UTC</mat-option>
-                <mat-option value="America/New_York">Eastern Time</mat-option>
-                <mat-option value="America/Chicago">Central Time</mat-option>
-                <mat-option value="America/Denver">Mountain Time</mat-option>
-                <mat-option value="America/Los_Angeles">Pacific Time</mat-option>
-                <mat-option value="Europe/London">London</mat-option>
-                <mat-option value="Asia/Dubai">Dubai</mat-option>
-              </mat-select>
-              <mat-icon matPrefix>access_time</mat-icon>
+              <mat-form-field appearance="outline" class="ocean-mint-field">
+                <mat-label>Timezone</mat-label>
+                <mat-select formControlName="timezone">
+                  <mat-option value="UTC">UTC (Coordinated Universal Time)</mat-option>
+                  <mat-option value="America/New_York">Eastern Time (ET)</mat-option>
+                  <mat-option value="America/Chicago">Central Time (CT)</mat-option>
+                  <mat-option value="America/Denver">Mountain Time (MT)</mat-option>
+                  <mat-option value="America/Los_Angeles">Pacific Time (PT)</mat-option>
+                  <mat-option value="Europe/London">London (GMT)</mat-option>
+                  <mat-option value="Europe/Paris">Paris (CET)</mat-option>
+                  <mat-option value="Asia/Dubai">Dubai (GST)</mat-option>
+                  <mat-option value="Asia/Tokyo">Tokyo (JST)</mat-option>
+                </mat-select>
+                <mat-icon matPrefix>access_time</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="ocean-mint-field full-width">
+              <mat-label>Bio</mat-label>
+              <textarea matInput formControlName="bio" rows="4" placeholder="Brief description about the user"></textarea>
+              <mat-icon matPrefix>description</mat-icon>
+              <mat-hint align="end">{{ profileForm.get('bio')?.value?.length || 0 }}/500</mat-hint>
             </mat-form-field>
           </div>
-
-          <mat-form-field appearance="outline" class="ocean-mint-field">
-            <mat-label>Bio</mat-label>
-            <textarea matInput formControlName="bio" rows="4"></textarea>
-            <mat-icon matPrefix>description</mat-icon>
-            <mat-hint>Brief description about the user</mat-hint>
-          </mat-form-field>
         </form>
       </mat-tab>
     </mat-tab-group>
   </mat-dialog-content>
 
-  <mat-dialog-actions align="end">
+  <mat-dialog-actions align="end" class="enhanced-actions">
     <button mat-button (click)="closeDialog()">Cancel</button>
     <button mat-raised-button
             color="primary"
             (click)="saveUser()"
             [disabled]="!userForm.valid || isSaving">
-      <mat-spinner diameter="16" *ngIf="isSaving"></mat-spinner>
-      {{ editingUser?.id ? 'Update' : 'Create' }}
+      <mat-spinner diameter="16" *ngIf="isSaving" class="button-spinner"></mat-spinner>
+      <mat-icon *ngIf="!isSaving">{{ editingUser?.id ? 'save' : 'add' }}</mat-icon>
+      {{ editingUser?.id ? 'Update' : 'Create' }} User
     </button>
   </mat-dialog-actions>
 </ng-template>
 
-<!-- Phone Numbers Dialog -->
-<ng-template #phoneNumbersDialog>
+<!-- Other dialogs remain the same but with enhanced styling classes -->
+<!-- ... (phoneNumbersDialog, resetPasswordDialog, viewUserDialog, etc.) ... -->
+
+<!-- Filter Presets Dialog -->
+<ng-template #filterPresetsDialog>
   <h2 mat-dialog-title>
-    <mat-icon>phone</mat-icon>
-    Phone Numbers - {{ selectedUser?.first_name }} {{ selectedUser?.last_name }}
+    <mat-icon>bookmark</mat-icon>
+    Filter Presets
   </h2>
 
   <mat-dialog-content class="dialog-content">
-    <div class="phone-list">
-      <div *ngFor="let phone of phoneNumbers" class="phone-item">
-        <div class="phone-info">
-          <span class="phone-number">{{ phone.phone_number }}</span>
-          <div class="phone-badges">
-            <mat-chip *ngIf="phone.main" class="status-chip main">Main</mat-chip>
-            <mat-chip *ngIf="phone.is_default" class="status-chip default">Default</mat-chip>
+    <form [formGroup]="filterPresetForm" class="preset-form">
+      <mat-form-field appearance="outline" class="ocean-mint-field">
+        <mat-label>Preset Name</mat-label>
+        <input matInput formControlName="name" placeholder="e.g., Active Admins">
+        <mat-icon matPrefix>label</mat-icon>
+      </mat-form-field>
+      <button mat-raised-button color="primary" (click)="saveFilterPreset()" [disabled]="!filterPresetForm.valid">
+        <mat-icon>save</mat-icon>
+        Save Current Filters
+      </button>
+    </form>
+
+    <mat-divider></mat-divider>
+
+    <div class="presets-list">
+      <h4>Saved Presets</h4>
+      <mat-list>
+        <mat-list-item *ngFor="let preset of filterPresets" class="preset-item">
+          <mat-icon matListItemIcon>filter_alt</mat-icon>
+          <div matListItemTitle>{{ preset.name }}</div>
+          <div matListItemLine class="preset-details">
+            <mat-chip *ngIf="preset.filters.search">Search: {{ preset.filters.search }}</mat-chip>
+            <mat-chip *ngIf="preset.statusFilter !== 'all'">{{ preset.statusFilter }}</mat-chip>
           </div>
-        </div>
-        <div class="phone-actions">
-          <button mat-icon-button (click)="editPhoneNumber(phone)" matTooltip="Edit">
-            <mat-icon>edit</mat-icon>
+          <button mat-icon-button (click)="applyFilterPreset(preset)" matTooltip="Apply">
+            <mat-icon>check</mat-icon>
           </button>
-          <button mat-icon-button (click)="deletePhoneNumber(phone)" matTooltip="Delete">
+          <button mat-icon-button (click)="deleteFilterPreset(preset)" matTooltip="Delete">
             <mat-icon>delete</mat-icon>
           </button>
-        </div>
-      </div>
+        </mat-list-item>
+      </mat-list>
 
-      <div class="empty-phone" *ngIf="phoneNumbers.length === 0">
-        <mat-icon>phone_disabled</mat-icon>
-        <p>No phone numbers added yet</p>
+      <div class="empty-presets" *ngIf="filterPresets.length === 0">
+        <mat-icon>bookmark_border</mat-icon>
+        <p>No saved presets yet</p>
       </div>
     </div>
-
-    <form [formGroup]="phoneForm" class="phone-form" *ngIf="editingPhone || addingPhone">
-      <h4>{{ editingPhone ? 'Edit' : 'Add' }} Phone Number</h4>
-      <div class="form-row">
-        <mat-form-field appearance="outline" class="ocean-mint-field">
-          <mat-label>Phone Number</mat-label>
-          <input matInput formControlName="phone_number" placeholder="+1234567890">
-          <mat-icon matPrefix>phone</mat-icon>
-          <mat-error *ngIf="phoneForm.get('phone_number')?.hasError('required')">
-            Phone number is required
-          </mat-error>
-          <mat-error *ngIf="phoneForm.get('phone_number')?.hasError('pattern')">
-            Invalid phone number format
-          </mat-error>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="ocean-mint-field">
-          <mat-label>Type</mat-label>
-          <mat-select formControlName="number_type">
-            <mat-option [value]="1">Fax</mat-option>
-            <mat-option [value]="2">Phone</mat-option>
-            <mat-option [value]="3">Employer</mat-option>
-          </mat-select>
-          <mat-icon matPrefix>category</mat-icon>
-        </mat-form-field>
-      </div>
-
-      <div class="checkbox-row">
-        <mat-checkbox formControlName="is_default">Default Number</mat-checkbox>
-        <mat-checkbox formControlName="main">Main Number</mat-checkbox>
-      </div>
-
-      <div class="form-actions">
-        <button mat-button (click)="cancelPhoneEdit()">Cancel</button>
-        <button mat-raised-button color="primary" (click)="savePhoneNumber()" [disabled]="!phoneForm.valid">
-          {{ editingPhone ? 'Update' : 'Add' }}
-        </button>
-      </div>
-    </form>
-
-    <button mat-raised-button
-            class="add-phone-btn"
-            (click)="startAddingPhone()"
-            *ngIf="!editingPhone && !addingPhone">
-      <mat-icon>add</mat-icon>
-      Add Phone Number
-    </button>
   </mat-dialog-content>
 
   <mat-dialog-actions align="end">
-    <button mat-button (click)="closePhoneDialog()">Close</button>
+    <button mat-button mat-dialog-close>Close</button>
   </mat-dialog-actions>
 </ng-template>
 
-<!-- Reset Password Dialog -->
-<ng-template #resetPasswordDialog>
+<!-- User Comparison Dialog -->
+<ng-template #compareUsersDialog>
   <h2 mat-dialog-title>
-    <mat-icon>lock_reset</mat-icon>
-    Reset Password
+    <mat-icon>compare_arrows</mat-icon>
+    Compare Users
+  </h2>
+
+  <mat-dialog-content class="dialog-content comparison-dialog">
+    <div class="comparison-table">
+      <table>
+        <thead>
+        <tr>
+          <th>Attribute</th>
+          <th *ngFor="let user of compareUsers" class="user-header">
+            <div class="compare-user-header">
+              <div class="user-avatar small" [style.background]="getUserAvatarColor(user)">
+                {{ getUserInitials(user) }}
+              </div>
+              <div>
+                <div class="user-name">{{ user.first_name }} {{ user.last_name }}</div>
+                <div class="user-username">@{{ user.username }}</div>
+              </div>
+            </div>
+          </th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <td class="attribute-label">Email</td>
+          <td *ngFor="let user of compareUsers">{{ user.email }}</td>
+        </tr>
+        <tr>
+          <td class="attribute-label">User Type</td>
+          <td *ngFor="let user of compareUsers">
+            <mat-chip *ngIf="user.user_type" class="type-chip small">{{ user.user_type.name }}</mat-chip>
+            <span *ngIf="!user.user_type">-</span>
+          </td>
+        </tr>
+        <tr>
+          <td class="attribute-label">Status</td>
+          <td *ngFor="let user of compareUsers">
+            <div class="status-indicator small" [class]="user.is_active ? 'active' : 'inactive'">
+              <span class="status-dot"></span>
+              <span class="status-text">{{ user.is_active ? 'Active' : 'Inactive' }}</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td class="attribute-label">Roles</td>
+          <td *ngFor="let user of compareUsers">
+            <div class="role-chips small">
+              <mat-chip *ngIf="user.is_superuser" class="role-chip superuser small">Super Admin</mat-chip>
+              <mat-chip *ngIf="user.is_staff && !user.is_superuser" class="role-chip staff small">Staff</mat-chip>
+              <mat-chip *ngIf="user.is_developer" class="role-chip developer small">Developer</mat-chip>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td class="attribute-label">Groups</td>
+          <td *ngFor="let user of compareUsers">
+            <mat-chip-set>
+              <mat-chip *ngFor="let group of user.groups" class="group-chip small">{{ group.name }}</mat-chip>
+            </mat-chip-set>
+          </td>
+        </tr>
+        <tr>
+          <td class="attribute-label">Verified</td>
+          <td *ngFor="let user of compareUsers">
+            <mat-icon *ngIf="user.activated_account" class="verified-icon">verified</mat-icon>
+            <mat-icon *ngIf="!user.activated_account" class="unverified-icon">cancel</mat-icon>
+          </td>
+        </tr>
+        <tr>
+          <td class="attribute-label">Date Joined</td>
+          <td *ngFor="let user of compareUsers">{{ user.date_joined | date:'mediumDate' }}</td>
+        </tr>
+        <tr>
+          <td class="attribute-label">Last Login</td>
+          <td *ngFor="let user of compareUsers">{{ formatDate(user.last_login) }}</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="clearComparison()" mat-dialog-close>Clear & Close</button>
+    <button mat-button mat-dialog-close>Close</button>
+  </mat-dialog-actions>
+</ng-template>
+
+<!-- Batch Edit Dialog -->
+<ng-template #batchEditDialog>
+  <h2 mat-dialog-title>
+    <mat-icon>edit</mat-icon>
+    Batch Edit {{ selection.length }} Users
   </h2>
 
   <mat-dialog-content class="dialog-content">
-    <p class="reset-info">
-      Reset password for <strong>{{ selectedUser?.first_name }} {{ selectedUser?.last_name }}</strong>
-      (&#64;{{ selectedUser?.username }})
+    <p class="batch-info">
+      Make changes to multiple users at once. Only filled fields will be updated.
     </p>
 
-    <form [formGroup]="resetPasswordForm" class="reset-form">
+    <form [formGroup]="batchEditForm" class="batch-form">
       <mat-form-field appearance="outline" class="ocean-mint-field">
-        <mat-label>New Password</mat-label>
-        <input matInput
-               [type]="showResetPassword ? 'text' : 'password'"
-               formControlName="password">
-        <mat-icon matPrefix>lock</mat-icon>
-        <button mat-icon-button matSuffix (click)="showResetPassword = !showResetPassword" type="button">
-          <mat-icon>{{ showResetPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
-        </button>
-        <mat-error *ngIf="resetPasswordForm.get('password')?.hasError('required')">
-          Password is required
-        </mat-error>
-        <mat-error *ngIf="resetPasswordForm.get('password')?.hasError('minlength')">
-          Password must be at least 8 characters
-        </mat-error>
-        <mat-error *ngIf="resetPasswordForm.get('password')?.hasError('pattern')">
-          Must contain upper, lower, number & special char
-        </mat-error>
+        <mat-label>Set Status</mat-label>
+        <mat-select formControlName="is_active">
+          <mat-option [value]="null">No change</mat-option>
+          <mat-option [value]="true">Active</mat-option>
+          <mat-option [value]="false">Inactive</mat-option>
+        </mat-select>
+        <mat-icon matPrefix>power_settings_new</mat-icon>
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="ocean-mint-field">
-        <mat-label>Confirm Password</mat-label>
-        <input matInput
-               [type]="showResetPassword ? 'text' : 'password'"
-               formControlName="confirmPassword">
-        <mat-icon matPrefix>lock</mat-icon>
-        <mat-error *ngIf="resetPasswordForm.get('confirmPassword')?.hasError('required')">
-          Please confirm password
-        </mat-error>
-        <mat-error *ngIf="resetPasswordForm.hasError('passwordMismatch')">
-          Passwords do not match
-        </mat-error>
+        <mat-label>Set User Type</mat-label>
+        <mat-select formControlName="user_type_id">
+          <mat-option [value]="null">No change</mat-option>
+          <mat-option *ngFor="let type of userTypes" [value]="type.id">
+            {{ type.name }}
+          </mat-option>
+        </mat-select>
+        <mat-icon matPrefix>category</mat-icon>
       </mat-form-field>
+
+      <div class="batch-toggles">
+        <mat-slide-toggle formControlName="is_staff" class="batch-toggle">
+          Staff Status
+        </mat-slide-toggle>
+        <mat-slide-toggle formControlName="is_developer" class="batch-toggle">
+          Developer Status
+        </mat-slide-toggle>
+      </div>
     </form>
   </mat-dialog-content>
 
   <mat-dialog-actions align="end">
-    <button mat-button (click)="closeResetPasswordDialog()">Cancel</button>
-    <button mat-raised-button
-            color="primary"
-            (click)="confirmResetPassword()"
-            [disabled]="!resetPasswordForm.valid || isResettingPassword">
-      <mat-spinner diameter="16" *ngIf="isResettingPassword"></mat-spinner>
-      Reset Password
+    <button mat-button mat-dialog-close>Cancel</button>
+    <button mat-raised-button color="primary" (click)="applyBatchEdit()">
+      <mat-icon>save</mat-icon>
+      Apply Changes
     </button>
   </mat-dialog-actions>
 </ng-template>
 
-<!-- View User Dialog -->
-<!-- View User Dialog -->
-<ng-template #viewUserDialog>
+<!-- Column Settings Dialog -->
+<ng-template #columnSettingsDialog>
   <h2 mat-dialog-title>
-    <mat-icon>person</mat-icon>
-    User Details
+    <mat-icon>view_column</mat-icon>
+    Configure Table Columns
   </h2>
 
-  <mat-dialog-content class="dialog-content user-details-dialog" *ngIf="selectedUser">
-    <div class="user-header">
-      <div class="user-avatar-large" [style.background]="getUserAvatarColor(selectedUser)">
-        <span>{{ getUserInitials(selectedUser) }}</span>
-      </div>
-      <div class="user-header-info">
-        <h3>{{ selectedUser.first_name }} {{ selectedUser.second_name || '' }} {{ selectedUser.third_name || '' }} {{ selectedUser.last_name }}</h3>
-        <p>&#64;{{ selectedUser.username }}</p>
-        <div class="user-badges">
-          <mat-chip *ngIf="selectedUser.is_superuser" class="role-chip superuser">Super Admin</mat-chip>
-          <mat-chip *ngIf="selectedUser.is_staff && !selectedUser.is_superuser" class="role-chip staff">Staff</mat-chip>
-          <mat-chip *ngIf="selectedUser.is_developer" class="role-chip developer">Developer</mat-chip>
-          <mat-chip *ngIf="selectedUser.is_active" class="status-chip active">Active</mat-chip>
-          <mat-chip *ngIf="!selectedUser.is_active" class="status-chip inactive">Inactive</mat-chip>
-        </div>
-      </div>
-    </div>
+  <mat-dialog-content class="dialog-content">
+    <p>Drag to reorder columns or toggle visibility.</p>
 
-    <div class="details-section">
-      <h4>Basic Information</h4>
-      <div class="detail-row">
-        <span class="detail-label">Email:</span>
-        <span class="detail-value">{{ selectedUser.email }}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">User Type:</span>
-        <span class="detail-value">{{ selectedUser.user_type?.name || 'Not assigned' }}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Account Verified:</span>
-        <span class="detail-value">{{ selectedUser.activated_account ? 'Yes' : 'No' }}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Last Login:</span>
-        <span class="detail-value">{{ formatDate(selectedUser.last_login) }}</span>
-      </div>
-    </div>
-
-    <div class="details-section" *ngIf="selectedUser.groups && selectedUser.groups.length > 0">
-      <h4>Groups</h4>
-      <div class="groups-display">
-        <mat-chip *ngFor="let group of selectedUser.groups" class="role-chip group">
-          {{ group.name }}
-        </mat-chip>
+    <div cdkDropList (cdkDropListDropped)="reorderColumns($event)" class="columns-list">
+      <div *ngFor="let column of columns"
+           cdkDrag
+           class="column-item"
+           [class.disabled]="column.key === 'select' || column.key === 'actions'">
+        <mat-icon cdkDragHandle class="drag-handle" *ngIf="column.key !== 'select' && column.key !== 'actions'">
+          drag_indicator
+        </mat-icon>
+        <mat-checkbox [(ngModel)]="column.visible"
+                      (change)="toggleColumnVisibility(column)"
+                      [disabled]="column.key === 'select' || column.key === 'actions'">
+          {{ column.label }}
+        </mat-checkbox>
       </div>
     </div>
   </mat-dialog-content>
 
   <mat-dialog-actions align="end">
-    <button mat-button (click)="closeViewDialog()">Close</button>
-    <button mat-raised-button color="primary" (click)="editUser(selectedUser!)" *ngIf="selectedUser">
-      <mat-icon>edit</mat-icon>
-      Edit User
-    </button>
+    <button mat-button (click)="resetColumns()">Reset to Default</button>
+    <button mat-raised-button color="primary" mat-dialog-close>Done</button>
   </mat-dialog-actions>
 </ng-template>
