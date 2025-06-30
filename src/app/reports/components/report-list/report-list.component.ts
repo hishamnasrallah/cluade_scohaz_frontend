@@ -24,6 +24,8 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { debounceTime } from 'rxjs/operators';
 import { ReportService } from '../../../services/report.service';
 import { Report } from '../../../models/report.models';
+import {MatButtonToggle, MatButtonToggleGroup} from '@angular/material/button-toggle';
+import {MatDivider} from '@angular/material/divider';
 
 @Component({
   selector: 'app-report-list',
@@ -50,7 +52,7 @@ import { Report } from '../../../models/report.models';
     MatDialogModule,
     MatButtonToggle,
     MatButtonToggleGroup,
-    MatButtonToggle
+    MatDivider
   ],
   templateUrl: 'report-list.component.html',
   styleUrl: 'report-list.component.scss'

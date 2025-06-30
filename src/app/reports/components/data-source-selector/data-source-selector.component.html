@@ -237,9 +237,8 @@
           <mat-hint>Many-to-many or reverse foreign key fields</mat-hint>
         </mat-form-field>
       </div>
-
       <mat-slide-toggle formControlName="is_primary"
-                        [disabled]="editingDataSource?.is_primary && dataSources.length > 1">
+                        [disabled]="!!(editingDataSource?.is_primary && dataSources.length > 1)">
         Set as Primary Source
       </mat-slide-toggle>
     </form>

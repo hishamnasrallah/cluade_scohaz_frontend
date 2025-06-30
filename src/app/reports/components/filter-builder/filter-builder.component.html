@@ -222,7 +222,7 @@
       </div>
     </div>
 
-    <!-- Group Connector -->
+    <!-- Group Connector - Now inside the ngFor loop -->
     <div class="group-connector"
          *ngIf="groupIndex < filterGroups.length - 1">
       <span class="connector-text">AND</span>
@@ -253,7 +253,7 @@
 
     <div class="dynamic-values-grid">
       <div *ngFor="let dv of dynamicValues" class="dynamic-value-item">
-        <code>{{ '{{' + dv.type + '}}' }}</code>
+        <code>{{ getInterpolationString(dv.type) }}</code>
         <span>{{ dv.label }}</span>
       </div>
     </div>

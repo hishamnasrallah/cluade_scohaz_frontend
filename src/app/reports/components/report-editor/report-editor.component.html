@@ -160,7 +160,7 @@
           <div class="step-label">
             <mat-icon>storage</mat-icon>
             <span>Data Sources</span>
-            <mat-badge [content]="dataSources.length"
+            <mat-badge [matBadge]="dataSources.length"
                        matBadgeSize="small"
                        *ngIf="dataSources.length > 0"></mat-badge>
           </div>
@@ -198,7 +198,7 @@
           <div class="step-label">
             <mat-icon>view_column</mat-icon>
             <span>Fields</span>
-            <mat-badge [content]="fields.length"
+            <mat-badge [matBadge]="fields.length"
                        matBadgeSize="small"
                        *ngIf="fields.length > 0"></mat-badge>
           </div>
@@ -237,7 +237,7 @@
           <div class="step-label">
             <mat-icon>filter_list</mat-icon>
             <span>Filters</span>
-            <mat-badge [content]="filters.length"
+            <mat-badge [matBadge]="filters.length"
                        matBadgeSize="small"
                        *ngIf="filters.length > 0"></mat-badge>
           </div>
@@ -275,7 +275,7 @@
           <div class="step-label">
             <mat-icon>tune</mat-icon>
             <span>Parameters</span>
-            <mat-badge [content]="parameters.length"
+            <mat-badge [matBadge]="parameters.length"
                        matBadgeSize="small"
                        *ngIf="parameters.length > 0"></mat-badge>
           </div>

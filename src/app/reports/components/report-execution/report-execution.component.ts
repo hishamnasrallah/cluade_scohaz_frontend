@@ -56,6 +56,7 @@ export class ReportExecutionComponent implements OnInit {
   isLoading = false;
   isExecuting = false;
   error: string | null = null;
+  displayedColumns: string[] = [];
 
   // Forms
   parametersForm: FormGroup;
@@ -70,7 +71,7 @@ export class ReportExecutionComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private router: Router,
+    public router: Router,  // Make it public so template can access it
     private reportService: ReportService,
     private snackBar: MatSnackBar
   ) {
@@ -136,23 +137,25 @@ export class ReportExecutionComponent implements OnInit {
 
       // Add type-specific validators
       if (param.parameter_type === 'number' && param.validation_rules) {
-        if (param.validation_rules.min_value !== null) {
-          validators.push(Validators.min(param.validation_rules.min_value));
+        const rules = param.validation_rules;
+        if (rules['min_value'] !== null && rules['min_value'] !== undefined) {
+          validators.push(Validators.min(rules['min_value']));
         }
-        if (param.validation_rules.max_value !== null) {
-          validators.push(Validators.max(param.validation_rules.max_value));
+        if (rules['max_value'] !== null && rules['max_value'] !== undefined) {
+          validators.push(Validators.max(rules['max_value']));
         }
       }
 
       if (param.parameter_type === 'text' && param.validation_rules) {
-        if (param.validation_rules.min_length) {
-          validators.push(Validators.minLength(param.validation_rules.min_length));
+        const rules = param.validation_rules;
+        if (rules['min_length']) {
+          validators.push(Validators.minLength(rules['min_length']));
         }
-        if (param.validation_rules.max_length) {
-          validators.push(Validators.maxLength(param.validation_rules.max_length));
+        if (rules['max_length']) {
+          validators.push(Validators.maxLength(rules['max_length']));
         }
-        if (param.validation_rules.regex) {
-          validators.push(Validators.pattern(param.validation_rules.regex));
+        if (rules['regex']) {
+          validators.push(Validators.pattern(rules['regex']));
         }
       }
 
@@ -182,7 +185,7 @@ export class ReportExecutionComponent implements OnInit {
 
   getParameterError(param: Parameter): string {
     const control = this.getParameterControl(param.name);
-    if (!control || !control.invalid || !control.touched) return '';
+    if (!control?.invalid || !control?.touched) return '';
 
     if (control.errors?.['required']) return `${param.display_name} is required`;
     if (control.errors?.['min']) return `Minimum value is ${control.errors['min'].min}`;
@@ -237,6 +240,8 @@ export class ReportExecutionComponent implements OnInit {
     this.reportService.executeReport(this.report.id, executionParams).subscribe({
       next: (result) => {
         this.executionResult = result;
+        this.displayedColumns = result.columns.map(c => c.name);
+
         this.isExecuting = false;
 
         // Move to results step
@@ -272,7 +277,7 @@ export class ReportExecutionComponent implements OnInit {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${this.report.name}.${format === 'excel' ? 'xlsx' : format}`;
+        a.download = `${this.report?.name || 'report'}.${format === 'excel' ? 'xlsx' : format}`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);

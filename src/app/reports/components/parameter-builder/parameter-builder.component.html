@@ -423,9 +423,9 @@
             <mat-form-field appearance="outline" *ngSwitchCase="'text'">
               <mat-label>{{ param.display_name }}</mat-label>
               <input matInput
-                     [placeholder]="param.placeholder"
+                     [placeholder]="param.placeholder || ''"
                      [value]="param.default_value">
-              <mat-hint>{{ param.help_text }}</mat-hint>
+              <mat-hint>{{ param.help_text || '' }}</mat-hint>
             </mat-form-field>
 
             <!-- Number Preview -->
@@ -433,9 +433,9 @@
               <mat-label>{{ param.display_name }}</mat-label>
               <input matInput
                      type="number"
-                     [placeholder]="param.placeholder"
+                     [placeholder]="param.placeholder || ''"
                      [value]="param.default_value">
-              <mat-hint>{{ param.help_text }}</mat-hint>
+              <mat-hint>{{ param.help_text || '' }}</mat-hint>
             </mat-form-field>
 
             <!-- Date Preview -->
@@ -443,7 +443,7 @@
               <mat-label>{{ param.display_name }}</mat-label>
               <input matInput
                      [matDatepicker]="previewPicker"
-                     [placeholder]="param.placeholder">
+                     [placeholder]="param.placeholder || ''">
               <mat-datepicker-toggle matIconSuffix [for]="previewPicker"></mat-datepicker-toggle>
               <mat-datepicker #previewPicker></mat-datepicker>
               <mat-hint>{{ param.help_text }}</mat-hint>
@@ -452,7 +452,7 @@
             <!-- Select Preview -->
             <mat-form-field appearance="outline" *ngSwitchCase="'select'">
               <mat-label>{{ param.display_name }}</mat-label>
-              <mat-select [placeholder]="param.placeholder">
+              <mat-select [placeholder]="param.placeholder || ''">
                 <mat-option *ngFor="let choice of param.choices_static" [value]="choice.value">
                   {{ choice.label }}
                 </mat-option>

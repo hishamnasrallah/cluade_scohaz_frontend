@@ -108,14 +108,20 @@ export class ReportPreviewComponent implements OnInit {
   }
 
   exportPreview(format: 'csv' | 'excel'): void {
-    if (!this.report?.id || !this.previewData) return;
+    if (!this.report?.id || !this.previewData) {
+      this.snackBar.open('No report or preview data available', 'Close', {
+        duration: 3000,
+        panelClass: ['error-snackbar']
+      });
+      return;
+    }
 
     this.reportService.exportReport(this.report.id, format).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${this.report.name}_preview.${format === 'excel' ? 'xlsx' : format}`;
+        a.download = `${this.report?.name}_preview.${format === 'excel' ? 'xlsx' : format}`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);

@@ -517,4 +517,8 @@ export class FilterBuilderComponent implements OnInit {
     // This would be populated from the parameters component
     return [];
   }
+
+  getInterpolationString(type: string): string {
+    return `{{${type}}}`;
+  }
 }

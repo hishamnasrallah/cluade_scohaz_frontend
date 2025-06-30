@@ -1,11 +1,11 @@
 // src/app/reports/components/report-editor/report-editor.component.ts
 
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
+import { COMMA, ENTER } from '@angular/cdk/keycodes';
 
 // Material imports
 import { MatStepperModule, MatStepper } from '@angular/material/stepper';
@@ -15,7 +15,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatChipsModule } from '@angular/material/chips';
+import { MatChipsModule, MatChipInputEvent } from '@angular/material/chips';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -39,7 +39,6 @@ import { ReportPreviewComponent } from '../report-preview/report-preview.compone
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    DragDropModule,
     MatStepperModule,
     MatButtonModule,
     MatIconModule,
@@ -60,9 +59,11 @@ import { ReportPreviewComponent } from '../report-preview/report-preview.compone
     ReportPreviewComponent
   ],
   templateUrl: 'report-editor.component.html',
-  styleUrl: 'report-editor.component.css',
+  styleUrl: 'report-editor.component.scss',
 })
 export class ReportEditorComponent implements OnInit, OnDestroy {
+  @ViewChild('stepper') stepper!: MatStepper;
+
   private destroy$ = new Subject<void>();
 
   mode: 'create' | 'edit' = 'create';
@@ -83,7 +84,7 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
 
   // Tags
   tags: string[] = [];
-  separatorKeysCodes = [13, 188]; // Enter, Comma
+  readonly separatorKeysCodes = [ENTER, COMMA] as const;
 
   constructor(
     private fb: FormBuilder,
@@ -205,7 +206,7 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
     this.progressValue = ((event.selectedIndex + 1) / 6) * 100;
   }
 
-  addTag(event: any): void {
+  addTag(event: MatChipInputEvent): void {
     const value = (event.value || '').trim();
     if (value && !this.tags.includes(value)) {
       this.tags.push(value);

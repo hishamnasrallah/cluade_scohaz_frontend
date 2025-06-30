@@ -23,6 +23,23 @@ import { MatRadioModule } from '@angular/material/radio';
 import { Report, Parameter, ParameterType, ParameterChoice } from '../../../models/report.models';
 import { ReportService } from '../../../services/report.service';
 
+
+interface ValidationRules {
+  min_length?: number | null;
+  max_length?: number | null;
+  regex?: string | null;
+  min_value?: number | null;
+  max_value?: number | null;
+  step?: number | null;
+  allow_decimals?: boolean | null;
+  min_date?: string | null;
+  max_date?: string | null;
+  allow_past?: boolean | null;
+  allow_future?: boolean | null;
+  min_selections?: number | null;
+  max_selections?: number | null;
+}
+
 @Component({
   selector: 'app-parameter-builder',
   standalone: true,
@@ -120,28 +137,44 @@ export class ParameterBuilderComponent implements OnInit {
       default_end: [''],
 
       // Validation rules
+      // Validation rules
       validation_rules: this.fb.group({
-        min_length: [null],
-        max_length: [null],
+        min_length: [null as number | null],
+        max_length: [null as number | null],
         regex: [''],
-        min_value: [null],
-        max_value: [null],
-        step: [1],
-        allow_decimals: [true],
-        min_date: [null],
-        max_date: [null],
-        allow_past: [true],
-        allow_future: [true],
-        min_selections: [null],
-        max_selections: [null]
+        min_value: [null as number | null],
+        max_value: [null as number | null],
+        step: [1 as number | null],
+        allow_decimals: [true as boolean | null],
+        min_date: [null as string | null],
+        max_date: [null as string | null],
+        allow_past: [true as boolean | null],
+        allow_future: [true as boolean | null],
+        min_selections: [null as number | null],
+        max_selections: [null as number | null]
       })
     });
 
     // Set validation rules if they exist
+// Set validation rules if they exist
     if (parameter?.validation_rules) {
-      form.get('validation_rules')?.patchValue(parameter.validation_rules);
+      const validationRules = parameter.validation_rules as ValidationRules;
+      form.get('validation_rules')?.patchValue({
+        min_length: validationRules.min_length ?? null,
+        max_length: validationRules.max_length ?? null,
+        regex: validationRules.regex ?? '',
+        min_value: validationRules.min_value ?? null,
+        max_value: validationRules.max_value ?? null,
+        step: validationRules.step ?? 1,
+        allow_decimals: validationRules.allow_decimals ?? true,
+        min_date: validationRules.min_date ?? null,
+        max_date: validationRules.max_date ?? null,
+        allow_past: validationRules.allow_past ?? true,
+        allow_future: validationRules.allow_future ?? true,
+        min_selections: validationRules.min_selections ?? null,
+        max_selections: validationRules.max_selections ?? null
+      });
     }
-
     return form;
   }
 
