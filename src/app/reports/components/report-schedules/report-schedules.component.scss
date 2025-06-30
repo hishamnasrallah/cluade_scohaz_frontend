@@ -1,0 +1,425 @@
+
+
+// src/app/reports/components/report-schedules/report-schedules.component.scss
+
+.report-schedules-container {
+  padding: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: #F4FDFD;
+  min-height: 100vh;
+}
+
+/* Header */
+.schedules-header {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(47, 72, 88, 0.06);
+  border: 1px solid rgba(196, 247, 239, 0.5);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-text {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.header-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 4px 12px rgba(52, 197, 170, 0.25);
+
+  mat-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+  }
+}
+
+.header-text h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #2F4858;
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+.header-text p {
+  color: #6B7280;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.header-actions {
+  button {
+    background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(52, 197, 170, 0.25);
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(52, 197, 170, 0.35);
+    }
+
+    &:disabled {
+      background: #E5E7EB;
+      color: #9CA3AF;
+      box-shadow: none;
+    }
+  }
+}
+
+/* Schedule Form */
+.schedule-form-card {
+  margin-bottom: 24px;
+  animation: slideDown 0.3s ease-out;
+
+  mat-card-header {
+    background: linear-gradient(135deg, rgba(196, 247, 239, 0.2) 0%, rgba(196, 247, 239, 0.1) 100%);
+    margin: -16px -16px 16px -16px;
+    padding: 16px;
+  }
+
+  mat-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.125rem;
+    color: #2F4858;
+
+    mat-icon {
+      color: #34C5AA;
+    }
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.schedule-form {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #2F4858;
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(196, 247, 239, 0.3);
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+
+  mat-form-field {
+    flex: 1;
+  }
+
+  .full-width {
+    width: 100%;
+  }
+}
+
+/* Recipients Section */
+.recipients-section {
+  margin-bottom: 20px;
+
+  h4 {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #4B5563;
+    margin: 0 0 12px 0;
+  }
+}
+
+.email-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+
+  .email-input {
+    flex: 1;
+  }
+}
+
+.email-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+
+  mat-chip {
+    background: rgba(52, 197, 170, 0.1);
+    color: #2BA99B;
+  }
+}
+
+/* Advanced Options */
+.advanced-options {
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+
+  ::ng-deep .mat-expansion-panel-header {
+    background: transparent;
+  }
+
+  mat-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #6B7280;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  mat-slide-toggle {
+    display: block;
+    margin-bottom: 16px;
+
+    mat-icon {
+      margin-right: 8px;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      vertical-align: middle;
+    }
+  }
+}
+
+/* Card Actions */
+mat-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px !important;
+  background: #F9FAFB;
+  margin: 16px -16px -16px !important;
+  border-top: 1px solid rgba(229, 231, 235, 0.5);
+}
+
+/* Loading */
+.loading-section {
+  text-align: center;
+  padding: 60px;
+  background: white;
+  border-radius: 12px;
+  margin: 24px 0;
+
+  p {
+    margin-top: 16px;
+    color: #6B7280;
+  }
+}
+
+/* Schedules Table */
+.schedules-table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.schedules-table {
+  width: 100%;
+
+  .mat-mdc-header-row {
+    background: linear-gradient(135deg, rgba(196, 247, 239, 0.3) 0%, rgba(196, 247, 239, 0.1) 100%);
+  }
+
+  .mat-mdc-header-cell {
+    font-weight: 600;
+    color: #2F4858;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .schedule-row {
+    &:hover {
+      background: rgba(196, 247, 239, 0.08);
+    }
+  }
+
+  .mat-mdc-cell {
+    color: #4B5563;
+    font-size: 0.875rem;
+  }
+}
+
+.schedule-name {
+  .name {
+    font-weight: 600;
+    color: #2F4858;
+  }
+}
+
+.schedule-type {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .type-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: #34C5AA;
+  }
+
+  .schedule-details {
+    font-size: 0.75rem;
+    color: #6B7280;
+  }
+}
+
+.next-run {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #4B5563;
+
+  .clock-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: #9CA3AF;
+  }
+}
+
+.inactive-label {
+  color: #9CA3AF;
+  font-style: italic;
+}
+
+.recipients-summary {
+  font-size: 0.813rem;
+  color: #6B7280;
+}
+
+.report-category {
+  font-size: 0.813rem;
+  color: #6B7280;
+  font-style: italic;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  background: white;
+  border-radius: 12px;
+  border: 2px dashed rgba(196, 247, 239, 0.5);
+
+  mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: #C4F7EF;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2F4858;
+    margin: 0 0 8px 0;
+  }
+
+  p {
+    margin: 0 0 24px 0;
+    color: #6B7280;
+  }
+
+  button {
+    background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+  }
+}
+
+/* Menu Items */
+::ng-deep .mat-mdc-menu-item {
+  &.delete-item {
+    color: #EF4444;
+
+    mat-icon {
+      color: #EF4444;
+    }
+  }
+}
+
+/* Material Form Fields */
+::ng-deep .mat-mdc-form-field {
+  .mat-mdc-text-field-wrapper {
+    background: #F9FAFB;
+    border-radius: 8px;
+  }
+
+  &.mat-focused .mat-mdc-text-field-wrapper {
+    background: white;
+  }
+}
+
+::ng-deep .mat-mdc-slide-toggle {
+  display: inline-flex;
+  align-items: center;
+
+  mat-icon {
+    margin-right: 4px;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .report-schedules-container {
+    padding: 12px;
+  }
+
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .form-row {
+    flex-direction: column;
+
+    mat-form-field {
+      width: 100%;
+    }
+  }
+
+  .schedules-table-card {
+    overflow-x: auto;
+  }
+}

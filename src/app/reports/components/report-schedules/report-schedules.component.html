@@ -1,0 +1,392 @@
+
+
+// src/app/reports/components/report-schedules/report-schedules.component.html
+
+<div class="report-schedules-container">
+  <!-- Header -->
+  <div class="schedules-header">
+    <div class="header-content">
+      <div class="header-text">
+        <div class="header-icon">
+          <mat-icon>schedule</mat-icon>
+        </div>
+        <div>
+          <h1>Report Schedules</h1>
+          <p>Automate report generation and distribution</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button mat-raised-button
+                color="primary"
+                (click)="showCreateForm()"
+                [disabled]="showForm">
+          <mat-icon>add</mat-icon>
+          Create Schedule
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schedule Form -->
+  <mat-card class="schedule-form-card" *ngIf="showForm">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>{{ editingSchedule ? 'edit' : 'add' }}</mat-icon>
+        {{ editingSchedule ? 'Edit Schedule' : 'Create New Schedule' }}
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="scheduleForm" class="schedule-form">
+        <!-- Basic Information -->
+        <div class="form-section">
+          <h3 class="section-title">Basic Information</h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Schedule Name</mat-label>
+              <input matInput formControlName="name" placeholder="e.g., Weekly Sales Report">
+              <mat-icon matPrefix>label</mat-icon>
+              <mat-error *ngIf="scheduleForm.get('name')?.hasError('required')">
+                Schedule name is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Report</mat-label>
+              <mat-select formControlName="report">
+                <mat-option *ngFor="let report of reports" [value]="report.id">
+                  {{ report.name }}
+                  <span class="report-category" *ngIf="report.category">
+  ({{ report.category }})
+</span>
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>assessment</mat-icon>
+              <mat-error *ngIf="scheduleForm.get('report')?.hasError('required')">
+                Please select a report
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Schedule Configuration -->
+        <div class="form-section">
+          <h3 class="section-title">Schedule Configuration</h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Frequency</mat-label>
+              <mat-select formControlName="schedule_type">
+                <mat-option *ngFor="let type of scheduleTypes" [value]="type.value">
+                  <mat-icon>{{ type.icon }}</mat-icon>
+                  {{ type.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" *ngIf="scheduleForm.get('schedule_type')?.value === 'weekly'">
+              <mat-label>Day of Week</mat-label>
+              <mat-select formControlName="day_of_week">
+                <mat-option *ngFor="let day of daysOfWeek" [value]="day.value">
+                  {{ day.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" *ngIf="scheduleForm.get('schedule_type')?.value === 'monthly'">
+              <mat-label>Day of Month</mat-label>
+              <input matInput type="number" formControlName="day_of_month" min="1" max="31">
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Time</mat-label>
+              <input matInput type="time" formControlName="time_of_day">
+              <mat-icon matPrefix>schedule</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Timezone</mat-label>
+              <mat-select formControlName="timezone">
+                <mat-option *ngFor="let tz of timezones" [value]="tz">
+                  {{ tz }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>language</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Output Format</mat-label>
+              <mat-select formControlName="output_format">
+                <mat-option *ngFor="let format of outputFormats" [value]="format.value">
+                  <mat-icon>{{ format.icon }}</mat-icon>
+                  {{ format.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Recipients -->
+        <div class="form-section">
+          <h3 class="section-title">Recipients</h3>
+
+          <!-- Email Recipients -->
+          <div class="recipients-section">
+            <h4>Email Addresses</h4>
+            <div class="email-input-row">
+              <mat-form-field appearance="outline" class="email-input">
+                <mat-label>Add Email</mat-label>
+                <input matInput
+                       #emailInput
+                       type="email"
+                       placeholder="user@example.com"
+                       (keyup.enter)="addRecipientEmail(emailInput.value); emailInput.value = ''">
+                <mat-icon matPrefix>email</mat-icon>
+              </mat-form-field>
+              <button mat-icon-button
+                      color="primary"
+                      (click)="addRecipientEmail(emailInput.value); emailInput.value = ''"
+                      matTooltip="Add Email">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+
+            <div class="email-chips">
+              <mat-chip *ngFor="let email of recipientEmails"
+                        [removable]="true"
+                        (removed)="removeRecipientEmail(email)">
+                {{ email }}
+                <button matChipRemove>
+                  <mat-icon>cancel</mat-icon>
+                </button>
+              </mat-chip>
+            </div>
+          </div>
+
+          <!-- User Recipients -->
+          <div class="recipients-section">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Users</mat-label>
+              <mat-select formControlName="recipient_users" multiple>
+                <mat-option *ngFor="let user of availableUsers" [value]="user.id">
+                  {{ user.first_name }} {{ user.last_name }} ({{ user.username }})
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>people</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <!-- Group Recipients -->
+          <div class="recipients-section">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Groups</mat-label>
+              <mat-select formControlName="recipient_groups" multiple>
+                <mat-option *ngFor="let group of availableGroups" [value]="group.id">
+                  {{ group.name }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>group</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Email Configuration -->
+        <div class="form-section">
+          <h3 class="section-title">Email Configuration</h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Email Subject</mat-label>
+              <input matInput
+                     formControlName="email_subject"
+                     placeholder="{{report_name}} - {{date}}">
+              <mat-icon matPrefix>subject</mat-icon>
+              <mat-hint>You can use variables: {{report_name}}, {{date}}, {{time}}</mat-hint>
+              <mat-error *ngIf="scheduleForm.get('email_subject')?.hasError('required')">
+                Email subject is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Email Body</mat-label>
+              <textarea matInput
+                        formControlName="email_body"
+                        rows="4"
+                        placeholder="Please find attached the latest report..."></textarea>
+              <mat-icon matPrefix>message</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Advanced Options -->
+        <mat-expansion-panel class="advanced-options">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon>settings</mat-icon>
+              Advanced Options
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <div class="form-section">
+            <mat-slide-toggle formControlName="is_active" color="primary">
+              <mat-icon>power_settings_new</mat-icon>
+              Active Schedule
+            </mat-slide-toggle>
+
+            <mat-slide-toggle formControlName="retry_on_failure" color="primary">
+              <mat-icon>replay</mat-icon>
+              Retry on Failure
+            </mat-slide-toggle>
+
+            <mat-form-field appearance="outline" *ngIf="scheduleForm.get('retry_on_failure')?.value">
+              <mat-label>Max Retries</mat-label>
+              <input matInput type="number" formControlName="max_retries" min="1" max="10">
+              <mat-icon matPrefix>loop</mat-icon>
+            </mat-form-field>
+          </div>
+        </mat-expansion-panel>
+      </form>
+    </mat-card-content>
+
+    <mat-card-actions>
+      <button mat-button (click)="cancelForm()">Cancel</button>
+      <button mat-raised-button
+              color="primary"
+              (click)="saveSchedule()"
+              [disabled]="!scheduleForm.valid">
+        <mat-icon>{{ editingSchedule ? 'save' : 'add' }}</mat-icon>
+        {{ editingSchedule ? 'Update Schedule' : 'Create Schedule' }}
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  <!-- Loading State -->
+  <div class="loading-section" *ngIf="isLoading">
+    <mat-spinner diameter="40" color="primary"></mat-spinner>
+    <p>Loading schedules...</p>
+  </div>
+
+  <!-- Schedules Table -->
+  <mat-card class="schedules-table-card" *ngIf="!isLoading">
+    <table mat-table [dataSource]="dataSource" matSort class="schedules-table">
+
+      <!-- Name Column -->
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Schedule Name</th>
+        <td mat-cell *matCellDef="let schedule">
+          <div class="schedule-name">
+            <span class="name">{{ schedule.name }}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Report Column -->
+      <ng-container matColumnDef="report">
+        <th mat-header-cell *matHeaderCellDef>Report</th>
+        <td mat-cell *matCellDef="let schedule">
+          {{ getReportName(schedule.report) }}
+        </td>
+      </ng-container>
+
+      <!-- Schedule Type Column -->
+      <ng-container matColumnDef="schedule_type">
+        <th mat-header-cell *matHeaderCellDef>Frequency</th>
+        <td mat-cell *matCellDef="let schedule">
+          <div class="schedule-type">
+            <mat-icon class="type-icon">
+              {{ schedule.schedule_type === 'daily' ? 'today' :
+              schedule.schedule_type === 'weekly' ? 'date_range' : 'calendar_month' }}
+            </mat-icon>
+            <span>{{ schedule.schedule_type | titlecase }}</span>
+            <span class="schedule-details" *ngIf="schedule.schedule_type === 'weekly'">
+  ({{ daysOfWeek.find(d => d.value === schedule.day_of_week)?.label }})
+</span>
+            <span class="schedule-details" *ngIf="schedule.schedule_type === 'monthly'">
+  (Day {{ schedule.day_of_month }})
+</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Next Run Column -->
+      <ng-container matColumnDef="next_run">
+        <th mat-header-cell *matHeaderCellDef>Next Run</th>
+        <td mat-cell *matCellDef="let schedule">
+          <div class="next-run" *ngIf="schedule.is_active">
+            <mat-icon class="clock-icon">schedule</mat-icon>
+            {{ getNextRunTime(schedule) }}
+          </div>
+          <span class="inactive-label" *ngIf="!schedule.is_active">Inactive</span>
+        </td>
+      </ng-container>
+
+      <!-- Status Column -->
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let schedule">
+          <mat-slide-toggle
+            [checked]="schedule.is_active"
+            (change)="toggleScheduleStatus(schedule)"
+            color="primary">
+          </mat-slide-toggle>
+        </td>
+      </ng-container>
+
+      <!-- Recipients Column -->
+      <ng-container matColumnDef="recipients">
+        <th mat-header-cell *matHeaderCellDef>Recipients</th>
+        <td mat-cell *matCellDef="let schedule">
+          <span class="recipients-summary">{{ formatRecipients(schedule) }}</span>
+        </td>
+      </ng-container>
+
+      <!-- Actions Column -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let schedule">
+          <button mat-icon-button [matMenuTriggerFor]="menu" matTooltip="More actions">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #menu="matMenu">
+            <button mat-menu-item (click)="runNow(schedule)">
+              <mat-icon>play_arrow</mat-icon>
+              <span>Run Now</span>
+            </button>
+            <button mat-menu-item (click)="editSchedule(schedule)">
+              <mat-icon>edit</mat-icon>
+              <span>Edit</span>
+            </button>
+            <mat-divider></mat-divider>
+            <button mat-menu-item (click)="deleteSchedule(schedule)" class="delete-item">
+              <mat-icon>delete</mat-icon>
+              <span>Delete</span>
+            </button>
+          </mat-menu>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="schedule-row"></tr>
+    </table>
+
+    <mat-paginator [pageSizeOptions]="[10, 25, 50]" showFirstLastButtons></mat-paginator>
+  </mat-card>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!isLoading && schedules.length === 0 && !showForm">
+    <mat-icon>schedule</mat-icon>
+    <h3>No schedules configured</h3>
+    <p>Create your first schedule to automate report generation</p>
+    <button mat-raised-button color="primary" (click)="showCreateForm()">
+      <mat-icon>add</mat-icon>
+      Create Schedule
+    </button>
+  </div>
+</div>
