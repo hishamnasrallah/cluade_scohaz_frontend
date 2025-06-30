@@ -776,6 +776,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
 
   viewUser(user: CustomUser): void {
+    if (!user) return;
+
     this.selectedUser = user;
     this.dialog.open(this.viewUserDialog, {
       width: '600px',
