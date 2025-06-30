@@ -1,0 +1,475 @@
+<div class="parameter-builder">
+  <!-- Header -->
+  <div class="builder-header">
+    <div class="header-info">
+      <mat-icon>tune</mat-icon>
+      <h3>Report Parameters</h3>
+      <span class="parameter-count" *ngIf="parameters.length > 0">
+            {{ parameters.length }} parameter{{ parameters.length > 1 ? 's' : '' }}
+          </span>
+    </div>
+    <button mat-raised-button
+            color="primary"
+            (click)="addParameter()"
+            class="add-parameter-btn">
+      <mat-icon>add</mat-icon>
+      Add Parameter
+    </button>
+  </div>
+
+  <!-- Parameters List -->
+  <div class="parameters-list"
+       cdkDropList
+       (cdkDropListDropped)="onDrop($event)"
+       *ngIf="parameters.length > 0">
+
+    <mat-expansion-panel *ngFor="let parameter of parameters; let i = index"
+                         cdkDrag
+                         [cdkDragData]="parameter"
+                         class="parameter-panel">
+
+      <!-- Panel Header -->
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <div class="panel-title-content">
+            <mat-icon cdkDragHandle class="drag-handle">drag_indicator</mat-icon>
+            <mat-icon>{{ getParameterIcon(parameter.parameter_type) }}</mat-icon>
+            <span class="parameter-name">{{ parameter.display_name || parameter.name }}</span>
+            <mat-chip class="type-chip">{{ getParameterTypeLabel(parameter.parameter_type) }}</mat-chip>
+            <mat-icon class="required-indicator"
+                      *ngIf="parameter.is_required"
+                      matTooltip="Required">
+              error_outline
+            </mat-icon>
+          </div>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+
+      <!-- Panel Content -->
+      <div class="parameter-content">
+        <form [formGroup]="getParameterForm(i)" class="parameter-form">
+          <!-- Basic Info -->
+          <div class="form-section">
+            <h4>Basic Information</h4>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Parameter Name</mat-label>
+                <input matInput
+                       formControlName="name"
+                       placeholder="parameter_name"
+                       (blur)="updateParameter(i)">
+                <mat-icon matPrefix>label</mat-icon>
+                <mat-hint>Internal name (no spaces)</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Display Name</mat-label>
+                <input matInput
+                       formControlName="display_name"
+                       placeholder="Display Name"
+                       (blur)="updateParameter(i)">
+                <mat-icon matPrefix>text_fields</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Help Text</mat-label>
+              <textarea matInput
+                        formControlName="help_text"
+                        rows="2"
+                        placeholder="Provide guidance for users..."
+                        (blur)="updateParameter(i)"></textarea>
+              <mat-icon matPrefix>help_outline</mat-icon>
+            </mat-form-field>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Parameter Type</mat-label>
+                <mat-select formControlName="parameter_type"
+                            (selectionChange)="onParameterTypeChange(i)">
+                  <mat-option *ngFor="let type of parameterTypes" [value]="type.value">
+                    <mat-icon>{{ type.icon }}</mat-icon>
+                    {{ type.label }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Placeholder</mat-label>
+                <input matInput
+                       formControlName="placeholder"
+                       (blur)="updateParameter(i)">
+                <mat-icon matPrefix>edit</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <mat-slide-toggle formControlName="is_required"
+                              (change)="updateParameter(i)"
+                              color="primary">
+              <mat-icon>{{ getParameterForm(i).get('is_required')?.value ? 'lock' : 'lock_open' }}</mat-icon>
+              Required Parameter
+            </mat-slide-toggle>
+          </div>
+
+          <!-- Type-Specific Configuration -->
+          <div class="form-section" [ngSwitch]="parameter.parameter_type">
+
+            <!-- Text Configuration -->
+            <div *ngSwitchCase="'text'" class="type-config">
+              <h4>Text Configuration</h4>
+              <mat-form-field appearance="outline">
+                <mat-label>Default Value</mat-label>
+                <input matInput
+                       formControlName="default_value"
+                       (blur)="updateParameter(i)">
+              </mat-form-field>
+
+              <div class="validation-rules" formGroupName="validation_rules">
+                <mat-form-field appearance="outline" class="half-width">
+                  <mat-label>Min Length</mat-label>
+                  <input matInput
+                         type="number"
+                         formControlName="min_length"
+                         (blur)="updateParameter(i)">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="half-width">
+                  <mat-label>Max Length</mat-label>
+                  <input matInput
+                         type="number"
+                         formControlName="max_length"
+                         (blur)="updateParameter(i)">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Regex Pattern</mat-label>
+                  <input matInput
+                         formControlName="regex"
+                         placeholder="^[A-Za-z]+$"
+                         (blur)="updateParameter(i)">
+                  <mat-icon matPrefix>pattern</mat-icon>
+                </mat-form-field>
+              </div>
+            </div>
+
+            <!-- Number Configuration -->
+            <div *ngSwitchCase="'number'" class="type-config">
+              <h4>Number Configuration</h4>
+              <mat-form-field appearance="outline">
+                <mat-label>Default Value</mat-label>
+                <input matInput
+                       type="number"
+                       formControlName="default_value"
+                       (blur)="updateParameter(i)">
+              </mat-form-field>
+
+              <div class="validation-rules" formGroupName="validation_rules">
+                <mat-form-field appearance="outline" class="half-width">
+                  <mat-label>Min Value</mat-label>
+                  <input matInput
+                         type="number"
+                         formControlName="min_value"
+                         (blur)="updateParameter(i)">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="half-width">
+                  <mat-label>Max Value</mat-label>
+                  <input matInput
+                         type="number"
+                         formControlName="max_value"
+                         (blur)="updateParameter(i)">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="half-width">
+                  <mat-label>Step</mat-label>
+                  <input matInput
+                         type="number"
+                         formControlName="step"
+                         (blur)="updateParameter(i)">
+                </mat-form-field>
+                <mat-checkbox formControlName="allow_decimals"
+                              (change)="updateParameter(i)">
+                  Allow Decimals
+                </mat-checkbox>
+              </div>
+            </div>
+
+            <!-- Date Configuration -->
+            <div *ngSwitchCase="'date'" class="type-config">
+              <h4>Date Configuration</h4>
+              <mat-form-field appearance="outline">
+                <mat-label>Default Value</mat-label>
+                <input matInput
+                       [matDatepicker]="defaultPicker"
+                       formControlName="default_value"
+                       (dateChange)="updateParameter(i)">
+                <mat-datepicker-toggle matIconSuffix [for]="defaultPicker"></mat-datepicker-toggle>
+                <mat-datepicker #defaultPicker></mat-datepicker>
+              </mat-form-field>
+
+              <div class="validation-rules" formGroupName="validation_rules">
+                <mat-form-field appearance="outline" class="half-width">
+                  <mat-label>Min Date</mat-label>
+                  <input matInput
+                         [matDatepicker]="minPicker"
+                         formControlName="min_date"
+                         (dateChange)="updateParameter(i)">
+                  <mat-datepicker-toggle matIconSuffix [for]="minPicker"></mat-datepicker-toggle>
+                  <mat-datepicker #minPicker></mat-datepicker>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="half-width">
+                  <mat-label>Max Date</mat-label>
+                  <input matInput
+                         [matDatepicker]="maxPicker"
+                         formControlName="max_date"
+                         (dateChange)="updateParameter(i)">
+                  <mat-datepicker-toggle matIconSuffix [for]="maxPicker"></mat-datepicker-toggle>
+                  <mat-datepicker #maxPicker></mat-datepicker>
+                </mat-form-field>
+                <mat-checkbox formControlName="allow_past"
+                              (change)="updateParameter(i)">
+                  Allow Past Dates
+                </mat-checkbox>
+                <mat-checkbox formControlName="allow_future"
+                              (change)="updateParameter(i)">
+                  Allow Future Dates
+                </mat-checkbox>
+              </div>
+            </div>
+
+            <!-- Date Range Configuration -->
+            <div *ngSwitchCase="'date_range'" class="type-config">
+              <h4>Date Range Configuration</h4>
+              <div class="default-range">
+                <mat-form-field appearance="outline" class="half-width">
+                  <mat-label>Default Start</mat-label>
+                  <mat-select formControlName="default_start"
+                              (selectionChange)="updateParameter(i)">
+                    <mat-option value="">None</mat-option>
+                    <mat-option value="current_month_start">Start of Month</mat-option>
+                    <mat-option value="current_week_start">Start of Week</mat-option>
+                    <mat-option value="current_year_start">Start of Year</mat-option>
+                    <mat-option value="today">Today</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="half-width">
+                  <mat-label>Default End</mat-label>
+                  <mat-select formControlName="default_end"
+                              (selectionChange)="updateParameter(i)">
+                    <mat-option value="">None</mat-option>
+                    <mat-option value="current_month_end">End of Month</mat-option>
+                    <mat-option value="current_week_end">End of Week</mat-option>
+                    <mat-option value="current_year_end">End of Year</mat-option>
+                    <mat-option value="today">Today</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </div>
+
+            <!-- Select Configuration -->
+            <div *ngSwitchCase="'select'" class="type-config">
+              <h4>Select Options</h4>
+
+              <mat-radio-group formControlName="choices_type"
+                               (change)="onChoicesTypeChange(i)"
+                               class="choices-type-radio">
+                <mat-radio-button value="static">Static Choices</mat-radio-button>
+                <mat-radio-button value="dynamic">Dynamic Query</mat-radio-button>
+              </mat-radio-group>
+
+              <!-- Static Choices -->
+              <div *ngIf="getParameterForm(i).get('choices_type')?.value === 'static'"
+                   class="static-choices">
+                <div class="choices-list">
+                  <div *ngFor="let choice of getStaticChoices(i); let choiceIndex = index"
+                       class="choice-item">
+                    <mat-form-field appearance="outline" class="choice-value">
+                      <mat-label>Value</mat-label>
+                      <input matInput
+                             [(ngModel)]="choice.value"
+                             [ngModelOptions]="{standalone: true}"
+                             (blur)="updateStaticChoices(i)">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="choice-label">
+                      <mat-label>Label</mat-label>
+                      <input matInput
+                             [(ngModel)]="choice.label"
+                             [ngModelOptions]="{standalone: true}"
+                             (blur)="updateStaticChoices(i)">
+                    </mat-form-field>
+                    <button mat-icon-button
+                            (click)="removeChoice(i, choiceIndex)"
+                            matTooltip="Remove">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </div>
+                <button mat-button
+                        (click)="addChoice(i)"
+                        class="add-choice-btn">
+                  <mat-icon>add</mat-icon>
+                  Add Choice
+                </button>
+              </div>
+
+              <!-- Dynamic Query -->
+              <div *ngIf="getParameterForm(i).get('choices_type')?.value === 'dynamic'"
+                   class="dynamic-query">
+                <mat-form-field appearance="outline">
+                  <mat-label>Content Type</mat-label>
+                  <mat-select formControlName="query_content_type"
+                              (selectionChange)="updateParameter(i)">
+                    <mat-option *ngFor="let ct of getContentTypes()" [value]="ct.id">
+                      {{ ct.display_name }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Value Field</mat-label>
+                    <input matInput
+                           formControlName="query_value_field"
+                           placeholder="id"
+                           (blur)="updateParameter(i)">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Label Field</mat-label>
+                    <input matInput
+                           formControlName="query_label_field"
+                           placeholder="name"
+                           (blur)="updateParameter(i)">
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Default Selection</mat-label>
+                <input matInput
+                       formControlName="default_value"
+                       (blur)="updateParameter(i)">
+              </mat-form-field>
+            </div>
+
+            <!-- Multi-Select Configuration -->
+            <div *ngSwitchCase="'multiselect'" class="type-config">
+              <h4>Multi-Select Options</h4>
+              <!-- Similar to select but with multi-selection options -->
+              <div class="validation-rules" formGroupName="validation_rules">
+                <mat-form-field appearance="outline" class="half-width">
+                  <mat-label>Min Selections</mat-label>
+                  <input matInput
+                         type="number"
+                         formControlName="min_selections"
+                         (blur)="updateParameter(i)">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="half-width">
+                  <mat-label>Max Selections</mat-label>
+                  <input matInput
+                         type="number"
+                         formControlName="max_selections"
+                         (blur)="updateParameter(i)">
+                </mat-form-field>
+              </div>
+            </div>
+
+            <!-- Boolean Configuration -->
+            <div *ngSwitchCase="'boolean'" class="type-config">
+              <h4>Boolean Configuration</h4>
+              <mat-slide-toggle formControlName="default_value"
+                                (change)="updateParameter(i)"
+                                color="primary">
+                Default Value
+              </mat-slide-toggle>
+            </div>
+          </div>
+
+          <!-- Parameter Actions -->
+          <div class="parameter-actions">
+            <button mat-button
+                    color="warn"
+                    (click)="removeParameter(i)">
+              <mat-icon>delete</mat-icon>
+              Remove Parameter
+            </button>
+          </div>
+        </form>
+      </div>
+    </mat-expansion-panel>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="parameters.length === 0">
+    <mat-icon>tune</mat-icon>
+    <h3>No parameters defined</h3>
+    <p>Add parameters to make your report dynamic and reusable</p>
+    <button mat-raised-button
+            color="primary"
+            (click)="addParameter()">
+      <mat-icon>add</mat-icon>
+      Add First Parameter
+    </button>
+  </div>
+
+  <!-- Preview Section -->
+  <mat-card class="preview-section" *ngIf="parameters.length > 0">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>preview</mat-icon>
+        Parameter Preview
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="preview-form">
+        <div *ngFor="let param of parameters" class="preview-field">
+          <div [ngSwitch]="param.parameter_type">
+            <!-- Text Preview -->
+            <mat-form-field appearance="outline" *ngSwitchCase="'text'">
+              <mat-label>{{ param.display_name }}</mat-label>
+              <input matInput
+                     [placeholder]="param.placeholder"
+                     [value]="param.default_value">
+              <mat-hint>{{ param.help_text }}</mat-hint>
+            </mat-form-field>
+
+            <!-- Number Preview -->
+            <mat-form-field appearance="outline" *ngSwitchCase="'number'">
+              <mat-label>{{ param.display_name }}</mat-label>
+              <input matInput
+                     type="number"
+                     [placeholder]="param.placeholder"
+                     [value]="param.default_value">
+              <mat-hint>{{ param.help_text }}</mat-hint>
+            </mat-form-field>
+
+            <!-- Date Preview -->
+            <mat-form-field appearance="outline" *ngSwitchCase="'date'">
+              <mat-label>{{ param.display_name }}</mat-label>
+              <input matInput
+                     [matDatepicker]="previewPicker"
+                     [placeholder]="param.placeholder">
+              <mat-datepicker-toggle matIconSuffix [for]="previewPicker"></mat-datepicker-toggle>
+              <mat-datepicker #previewPicker></mat-datepicker>
+              <mat-hint>{{ param.help_text }}</mat-hint>
+            </mat-form-field>
+
+            <!-- Select Preview -->
+            <mat-form-field appearance="outline" *ngSwitchCase="'select'">
+              <mat-label>{{ param.display_name }}</mat-label>
+              <mat-select [placeholder]="param.placeholder">
+                <mat-option *ngFor="let choice of param.choices_static" [value]="choice.value">
+                  {{ choice.label }}
+                </mat-option>
+              </mat-select>
+              <mat-hint>{{ param.help_text }}</mat-hint>
+            </mat-form-field>
+
+            <!-- Boolean Preview -->
+            <div class="boolean-preview" *ngSwitchCase="'boolean'">
+              <mat-slide-toggle [checked]="param.default_value">
+                {{ param.display_name }}
+              </mat-slide-toggle>
+              <mat-hint>{{ param.help_text }}</mat-hint>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

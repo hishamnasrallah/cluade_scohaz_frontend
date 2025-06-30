@@ -1,0 +1,414 @@
+.data-source-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.selector-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  min-height: 500px;
+}
+
+/* Panels */
+.models-panel,
+.sources-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+mat-card-header {
+  background: linear-gradient(135deg, rgba(196, 247, 239, 0.2) 0%, rgba(196, 247, 239, 0.1) 100%);
+  padding: 16px;
+  margin: -16px -16px 16px -16px;
+  border-bottom: 1px solid rgba(196, 247, 239, 0.3);
+}
+
+mat-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2F4858;
+  margin: 0;
+
+  mat-icon {
+    color: #34C5AA;
+  }
+}
+
+.count-badge {
+  background: #34C5AA;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: auto;
+}
+
+mat-card-content {
+  flex: 1;
+  overflow: auto;
+}
+
+/* Search Field */
+.search-field {
+  width: 100%;
+  margin-top: 12px;
+
+  ::ng-deep .mat-mdc-form-field-wrapper {
+    background: white;
+    padding: 0;
+    margin: 0;
+  }
+
+  ::ng-deep .mat-mdc-text-field-wrapper {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  ::ng-deep .mat-mdc-form-field-infix {
+    padding-top: 8px;
+    padding-bottom: 8px;
+    min-height: auto;
+  }
+
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}
+
+/* Tree */
+.mat-tree {
+  background: transparent;
+}
+
+.mat-tree-node {
+  min-height: 40px;
+  font-size: 0.875rem;
+}
+
+.nested-node {
+  padding-left: 20px;
+}
+
+.node-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(196, 247, 239, 0.2);
+  }
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.app-node {
+  font-weight: 600;
+  color: #2F4858;
+
+  mat-icon {
+    color: #6B7280;
+  }
+}
+
+.model-node {
+  color: #4B5563;
+
+  &:hover {
+    color: #34C5AA;
+
+    mat-icon {
+      color: #34C5AA;
+    }
+  }
+
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+
+    &:hover {
+      background: transparent;
+      color: #4B5563;
+    }
+  }
+}
+
+.node-name {
+  flex: 1;
+}
+
+.app-badge {
+  background: rgba(107, 114, 128, 0.1);
+  color: #6B7280;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Data Sources List */
+.data-sources-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.data-source-item {
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 16px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: rgba(52, 197, 170, 0.3);
+    box-shadow: 0 2px 8px rgba(47, 72, 88, 0.05);
+  }
+
+  &.primary {
+    background: linear-gradient(135deg, rgba(52, 197, 170, 0.05) 0%, rgba(43, 169, 155, 0.05) 100%);
+    border-color: rgba(52, 197, 170, 0.3);
+  }
+}
+
+.source-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.source-info {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+
+  mat-icon {
+    color: #34C5AA;
+    margin-top: 2px;
+  }
+}
+
+.source-details {
+  h4 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #2F4858;
+  }
+
+  p {
+    margin: 4px 0 0 0;
+    font-size: 0.813rem;
+    color: #6B7280;
+
+    strong {
+      color: #4B5563;
+      font-family: monospace;
+    }
+  }
+}
+
+.source-actions {
+  display: flex;
+  gap: 4px;
+
+  button {
+    width: 32px;
+    height: 32px;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #6B7280;
+    }
+
+    &:hover mat-icon {
+      color: #34C5AA;
+    }
+  }
+}
+
+.source-config {
+  margin: 12px 0;
+}
+
+.config-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  mat-chip {
+    height: 24px;
+    font-size: 0.75rem;
+    padding: 0 8px;
+
+    mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+      margin-right: 4px;
+    }
+  }
+
+  .select-chip {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3B82F6;
+  }
+
+  .prefetch-chip {
+    background: rgba(168, 85, 247, 0.1);
+    color: #9333EA;
+  }
+}
+
+.primary-toggle {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #E5E7EB;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6B7280;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: #D1D5DB;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #4B5563;
+    margin: 0 0 8px 0;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.875rem;
+  }
+}
+
+/* Loading */
+.loading {
+  text-align: center;
+  padding: 40px;
+
+  p {
+    margin-top: 12px;
+    color: #6B7280;
+  }
+}
+
+/* Info Panel */
+.info-panel {
+  mat-card {
+    background: linear-gradient(135deg, rgba(196, 247, 239, 0.1) 0%, white 100%);
+  }
+
+  mat-card-title {
+    font-size: 1rem;
+    color: #2F4858;
+  }
+}
+
+.model-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.info-item {
+  display: flex;
+  gap: 12px;
+
+  label {
+    font-weight: 600;
+    color: #6B7280;
+    min-width: 100px;
+  }
+
+  span {
+    color: #2F4858;
+  }
+}
+
+.add-model-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+}
+
+/* Edit Dialog */
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 0;
+  min-width: 500px;
+}
+
+.optimization-section {
+  h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2F4858;
+    margin: 0 0 16px 0;
+  }
+}
+
+::ng-deep .mat-mdc-dialog-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #2F4858;
+
+  mat-icon {
+    color: #34C5AA;
+  }
+}
+
+/* Hidden class */
+.hidden {
+  display: none;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .selector-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .info-panel {
+    position: static;
+    transform: none;
+    margin-top: 20px;
+  }
+
+  .edit-form {
+    min-width: auto;
+  }
+}

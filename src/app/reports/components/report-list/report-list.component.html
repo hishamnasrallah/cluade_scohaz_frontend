@@ -1,0 +1,374 @@
+<div class="report-list-container">
+  <!-- Ocean Mint Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-text">
+        <div class="header-icon">
+          <mat-icon>assessment</mat-icon>
+        </div>
+        <div>
+          <h1>Reports</h1>
+          <p>Create, manage, and execute dynamic reports</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button mat-icon-button
+                (click)="refreshData()"
+                class="refresh-btn"
+                matTooltip="Refresh"
+                [disabled]="isLoading">
+          <mat-icon [class.spinning]="isLoading">refresh</mat-icon>
+        </button>
+        <button mat-raised-button
+                color="primary"
+                (click)="createReport()"
+                class="create-btn">
+          <mat-icon>add</mat-icon>
+          Create Report
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-section">
+    <div class="stat-card">
+      <div class="stat-icon total-icon">
+        <mat-icon>assessment</mat-icon>
+      </div>
+      <div class="stat-content">
+        <h3>{{ totalReports }}</h3>
+        <p>Total Reports</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon active-icon">
+        <mat-icon>check_circle</mat-icon>
+      </div>
+      <div class="stat-content">
+        <h3>{{ activeReports }}</h3>
+        <p>Active</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon public-icon">
+        <mat-icon>public</mat-icon>
+      </div>
+      <div class="stat-content">
+        <h3>{{ publicReports }}</h3>
+        <p>Public</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon recent-icon">
+        <mat-icon>schedule</mat-icon>
+      </div>
+      <div class="stat-content">
+        <h3>{{ recentExecutions }}</h3>
+        <p>Recent Runs</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters and View Toggle -->
+  <div class="filters-section">
+    <div class="filters-row">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search reports</mat-label>
+        <input matInput [formControl]="searchControl" placeholder="Search by name or description">
+        <mat-icon matPrefix>search</mat-icon>
+        <button mat-icon-button matSuffix *ngIf="searchControl.value" (click)="searchControl.setValue('')">
+          <mat-icon>clear</mat-icon>
+        </button>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Type</mat-label>
+        <mat-select [formControl]="typeControl">
+          <mat-option value="">All Types</mat-option>
+          <mat-option value="ad_hoc">Ad Hoc</mat-option>
+          <mat-option value="template">Template</mat-option>
+          <mat-option value="dashboard">Dashboard</mat-option>
+          <mat-option value="scheduled">Scheduled</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Category</mat-label>
+        <mat-select [formControl]="categoryControl">
+          <mat-option value="">All Categories</mat-option>
+          <mat-option *ngFor="let category of categories" [value]="category">
+            {{ category }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select [formControl]="statusControl">
+          <mat-option value="">All</mat-option>
+          <mat-option value="active">Active</mat-option>
+          <mat-option value="inactive">Inactive</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="view-toggle">
+      <mat-button-toggle-group [value]="viewMode" (change)="onViewModeChange($event)">
+        <mat-button-toggle value="grid" matTooltip="Grid View">
+          <mat-icon>grid_view</mat-icon>
+        </mat-button-toggle>
+        <mat-button-toggle value="table" matTooltip="Table View">
+          <mat-icon>table_rows</mat-icon>
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-section" *ngIf="isLoading">
+    <mat-spinner diameter="40" color="primary"></mat-spinner>
+    <p>Loading reports...</p>
+  </div>
+
+  <!-- Grid View -->
+  <div class="reports-grid" *ngIf="!isLoading && viewMode === 'grid'">
+    <div *ngFor="let report of filteredReports"
+         class="report-card"
+         [class.inactive]="!report.is_active">
+
+      <!-- Card Header -->
+      <div class="card-header">
+        <div class="report-type-badge" [class]="'type-' + report.report_type">
+          <mat-icon>{{ getReportTypeIcon(report.report_type) }}</mat-icon>
+          {{ getReportTypeLabel(report.report_type) }}
+        </div>
+        <button mat-icon-button [matMenuTriggerFor]="menu" class="menu-trigger">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #menu="matMenu">
+          <button mat-menu-item (click)="viewReport(report)">
+            <mat-icon>visibility</mat-icon>
+            <span>View</span>
+          </button>
+          <button mat-menu-item (click)="editReport(report)">
+            <mat-icon>edit</mat-icon>
+            <span>Edit</span>
+          </button>
+          <button mat-menu-item (click)="executeReport(report)">
+            <mat-icon>play_arrow</mat-icon>
+            <span>Execute</span>
+          </button>
+          <button mat-menu-item (click)="duplicateReport(report)">
+            <mat-icon>content_copy</mat-icon>
+            <span>Duplicate</span>
+          </button>
+          <mat-divider></mat-divider>
+          <button mat-menu-item (click)="deleteReport(report)" class="delete-item">
+            <mat-icon>delete</mat-icon>
+            <span>Delete</span>
+          </button>
+        </mat-menu>
+      </div>
+
+      <!-- Card Content -->
+      <div class="card-content">
+        <h3 class="report-name">{{ report.name }}</h3>
+        <p class="report-description">{{ report.description || 'No description available' }}</p>
+
+        <div class="report-meta">
+          <div class="meta-item">
+            <mat-icon>calendar_today</mat-icon>
+            <span>Created {{ formatDate(report.created_at) }}</span>
+          </div>
+          <div class="meta-item">
+            <mat-icon>person</mat-icon>
+            <span>{{ report.created_by_username || 'System' }}</span>
+          </div>
+          <div class="meta-item" *ngIf="report.field_count">
+            <mat-icon>view_column</mat-icon>
+            <span>{{ report.field_count }} fields</span>
+          </div>
+        </div>
+
+        <div class="report-tags" *ngIf="report.tags?.length">
+          <mat-chip *ngFor="let tag of report.tags" class="tag-chip">
+            {{ tag }}
+          </mat-chip>
+        </div>
+
+        <div class="report-status">
+          <div class="status-badges">
+                <span class="status-badge" [class.active]="report.is_active" [class.inactive]="!report.is_active">
+                  {{ report.is_active ? 'Active' : 'Inactive' }}
+                </span>
+            <span class="visibility-badge" [class.public]="report.is_public" [class.private]="!report.is_public">
+                  <mat-icon>{{ report.is_public ? 'public' : 'lock' }}</mat-icon>
+              {{ report.is_public ? 'Public' : 'Private' }}
+                </span>
+          </div>
+        </div>
+
+        <div class="last-execution" *ngIf="report.last_execution">
+          <div class="execution-info">
+            <mat-icon>history</mat-icon>
+            <span>Last run {{ formatDate(report.last_execution.executed_at) }}</span>
+          </div>
+          <div class="execution-stats">
+            <span class="row-count">{{ report.last_execution.row_count }} rows</span>
+            <span class="execution-status" [class]="report.last_execution.status">
+                  {{ report.last_execution.status }}
+                </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Actions -->
+      <div class="card-actions">
+        <button mat-button (click)="viewReport(report)" class="view-btn">
+          <mat-icon>visibility</mat-icon>
+          View
+        </button>
+        <button mat-button (click)="editReport(report)" class="edit-btn">
+          <mat-icon>edit</mat-icon>
+          Edit
+        </button>
+        <button mat-raised-button color="primary" (click)="executeReport(report)" class="execute-btn">
+          <mat-icon>play_arrow</mat-icon>
+          Execute
+        </button>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredReports.length === 0">
+      <mat-icon>assessment</mat-icon>
+      <h3>No reports found</h3>
+      <p>{{ searchControl.value ? 'Try adjusting your search criteria' : 'Create your first report to get started' }}</p>
+      <button mat-raised-button color="primary" (click)="createReport()" *ngIf="!searchControl.value">
+        <mat-icon>add</mat-icon>
+        Create Report
+      </button>
+    </div>
+  </div>
+
+  <!-- Table View -->
+  <mat-card class="table-card" *ngIf="!isLoading && viewMode === 'table'">
+    <table mat-table [dataSource]="dataSource" matSort class="professional-table">
+
+      <!-- Name Column -->
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+        <td mat-cell *matCellDef="let report">
+          <div class="name-cell">
+            <span class="report-name">{{ report.name }}</span>
+            <span class="report-description">{{ report.description }}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Type Column -->
+      <ng-container matColumnDef="type">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+        <td mat-cell *matCellDef="let report">
+              <span class="type-badge type-{{ report.report_type }}">
+                {{ getReportTypeLabel(report.report_type) }}
+              </span>
+        </td>
+      </ng-container>
+
+      <!-- Category Column -->
+      <ng-container matColumnDef="category">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Category</th>
+        <td mat-cell *matCellDef="let report">{{ report.category || '-' }}</td>
+      </ng-container>
+
+      <!-- Status Column -->
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let report">
+              <span class="status-indicator" [class.active]="report.is_active">
+                {{ report.is_active ? 'Active' : 'Inactive' }}
+              </span>
+        </td>
+      </ng-container>
+
+      <!-- Visibility Column -->
+      <ng-container matColumnDef="visibility">
+        <th mat-header-cell *matHeaderCellDef>Visibility</th>
+        <td mat-cell *matCellDef="let report">
+          <mat-icon class="visibility-icon" [class.public]="report.is_public">
+            {{ report.is_public ? 'public' : 'lock' }}
+          </mat-icon>
+        </td>
+      </ng-container>
+
+      <!-- Created Column -->
+      <ng-container matColumnDef="created">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Created</th>
+        <td mat-cell *matCellDef="let report">
+          <div class="created-cell">
+            <span>{{ formatDate(report.created_at) }}</span>
+            <span class="created-by">by {{ report.created_by_username || 'System' }}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Last Run Column -->
+      <ng-container matColumnDef="lastRun">
+        <th mat-header-cell *matHeaderCellDef>Last Run</th>
+        <td mat-cell *matCellDef="let report">
+              <span *ngIf="report.last_execution">
+                {{ formatDate(report.last_execution.executed_at) }}
+              </span>
+          <span *ngIf="!report.last_execution" class="no-data">Never</span>
+        </td>
+      </ng-container>
+
+      <!-- Actions Column -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let report">
+          <div class="table-actions">
+            <button mat-icon-button (click)="viewReport(report)" matTooltip="View">
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <button mat-icon-button (click)="editReport(report)" matTooltip="Edit">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button (click)="executeReport(report)" matTooltip="Execute" color="primary">
+              <mat-icon>play_arrow</mat-icon>
+            </button>
+            <button mat-icon-button [matMenuTriggerFor]="menu" matTooltip="More">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #menu="matMenu">
+              <button mat-menu-item (click)="duplicateReport(report)">
+                <mat-icon>content_copy</mat-icon>
+                <span>Duplicate</span>
+              </button>
+              <button mat-menu-item (click)="scheduleReport(report)">
+                <mat-icon>schedule</mat-icon>
+                <span>Schedule</span>
+              </button>
+              <button mat-menu-item (click)="shareReport(report)">
+                <mat-icon>share</mat-icon>
+                <span>Share</span>
+              </button>
+              <mat-divider></mat-divider>
+              <button mat-menu-item (click)="deleteReport(report)" class="delete-item">
+                <mat-icon>delete</mat-icon>
+                <span>Delete</span>
+              </button>
+            </mat-menu>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="table-row"></tr>
+    </table>
+
+    <mat-paginator [pageSizeOptions]="[10, 25, 50, 100]" showFirstLastButtons></mat-paginator>
+  </mat-card>
+</div>

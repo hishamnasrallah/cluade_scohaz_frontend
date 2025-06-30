@@ -1,0 +1,353 @@
+<div class="report-editor-container">
+  <!-- Header -->
+  <div class="editor-header">
+    <div class="header-content">
+      <div class="header-left">
+        <button mat-icon-button (click)="goBack()" class="back-btn">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div class="header-text">
+          <h1>{{ mode === 'create' ? 'Create New Report' : 'Edit Report' }}</h1>
+          <p>{{ report?.name || 'Build dynamic reports with advanced filtering' }}</p>
+        </div>
+      </div>
+      <div class="header-actions">
+            <span class="save-status" *ngIf="isDirty">
+              <mat-icon>warning</mat-icon>
+              Unsaved changes
+            </span>
+        <button mat-button (click)="saveDraft()" [disabled]="isSaving">
+          <mat-icon>save</mat-icon>
+          Save Draft
+        </button>
+        <button mat-raised-button
+                color="primary"
+                (click)="saveAndExecute()"
+                [disabled]="!isValid || isSaving">
+          <mat-icon>play_arrow</mat-icon>
+          Save & Execute
+        </button>
+      </div>
+    </div>
+    <mat-progress-bar mode="determinate"
+                      [value]="progressValue"
+                      class="step-progress"></mat-progress-bar>
+  </div>
+
+  <!-- Stepper -->
+  <mat-card class="stepper-card">
+    <mat-stepper #stepper
+                 linear="false"
+                 (selectionChange)="onStepChange($event)">
+
+      <!-- Step 1: Basic Information -->
+      <mat-step [stepControl]="basicInfoForm">
+        <ng-template matStepLabel>
+          <div class="step-label">
+            <mat-icon>info</mat-icon>
+            <span>Basic Info</span>
+          </div>
+        </ng-template>
+
+        <div class="step-content">
+          <h2 class="step-title">Report Information</h2>
+          <p class="step-description">Configure basic report settings and metadata</p>
+
+          <form [formGroup]="basicInfoForm" class="report-form">
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Report Name</mat-label>
+                <input matInput
+                       formControlName="name"
+                       placeholder="Enter a descriptive name">
+                <mat-icon matPrefix>label</mat-icon>
+                <mat-error *ngIf="basicInfoForm.get('name')?.hasError('required')">
+                  Report name is required
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Description</mat-label>
+                <textarea matInput
+                          formControlName="description"
+                          rows="3"
+                          placeholder="Describe what this report shows"></textarea>
+                <mat-icon matPrefix>description</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Report Type</mat-label>
+                <mat-select formControlName="report_type">
+                  <mat-option value="ad_hoc">
+                    <mat-icon>dashboard</mat-icon>
+                    Ad Hoc
+                  </mat-option>
+                  <mat-option value="template">
+                    <mat-icon>content_copy</mat-icon>
+                    Template
+                  </mat-option>
+                  <mat-option value="dashboard">
+                    <mat-icon>view_quilt</mat-icon>
+                    Dashboard
+                  </mat-option>
+                  <mat-option value="scheduled">
+                    <mat-icon>schedule</mat-icon>
+                    Scheduled
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Category</mat-label>
+                <input matInput
+                       formControlName="category"
+                       placeholder="e.g., Sales, Finance, HR">
+                <mat-icon matPrefix>category</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Tags</mat-label>
+                <mat-chip-grid #chipGrid>
+                  <mat-chip-row *ngFor="let tag of tags"
+                                (removed)="removeTag(tag)"
+                                [removable]="true">
+                    {{ tag }}
+                    <button matChipRemove>
+                      <mat-icon>cancel</mat-icon>
+                    </button>
+                  </mat-chip-row>
+                  <input placeholder="Add tags..."
+                         [matChipInputFor]="chipGrid"
+                         [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                         (matChipInputTokenEnd)="addTag($event)">
+                </mat-chip-grid>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row toggles">
+              <mat-slide-toggle formControlName="is_active" color="primary">
+                <mat-icon>power_settings_new</mat-icon>
+                Active
+              </mat-slide-toggle>
+              <mat-slide-toggle formControlName="is_public" color="primary">
+                <mat-icon>public</mat-icon>
+                Public
+              </mat-slide-toggle>
+            </div>
+          </form>
+
+          <div class="step-actions">
+            <button mat-raised-button
+                    color="primary"
+                    matStepperNext
+                    [disabled]="!basicInfoForm.valid">
+              Next
+              <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </div>
+        </div>
+      </mat-step>
+
+      <!-- Step 2: Data Sources -->
+      <mat-step>
+        <ng-template matStepLabel>
+          <div class="step-label">
+            <mat-icon>storage</mat-icon>
+            <span>Data Sources</span>
+            <mat-badge [content]="dataSources.length"
+                       matBadgeSize="small"
+                       *ngIf="dataSources.length > 0"></mat-badge>
+          </div>
+        </ng-template>
+
+        <div class="step-content">
+          <h2 class="step-title">Select Data Sources</h2>
+          <p class="step-description">Choose the models and relationships to include in your report</p>
+
+          <app-data-source-selector
+            [report]="report"
+            [dataSources]="dataSources"
+            (dataSourcesChange)="onDataSourcesChange($event)">
+          </app-data-source-selector>
+
+          <div class="step-actions">
+            <button mat-button matStepperPrevious>
+              <mat-icon>arrow_back</mat-icon>
+              Previous
+            </button>
+            <button mat-raised-button
+                    color="primary"
+                    matStepperNext
+                    [disabled]="dataSources.length === 0">
+              Next
+              <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </div>
+        </div>
+      </mat-step>
+
+      <!-- Step 3: Fields -->
+      <mat-step>
+        <ng-template matStepLabel>
+          <div class="step-label">
+            <mat-icon>view_column</mat-icon>
+            <span>Fields</span>
+            <mat-badge [content]="fields.length"
+                       matBadgeSize="small"
+                       *ngIf="fields.length > 0"></mat-badge>
+          </div>
+        </ng-template>
+
+        <div class="step-content">
+          <h2 class="step-title">Select Fields</h2>
+          <p class="step-description">Choose and configure the fields to display in your report</p>
+
+          <app-field-builder
+            [report]="report"
+            [dataSources]="dataSources"
+            [fields]="fields"
+            (fieldsChange)="onFieldsChange($event)">
+          </app-field-builder>
+
+          <div class="step-actions">
+            <button mat-button matStepperPrevious>
+              <mat-icon>arrow_back</mat-icon>
+              Previous
+            </button>
+            <button mat-raised-button
+                    color="primary"
+                    matStepperNext
+                    [disabled]="fields.length === 0">
+              Next
+              <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </div>
+        </div>
+      </mat-step>
+
+      <!-- Step 4: Filters -->
+      <mat-step>
+        <ng-template matStepLabel>
+          <div class="step-label">
+            <mat-icon>filter_list</mat-icon>
+            <span>Filters</span>
+            <mat-badge [content]="filters.length"
+                       matBadgeSize="small"
+                       *ngIf="filters.length > 0"></mat-badge>
+          </div>
+        </ng-template>
+
+        <div class="step-content">
+          <h2 class="step-title">Add Filters</h2>
+          <p class="step-description">Define conditions to filter your report data</p>
+
+          <app-filter-builder
+            [report]="report"
+            [dataSources]="dataSources"
+            [filters]="filters"
+            (filtersChange)="onFiltersChange($event)">
+          </app-filter-builder>
+
+          <div class="step-actions">
+            <button mat-button matStepperPrevious>
+              <mat-icon>arrow_back</mat-icon>
+              Previous
+            </button>
+            <button mat-raised-button
+                    color="primary"
+                    matStepperNext>
+              Next
+              <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </div>
+        </div>
+      </mat-step>
+
+      <!-- Step 5: Parameters -->
+      <mat-step>
+        <ng-template matStepLabel>
+          <div class="step-label">
+            <mat-icon>tune</mat-icon>
+            <span>Parameters</span>
+            <mat-badge [content]="parameters.length"
+                       matBadgeSize="small"
+                       *ngIf="parameters.length > 0"></mat-badge>
+          </div>
+        </ng-template>
+
+        <div class="step-content">
+          <h2 class="step-title">Define Parameters</h2>
+          <p class="step-description">Add runtime parameters for dynamic filtering</p>
+
+          <app-parameter-builder
+            [report]="report"
+            [parameters]="parameters"
+            (parametersChange)="onParametersChange($event)">
+          </app-parameter-builder>
+
+          <div class="step-actions">
+            <button mat-button matStepperPrevious>
+              <mat-icon>arrow_back</mat-icon>
+              Previous
+            </button>
+            <button mat-raised-button
+                    color="primary"
+                    matStepperNext>
+              Next
+              <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </div>
+        </div>
+      </mat-step>
+
+      <!-- Step 6: Preview & Save -->
+      <mat-step>
+        <ng-template matStepLabel>
+          <div class="step-label">
+            <mat-icon>preview</mat-icon>
+            <span>Preview</span>
+          </div>
+        </ng-template>
+
+        <div class="step-content">
+          <h2 class="step-title">Preview Report</h2>
+          <p class="step-description">Review your report configuration and test with sample data</p>
+
+          <app-report-preview
+            [report]="report"
+            [dataSources]="dataSources"
+            [fields]="fields"
+            [filters]="filters"
+            [parameters]="parameters">
+          </app-report-preview>
+
+          <div class="step-actions final-actions">
+            <button mat-button matStepperPrevious>
+              <mat-icon>arrow_back</mat-icon>
+              Previous
+            </button>
+            <div class="save-actions">
+              <button mat-button (click)="saveDraft()" [disabled]="isSaving">
+                <mat-icon>save</mat-icon>
+                Save as Draft
+              </button>
+              <button mat-raised-button
+                      color="primary"
+                      (click)="saveReport()"
+                      [disabled]="!isValid || isSaving">
+                <mat-icon>check</mat-icon>
+                Save Report
+              </button>
+            </div>
+          </div>
+        </div>
+      </mat-step>
+    </mat-stepper>
+  </mat-card>
+</div>

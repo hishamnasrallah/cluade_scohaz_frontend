@@ -1,0 +1,326 @@
+<div class="field-builder">
+  <div class="builder-content">
+    <!-- Left Panel - Available Fields -->
+    <mat-card class="available-fields-panel">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>view_column</mat-icon>
+          Available Fields
+        </mat-card-title>
+        <mat-form-field appearance="outline" class="search-field">
+          <input matInput
+                 placeholder="Search fields..."
+                 [(ngModel)]="searchTerm"
+                 (ngModelChange)="filterFields()">
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+      </mat-card-header>
+
+      <mat-card-content>
+        <!-- Tab for each data source -->
+        <mat-tab-group *ngIf="dataSources.length > 0">
+          <mat-tab *ngFor="let dataSource of dataSources">
+            <ng-template mat-tab-label>
+              <mat-icon>{{ dataSource.is_primary ? 'star' : 'table_chart' }}</mat-icon>
+              {{ dataSource.alias }}
+            </ng-template>
+
+            <div class="fields-list"
+                 cdkDropList
+                 [cdkDropListData]="getAvailableFieldsForDataSource(dataSource)"
+                 [cdkDropListConnectedTo]="['selected-fields']"
+                 (cdkDropListDropped)="onDrop($event)">
+
+              <div *ngFor="let field of getFilteredFieldsForDataSource(dataSource)"
+                   cdkDrag
+                   [cdkDragData]="field"
+                   class="field-item available"
+                   [class.already-selected]="isFieldSelected(field)">
+
+                <div class="field-content" *cdkDragPreview>
+                  <mat-icon>{{ getFieldIcon(field.type) }}</mat-icon>
+                  <span class="field-name">{{ field.verbose_name }}</span>
+                </div>
+
+                <div class="field-content">
+                  <mat-icon>{{ getFieldIcon(field.type) }}</mat-icon>
+                  <div class="field-info">
+                    <span class="field-name">{{ field.verbose_name }}</span>
+                    <span class="field-path">{{ field.path }}</span>
+                  </div>
+                  <div class="field-meta">
+                    <mat-chip class="type-chip">{{ getFieldTypeLabel(field.type) }}</mat-chip>
+                    <button mat-icon-button
+                            *ngIf="!isFieldSelected(field)"
+                            (click)="quickAddField(field, dataSource)"
+                            matTooltip="Add to report">
+                      <mat-icon>add_circle</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="empty-state" *ngIf="getFilteredFieldsForDataSource(dataSource).length === 0">
+                <mat-icon>search_off</mat-icon>
+                <p>No fields match your search</p>
+              </div>
+            </div>
+          </mat-tab>
+        </mat-tab-group>
+
+        <div class="empty-state" *ngIf="dataSources.length === 0">
+          <mat-icon>layers_clear</mat-icon>
+          <p>Add data sources first</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Right Panel - Selected Fields -->
+    <mat-card class="selected-fields-panel">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>playlist_add_check</mat-icon>
+          Selected Fields
+          <span class="count-badge" *ngIf="fields.length > 0">
+                {{ fields.length }}
+              </span>
+        </mat-card-title>
+        <button mat-icon-button
+                (click)="clearAllFields()"
+                *ngIf="fields.length > 0"
+                matTooltip="Clear all">
+          <mat-icon>clear_all</mat-icon>
+        </button>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="selected-fields-list"
+             cdkDropList
+             id="selected-fields"
+             [cdkDropListData]="fields"
+             (cdkDropListDropped)="onDrop($event)">
+
+          <div *ngFor="let field of fields; let i = index"
+               cdkDrag
+               [cdkDragData]="field"
+               class="field-item selected">
+
+            <div class="drag-handle" cdkDragHandle>
+              <mat-icon>drag_indicator</mat-icon>
+            </div>
+
+            <div class="field-content">
+              <div class="field-main">
+                <mat-icon>{{ getFieldIcon(field.field_type) }}</mat-icon>
+                <div class="field-details">
+                  <span class="field-display-name">{{ field.display_name }}</span>
+                  <span class="field-source">{{ getDataSourceAlias(field.data_source) }}.{{ field.field_path }}</span>
+                </div>
+              </div>
+
+              <div class="field-config">
+                <mat-chip *ngIf="field.aggregation" class="aggregation-chip">
+                  <mat-icon>functions</mat-icon>
+                  {{ getAggregationLabel(field.aggregation) }}
+                </mat-chip>
+                <mat-chip *ngIf="!field.is_visible" class="hidden-chip">
+                  <mat-icon>visibility_off</mat-icon>
+                  Hidden
+                </mat-chip>
+                <mat-chip *ngIf="field.formatting?.type" class="format-chip">
+                  <mat-icon>{{ getFormattingIcon(field.formatting.type) }}</mat-icon>
+                  {{ field.formatting.type }}
+                </mat-chip>
+              </div>
+
+              <div class="field-actions">
+                <button mat-icon-button
+                        (click)="editField(field, i)"
+                        matTooltip="Configure">
+                  <mat-icon>settings</mat-icon>
+                </button>
+                <button mat-icon-button
+                        (click)="toggleVisibility(field, i)"
+                        matTooltip="{{ field.is_visible ? 'Hide' : 'Show' }}">
+                  <mat-icon>{{ field.is_visible ? 'visibility' : 'visibility_off' }}</mat-icon>
+                </button>
+                <button mat-icon-button
+                        (click)="removeField(i)"
+                        matTooltip="Remove">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="empty-state" *ngIf="fields.length === 0">
+            <mat-icon>playlist_add</mat-icon>
+            <h3>No fields selected</h3>
+            <p>Drag fields from the left panel or click the add button</p>
+          </div>
+        </div>
+
+        <!-- Field Summary -->
+        <div class="field-summary" *ngIf="fields.length > 0">
+          <mat-divider></mat-divider>
+          <div class="summary-content">
+            <div class="summary-item">
+              <mat-icon>view_column</mat-icon>
+              <span>{{ fields.length }} fields</span>
+            </div>
+            <div class="summary-item">
+              <mat-icon>functions</mat-icon>
+              <span>{{ getAggregatedFieldsCount() }} aggregations</span>
+            </div>
+            <div class="summary-item">
+              <mat-icon>visibility</mat-icon>
+              <span>{{ getVisibleFieldsCount() }} visible</span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions">
+    <button mat-button (click)="suggestFields()" class="suggest-btn">
+      <mat-icon>lightbulb</mat-icon>
+      Suggest Fields
+    </button>
+    <button mat-button (click)="addAllPrimaryFields()" class="add-all-btn">
+      <mat-icon>select_all</mat-icon>
+      Add All Primary Fields
+    </button>
+  </div>
+</div>
+
+<!-- Field Configuration Dialog -->
+<ng-template #fieldConfigDialog>
+  <h2 mat-dialog-title>
+    <mat-icon>settings</mat-icon>
+    Configure Field
+  </h2>
+
+  <mat-dialog-content>
+    <form [formGroup]="fieldForm" class="field-form">
+      <mat-form-field appearance="outline">
+        <mat-label>Display Name</mat-label>
+        <input matInput formControlName="display_name">
+        <mat-icon matPrefix>label</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Aggregation</mat-label>
+        <mat-select formControlName="aggregation">
+          <mat-option value="">None</mat-option>
+          <mat-option *ngFor="let agg of aggregationOptions" [value]="agg.value">
+            <mat-icon>{{ agg.icon }}</mat-icon>
+            {{ agg.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="half-width">
+          <mat-label>Width (pixels)</mat-label>
+          <input matInput type="number" formControlName="width">
+          <mat-icon matPrefix>straighten</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="half-width">
+          <mat-label>Order</mat-label>
+          <input matInput type="number" formControlName="order">
+          <mat-icon matPrefix>reorder</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <mat-slide-toggle formControlName="is_visible" color="primary">
+        <mat-icon>{{ fieldForm.get('is_visible')?.value ? 'visibility' : 'visibility_off' }}</mat-icon>
+        Visible in results
+      </mat-slide-toggle>
+
+      <!-- Formatting Section -->
+      <mat-expansion-panel class="formatting-panel">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <mat-icon>format_paint</mat-icon>
+            Formatting Options
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <div [formGroup]="formattingForm">
+          <mat-form-field appearance="outline">
+            <mat-label>Format Type</mat-label>
+            <mat-select formControlName="type">
+              <mat-option value="">None</mat-option>
+              <mat-option *ngFor="let format of formatTypes" [value]="format.value">
+                <mat-icon>{{ format.icon }}</mat-icon>
+                {{ format.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Currency Options -->
+          <ng-container *ngIf="formattingForm.get('type')?.value === 'currency'">
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Prefix</mat-label>
+                <input matInput formControlName="prefix" placeholder="$">
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Decimals</mat-label>
+                <input matInput type="number" formControlName="decimals" min="0" max="10">
+              </mat-form-field>
+            </div>
+          </ng-container>
+
+          <!-- Number Options -->
+          <ng-container *ngIf="formattingForm.get('type')?.value === 'number'">
+            <mat-form-field appearance="outline">
+              <mat-label>Decimal Places</mat-label>
+              <input matInput type="number" formControlName="decimals" min="0" max="10">
+            </mat-form-field>
+            <mat-slide-toggle formControlName="thousands_separator">
+              Use thousands separator
+            </mat-slide-toggle>
+          </ng-container>
+
+          <!-- Date Options -->
+          <ng-container *ngIf="formattingForm.get('type')?.value === 'date' || formattingForm.get('type')?.value === 'datetime'">
+            <mat-form-field appearance="outline">
+              <mat-label>Date Format</mat-label>
+              <mat-select formControlName="date_format">
+                <mat-option value="MM/DD/YYYY">MM/DD/YYYY</mat-option>
+                <mat-option value="DD/MM/YYYY">DD/MM/YYYY</mat-option>
+                <mat-option value="YYYY-MM-DD">YYYY-MM-DD</mat-option>
+                <mat-option value="MMM DD, YYYY">MMM DD, YYYY</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </ng-container>
+
+          <!-- Percentage Options -->
+          <ng-container *ngIf="formattingForm.get('type')?.value === 'percentage'">
+            <mat-form-field appearance="outline">
+              <mat-label>Decimal Places</mat-label>
+              <input matInput type="number" formControlName="decimals" min="0" max="10">
+            </mat-form-field>
+            <mat-slide-toggle formControlName="multiply_by_100">
+              Multiply by 100
+            </mat-slide-toggle>
+          </ng-container>
+        </div>
+      </mat-expansion-panel>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Cancel</button>
+    <button mat-raised-button
+            color="primary"
+            (click)="saveFieldConfig()"
+            [disabled]="!fieldForm.valid">
+      Save Changes
+    </button>
+  </mat-dialog-actions>
+</ng-template>

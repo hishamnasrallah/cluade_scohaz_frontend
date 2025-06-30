@@ -1,0 +1,373 @@
+.parameter-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Header */
+.builder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(47, 72, 88, 0.06);
+  border: 1px solid rgba(196, 247, 239, 0.5);
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  mat-icon {
+    color: #34C5AA;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #2F4858;
+  }
+}
+
+.parameter-count {
+  background: rgba(52, 197, 170, 0.1);
+  color: #2BA99B;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.813rem;
+  font-weight: 600;
+}
+
+.add-parameter-btn {
+  background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+}
+
+/* Parameters List */
+.parameters-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.parameter-panel {
+  background: white;
+  border: 1px solid rgba(196, 247, 239, 0.5);
+  box-shadow: 0 2px 8px rgba(47, 72, 88, 0.06);
+  overflow: hidden;
+
+  &.cdk-drag-preview {
+    box-shadow: 0 5px 15px rgba(52, 197, 170, 0.3);
+  }
+
+  &.cdk-drag-animating {
+    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+.cdk-drop-list-dragging .parameter-panel:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.4;
+  background: rgba(52, 197, 170, 0.1);
+  border: 2px dashed #34C5AA;
+}
+
+/* Panel Header */
+::ng-deep .mat-expansion-panel-header {
+  background: linear-gradient(135deg, rgba(196, 247, 239, 0.2) 0%, rgba(196, 247, 239, 0.1) 100%);
+  min-height: 64px;
+}
+
+.panel-title-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+
+  .drag-handle {
+    cursor: move;
+    color: #9CA3AF;
+
+    &:hover {
+      color: #6B7280;
+    }
+  }
+
+  mat-icon {
+    color: #6B7280;
+  }
+
+  .parameter-name {
+    font-weight: 600;
+    color: #2F4858;
+    margin-right: auto;
+  }
+
+  .type-chip {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6B7280;
+    height: 24px;
+    font-size: 0.75rem;
+  }
+
+  .required-indicator {
+    color: #F59E0B;
+  }
+}
+
+/* Parameter Content */
+.parameter-content {
+  padding: 24px;
+  background: #FAFBFC;
+}
+
+.parameter-form {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  h4 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #2F4858;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(196, 247, 239, 0.3);
+  }
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+
+  .half-width {
+    flex: 1;
+  }
+}
+
+/* Type-Specific Configurations */
+.type-config {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
+}
+
+.validation-rules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
+.choices-type-radio {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 16px;
+}
+
+/* Static Choices */
+.static-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.choices-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.choice-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #F9FAFB;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
+
+  .choice-value,
+  .choice-label {
+    flex: 1;
+  }
+
+  button {
+    width: 36px;
+    height: 36px;
+
+    mat-icon {
+      color: #6B7280;
+    }
+
+    &:hover mat-icon {
+      color: #EF4444;
+    }
+  }
+}
+
+.add-choice-btn {
+  align-self: flex-start;
+  border: 2px dashed rgba(52, 197, 170, 0.3);
+  color: #34C5AA;
+
+  &:hover {
+    background: rgba(196, 247, 239, 0.1);
+    border-style: solid;
+  }
+}
+
+/* Dynamic Query */
+.dynamic-query {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Default Range */
+.default-range {
+  display: flex;
+  gap: 16px;
+}
+
+/* Boolean Preview */
+.boolean-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 0;
+}
+
+/* Parameter Actions */
+.parameter-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 16px;
+  border-top: 1px solid #E5E7EB;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  background: white;
+  border-radius: 12px;
+  border: 2px dashed rgba(196, 247, 239, 0.5);
+
+  mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: #C4F7EF;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2F4858;
+    margin: 0 0 8px 0;
+  }
+
+  p {
+    margin: 0 0 24px 0;
+    color: #6B7280;
+  }
+
+  button {
+    background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+  }
+}
+
+/* Preview Section */
+.preview-section {
+  margin-top: 24px;
+  background: linear-gradient(135deg, rgba(196, 247, 239, 0.1) 0%, white 100%);
+  border: 1px solid rgba(196, 247, 239, 0.5);
+
+  mat-card-header {
+    background: linear-gradient(135deg, rgba(196, 247, 239, 0.3) 0%, rgba(196, 247, 239, 0.1) 100%);
+    margin: -16px -16px 16px -16px;
+    padding: 16px;
+  }
+
+  mat-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1rem;
+    color: #2F4858;
+
+    mat-icon {
+      color: #34C5AA;
+    }
+  }
+}
+
+.preview-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+.preview-field {
+  mat-form-field {
+    width: 100%;
+  }
+}
+
+/* Material Form Fields */
+::ng-deep .mat-mdc-form-field {
+  &.mat-focused .mat-mdc-text-field-wrapper {
+    border-color: #34C5AA;
+  }
+}
+
+::ng-deep .mat-mdc-slide-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  mat-icon {
+    margin-right: 4px;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .builder-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .form-row {
+    flex-direction: column;
+
+    .half-width {
+      width: 100%;
+    }
+  }
+
+  .default-range {
+    flex-direction: column;
+  }
+
+  .preview-form {
+    grid-template-columns: 1fr;
+  }
+}

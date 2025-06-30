@@ -1,0 +1,257 @@
+<div class="data-source-selector">
+  <div class="selector-content">
+    <!-- Left Panel - Available Models -->
+    <mat-card class="models-panel">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>storage</mat-icon>
+          Available Models
+        </mat-card-title>
+        <mat-form-field appearance="outline" class="search-field">
+          <input matInput
+                 placeholder="Search models..."
+                 [(ngModel)]="searchTerm"
+                 (ngModelChange)="filterTree()">
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="loading" *ngIf="isLoadingModels">
+          <mat-spinner diameter="30"></mat-spinner>
+          <p>Loading models...</p>
+        </div>
+
+        <mat-tree [dataSource]="dataSource"
+                  [treeControl]="treeControl"
+                  *ngIf="!isLoadingModels">
+          <!-- App Node -->
+          <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
+            <button mat-icon-button disabled></button>
+            <div class="node-content model-node"
+                 [class.disabled]="isModelAlreadyAdded(node.contentType)"
+                 (click)="selectModel(node.contentType)">
+              <mat-icon>table_chart</mat-icon>
+              <span class="node-name">{{ node.name }}</span>
+              <button mat-icon-button
+                      *ngIf="!isModelAlreadyAdded(node.contentType)"
+                      (click)="addDataSource(node.contentType); $event.stopPropagation()">
+                <mat-icon>add_circle</mat-icon>
+              </button>
+            </div>
+          </mat-tree-node>
+
+          <!-- Expandable Node -->
+          <mat-nested-tree-node *matTreeNodeDef="let node; when: hasChild">
+            <div class="mat-tree-node">
+              <button mat-icon-button matTreeNodeToggle>
+                <mat-icon>
+                  {{ treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right' }}
+                </mat-icon>
+              </button>
+              <div class="node-content app-node">
+                <mat-icon>folder</mat-icon>
+                <span class="node-name">{{ node.name }}</span>
+                <span class="app-badge">{{ node.children?.length || 0 }} models</span>
+              </div>
+            </div>
+            <div [class.hidden]="!treeControl.isExpanded(node)"
+                 role="group"
+                 class="nested-node">
+              <ng-container matTreeNodeOutlet></ng-container>
+            </div>
+          </mat-nested-tree-node>
+        </mat-tree>
+
+        <div class="empty-state" *ngIf="!isLoadingModels && treeData.length === 0">
+          <mat-icon>folder_open</mat-icon>
+          <p>No models found</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Right Panel - Selected Data Sources -->
+    <mat-card class="sources-panel">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>layers</mat-icon>
+          Selected Data Sources
+          <span class="count-badge" *ngIf="dataSources.length > 0">
+                {{ dataSources.length }}
+              </span>
+        </mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="data-sources-list" *ngIf="dataSources.length > 0">
+          <div *ngFor="let source of dataSources; let i = index"
+               class="data-source-item"
+               [class.primary]="source.is_primary">
+
+            <div class="source-header">
+              <div class="source-info">
+                <mat-icon>{{ source.is_primary ? 'star' : 'table_chart' }}</mat-icon>
+                <div class="source-details">
+                  <h4>{{ source.content_type?.display_name || source.app_name + '.' + source.model_name }}</h4>
+                  <p>Alias: <strong>{{ source.alias }}</strong></p>
+                </div>
+              </div>
+              <div class="source-actions">
+                <button mat-icon-button
+                        (click)="editDataSource(source)"
+                        matTooltip="Edit">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button
+                        (click)="removeDataSource(i)"
+                        [disabled]="source.is_primary && dataSources.length > 1"
+                        matTooltip="Remove">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <div class="source-config" *ngIf="source.select_related?.length || source.prefetch_related?.length">
+              <div class="config-chips">
+                <mat-chip *ngFor="let field of source.select_related" class="select-chip">
+                  <mat-icon>link</mat-icon>
+                  {{ field }}
+                </mat-chip>
+                <mat-chip *ngFor="let field of source.prefetch_related" class="prefetch-chip">
+                  <mat-icon>call_split</mat-icon>
+                  {{ field }}
+                </mat-chip>
+              </div>
+            </div>
+
+            <div class="primary-toggle" *ngIf="dataSources.length > 1">
+              <mat-slide-toggle
+                [checked]="source.is_primary"
+                (change)="setPrimarySource(i)"
+                [disabled]="source.is_primary">
+                Primary Source
+              </mat-slide-toggle>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-state" *ngIf="dataSources.length === 0">
+          <mat-icon>add_circle_outline</mat-icon>
+          <h3>No data sources selected</h3>
+          <p>Select models from the left panel to add them as data sources</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Info Panel -->
+  <div class="info-panel" *ngIf="selectedModel">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Model Information</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="model-info">
+          <div class="info-item">
+            <label>Model:</label>
+            <span>{{ selectedModel.display_name }}</span>
+          </div>
+          <div class="info-item">
+            <label>App:</label>
+            <span>{{ selectedModel.app_label }}</span>
+          </div>
+          <div class="info-item">
+            <label>Table:</label>
+            <span>{{ selectedModel.model }}</span>
+          </div>
+          <div class="info-item" *ngIf="selectedModel.verbose_name">
+            <label>Verbose Name:</label>
+            <span>{{ selectedModel.verbose_name }}</span>
+          </div>
+        </div>
+        <button mat-raised-button
+                color="primary"
+                (click)="addDataSource(selectedModel)"
+                [disabled]="isModelAlreadyAdded(selectedModel)"
+                class="add-model-btn">
+          <mat-icon>add</mat-icon>
+          Add as Data Source
+        </button>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+
+<!-- Edit Data Source Dialog -->
+<ng-template #editDialog>
+  <h2 mat-dialog-title>
+    <mat-icon>edit</mat-icon>
+    Edit Data Source
+  </h2>
+
+  <mat-dialog-content>
+    <form [formGroup]="editForm" class="edit-form">
+      <mat-form-field appearance="outline">
+        <mat-label>Alias</mat-label>
+        <input matInput formControlName="alias" placeholder="e.g., customer, order">
+        <mat-icon matPrefix>label</mat-icon>
+        <mat-hint>Short name for joins and references</mat-hint>
+      </mat-form-field>
+
+      <div class="optimization-section">
+        <h3>Query Optimization</h3>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Select Related</mat-label>
+          <mat-chip-grid #selectChipGrid>
+            <mat-chip-row *ngFor="let field of editingSelectRelated"
+                          (removed)="removeSelectRelated(field)">
+              {{ field }}
+              <button matChipRemove>
+                <mat-icon>cancel</mat-icon>
+              </button>
+            </mat-chip-row>
+            <input placeholder="Add foreign key field..."
+                   [matChipInputFor]="selectChipGrid"
+                   [matChipInputSeparatorKeyCodes]="[13, 188]"
+                   (matChipInputTokenEnd)="addSelectRelated($event)">
+          </mat-chip-grid>
+          <mat-hint>Foreign key fields to join in the query</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Prefetch Related</mat-label>
+          <mat-chip-grid #prefetchChipGrid>
+            <mat-chip-row *ngFor="let field of editingPrefetchRelated"
+                          (removed)="removePrefetchRelated(field)">
+              {{ field }}
+              <button matChipRemove>
+                <mat-icon>cancel</mat-icon>
+              </button>
+            </mat-chip-row>
+            <input placeholder="Add many-to-many field..."
+                   [matChipInputFor]="prefetchChipGrid"
+                   [matChipInputSeparatorKeyCodes]="[13, 188]"
+                   (matChipInputTokenEnd)="addPrefetchRelated($event)">
+          </mat-chip-grid>
+          <mat-hint>Many-to-many or reverse foreign key fields</mat-hint>
+        </mat-form-field>
+      </div>
+
+      <mat-slide-toggle formControlName="is_primary"
+                        [disabled]="editingDataSource?.is_primary && dataSources.length > 1">
+        Set as Primary Source
+      </mat-slide-toggle>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Cancel</button>
+    <button mat-raised-button
+            color="primary"
+            (click)="saveDataSourceEdit()"
+            [disabled]="!editForm.valid">
+      Save Changes
+    </button>
+  </mat-dialog-actions>
+</ng-template>
