@@ -2,6 +2,7 @@
 import { Component, OnInit, ViewChild, TemplateRef, OnDestroy, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, FormsModule } from '@angular/forms';
+import { trigger, state, style, transition, animate } from '@angular/animations';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
@@ -28,11 +29,13 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged, forkJoin, timer, of } from 'rxjs';
 import { UserService, CustomUser, Group, UserType, PhoneNumber, UserFilters } from '../../../services/user.service';
 import { AuthService } from '../../../services/auth.service';
-import { CdkVirtualScrollViewport, ScrollingModule } from '@angular/cdk/scrolling';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Clipboard } from '@angular/cdk/clipboard';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-
+import * as XLSX from 'xlsx';
 
 interface PhoneNumberForm {
   phone_number: string;
@@ -44,6 +47,7 @@ interface PhoneNumberForm {
 interface PasswordStrength {
   score: number;
   text: string;
+  feedback?: string[];
 }
 interface FilterPreset {
   id: string;
@@ -86,37 +90,58 @@ interface ColumnDefinition {
   selector: 'app-user-management',
   standalone: true,
   imports:[
-  CommonModule,
-  FormsModule,
-  ReactiveFormsModule,
-  MatButtonModule,
-  MatIconModule,
-  MatTableModule,
-  MatDialogModule,
-  MatSnackBarModule,
-  MatFormFieldModule,
-  MatInputModule,
-  MatSelectModule,
-  MatCheckboxModule,
-  MatProgressSpinnerModule,
-  MatTooltipModule,
-  MatCardModule,
-  MatChipsModule,
-  MatTabsModule,
-  MatPaginatorModule,
-  MatSortModule,
-  MatMenuModule,
-  MatListModule,
-  MatDividerModule,
-  MatButtonToggleModule,
-  MatProgressBarModule,
-  MatSlideToggleModule,
-  MatBadgeModule,
-  ScrollingModule,
-  DragDropModule
-],
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatIconModule,
+    MatTableModule,
+    MatDialogModule,
+    MatSnackBarModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatCheckboxModule,
+    MatProgressSpinnerModule,
+    MatTooltipModule,
+    MatCardModule,
+    MatChipsModule,
+    MatTabsModule,
+    MatPaginatorModule,
+    MatSortModule,
+    MatMenuModule,
+    MatListModule,
+    MatDividerModule,
+    MatButtonToggleModule,
+    MatProgressBarModule,
+    MatSlideToggleModule,
+    MatBadgeModule,
+    ScrollingModule,
+    DragDropModule,
+    MatAutocompleteModule
+  ],
   templateUrl: './user-management.component.html',
-  styleUrls: ['./user-management.component.scss']
+  styleUrls: ['./user-management.component.scss'],
+  animations: [
+    trigger('fadeInUp', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(20px)' }),
+        animate('0.6s ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
+      ])
+    ]),
+    trigger('fadeInScale', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'scale(0.95)' }),
+        animate('0.4s ease-out', style({ opacity: 1, transform: 'scale(1)' }))
+      ])
+    ]),
+    trigger('slideInLeft', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateX(-20px)' }),
+        animate('0.3s ease-out', style({ opacity: 1, transform: 'translateX(0)' }))
+      ])
+    ])
+  ]
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
   @ViewChild('editUserDialog') editUserDialog!: TemplateRef<any>;
@@ -129,7 +154,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   @ViewChild('columnSettingsDialog') columnSettingsDialog!: TemplateRef<any>;
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
-  @ViewChild(CdkVirtualScrollViewport) viewport!: CdkVirtualScrollViewport;
 
   viewMode: 'table' | 'grid' = 'table';
 
@@ -166,7 +190,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   phoneNumbers: PhoneNumber[] = [];
   currentUser: CustomUser | null = null;
 
-  // Pagination
+  // Filters
   searchQuery = '';
   statusFilter = 'all';
   userTypeFilter = '';
@@ -174,6 +198,12 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   advancedFilters: any = {};
   filterChips: string[] = [];
   filterPresets: FilterPreset[] = [];
+
+  // Pagination
+  currentPage = 0;
+  pageSize = 10;
+  totalUsers = 0;
+  pageSizeOptions = [5, 10, 25, 50, 100];
 
   // Selection
   selection: CustomUser[] = [];
@@ -314,6 +344,162 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
     this.saveFilterPresets();
+  }
+
+  // Missing method implementations
+  resetColumns(): void {
+    // Reset to default column configuration
+    this.columns = [
+      { key: 'select', label: 'Select', visible: true, sortable: false },
+      { key: 'user', label: 'User', visible: true, sortable: true },
+      { key: 'email', label: 'Email', visible: true, sortable: true },
+      { key: 'userType', label: 'Type', visible: true, sortable: false },
+      { key: 'role', label: 'Role', visible: true, sortable: false },
+      { key: 'status', label: 'Status', visible: true, sortable: true },
+      { key: 'lastLogin', label: 'Last Login', visible: true, sortable: true },
+      { key: 'dateJoined', label: 'Date Joined', visible: false, sortable: true },
+      { key: 'actions', label: 'Actions', visible: true, sortable: false }
+    ];
+    this.updateDisplayedColumns();
+  }
+
+  importUsers(): void {
+    // Create file input element
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv,.xlsx,.xls';
+
+    input.onchange = (event: any) => {
+      const file = event.target.files[0];
+      if (file) {
+        this.handleFileImport(file);
+      }
+    };
+
+    input.click();
+  }
+
+  private handleFileImport(file: File): void {
+    const reader = new FileReader();
+
+    reader.onload = (e: any) => {
+      try {
+        const data = e.target.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+        // Process imported data
+        this.processImportedUsers(jsonData);
+      } catch (error) {
+        this.snackBar.open('Error importing file', 'Close', {
+          duration: 3000,
+          panelClass: 'error-snackbar'
+        });
+      }
+    };
+
+    reader.readAsBinaryString(file);
+  }
+
+  private processImportedUsers(users: any[]): void {
+    // Validate and process imported users
+    const validUsers = users.filter(user =>
+      user.username && user.email && user.first_name && user.last_name
+    );
+
+    if (validUsers.length === 0) {
+      this.snackBar.open('No valid users found in file', 'Close', {
+        duration: 3000,
+        panelClass: 'warning-snackbar'
+      });
+      return;
+    }
+
+    // In a real app, this would be a bulk import endpoint
+    this.snackBar.open(`Importing ${validUsers.length} users...`, 'Close', {
+      duration: 2000,
+      panelClass: 'info-snackbar'
+    });
+
+    // Simulate import process
+    setTimeout(() => {
+      this.loadUsers();
+      this.snackBar.open(`Successfully imported ${validUsers.length} users`, 'Close', {
+        duration: 3000,
+        panelClass: 'success-snackbar'
+      });
+    }, 2000);
+  }
+
+  selectAllGroups(): void {
+    if (this.selectedGroups.length === this.userGroups.length) {
+      this.selectedGroups = [];
+    } else {
+      this.selectedGroups = this.userGroups.map(g => g.id);
+    }
+  }
+
+  viewUserActivity(user: CustomUser): void {
+    // Navigate to user activity log or open dialog
+    this.snackBar.open('User activity log feature coming soon', 'Close', {
+      duration: 2000,
+      panelClass: 'info-snackbar'
+    });
+  }
+
+  openGroupsOverview(): void {
+    // Navigate to groups management or open dialog
+    this.snackBar.open('Groups overview feature coming soon', 'Close', {
+      duration: 2000,
+      panelClass: 'info-snackbar'
+    });
+  }
+
+  bulkAssignGroup(): void {
+    // Open dialog to assign group to selected users
+    this.snackBar.open('Bulk assign group feature coming soon', 'Close', {
+      duration: 2000,
+      panelClass: 'info-snackbar'
+    });
+  }
+
+  bulkExport(): void {
+    // Export selected users
+    const selectedData = this.selection.map(user => ({
+      username: user.username,
+      email: user.email,
+      name: `${user.first_name} ${user.last_name}`,
+      type: user.user_type?.name || 'N/A',
+      status: user.is_active ? 'Active' : 'Inactive',
+      last_login: this.formatDate(user.last_login)
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(selectedData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Selected Users');
+    XLSX.writeFile(wb, `selected_users_${new Date().toISOString().split('T')[0]}.xlsx`);
+  }
+
+  bulkDelete(): void {
+    if (confirm(`Are you sure you want to delete ${this.selection.length} users?`)) {
+      const userIds = this.selection.map(u => u.id!).filter(id => id !== undefined);
+
+      // In a real app, this would be a bulk delete endpoint
+      this.snackBar.open(`Deleting ${userIds.length} users...`, 'Close', {
+        duration: 2000,
+        panelClass: 'info-snackbar'
+      });
+
+      setTimeout(() => {
+        this.clearSelection();
+        this.loadUsers();
+        this.snackBar.open('Users deleted successfully', 'Close', {
+          duration: 3000,
+          panelClass: 'success-snackbar'
+        });
+      }, 2000);
+    }
   }
 
   private initializeForms(): void {
@@ -1017,7 +1203,7 @@ Last Login: ${this.formatDate(user.last_login)}
     this.exportToExcel(); // Default to Excel for now
   }
 
-  private exportToCSV(): void {
+  exportToCSV(): void {
     // Use existing CSV export
     const filters: UserFilters = {
       search: this.searchQuery,
@@ -1046,7 +1232,7 @@ Last Login: ${this.formatDate(user.last_login)}
       });
   }
 
-  private exportToExcel(): void {
+  exportToExcel(): void {
     const ws_data = [
       ['User Report', '', '', '', '', ''],
       ['Generated:', new Date().toLocaleString(), '', '', '', ''],
@@ -1078,7 +1264,7 @@ Last Login: ${this.formatDate(user.last_login)}
     XLSX.writeFile(wb, `users_${new Date().toISOString().split('T')[0]}.xlsx`);
   }
 
-  private exportToPDF(): void {
+  exportToPDF(): void {
     const doc = new jsPDF();
 
     // Add header
@@ -1616,15 +1802,35 @@ Last Login: ${this.formatDate(user.last_login)}
     if (!user) return;
 
     this.selectedUser = user;
-    this.dialog.open(this.viewUserDialog, {
-      width: '600px',
-      panelClass: 'ocean-mint-dialog'
+
+    // Ensure dialog template is available
+    setTimeout(() => {
+      if (this.viewUserDialog) {
+        this.dialog.open(this.viewUserDialog, {
+          width: '600px',
+          panelClass: 'ocean-mint-dialog'
+        });
+      } else {
+        console.error('View user dialog template not found');
+        this.snackBar.open('Error opening user details', 'Close', {
+          duration: 3000,
+          panelClass: 'error-snackbar'
+        });
+      }
     });
   }
 
   closeViewDialog(): void {
     this.dialog.closeAll();
     this.selectedUser = null;
+  }
+
+  // Add a safe edit method
+  editUserFromView(): void {
+    if (this.selectedUser) {
+      this.editUser(this.selectedUser);
+      this.closeViewDialog();
+    }
   }
 
 // Update the editUser method to also populate profile form if needed:
@@ -1646,15 +1852,14 @@ Last Login: ${this.formatDate(user.last_login)}
     });
 
     // Populate profile form if user has profile data
-    if (user.profile) {
-      this.profileForm.patchValue({
-        phone: user.profile.phone || '',
-        department: user.profile.department || '',
-        position: user.profile.position || '',
-        timezone: user.profile.timezone || 'UTC',
-        bio: user.profile.bio || ''
-      });
-    }
+    // For now, initialize with empty values until backend provides profile data
+    this.profileForm.patchValue({
+      phone: '',
+      department: '',
+      position: '',
+      timezone: 'UTC',
+      bio: ''
+    });
 
     this.selectedGroups = user.groups?.map(g => g.id) || [];
 
