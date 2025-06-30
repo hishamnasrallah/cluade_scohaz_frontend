@@ -358,127 +358,146 @@
           <span class="tab-label">Basic Info</span>
         </ng-template>
 
-        <form [formGroup]="userForm" class="user-form">
-          <div class="form-row">
-            <mat-form-field appearance="outline" class="ocean-mint-field">
-              <mat-label>First Name</mat-label>
-              <input matInput formControlName="first_name">
-              <mat-icon matPrefix>person</mat-icon>
-              <mat-error *ngIf="userForm.get('first_name')?.hasError('required')">
-                First name is required
-              </mat-error>
-            </mat-form-field>
+<!--        <form [formGroup]="userForm" class="user-form">-->
+<!--          <div class="form-row">-->
+<!--            <mat-form-field appearance="outline" class="ocean-mint-field">-->
+<!--              <mat-label>First Name</mat-label>-->
+<!--              <input matInput formControlName="first_name">-->
+<!--              <mat-icon matPrefix>person</mat-icon>-->
+<!--              <mat-error *ngIf="userForm.get('first_name')?.hasError('required')">-->
+<!--                First name is required-->
+<!--              </mat-error>-->
+<!--            </mat-form-field>-->
 
-            <mat-form-field appearance="outline" class="ocean-mint-field">
-              <mat-label>Second Name</mat-label>
-              <input matInput formControlName="second_name">
-              <mat-icon matPrefix>person</mat-icon>
-            </mat-form-field>
-          </div>
+<!--            <mat-form-field appearance="outline" class="ocean-mint-field">-->
+<!--              <mat-label>Second Name</mat-label>-->
+<!--              <input matInput formControlName="second_name">-->
+<!--              <mat-icon matPrefix>person</mat-icon>-->
+<!--            </mat-form-field>-->
+<!--          </div>-->
 
-          <div class="form-row">
-            <mat-form-field appearance="outline" class="ocean-mint-field">
-              <mat-label>Third Name</mat-label>
-              <input matInput formControlName="third_name">
-              <mat-icon matPrefix>person</mat-icon>
-            </mat-form-field>
+<!--          <div class="form-row">-->
+<!--            <mat-form-field appearance="outline" class="ocean-mint-field">-->
+<!--              <mat-label>Third Name</mat-label>-->
+<!--              <input matInput formControlName="third_name">-->
+<!--              <mat-icon matPrefix>person</mat-icon>-->
+<!--            </mat-form-field>-->
 
-            <mat-form-field appearance="outline" class="ocean-mint-field">
-              <mat-label>Last Name</mat-label>
-              <input matInput formControlName="last_name">
-              <mat-icon matPrefix>person</mat-icon>
-              <mat-error *ngIf="userForm.get('last_name')?.hasError('required')">
-                Last name is required
-              </mat-error>
-            </mat-form-field>
-          </div>
+<!--            <mat-form-field appearance="outline" class="ocean-mint-field">-->
+<!--              <mat-label>Last Name</mat-label>-->
+<!--              <input matInput formControlName="last_name">-->
+<!--              <mat-icon matPrefix>person</mat-icon>-->
+<!--              <mat-error *ngIf="userForm.get('last_name')?.hasError('required')">-->
+<!--                Last name is required-->
+<!--              </mat-error>-->
+<!--            </mat-form-field>-->
+<!--          </div>-->
 
-          <div class="form-row">
-            <mat-form-field appearance="outline" class="ocean-mint-field">
-              <mat-label>Username</mat-label>
-              <input matInput formControlName="username" (blur)="checkUsernameAvailability()">
-              <mat-icon matPrefix>alternate_email</mat-icon>
-              <mat-error *ngIf="userForm.get('username')?.hasError('required')">
-                Username is required
-              </mat-error>
-              <mat-error *ngIf="userForm.get('username')?.hasError('pattern')">
-                Username can only contain letters, numbers, and underscores
-              </mat-error>
-              <mat-error *ngIf="userForm.get('username')?.hasError('notAvailable')">
-                Username is already taken
-              </mat-error>
-              <mat-hint *ngIf="checkingUsername">
-                <mat-spinner diameter="16" style="display: inline-block; margin-right: 4px;"></mat-spinner>
-                Checking availability...
-              </mat-hint>
-            </mat-form-field>
+<!--          <div class="form-row">-->
+<!--            <mat-form-field appearance="outline" class="ocean-mint-field">-->
+<!--              <mat-label>Username</mat-label>-->
+<!--              <input matInput formControlName="username" (blur)="checkUsernameAvailability()">-->
+<!--              <mat-icon matPrefix>alternate_email</mat-icon>-->
+<!--              <mat-error *ngIf="userForm.get('username')?.hasError('required')">-->
+<!--                Username is required-->
+<!--              </mat-error>-->
+<!--              <mat-error *ngIf="userForm.get('username')?.hasError('pattern')">-->
+<!--                Username can only contain letters, numbers, and underscores-->
+<!--              </mat-error>-->
+<!--              <mat-error *ngIf="userForm.get('username')?.hasError('notAvailable')">-->
+<!--                Username is already taken-->
+<!--              </mat-error>-->
+<!--              <mat-hint *ngIf="checkingUsername">-->
+<!--                <mat-spinner diameter="16" style="display: inline-block; margin-right: 4px;"></mat-spinner>-->
+<!--                Checking availability...-->
+<!--              </mat-hint>-->
+<!--            </mat-form-field>-->
 
-            <mat-form-field appearance="outline" class="ocean-mint-field">
-              <mat-label>Email</mat-label>
-              <input matInput type="email" formControlName="email">
-              <mat-icon matPrefix>email</mat-icon>
-              <mat-error *ngIf="userForm.get('email')?.hasError('required')">
-                Email is required
-              </mat-error>
-              <mat-error *ngIf="userForm.get('email')?.hasError('email')">
-                Please enter a valid email
-              </mat-error>
-            </mat-form-field>
-          </div>
+<!--            <mat-form-field appearance="outline" class="ocean-mint-field">-->
+<!--              <mat-label>Email</mat-label>-->
+<!--              <input matInput type="email" formControlName="email">-->
+<!--              <mat-icon matPrefix>email</mat-icon>-->
+<!--              <mat-error *ngIf="userForm.get('email')?.hasError('required')">-->
+<!--                Email is required-->
+<!--              </mat-error>-->
+<!--              <mat-error *ngIf="userForm.get('email')?.hasError('email')">-->
+<!--                Please enter a valid email-->
+<!--              </mat-error>-->
+<!--            </mat-form-field>-->
+<!--          </div>-->
 
-          <mat-form-field appearance="outline" class="ocean-mint-field">
-            <mat-label>User Type</mat-label>
-            <mat-select formControlName="user_type_id">
-              <mat-option [value]="null">No type assigned</mat-option>
-              <mat-option *ngFor="let type of userTypes" [value]="type.id">
-                {{ type.name }} ({{ type.code }})
-              </mat-option>
-            </mat-select>
-            <mat-icon matPrefix>category</mat-icon>
-          </mat-form-field>
+<!--          <mat-form-field appearance="outline" class="ocean-mint-field">-->
+<!--            <mat-label>User Type</mat-label>-->
+<!--            <mat-select formControlName="user_type_id">-->
+<!--              <mat-option [value]="null">No type assigned</mat-option>-->
+<!--              <mat-option *ngFor="let type of userTypes" [value]="type.id">-->
+<!--                {{ type.name }} ({{ type.code }})-->
+<!--              </mat-option>-->
+<!--            </mat-select>-->
+<!--            <mat-icon matPrefix>category</mat-icon>-->
+<!--          </mat-form-field>-->
 
-          <mat-form-field appearance="outline" class="ocean-mint-field" *ngIf="!editingUser?.id">
-            <mat-label>Password</mat-label>
-            <input matInput [type]="showPassword ? 'text' : 'password'" formControlName="password">
-            <mat-icon matPrefix>lock</mat-icon>
-            <button mat-icon-button matSuffix (click)="showPassword = !showPassword" type="button">
-              <mat-icon>{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
-            </button>
-            <mat-error *ngIf="userForm.get('password')?.hasError('required')">
-              Password is required
-            </mat-error>
-            <mat-error *ngIf="userForm.get('password')?.hasError('minlength')">
-              Password must be at least 8 characters
-            </mat-error>
-            <mat-error *ngIf="userForm.get('password')?.hasError('pattern')">
-              Password must contain uppercase, lowercase, number and special character
-            </mat-error>
-            <mat-hint>Min 8 chars with upper, lower, number & special char</mat-hint>
-          </mat-form-field>
-
-          <div class="checkbox-section">
-            <mat-checkbox formControlName="is_active" class="styled-checkbox">
-              <span class="checkbox-label">Active User</span>
-              <span class="checkbox-description">User can log in and access the system</span>
-            </mat-checkbox>
-            <mat-checkbox formControlName="activated_account" class="styled-checkbox">
-              <span class="checkbox-label">Account Verified</span>
-              <span class="checkbox-description">User has verified their email/phone</span>
-            </mat-checkbox>
-            <mat-checkbox formControlName="is_staff" class="styled-checkbox">
-              <span class="checkbox-label">Staff Status</span>
-              <span class="checkbox-description">User can access the admin interface</span>
-            </mat-checkbox>
-            <mat-checkbox formControlName="is_developer" class="styled-checkbox">
-              <span class="checkbox-label">Developer Status</span>
-              <span class="checkbox-description">User has developer privileges</span>
-            </mat-checkbox>
-            <mat-checkbox formControlName="is_superuser" class="styled-checkbox">
-              <span class="checkbox-label">Superuser Status</span>
-              <span class="checkbox-description">User has all permissions without explicitly assigning them</span>
-            </mat-checkbox>
-          </div>
-        </form>
+<!--          <mat-form-field appearance="outline" class="ocean-mint-field" *ngIf="!editingUser?.id">-->
+<!--            <mat-label>Password</mat-label>-->
+<!--            <input matInput [type]="showPassword ? 'text' : 'password'" formControlName="password" (input)="checkPasswordStrength()">-->
+<!--            <mat-icon matPrefix>lock</mat-icon>-->
+<!--            <button mat-icon-button matSuffix (click)="showPassword = !showPassword" type="button">-->
+<!--              <mat-icon>{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>-->
+<!--            </button>-->
+<!--            <mat-error *ngIf="userForm.get('password')?.hasError('required')">-->
+<!--              Password is required-->
+<!--            </mat-error>-->
+<!--            <mat-error *ngIf="userForm.get('password')?.hasError('minlength')">-->
+<!--              Password must be at least 8 characters-->
+<!--            </mat-error>-->
+<!--            <mat-error *ngIf="userForm.get('password')?.hasError('pattern')">-->
+<!--              Password must contain uppercase, lowercase, number and special character-->
+<!--            </mat-error>-->
+<!--            <mat-hint>Min 8 chars with upper, lower, number & special char</mat-hint>-->
+<!--          </mat-form-field>-->
+<!--          &lt;!&ndash; Password Strength Indicator &ndash;&gt;-->
+<!--          <div class="password-strength" *ngIf="!editingUser?.id && userForm.get('password')?.value">-->
+<!--            <div class="strength-label">Password Strength:</div>-->
+<!--            <div class="strength-bar">-->
+<!--              <div class="strength-progress"-->
+<!--                   [style.width.%]="passwordStrength.score * 25"-->
+<!--                   [class.weak]="passwordStrength.score <= 1"-->
+<!--                   [class.fair]="passwordStrength.score === 2"-->
+<!--                   [class.good]="passwordStrength.score === 3"-->
+<!--                   [class.strong]="passwordStrength.score === 4">-->
+<!--              </div>-->
+<!--            </div>-->
+<!--            <div class="strength-text"-->
+<!--                 [class.weak]="passwordStrength.score <= 1"-->
+<!--                 [class.fair]="passwordStrength.score === 2"-->
+<!--                 [class.good]="passwordStrength.score === 3"-->
+<!--                 [class.strong]="passwordStrength.score === 4">-->
+<!--              {{ passwordStrength.text }}-->
+<!--            </div>-->
+<!--          </div>-->
+<!--          <div class="checkbox-section">-->
+<!--            <mat-checkbox formControlName="is_active" class="styled-checkbox">-->
+<!--              <span class="checkbox-label">Active User</span>-->
+<!--              <span class="checkbox-description">User can log in and access the system</span>-->
+<!--            </mat-checkbox>-->
+<!--            <mat-checkbox formControlName="activated_account" class="styled-checkbox">-->
+<!--              <span class="checkbox-label">Account Verified</span>-->
+<!--              <span class="checkbox-description">User has verified their email/phone</span>-->
+<!--            </mat-checkbox>-->
+<!--            <mat-checkbox formControlName="is_staff" class="styled-checkbox">-->
+<!--              <span class="checkbox-label">Staff Status</span>-->
+<!--              <span class="checkbox-description">User can access the admin interface</span>-->
+<!--            </mat-checkbox>-->
+<!--            <mat-checkbox formControlName="is_developer" class="styled-checkbox">-->
+<!--              <span class="checkbox-label">Developer Status</span>-->
+<!--              <span class="checkbox-description">User has developer privileges</span>-->
+<!--            </mat-checkbox>-->
+<!--            <mat-checkbox formControlName="is_superuser" class="styled-checkbox">-->
+<!--              <span class="checkbox-label">Superuser Status</span>-->
+<!--              <span class="checkbox-description">User has all permissions without explicitly assigning them</span>-->
+<!--            </mat-checkbox>-->
+<!--          </div>-->
+<!--        </form>-->
       </mat-tab>
 
       <!-- Groups & Permissions Tab -->
