@@ -1,0 +1,260 @@
+<!-- src/app/reports/components/report-preview/report-preview.component.html -->
+
+<div class="report-preview">
+  <!-- Configuration Summary -->
+  <mat-card class="summary-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>summarize</mat-icon>
+        Report Configuration Summary
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <mat-icon>storage</mat-icon>
+          <div class="summary-details">
+            <span class="summary-value">{{ configSummary.dataSources }}</span>
+            <span class="summary-label">Data Sources</span>
+          </div>
+        </div>
+
+        <div class="summary-item">
+          <mat-icon>view_column</mat-icon>
+          <div class="summary-details">
+            <span class="summary-value">{{ configSummary.visibleFields }}/{{ configSummary.fields }}</span>
+            <span class="summary-label">Visible Fields</span>
+          </div>
+        </div>
+
+        <div class="summary-item">
+          <mat-icon>functions</mat-icon>
+          <div class="summary-details">
+            <span class="summary-value">{{ configSummary.aggregatedFields }}</span>
+            <span class="summary-label">Aggregations</span>
+          </div>
+        </div>
+
+        <div class="summary-item">
+          <mat-icon>filter_list</mat-icon>
+          <div class="summary-details">
+            <span class="summary-value">{{ configSummary.activeFilters }}/{{ configSummary.filters }}</span>
+            <span class="summary-label">Active Filters</span>
+          </div>
+        </div>
+
+        <div class="summary-item">
+          <mat-icon>tune</mat-icon>
+          <div class="summary-details">
+            <span class="summary-value">{{ configSummary.parameters }}</span>
+            <span class="summary-label">Parameters</span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Configuration Details -->
+  <mat-accordion class="config-accordion">
+    <!-- Data Sources -->
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <mat-icon>storage</mat-icon>
+          Data Sources ({{ dataSources.length }})
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+
+      <div class="config-list">
+        <div *ngFor="let ds of dataSources" class="config-item">
+          <mat-icon [class.primary-icon]="ds.is_primary">
+            {{ ds.is_primary ? 'star' : 'table_chart' }}
+          </mat-icon>
+          <div class="item-details">
+            <span class="item-name">{{ ds.alias }}</span>
+            <span class="item-meta">{{ ds.content_type?.display_name || ds.model_name }}</span>
+          </div>
+          <mat-chip *ngIf="ds.is_primary" class="primary-chip">Primary</mat-chip>
+        </div>
+      </div>
+    </mat-expansion-panel>
+
+    <!-- Fields -->
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <mat-icon>view_column</mat-icon>
+          Fields ({{ fields.length }})
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+
+      <div class="config-list">
+        <div *ngFor="let field of fields" class="config-item" [class.hidden-field]="!field.is_visible">
+          <mat-icon>{{ field.is_visible ? 'visibility' : 'visibility_off' }}</mat-icon>
+          <div class="item-details">
+            <span class="item-name">{{ field.display_name }}</span>
+            <span class="item-meta">{{ getDataSourceName(field.data_source) }}.{{ field.field_path }}</span>
+          </div>
+          <div class="field-badges">
+            <mat-chip *ngIf="field.aggregation" class="aggregation-chip">
+              {{ field.aggregation }}
+            </mat-chip>
+            <mat-chip *ngIf="field.formatting?.type" class="format-chip">
+              {{ field.formatting.type }}
+            </mat-chip>
+          </div>
+        </div>
+      </div>
+    </mat-expansion-panel>
+
+    <!-- Filters -->
+    <mat-expansion-panel *ngIf="filters.length > 0">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <mat-icon>filter_list</mat-icon>
+          Filters ({{ filters.length }})
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+
+      <div class="config-list">
+        <div *ngFor="let filter of filters" class="config-item" [class.inactive-filter]="!filter.is_active">
+          <mat-icon>{{ filter.is_active ? 'check_circle' : 'cancel' }}</mat-icon>
+          <div class="item-details">
+            <span class="item-name">{{ filter.field_path }}</span>
+            <span class="item-meta">
+              {{ getOperatorLabel(filter.operator) }}
+              <strong>{{ filter.value_type === 'parameter' ? '{{' + filter.value + '}}' : filter.value }}</strong>
+            </span>
+          </div>
+          <div class="filter-badges">
+            <mat-chip *ngIf="filter.is_required" class="required-chip">Required</mat-chip>
+            <mat-chip class="logic-chip">{{ filter.logic_group }}</mat-chip>
+          </div>
+        </div>
+      </div>
+    </mat-expansion-panel>
+
+    <!-- Parameters -->
+    <mat-expansion-panel *ngIf="parameters.length > 0">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <mat-icon>tune</mat-icon>
+          Parameters ({{ parameters.length }})
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+
+      <div class="config-list">
+        <div *ngFor="let param of parameters" class="config-item">
+          <mat-icon>{{ param.is_required ? 'error_outline' : 'info_outline' }}</mat-icon>
+          <div class="item-details">
+            <span class="item-name">{{ param.display_name }}</span>
+            <span class="item-meta">
+              {{ param.name }} - {{ getParameterType(param.parameter_type) }}
+              <span *ngIf="param.default_value">(Default: {{ param.default_value }})</span>
+            </span>
+          </div>
+          <mat-chip *ngIf="param.is_required" class="required-chip">Required</mat-chip>
+        </div>
+      </div>
+    </mat-expansion-panel>
+  </mat-accordion>
+
+  <!-- Preview Section -->
+  <mat-card class="preview-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>preview</mat-icon>
+        Data Preview
+      </mat-card-title>
+      <div class="preview-actions">
+        <button mat-raised-button
+                color="primary"
+                (click)="runPreview()"
+                [disabled]="isLoading || !report?.id">
+          <mat-icon>play_arrow</mat-icon>
+          Run Preview
+        </button>
+      </div>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Loading State -->
+      <div class="loading-state" *ngIf="isLoading">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Generating preview...</p>
+      </div>
+
+      <!-- Error State -->
+      <div class="error-state" *ngIf="error && !isLoading">
+        <mat-icon>error_outline</mat-icon>
+        <h3>Preview Error</h3>
+        <p>{{ error }}</p>
+        <button mat-button (click)="runPreview()">
+          <mat-icon>refresh</mat-icon>
+          Try Again
+        </button>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="!previewData && !isLoading && !error">
+        <mat-icon>assessment</mat-icon>
+        <h3>No Preview Yet</h3>
+        <p>Click "Run Preview" to generate a sample of your report data</p>
+      </div>
+
+      <!-- Results -->
+      <div class="preview-results" *ngIf="previewData && !isLoading">
+        <div class="results-header">
+          <div class="results-info">
+            <mat-icon>table_rows</mat-icon>
+            <span>Showing {{ previewData.data.length }} rows (limited to 10 for preview)</span>
+          </div>
+          <div class="export-actions" *ngIf="previewData.data.length > 0">
+            <button mat-button (click)="exportPreview('csv')">
+              <mat-icon>download</mat-icon>
+              Export CSV
+            </button>
+            <button mat-button (click)="exportPreview('excel')">
+              <mat-icon>download</mat-icon>
+              Export Excel
+            </button>
+          </div>
+        </div>
+
+        <div class="table-container" *ngIf="previewData.data.length > 0">
+          <table mat-table [dataSource]="previewData.data" class="preview-table">
+            <ng-container *ngFor="let column of previewData.columns" [matColumnDef]="column.name">
+              <th mat-header-cell *matHeaderCellDef>{{ column.display_name }}</th>
+              <td mat-cell *matCellDef="let row">
+                {{ formatValue(row[column.name], column.formatting) }}
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="previewData.columns.map(c => c.name)"></tr>
+            <tr mat-row *matRowDef="let row; columns: previewData.columns.map(c => c.name);"></tr>
+          </table>
+        </div>
+
+        <!-- Execution Info -->
+        <div class="execution-info" *ngIf="previewData">
+          <mat-divider></mat-divider>
+          <div class="info-items">
+            <div class="info-item">
+              <mat-icon>schedule</mat-icon>
+              <span>Execution Time: {{ previewData.execution_time?.toFixed(2) || 0 }}s</span>
+            </div>
+            <div class="info-item">
+              <mat-icon>storage</mat-icon>
+              <span>Total Rows: {{ previewData.row_count }}</span>
+            </div>
+            <div class="info-item" *ngIf="previewData.parameters_used">
+              <mat-icon>tune</mat-icon>
+              <span>Parameters Applied</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

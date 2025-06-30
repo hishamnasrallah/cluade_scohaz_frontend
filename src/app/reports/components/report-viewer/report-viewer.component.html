@@ -1,0 +1,247 @@
+<!-- src/app/reports/components/report-viewer/report-viewer.component.html -->
+
+<div class="report-viewer-container">
+  <!-- Header -->
+  <div class="viewer-header">
+    <div class="header-content">
+      <div class="header-left">
+        <button mat-icon-button (click)="router.navigate(['/reports'])" class="back-btn">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div class="header-info">
+          <div class="report-title">
+            <h1>{{ report?.name || 'Loading...' }}</h1>
+            <div class="report-badges">
+              <mat-chip class="type-chip type-{{ report?.report_type }}">
+                {{ report?.report_type }}
+              </mat-chip>
+              <mat-chip *ngIf="report?.category" class="category-chip">
+                {{ report.category }}
+              </mat-chip>
+              <mat-chip class="visibility-chip" [class.public]="isPublic">
+                <mat-icon>{{ isPublic ? 'public' : 'lock' }}</mat-icon>
+                {{ isPublic ? 'Public' : 'Private' }}
+              </mat-chip>
+            </div>
+          </div>
+          <p class="report-description">{{ report?.description || '' }}</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button mat-icon-button
+                (click)="executeReport()"
+                [disabled]="isExecuting"
+                matTooltip="Refresh Data">
+          <mat-icon [class.spinning]="isExecuting">refresh</mat-icon>
+        </button>
+
+        <button mat-icon-button [matMenuTriggerFor]="exportMenu" matTooltip="Export">
+          <mat-icon>download</mat-icon>
+        </button>
+        <mat-menu #exportMenu="matMenu">
+          <button mat-menu-item (click)="exportReport('csv')">
+            <mat-icon>table_chart</mat-icon>
+            <span>Export as CSV</span>
+          </button>
+          <button mat-menu-item (click)="exportReport('excel')">
+            <mat-icon>grid_on</mat-icon>
+            <span>Export as Excel</span>
+          </button>
+          <button mat-menu-item (click)="exportReport('pdf')">
+            <mat-icon>picture_as_pdf</mat-icon>
+            <span>Export as PDF</span>
+          </button>
+        </mat-menu>
+
+        <button mat-icon-button [matMenuTriggerFor]="shareMenu" matTooltip="Share">
+          <mat-icon>share</mat-icon>
+        </button>
+        <mat-menu #shareMenu="matMenu">
+          <div class="share-menu-content">
+            <mat-slide-toggle [(ngModel)]="isPublic" (change)="togglePublicAccess()">
+              Make Public
+            </mat-slide-toggle>
+            <mat-divider></mat-divider>
+            <div class="share-link" *ngIf="isPublic">
+              <mat-form-field appearance="outline">
+                <mat-label>Share Link</mat-label>
+                <input matInput [value]="shareUrl" readonly>
+                <button mat-icon-button matSuffix (click)="copyShareLink()">
+                  <mat-icon>content_copy</mat-icon>
+                </button>
+              </mat-form-field>
+            </div>
+          </div>
+        </mat-menu>
+
+        <button mat-icon-button [matMenuTriggerFor]="moreMenu" matTooltip="More Options">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #moreMenu="matMenu">
+          <button mat-menu-item (click)="editReport()">
+            <mat-icon>edit</mat-icon>
+            <span>Edit Report</span>
+          </button>
+          <button mat-menu-item (click)="duplicateReport()">
+            <mat-icon>content_copy</mat-icon>
+            <span>Duplicate</span>
+          </button>
+          <button mat-menu-item (click)="scheduleReport()">
+            <mat-icon>schedule</mat-icon>
+            <span>Schedule</span>
+          </button>
+        </mat-menu>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <mat-spinner diameter="48"></mat-spinner>
+    <p>Loading report...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="error && !isLoading">
+    <mat-icon>error_outline</mat-icon>
+    <h2>Error Loading Report</h2>
+    <p>{{ error }}</p>
+    <button mat-raised-button color="primary" (click)="loadReport(report?.id || 0)">
+      <mat-icon>refresh</mat-icon>
+      Try Again
+    </button>
+  </div>
+
+  <!-- Main Content -->
+  <div class="viewer-content" *ngIf="!isLoading && !error">
+    <!-- View Mode Toggle -->
+    <div class="view-controls">
+      <div class="execution-info" *ngIf="executionResult">
+        <mat-icon>schedule</mat-icon>
+        <span>Last updated: {{ formatDate(executionResult.parameters_used?.executed_at) }}</span>
+        <span class="separator">•</span>
+        <span>{{ executionResult.row_count }} rows</span>
+        <span class="separator">•</span>
+        <span>{{ executionResult.execution_time?.toFixed(2) || 0 }}s</span>
+      </div>
+
+      <div class="view-toggle">
+        <button mat-stroked-button
+                (click)="toggleViewMode()"
+                [disabled]="!executionResult || executionResult.data.length === 0">
+          <mat-icon>{{ viewMode === 'table' ? 'show_chart' : 'table_chart' }}</mat-icon>
+          {{ viewMode === 'table' ? 'Chart View' : 'Table View' }}
+        </button>
+
+        <button mat-icon-button
+                *ngIf="viewMode === 'chart'"
+                [matMenuTriggerFor]="chartMenu"
+                matTooltip="Chart Type">
+          <mat-icon>{{ chartType === 'bar' ? 'bar_chart' :
+            chartType === 'line' ? 'show_chart' :
+              chartType === 'pie' ? 'pie_chart' : 'donut_large' }}</mat-icon>
+        </button>
+        <mat-menu #chartMenu="matMenu">
+          <button mat-menu-item (click)="changeChartType('bar')">
+            <mat-icon>bar_chart</mat-icon>
+            <span>Bar Chart</span>
+          </button>
+          <button mat-menu-item (click)="changeChartType('line')">
+            <mat-icon>show_chart</mat-icon>
+            <span>Line Chart</span>
+          </button>
+          <button mat-menu-item (click)="changeChartType('pie')">
+            <mat-icon>pie_chart</mat-icon>
+            <span>Pie Chart</span>
+          </button>
+          <button mat-menu-item (click)="changeChartType('doughnut')">
+            <mat-icon>donut_large</mat-icon>
+            <span>Doughnut Chart</span>
+          </button>
+        </mat-menu>
+      </div>
+    </div>
+
+    <!-- Executing State -->
+    <div class="executing-overlay" *ngIf="isExecuting">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Executing report...</p>
+    </div>
+
+    <!-- No Data State -->
+    <div class="no-data-state" *ngIf="!isExecuting && !executionResult?.data?.length">
+      <mat-icon>assessment</mat-icon>
+      <h3>No Data Available</h3>
+      <p>{{ report?.parameters?.length ? 'Configure parameters and run the report' : 'Click refresh to load data' }}</p>
+      <button mat-raised-button color="primary" (click)="executeReport()">
+        <mat-icon>play_arrow</mat-icon>
+        Run Report
+      </button>
+    </div>
+
+    <!-- Table View -->
+    <mat-card class="results-card" *ngIf="viewMode === 'table' && executionResult?.data?.length && !isExecuting">
+      <div class="table-container">
+        <table mat-table
+               [dataSource]="executionResult.data"
+               matSort
+               class="results-table">
+
+          <ng-container *ngFor="let column of executionResult.columns" [matColumnDef]="column.name">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              {{ column.display_name }}
+            </th>
+            <td mat-cell *matCellDef="let row">
+              {{ formatValue(row[column.name], column.formatting) }}
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="executionResult.columns.map(c => c.name); sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: executionResult.columns.map(c => c.name);"></tr>
+        </table>
+      </div>
+
+      <mat-paginator [pageSizeOptions]="[10, 25, 50, 100]"
+                     showFirstLastButtons
+                     [length]="executionResult.row_count">
+      </mat-paginator>
+    </mat-card>
+
+    <!-- Chart View -->
+    <mat-card class="chart-card" *ngIf="viewMode === 'chart' && executionResult?.data?.length && !isExecuting">
+      <div class="chart-container">
+        <canvas #chartCanvas></canvas>
+      </div>
+    </mat-card>
+
+    <!-- Execution History -->
+    <mat-card class="history-card" *ngIf="executions.length > 0">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>history</mat-icon>
+          Execution History
+        </mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="execution-list">
+          <div *ngFor="let execution of executions.slice(0, 5)" class="execution-item">
+            <div class="execution-status" [class]="execution.status">
+              <mat-icon>{{ execution.status === 'success' ? 'check_circle' :
+                execution.status === 'error' ? 'error' : 'schedule' }}</mat-icon>
+            </div>
+            <div class="execution-details">
+              <span class="execution-date">{{ formatDate(execution.executed_at) }}</span>
+              <span class="execution-info">
+                By {{ execution.executed_by }} •
+                {{ execution.row_count || 0 }} rows •
+                {{ execution.execution_time?.toFixed(2) || 0 }}s
+              </span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

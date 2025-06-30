@@ -1,0 +1,350 @@
+<!-- src/app/reports/components/report-execution/report-execution.component.html -->
+
+<div class="report-execution-container">
+  <!-- Header -->
+  <div class="execution-header">
+    <div class="header-content">
+      <button mat-icon-button (click)="router.navigate(['/reports'])" class="back-btn">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="header-text">
+        <h1>Execute Report</h1>
+        <p>{{ report?.name || 'Loading...' }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <mat-spinner diameter="48"></mat-spinner>
+    <p>Loading report configuration...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="error && !isLoading">
+    <mat-icon>error_outline</mat-icon>
+    <h2>Error Loading Report</h2>
+    <p>{{ error }}</p>
+    <button mat-raised-button color="primary" (click)="loadReport(report?.id || 0)">
+      <mat-icon>refresh</mat-icon>
+      Try Again
+    </button>
+  </div>
+
+  <!-- Execution Stepper -->
+  <mat-card class="execution-card" *ngIf="!isLoading && !error && report">
+    <mat-stepper #stepper linear="false">
+
+      <!-- Step 1: Parameters -->
+      <mat-step [stepControl]="parametersForm" *ngIf="report.parameters && report.parameters.length > 0">
+        <ng-template matStepLabel>
+          <div class="step-label">
+            <mat-icon>tune</mat-icon>
+            <span>Parameters</span>
+          </div>
+        </ng-template>
+
+        <div class="step-content">
+          <h2 class="step-title">Configure Parameters</h2>
+          <p class="step-description">Set the values for report parameters</p>
+
+          <form [formGroup]="parametersForm" class="parameters-form">
+            <div *ngFor="let param of report.parameters" class="parameter-field">
+
+              <!-- Text Parameter -->
+              <mat-form-field appearance="outline" *ngIf="param.parameter_type === 'text'">
+                <mat-label>{{ param.display_name }}</mat-label>
+                <input matInput
+                       [formControlName]="param.name"
+                       [placeholder]="param.placeholder || ''"
+                       [required]="param.is_required">
+                <mat-icon matPrefix *ngIf="param.is_required" color="warn">error_outline</mat-icon>
+                <mat-hint>{{ param.help_text }}</mat-hint>
+                <mat-error>{{ getParameterError(param) }}</mat-error>
+              </mat-form-field>
+
+              <!-- Number Parameter -->
+              <mat-form-field appearance="outline" *ngIf="param.parameter_type === 'number'">
+                <mat-label>{{ param.display_name }}</mat-label>
+                <input matInput
+                       type="number"
+                       [formControlName]="param.name"
+                       [placeholder]="param.placeholder || ''"
+                       [required]="param.is_required">
+                <mat-icon matPrefix *ngIf="param.is_required" color="warn">error_outline</mat-icon>
+                <mat-hint>{{ param.help_text }}</mat-hint>
+                <mat-error>{{ getParameterError(param) }}</mat-error>
+              </mat-form-field>
+
+              <!-- Date Parameter -->
+              <mat-form-field appearance="outline" *ngIf="param.parameter_type === 'date'">
+                <mat-label>{{ param.display_name }}</mat-label>
+                <input matInput
+                       [matDatepicker]="datePicker"
+                       [formControlName]="param.name"
+                       [required]="param.is_required">
+                <mat-datepicker-toggle matIconSuffix [for]="datePicker"></mat-datepicker-toggle>
+                <mat-datepicker #datePicker></mat-datepicker>
+                <mat-icon matPrefix *ngIf="param.is_required" color="warn">error_outline</mat-icon>
+                <mat-hint>{{ param.help_text }}</mat-hint>
+                <mat-error>{{ getParameterError(param) }}</mat-error>
+              </mat-form-field>
+
+              <!-- Date Range Parameter -->
+              <div class="date-range-field" *ngIf="param.parameter_type === 'date_range'">
+                <h4>{{ param.display_name }}
+                  <mat-icon *ngIf="param.is_required" color="warn">error_outline</mat-icon>
+                </h4>
+                <div class="date-range-inputs">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Start Date</mat-label>
+                    <input matInput
+                           [matDatepicker]="startPicker"
+                           [value]="getDateRangeDefaults(param).start"
+                           (dateChange)="getParameterControl(param.name)?.patchValue({start: $event.value})">
+                    <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #startPicker></mat-datepicker>
+                  </mat-form-field>
+                  <span class="range-separator">to</span>
+                  <mat-form-field appearance="outline">
+                    <mat-label>End Date</mat-label>
+                    <input matInput
+                           [matDatepicker]="endPicker"
+                           [value]="getDateRangeDefaults(param).end"
+                           (dateChange)="getParameterControl(param.name)?.patchValue({end: $event.value})">
+                    <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #endPicker></mat-datepicker>
+                  </mat-form-field>
+                </div>
+                <mat-hint>{{ param.help_text }}</mat-hint>
+              </div>
+
+              <!-- Select Parameter -->
+              <mat-form-field appearance="outline" *ngIf="param.parameter_type === 'select'">
+                <mat-label>{{ param.display_name }}</mat-label>
+                <mat-select [formControlName]="param.name"
+                            [required]="param.is_required">
+                  <mat-option *ngFor="let choice of param.choices_static" [value]="choice.value">
+                    {{ choice.label }}
+                  </mat-option>
+                </mat-select>
+                <mat-icon matPrefix *ngIf="param.is_required" color="warn">error_outline</mat-icon>
+                <mat-hint>{{ param.help_text }}</mat-hint>
+                <mat-error>{{ getParameterError(param) }}</mat-error>
+              </mat-form-field>
+
+              <!-- Multi-Select Parameter -->
+              <mat-form-field appearance="outline" *ngIf="param.parameter_type === 'multiselect'">
+                <mat-label>{{ param.display_name }}</mat-label>
+                <mat-select [formControlName]="param.name"
+                            [required]="param.is_required"
+                            multiple>
+                  <mat-option *ngFor="let choice of param.choices_static" [value]="choice.value">
+                    {{ choice.label }}
+                  </mat-option>
+                </mat-select>
+                <mat-icon matPrefix *ngIf="param.is_required" color="warn">error_outline</mat-icon>
+                <mat-hint>{{ param.help_text }}</mat-hint>
+                <mat-error>{{ getParameterError(param) }}</mat-error>
+              </mat-form-field>
+
+              <!-- Boolean Parameter -->
+              <div class="boolean-field" *ngIf="param.parameter_type === 'boolean'">
+                <mat-slide-toggle [formControlName]="param.name" color="primary">
+                  {{ param.display_name }}
+                  <mat-icon *ngIf="param.is_required" color="warn">error_outline</mat-icon>
+                </mat-slide-toggle>
+                <mat-hint>{{ param.help_text }}</mat-hint>
+              </div>
+            </div>
+          </form>
+
+          <div class="step-actions">
+            <button mat-raised-button
+                    color="primary"
+                    matStepperNext
+                    [disabled]="parametersForm.invalid">
+              Next
+              <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </div>
+        </div>
+      </mat-step>
+
+      <!-- Step 2: Execution Options -->
+      <mat-step [stepControl]="optionsForm">
+        <ng-template matStepLabel>
+          <div class="step-label">
+            <mat-icon>settings</mat-icon>
+            <span>Options</span>
+          </div>
+        </ng-template>
+
+        <div class="step-content">
+          <h2 class="step-title">Execution Options</h2>
+          <p class="step-description">Configure how the report should be executed</p>
+
+          <form [formGroup]="optionsForm" class="options-form">
+            <mat-form-field appearance="outline">
+              <mat-label>Row Limit</mat-label>
+              <input matInput
+                     type="number"
+                     formControlName="limit"
+                     placeholder="Maximum rows to return">
+              <mat-icon matPrefix>table_rows</mat-icon>
+              <mat-hint>Maximum number of rows to return (1-10000)</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Export Format</mat-label>
+              <mat-select formControlName="export_format" (selectionChange)="onFormatChange()">
+                <mat-option value="json">
+                  <mat-icon>code</mat-icon>
+                  JSON (View in Browser)
+                </mat-option>
+                <mat-option value="csv">
+                  <mat-icon>table_chart</mat-icon>
+                  CSV
+                </mat-option>
+                <mat-option value="excel">
+                  <mat-icon>grid_on</mat-icon>
+                  Excel
+                </mat-option>
+                <mat-option value="pdf">
+                  <mat-icon>picture_as_pdf</mat-icon>
+                  PDF
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-slide-toggle formControlName="save_result"
+                              (change)="onSaveToggle()"
+                              color="primary">
+              <mat-icon>save</mat-icon>
+              Save Results
+            </mat-slide-toggle>
+
+            <mat-form-field appearance="outline" *ngIf="optionsForm.get('save_result')?.value">
+              <mat-label>Result Name</mat-label>
+              <input matInput
+                     formControlName="result_name"
+                     placeholder="Name for saved results">
+              <mat-icon matPrefix>label</mat-icon>
+            </mat-form-field>
+          </form>
+
+          <div class="step-actions">
+            <button mat-button matStepperPrevious *ngIf="report.parameters && report.parameters.length > 0">
+              <mat-icon>arrow_back</mat-icon>
+              Previous
+            </button>
+            <button mat-raised-button
+                    color="primary"
+                    (click)="executeReport()"
+                    [disabled]="isExecuting || optionsForm.invalid">
+              <mat-icon>{{ isExecuting ? 'hourglass_empty' : 'play_arrow' }}</mat-icon>
+              {{ isExecuting ? 'Executing...' : 'Execute Report' }}
+            </button>
+          </div>
+        </div>
+      </mat-step>
+
+      <!-- Step 3: Results -->
+      <mat-step>
+        <ng-template matStepLabel>
+          <div class="step-label">
+            <mat-icon>assessment</mat-icon>
+            <span>Results</span>
+          </div>
+        </ng-template>
+
+        <div class="step-content results-content">
+          <!-- Executing State -->
+          <div class="executing-state" *ngIf="isExecuting">
+            <mat-spinner diameter="48"></mat-spinner>
+            <h3>Executing Report</h3>
+            <p>Please wait while we process your request...</p>
+          </div>
+
+          <!-- Results -->
+          <div class="execution-results" *ngIf="executionResult && !isExecuting">
+            <div class="results-header">
+              <h2>Execution Complete</h2>
+              <div class="execution-stats">
+                <div class="stat-item">
+                  <mat-icon>table_rows</mat-icon>
+                  <span>{{ executionResult.row_count }} rows</span>
+                </div>
+                <div class="stat-item">
+                  <mat-icon>schedule</mat-icon>
+                  <span>{{ executionResult.execution_time?.toFixed(2) || 0 }}s</span>
+                </div>
+                <div class="stat-item" *ngIf="executionResult.execution_id">
+                  <mat-icon>fingerprint</mat-icon>
+                  <span>ID: {{ executionResult.execution_id }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Data Preview (JSON format only) -->
+            <mat-card class="data-preview" *ngIf="selectedFormat === 'json' && executionResult.data.length > 0">
+              <mat-card-header>
+                <mat-card-title>
+                  <mat-icon>preview</mat-icon>
+                  Data Preview
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="table-container">
+                  <table mat-table [dataSource]="executionResult.data.slice(0, 10)" class="preview-table">
+                    <ng-container *ngFor="let column of executionResult.columns" [matColumnDef]="column.name">
+                      <th mat-header-cell *matHeaderCellDef>{{ column.display_name }}</th>
+                      <td mat-cell *matCellDef="let row">
+                        {{ formatValue(row[column.name], column.formatting) }}
+                      </td>
+                    </ng-container>
+
+                    <tr mat-header-row *matHeaderRowDef="executionResult.columns.map(c => c.name)"></tr>
+                    <tr mat-row *matRowDef="let row; columns: executionResult.columns.map(c => c.name);"></tr>
+                  </table>
+                </div>
+                <p class="preview-note" *ngIf="executionResult.data.length > 10">
+                  Showing first 10 rows of {{ executionResult.data.length }}
+                </p>
+              </mat-card-content>
+            </mat-card>
+
+            <!-- Export Actions -->
+            <div class="export-actions">
+              <button mat-raised-button (click)="exportResults('csv')">
+                <mat-icon>table_chart</mat-icon>
+                Export as CSV
+              </button>
+              <button mat-raised-button (click)="exportResults('excel')">
+                <mat-icon>grid_on</mat-icon>
+                Export as Excel
+              </button>
+              <button mat-raised-button (click)="exportResults('pdf')">
+                <mat-icon>picture_as_pdf</mat-icon>
+                Export as PDF
+              </button>
+            </div>
+
+            <!-- Action Buttons -->
+            <mat-divider></mat-divider>
+            <div class="result-actions">
+              <button mat-button (click)="runAgain()">
+                <mat-icon>replay</mat-icon>
+                Run Again
+              </button>
+              <button mat-raised-button color="primary" (click)="viewInReportViewer()">
+                <mat-icon>visibility</mat-icon>
+                View in Report Viewer
+              </button>
+            </div>
+          </div>
+        </div>
+      </mat-step>
+    </mat-stepper>
+  </mat-card>
+</div>

@@ -1,0 +1,147 @@
+<!-- src/app/reports/components/report-templates/report-templates.component.html -->
+
+<div class="report-templates-container">
+  <!-- Header -->
+  <div class="templates-header">
+    <div class="header-content">
+      <div class="header-text">
+        <div class="header-icon">
+          <mat-icon>content_copy</mat-icon>
+        </div>
+        <div>
+          <h1>Report Templates</h1>
+          <p>Start with pre-built templates for common reporting needs</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button mat-raised-button
+                color="primary"
+                (click)="router.navigate(['/reports/create'])">
+          <mat-icon>add</mat-icon>
+          Create Custom Report
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category Filter -->
+  <div class="category-filter">
+    <button mat-button
+            [class.active]="selectedCategory === 'all'"
+            (click)="filterByCategory('all')">
+      <mat-icon>apps</mat-icon>
+      All Templates
+    </button>
+    <button mat-button
+            *ngFor="let category of categories"
+            [class.active]="selectedCategory === category"
+            (click)="filterByCategory(category)">
+      <mat-icon>{{ getCategoryIcon(category) }}</mat-icon>
+      {{ category }}
+    </button>
+  </div>
+
+  <!-- Templates Grid -->
+  <div class="templates-grid">
+    <mat-card *ngFor="let template of filteredTemplates"
+              class="template-card"
+              [ngStyle]="getTemplateStyle(template.color)">
+
+      <!-- Card Header -->
+      <div class="card-header">
+        <div class="template-icon" [ngStyle]="getIconStyle(template.color)">
+          <mat-icon>{{ template.icon }}</mat-icon>
+        </div>
+        <mat-chip class="category-chip">{{ template.category }}</mat-chip>
+      </div>
+
+      <!-- Card Content -->
+      <mat-card-content>
+        <h3 class="template-name">{{ template.name }}</h3>
+        <p class="template-description">{{ template.description }}</p>
+
+        <!-- Tags -->
+        <div class="template-tags">
+          <mat-chip *ngFor="let tag of template.tags" class="tag-chip">
+            {{ tag }}
+          </mat-chip>
+        </div>
+
+        <!-- Template Details -->
+        <div class="template-details">
+          <div class="detail-item">
+            <mat-icon>storage</mat-icon>
+            <span>{{ template.config.dataSources.length }} data source{{ template.config.dataSources.length > 1 ? 's' : '' }}</span>
+          </div>
+          <div class="detail-item">
+            <mat-icon>view_column</mat-icon>
+            <span>{{ template.config.fields.length }} fields</span>
+          </div>
+          <div class="detail-item" *ngIf="template.config.parameters?.length">
+            <mat-icon>tune</mat-icon>
+            <span>{{ template.config.parameters.length }} parameter{{ template.config.parameters.length > 1 ? 's' : '' }}</span>
+          </div>
+        </div>
+
+        <!-- Configuration Preview -->
+        <div class="config-preview">
+          <h4>Includes:</h4>
+          <ul>
+            <li *ngIf="template.config.fields.some(f => f.aggregation)">
+              <mat-icon>functions</mat-icon>
+              Aggregations & Grouping
+            </li>
+            <li *ngIf="template.config.filters?.length">
+              <mat-icon>filter_list</mat-icon>
+              Pre-configured Filters
+            </li>
+            <li *ngIf="template.config.parameters?.length">
+              <mat-icon>input</mat-icon>
+              Runtime Parameters
+            </li>
+            <li *ngIf="template.config.dataSources.length > 1">
+              <mat-icon>link</mat-icon>
+              Multi-table Joins
+            </li>
+          </ul>
+        </div>
+      </mat-card-content>
+
+      <!-- Card Actions -->
+      <mat-card-actions>
+        <button mat-button
+                [matTooltip]="'View details for ' + template.name"
+                class="details-btn">
+          <mat-icon>info</mat-icon>
+          Details
+        </button>
+        <button mat-raised-button
+                color="primary"
+                (click)="useTemplate(template)"
+                [disabled]="isCreating"
+                class="use-template-btn">
+          <mat-icon>{{ isCreating ? 'hourglass_empty' : 'rocket_launch' }}</mat-icon>
+          {{ isCreating ? 'Creating...' : 'Use Template' }}
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredTemplates.length === 0">
+      <mat-icon>content_copy</mat-icon>
+      <h3>No templates found</h3>
+      <p>Try selecting a different category</p>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" *ngIf="isCreating">
+    <mat-spinner diameter="48"></mat-spinner>
+    <p>Creating report from template...</p>
+  </div>
+</div>
+
+<!-- Helper method for category icons -->
+<ng-template #getCategoryIconTemplate>
+  <!-- This would be in the component -->
+</ng-template>
