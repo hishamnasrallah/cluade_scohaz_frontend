@@ -223,7 +223,12 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
     }
   }
 
-  onDataSourcesChange(dataSources: DataSource[]): void {
+  async onDataSourcesChange(dataSources: DataSource[]): Promise<void> {
+    // If report doesn't have an ID yet, save it first
+    if (!this.report?.id && this.basicInfoForm.valid) {
+      await this.saveReport(false);
+    }
+
     this.dataSources = dataSources;
     this.isDirty = true;
     this.validateReport();

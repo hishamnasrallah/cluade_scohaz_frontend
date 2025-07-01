@@ -56,7 +56,7 @@
           <mat-form-field appearance="outline" class="field-select">
             <mat-label>Field</mat-label>
             <mat-select [(ngModel)]="filter.field_path"
-                        (selectionChange)="onFieldChange(filter, groupIndex, filterIndex)">
+                        (ngModelChange)="onFieldChange(filter, groupIndex, filterIndex)">
               <mat-optgroup *ngFor="let ds of dataSources" [label]="ds.alias">
                 <mat-option *ngFor="let field of getFieldsForDataSource(ds)"
                             [value]="field.path">
@@ -214,7 +214,8 @@
 
         <!-- Add Filter Button -->
         <button mat-button
-                (click)="addFilter(groupIndex)"
+                type="button"
+                (click)="addFilter(groupIndex); $event.stopPropagation()"
                 class="add-filter-btn">
           <mat-icon>add</mat-icon>
           Add Filter

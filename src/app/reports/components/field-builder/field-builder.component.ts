@@ -1,6 +1,6 @@
 // src/app/reports/components/field-builder/field-builder.component.ts
 
-import { Component, Input, Output, EventEmitter, OnInit, ViewChild, TemplateRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, ViewChild, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import { CdkDragDrop, moveItemInArray, transferArrayItem, DragDropModule } from '@angular/cdk/drag-drop';
@@ -122,7 +122,15 @@ export class FieldBuilderComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadAvailableFields();
+    if (this.dataSources.length > 0) {
+      this.loadAvailableFields();
+    }
+  }
+
+  ngOnChanges(changes: any): void {
+    if (changes.dataSources && this.dataSources.length > 0) {
+      this.loadAvailableFields();
+    }
   }
 
   loadAvailableFields(): void {
@@ -131,7 +139,9 @@ export class FieldBuilderComponent implements OnInit {
 
       this.reportService.getContentTypeFields(dataSource.content_type_id).subscribe({
         next: (response) => {
-          this.availableFields.set(dataSource.id!, response.fields);
+          // Use content_type_id as key if dataSource doesn't have ID yet
+          const key = dataSource.id || dataSource.content_type_id;
+          this.availableFields.set(key, response.fields);
           this.filterFields();
         },
         error: (err) => {
@@ -164,11 +174,13 @@ export class FieldBuilderComponent implements OnInit {
   }
 
   getAvailableFieldsForDataSource(dataSource: DataSource): FieldInfo[] {
-    return this.availableFields.get(dataSource.id!) || [];
+    const key = dataSource.id || dataSource.content_type_id;
+    return this.availableFields.get(key!) || [];
   }
 
   getFilteredFieldsForDataSource(dataSource: DataSource): FieldInfo[] {
-    return this.filteredFields.get(dataSource.id!) || [];
+    const key = dataSource.id || dataSource.content_type_id;
+    return this.filteredFields.get(key!) || [];
   }
 
   isFieldSelected(field: FieldInfo): boolean {
@@ -176,37 +188,58 @@ export class FieldBuilderComponent implements OnInit {
   }
 
   quickAddField(field: FieldInfo, dataSource: DataSource): void {
-    if (!this.report?.id || !dataSource.id) return;
+    if (!this.report?.id || !dataSource.id) {
+      // If report or dataSource doesn't have ID, add to local array
+      const newField: Field = {
+        report: this.report?.id || 0,
+        data_source: dataSource.id || dataSource.content_type_id!,
+        field_path: field.path,
+        field_name: field.name,
+        display_name: field.verbose_name,
+        field_type: field.type,
+        order: this.fields.length,
+        is_visible: true
+      };
 
-    const newField: Partial<Field> = {
-      report: this.report.id,
-      data_source: dataSource.id,
-      field_path: field.path,
-      field_name: field.name,
-      display_name: field.verbose_name,
-      field_type: field.type,
-      order: this.fields.length,
-      is_visible: true
-    };
+      this.fields = [...this.fields, newField];
+      this.fieldsChange.emit(this.fields);
 
-    this.reportService.createField(newField).subscribe({
-      next: (createdField) => {
-        this.fields = [...this.fields, createdField];
-        this.fieldsChange.emit(this.fields);
+      this.snackBar.open('Field added (will be saved with report)', 'Close', {
+        duration: 2000,
+        panelClass: ['info-snackbar']
+      });
+    } else {
+      // If report has ID, save to backend
+      const newField: Partial<Field> = {
+        report: this.report.id,
+        data_source: dataSource.id,
+        field_path: field.path,
+        field_name: field.name,
+        display_name: field.verbose_name,
+        field_type: field.type,
+        order: this.fields.length,
+        is_visible: true
+      };
 
-        this.snackBar.open('Field added', 'Close', {
-          duration: 2000,
-          panelClass: ['success-snackbar']
-        });
-      },
-      error: (err) => {
-        console.error('Error adding field:', err);
-        this.snackBar.open('Error adding field', 'Close', {
-          duration: 3000,
-          panelClass: ['error-snackbar']
-        });
-      }
-    });
+      this.reportService.createField(newField).subscribe({
+        next: (createdField) => {
+          this.fields = [...this.fields, createdField];
+          this.fieldsChange.emit(this.fields);
+
+          this.snackBar.open('Field added', 'Close', {
+            duration: 2000,
+            panelClass: ['success-snackbar']
+          });
+        },
+        error: (err) => {
+          console.error('Error adding field:', err);
+          this.snackBar.open('Error adding field', 'Close', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
+        }
+      });
+    }
   }
 
   onDrop(event: CdkDragDrop<any[]>): void {
@@ -378,24 +411,47 @@ export class FieldBuilderComponent implements OnInit {
     if (!primaryDs) return;
 
     const commonFields = ['id', 'name', 'created_at', 'status'];
-    const availableForPrimary = this.availableFields.get(primaryDs.id!) || [];
+    const key = primaryDs.id || primaryDs.content_type_id;
+    const availableForPrimary = this.availableFields.get(key!) || [];
 
     const suggestedFields = availableForPrimary.filter(field =>
-      commonFields.some(common => field.name.includes(common)) &&
+      commonFields.some(common => field.name.toLowerCase().includes(common)) &&
       !this.isFieldSelected(field)
     );
 
     suggestedFields.forEach(field => {
       this.quickAddField(field, primaryDs);
     });
+
+    if (suggestedFields.length === 0) {
+      this.snackBar.open('No suggested fields found', 'Close', {
+        duration: 2000,
+        panelClass: ['info-snackbar']
+      });
+    }
   }
 
   addAllPrimaryFields(): void {
     const primaryDs = this.dataSources.find(ds => ds.is_primary);
-    if (!primaryDs) return;
+    if (!primaryDs) {
+      this.snackBar.open('No primary data source found', 'Close', {
+        duration: 2000,
+        panelClass: ['warning-snackbar']
+      });
+      return;
+    }
 
-    const availableForPrimary = this.availableFields.get(primaryDs.id!) || [];
+    const key = primaryDs.id || primaryDs.content_type_id;
+    const availableForPrimary = this.availableFields.get(key!) || [];
     const unselectedFields = availableForPrimary.filter(field => !this.isFieldSelected(field));
+
+    if (unselectedFields.length === 0) {
+      this.snackBar.open('All fields are already selected', 'Close', {
+        duration: 2000,
+        panelClass: ['info-snackbar']
+      });
+      return;
+    }
 
     if (unselectedFields.length > 10) {
       if (!confirm(`Add all ${unselectedFields.length} fields?`)) {
@@ -409,7 +465,9 @@ export class FieldBuilderComponent implements OnInit {
   }
 
   getDataSourceAlias(dataSourceId: number): string {
-    const ds = this.dataSources.find(d => d.id === dataSourceId);
+    const ds = this.dataSources.find(d =>
+      d.id === dataSourceId || d.content_type_id === dataSourceId
+    );
     return ds?.alias || 'unknown';
   }
 

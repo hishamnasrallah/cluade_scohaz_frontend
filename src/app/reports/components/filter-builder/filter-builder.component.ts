@@ -1,6 +1,6 @@
 // src/app/reports/components/filter-builder/filter-builder.component.ts
 
-import { Component, Input, Output, EventEmitter, OnInit, ViewChild, TemplateRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, ViewChild, TemplateRef, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators, FormsModule} from '@angular/forms';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -31,6 +31,7 @@ interface FilterGroup {
 @Component({
   selector: 'app-filter-builder',
   standalone: true,
+  // changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
     ReactiveFormsModule,
@@ -55,6 +56,8 @@ interface FilterGroup {
   templateUrl: 'filter-builder.component.html',
   styleUrl: 'filter-builder.component.scss'
 })
+
+
 export class FilterBuilderComponent implements OnInit {
   @ViewChild('filterConfigDialog') filterConfigDialog!: TemplateRef<any>;
 
@@ -96,7 +99,8 @@ export class FilterBuilderComponent implements OnInit {
     private fb: FormBuilder,
     private reportService: ReportService,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private cdr: ChangeDetectorRef
   ) {
     this.filterConfigForm = this.fb.group({
       is_required: [false],
@@ -107,17 +111,35 @@ export class FilterBuilderComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Initialize empty filter groups array
+    this.filterGroups = [];
+
+    // Load available fields
     this.loadAvailableFields();
-    this.organizeFiltersIntoGroups();
+
+    // Organize existing filters if any
+    if (this.filters && this.filters.length > 0) {
+      this.organizeFiltersIntoGroups();
+    }
   }
 
   loadAvailableFields(): void {
+    if (!this.dataSources || this.dataSources.length === 0) {
+      return;
+    }
+
     for (const dataSource of this.dataSources) {
       if (!dataSource.content_type_id) continue;
 
+      const key = dataSource.id || dataSource.content_type_id;
+
       this.reportService.getContentTypeFields(dataSource.content_type_id).subscribe({
         next: (response) => {
-          this.availableFields.set(dataSource.id!, response.fields);
+          this.availableFields.set(key, response.fields);
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error(`Error loading fields for data source ${dataSource.alias}:`, err);
         }
       });
     }
@@ -141,22 +163,33 @@ export class FilterBuilderComponent implements OnInit {
     }
 
     this.filterGroups = Array.from(groups.values()).sort((a, b) => a.order - b.order);
-
-    // Ensure at least one group exists
-    if (this.filterGroups.length === 0 && this.filters.length === 0) {
-      // Don't create empty groups automatically
-    }
   }
 
   addFilterGroup(): void {
-    const newGroup: FilterGroup = {
-      logic: 'AND',
-      filters: [],
-      order: this.filterGroups.length
-    };
+    try {
+      const newGroup: FilterGroup = {
+        logic: 'AND',
+        filters: [],
+        order: this.filterGroups.length
+      };
 
-    this.filterGroups.push(newGroup);
-    this.addFilter(this.filterGroups.length - 1);
+      // Create a new array to avoid mutation issues
+      this.filterGroups = [...this.filterGroups, newGroup];
+
+      // Trigger change detection
+      this.cdr.detectChanges();
+
+      // Add a filter to the new group after a microtask
+      Promise.resolve().then(() => {
+        this.addFilter(this.filterGroups.length - 1);
+      });
+    } catch (error) {
+      console.error('Error adding filter group:', error);
+      this.snackBar.open('Error adding filter group', 'Close', {
+        duration: 3000,
+        panelClass: ['error-snackbar']
+      });
+    }
   }
 
   removeFilterGroup(groupIndex: number): void {
@@ -188,33 +221,67 @@ export class FilterBuilderComponent implements OnInit {
   }
 
   addFilter(groupIndex: number): void {
-    if (!this.report?.id) return;
-
-    const group = this.filterGroups[groupIndex];
-    const newFilter: Partial<Filter> = {
-      report: this.report.id,
-      data_source: this.dataSources[0]?.id || 0,
-      field_path: '',
-      operator: 'eq' as FilterOperator,
-      value: null,
-      value_type: 'static',
-      logic_group: group.logic,
-      group_order: group.order,
-      is_active: true,
-      is_required: false
-    };
-
-    this.reportService.createFilter(newFilter).subscribe({
-      next: (filter) => {
-        group.filters.push(filter);
-        this.updateFiltersFromGroups();
-
-        this.snackBar.open('Filter added', 'Close', {
-          duration: 2000,
-          panelClass: ['success-snackbar']
-        });
+    try {
+      // Validate group exists
+      if (!this.filterGroups || !this.filterGroups[groupIndex]) {
+        console.error('Filter group not found at index:', groupIndex);
+        return;
       }
-    });
+
+      // Validate data sources exist
+      if (!this.dataSources || this.dataSources.length === 0) {
+        this.snackBar.open('Please add data sources first', 'Close', {
+          duration: 3000,
+          panelClass: ['warning-snackbar']
+        });
+        return;
+      }
+
+      const group = this.filterGroups[groupIndex];
+      const dataSourceId = this.dataSources[0]?.id || this.dataSources[0]?.content_type_id || 0;
+
+      // Create a simple filter object without backend call for now
+      const newFilter: Filter = {
+        report: this.report?.id || 0,
+        data_source: dataSourceId,
+        field_path: '',
+        field_name: '',
+        operator: 'eq' as FilterOperator,
+        value: null,
+        value_type: 'static',
+        logic_group: group.logic,
+        group_order: group.order,
+        is_active: true,
+        is_required: false
+      };
+
+      // Initialize filters array if needed
+      if (!group.filters) {
+        group.filters = [];
+      }
+
+      // Add filter to group
+      group.filters = [...group.filters, newFilter];
+
+      // Update the filters array
+      this.filters = this.filterGroups.flatMap(g => g.filters || []);
+      this.filtersChange.emit([...this.filters]);
+
+      // Trigger change detection
+      this.cdr.markForCheck();
+
+      this.snackBar.open('Filter added', 'Close', {
+        duration: 2000,
+        panelClass: ['info-snackbar']
+      });
+
+    } catch (error) {
+      console.error('Error in addFilter:', error);
+      this.snackBar.open('Error adding filter', 'Close', {
+        duration: 3000,
+        panelClass: ['error-snackbar']
+      });
+    }
   }
 
   removeFilter(groupIndex: number, filterIndex: number): void {
@@ -238,6 +305,16 @@ export class FilterBuilderComponent implements OnInit {
           });
         }
       });
+    } else {
+      // If filter doesn't have ID, just remove from local array
+      this.filterGroups[groupIndex].filters.splice(filterIndex, 1);
+
+      // Remove group if empty
+      if (this.filterGroups[groupIndex].filters.length === 0) {
+        this.filterGroups.splice(groupIndex, 1);
+      }
+
+      this.updateFiltersFromGroups();
     }
   }
 
@@ -300,7 +377,11 @@ export class FilterBuilderComponent implements OnInit {
   }
 
   updateFilter(filter: Filter, groupIndex: number, filterIndex: number): void {
-    if (!filter.id) return;
+    if (!filter.id) {
+      // If filter doesn't have ID, just update local array
+      this.updateFiltersFromGroups();
+      return;
+    }
 
     const updates: Partial<Filter> = {
       data_source: filter.data_source,
@@ -389,13 +470,30 @@ export class FilterBuilderComponent implements OnInit {
   }
 
   updateFiltersFromGroups(): void {
-    this.filters = this.filterGroups.flatMap(group => group.filters);
-    this.filtersChange.emit(this.filters);
+    try {
+      // Safely flatten filters from groups
+      const allFilters: Filter[] = [];
+
+      for (const group of this.filterGroups) {
+        if (group && group.filters && Array.isArray(group.filters)) {
+          allFilters.push(...group.filters);
+        }
+      }
+
+      this.filters = [...allFilters]; // Create new array reference
+      this.filtersChange.emit(this.filters);
+
+      // Manually trigger change detection
+      this.cdr.markForCheck();
+    } catch (error) {
+      console.error('Error updating filters:', error);
+    }
   }
 
   // Helper methods
   getFieldsForDataSource(dataSource: DataSource): any[] {
-    return this.availableFields.get(dataSource.id!) || [];
+    const key = dataSource.id || dataSource.content_type_id;
+    return this.availableFields.get(key!) || [];
   }
 
   findFieldByPath(path: string): any {

@@ -163,36 +163,61 @@ export class DataSourceSelectorComponent implements OnInit {
   }
 
   addDataSource(contentType?: ContentType): void {
-    if (!contentType || !this.report?.id) return;
+    if (!contentType) return;
 
-    const newDataSource: Partial<DataSource> = {
-      report: this.report.id,
-      content_type_id: contentType.id,
-      alias: contentType.model.toLowerCase(),
-      is_primary: this.dataSources.length === 0,
-      select_related: [],
-      prefetch_related: []
-    };
+    if (!this.report?.id) {
+      // If report doesn't have ID, add to local array
+      const newDataSource: DataSource = {
+        content_type_id: contentType.id,
+        content_type: contentType,
+        alias: contentType.model.toLowerCase(),
+        is_primary: this.dataSources.length === 0,
+        select_related: [],
+        prefetch_related: [],
+        report: 0, // Temporary value
+        app_name: contentType.app_label,
+        model_name: contentType.model
+      };
 
-    this.reportService.createDataSource(newDataSource).subscribe({
-      next: (dataSource) => {
-        this.dataSources = [...this.dataSources, dataSource];
-        this.dataSourcesChange.emit(this.dataSources);
-        this.selectedModel = null;
+      this.dataSources = [...this.dataSources, newDataSource];
+      this.dataSourcesChange.emit(this.dataSources);
+      this.selectedModel = null;
 
-        this.snackBar.open('Data source added successfully', 'Close', {
-          duration: 2000,
-          panelClass: ['success-snackbar']
-        });
-      },
-      error: (err) => {
-        console.error('Error adding data source:', err);
-        this.snackBar.open('Error adding data source', 'Close', {
-          duration: 3000,
-          panelClass: ['error-snackbar']
-        });
-      }
-    });
+      this.snackBar.open('Data source added (will be saved with report)', 'Close', {
+        duration: 2000,
+        panelClass: ['info-snackbar']
+      });
+    } else {
+      // If report has ID, save to backend
+      const newDataSource: Partial<DataSource> = {
+        report: this.report.id,
+        content_type_id: contentType.id,
+        alias: contentType.model.toLowerCase(),
+        is_primary: this.dataSources.length === 0,
+        select_related: [],
+        prefetch_related: []
+      };
+
+      this.reportService.createDataSource(newDataSource).subscribe({
+        next: (dataSource) => {
+          this.dataSources = [...this.dataSources, dataSource];
+          this.dataSourcesChange.emit(this.dataSources);
+          this.selectedModel = null;
+
+          this.snackBar.open('Data source added successfully', 'Close', {
+            duration: 2000,
+            panelClass: ['success-snackbar']
+          });
+        },
+        error: (err) => {
+          console.error('Error adding data source:', err);
+          this.snackBar.open('Error adding data source', 'Close', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
+        }
+      });
+    }
   }
 
   removeDataSource(index: number): void {
