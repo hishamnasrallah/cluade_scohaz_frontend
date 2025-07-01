@@ -1,19 +1,20 @@
+// src/app/reports/components/filter-builder/filter-builder.component.scss
+
 .filter-builder {
-  padding: 20px;
-  background: white;
+  padding: 24px;
+  background: #F4FDFD;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(47, 72, 88, 0.06);
-  border: 1px solid rgba(196, 247, 239, 0.5);
+  min-height: 400px;
 }
 
-/* Header */
+// Header
 .builder-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba(196, 247, 239, 0.3);
+  padding-bottom: 20px;
+  border-bottom: 2px solid rgba(196, 247, 239, 0.5);
 }
 
 .header-info {
@@ -23,14 +24,24 @@
 
   mat-icon {
     color: #34C5AA;
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
   }
 
   h3 {
     margin: 0;
-    font-size: 1.125rem;
+    font-size: 1.25rem;
     font-weight: 600;
     color: #2F4858;
+    font-family: 'Poppins', sans-serif;
   }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .filter-count {
@@ -38,238 +49,262 @@
   color: #2BA99B;
   padding: 4px 12px;
   border-radius: 16px;
-  font-size: 0.813rem;
-  font-weight: 600;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
-.header-actions {
-  display: flex;
-  gap: 8px;
-}
+.add-filter-btn {
+  background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(52, 197, 170, 0.25);
 
-.add-group-btn {
-  color: #34C5AA;
+  &:hover:not(:disabled) {
+    box-shadow: 0 4px 12px rgba(52, 197, 170, 0.35);
+  }
 
-  &:hover {
-    background: rgba(196, 247, 239, 0.2);
+  &:disabled {
+    background: #E5E7EB;
+    color: #9CA3AF;
+    box-shadow: none;
   }
 }
 
-/* Filter Groups */
+// Filter Groups
 .filter-groups {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 .filter-group {
-  background: #F9FAFB;
-  border: 2px solid #E5E7EB;
+  background: white;
   border-radius: 12px;
-  padding: 20px;
-  position: relative;
-
-  &.or-group {
-    border-color: rgba(245, 158, 11, 0.3);
-    background: rgba(254, 243, 199, 0.1);
-  }
+  border: 1px solid rgba(196, 247, 239, 0.5);
+  box-shadow: 0 2px 8px rgba(47, 72, 88, 0.04);
+  overflow: hidden;
 }
 
 .group-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 12px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(196, 247, 239, 0.2) 0%, rgba(196, 247, 239, 0.1) 100%);
+  border-bottom: 1px solid rgba(196, 247, 239, 0.5);
 }
 
-.logic-toggle {
-  border: 2px solid #E5E7EB;
-  border-radius: 8px;
-  overflow: hidden;
+.logic-chip {
+  font-weight: 600;
+  font-size: 0.75rem;
+  height: 24px;
+  padding: 0 12px;
 
-  ::ng-deep .mat-button-toggle-checked {
-    background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
-    color: white;
+  &.logic-and {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3B82F6;
+  }
+
+  &.logic-or {
+    background: rgba(245, 158, 11, 0.1);
+    color: #F59E0B;
   }
 }
 
 .group-label {
-  font-weight: 600;
-  color: #4B5563;
+  color: #6B7280;
   font-size: 0.875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-weight: 500;
 }
 
-/* Filter Row */
-.filter-row {
-  display: grid;
-  grid-template-columns: 2fr 1.5fr 3fr auto auto;
+.group-filters {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  align-items: center;
-  padding: 12px;
-  background: white;
-  border-radius: 8px;
-  margin-bottom: 12px;
+}
+
+// Filter Item
+.filter-item {
+  background: #F9FAFB;
   border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 16px;
   transition: all 0.2s ease;
 
   &:hover {
+    background: white;
     border-color: rgba(52, 197, 170, 0.3);
-    box-shadow: 0 2px 8px rgba(47, 72, 88, 0.05);
+    box-shadow: 0 2px 8px rgba(52, 197, 170, 0.1);
+  }
+
+  &.inactive {
+    opacity: 0.6;
+    background: #F3F4F6;
   }
 }
 
+.filter-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.drag-handle {
+  cursor: move;
+  color: #9CA3AF;
+  margin-top: 8px;
+
+  &:hover {
+    color: #6B7280;
+  }
+}
+
+.filter-toggle {
+  margin-top: 6px;
+}
+
+.filter-config {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+// Form Fields
 .field-select,
 .operator-select {
-  ::ng-deep .mat-mdc-form-field-wrapper {
-    margin-bottom: 0;
+  mat-form-field {
+    width: 100%;
   }
 }
 
 .value-input {
-  display: flex;
-  align-items: center;
+  .no-value {
+    mat-chip {
+      background: rgba(107, 114, 128, 0.1);
+      color: #6B7280;
+      font-size: 0.875rem;
+    }
+  }
 
-  mat-form-field {
-    width: 100%;
+  .between-values,
+  .date-range-values {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 
-    ::ng-deep .mat-mdc-form-field-wrapper {
-      margin-bottom: 0;
+    mat-form-field {
+      flex: 1;
+    }
+
+    .between-separator,
+    .date-separator {
+      color: #6B7280;
+      font-weight: 500;
+    }
+  }
+
+  .multi-values,
+  .single-value {
+    mat-form-field {
+      width: 100%;
     }
   }
 }
 
-.date-range,
-.between-values {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-
-  mat-form-field {
-    flex: 1;
-  }
-}
-
-.range-separator {
-  color: #6B7280;
-  font-size: 0.875rem;
-  padding: 0 4px;
-}
-
-.no-value {
-  padding: 8px 16px;
-  background: #F3F4F6;
-  border-radius: 6px;
-  width: 100%;
-  text-align: center;
-}
-
-.no-value-text {
-  color: #6B7280;
-  font-size: 0.875rem;
-  font-style: italic;
-}
-
-/* Value Type Toggle */
+// Value Type Toggle
 .value-type-toggle {
+  background: #F3F4F6;
+  border-radius: 8px;
   border: 1px solid #E5E7EB;
-  border-radius: 6px;
   overflow: hidden;
-  height: 36px;
 
-  ::ng-deep .mat-button-toggle {
-    padding: 0 8px;
-  }
-
-  ::ng-deep .mat-button-toggle-checked {
-    background: rgba(52, 197, 170, 0.1);
-    color: #2BA99B;
-  }
-
-  mat-icon {
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
-  }
-}
-
-/* Filter Actions */
-.filter-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-
-  ::ng-deep .mat-mdc-slide-toggle {
-    margin-right: 8px;
-  }
-
-  button {
-    width: 32px;
-    height: 32px;
+  mat-button-toggle {
+    &.mat-button-toggle-checked {
+      background: white;
+      color: #34C5AA;
+    }
 
     mat-icon {
       font-size: 18px;
       width: 18px;
       height: 18px;
-      color: #6B7280;
-    }
-
-    &:hover mat-icon {
-      color: #34C5AA;
     }
   }
 }
 
-/* Add Filter Button */
-.add-filter-btn {
-  width: 100%;
-  border: 2px dashed rgba(52, 197, 170, 0.3);
-  color: #34C5AA;
-  margin-top: 8px;
-
-  &:hover {
-    background: rgba(196, 247, 239, 0.1);
-    border-style: solid;
-  }
-}
-
-/* Group Connector */
-.group-connector {
+// Filter Options
+.filter-options {
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin: -10px 0;
-  position: relative;
-  z-index: 1;
+  gap: 16px;
+  margin-top: 8px;
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: #E5E7EB;
-  }
-
-  .connector-text {
-    background: white;
-    padding: 4px 16px;
-    border: 2px solid #E5E7EB;
-    border-radius: 20px;
-    font-weight: 600;
-    color: #6B7280;
-    font-size: 0.813rem;
-    position: relative;
+  mat-checkbox {
+    font-size: 0.875rem;
   }
 }
 
-/* Empty State */
+// Filter Actions
+.filter-actions {
+  display: flex;
+  gap: 4px;
+  align-items: flex-start;
+  margin-top: 8px;
+
+  button {
+    &:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+  }
+}
+
+// Add to Group Button
+.add-to-group-btn {
+  margin: 0 16px 16px;
+  width: calc(100% - 32px);
+  border: 2px dashed rgba(52, 197, 170, 0.3);
+  color: #34C5AA;
+
+  &:hover {
+    background: rgba(52, 197, 170, 0.05);
+    border-color: rgba(52, 197, 170, 0.5);
+  }
+}
+
+// Add Group Section
+.add-group-section {
+  margin-top: 24px;
+
+  mat-divider {
+    margin-bottom: 16px;
+  }
+}
+
+.add-group-btn {
+  width: 100%;
+  border: 2px dashed rgba(107, 114, 128, 0.3);
+  color: #6B7280;
+  padding: 12px;
+
+  &:hover {
+    background: rgba(107, 114, 128, 0.05);
+    border-color: rgba(107, 114, 128, 0.5);
+    color: #4B5563;
+  }
+
+  mat-icon {
+    margin-right: 8px;
+  }
+}
+
+// Empty State
 .empty-state {
   text-align: center;
   padding: 80px 20px;
+  background: white;
+  border-radius: 12px;
+  border: 2px dashed rgba(196, 247, 239, 0.5);
 
   mat-icon {
     font-size: 64px;
@@ -294,113 +329,202 @@
   button {
     background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
   }
-}
 
-/* Dynamic Values Panel */
-.dynamic-values-panel {
-  margin-top: 24px;
-  background: #F9FAFB;
-  border: 1px solid #E5E7EB;
-
-  ::ng-deep .mat-expansion-panel-header {
-    background: transparent;
-    height: 48px;
-  }
-
-  ::ng-deep .mat-panel-title {
+  .hint {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    color: #4B5563;
-    font-weight: 600;
+    margin-top: 16px;
+    color: #9CA3AF;
+    font-size: 0.875rem;
 
     mat-icon {
-      color: #6B7280;
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
     }
   }
 }
 
-.dynamic-values-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 12px;
-  padding: 16px;
-}
-
-.dynamic-value-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
+// Filter Summary
+.filter-summary {
+  margin-top: 32px;
   background: white;
-  border-radius: 6px;
-  border: 1px solid #E5E7EB;
 
-  code {
-    background: #F3F4F6;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.813rem;
-    color: #6B7280;
-    font-family: monospace;
+  mat-card-header {
+    background: linear-gradient(135deg, rgba(196, 247, 239, 0.2) 0%, rgba(196, 247, 239, 0.1) 100%);
+    margin: -16px -16px 16px -16px;
+    padding: 16px;
   }
 
-  span {
-    color: #4B5563;
-    font-size: 0.875rem;
+  mat-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1rem;
+    margin: 0;
+
+    mat-icon {
+      color: #34C5AA;
+    }
   }
 }
 
-/* Dialog */
-.filter-config-form {
+.logic-preview {
+  background: #F9FAFB;
+  border-radius: 8px;
+  padding: 16px;
+  font-size: 0.875rem;
+}
+
+.logic-group {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding: 20px 0;
-  min-width: 400px;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
-::ng-deep .mat-mdc-dialog-title {
+.group-logic {
+  background: rgba(52, 197, 170, 0.1);
+  color: #2BA99B;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  min-width: 40px;
+  text-align: center;
+}
+
+.group-conditions {
+  flex: 1;
+  line-height: 1.6;
+}
+
+.condition {
+  strong {
+    color: #2F4858;
+    font-weight: 600;
+  }
+
+  em {
+    color: #6B7280;
+    font-style: normal;
+  }
+}
+
+.logic-separator {
+  color: #9CA3AF;
+  margin: 0 8px;
+  font-weight: 500;
+}
+
+.group-separator {
+  display: block;
+  text-align: center;
+  color: #4B5563;
+  font-weight: 600;
+  margin: 8px 0;
+}
+
+// Quick Actions Dialog
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 16px 0;
+}
+
+.action-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  color: #2F4858;
+  padding: 16px;
+  border: 2px solid rgba(52, 197, 170, 0.2);
+
+  &:hover {
+    background: rgba(52, 197, 170, 0.05);
+    border-color: rgba(52, 197, 170, 0.3);
+  }
 
   mat-icon {
     color: #34C5AA;
   }
 }
 
-/* Responsive */
-@media (max-width: 1200px) {
-  .filter-row {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
+// Material Form Field Overrides
+::ng-deep {
+  .filter-builder {
+    .mat-mdc-form-field {
+      .mat-mdc-text-field-wrapper {
+        background: white;
+      }
+    }
 
-  .date-range,
-  .between-values {
-    flex-direction: column;
-    align-items: stretch;
+    .mat-mdc-select-value {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-    .range-separator {
-      text-align: center;
+    .mat-mdc-option {
+      .mat-icon {
+        margin-right: 8px;
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #6B7280;
+      }
     }
   }
 }
 
+// Responsive
+@media (max-width: 1024px) {
+  .filter-config {
+    flex-direction: column;
+  }
+
+  .value-type-toggle {
+    width: 100%;
+  }
+}
+
 @media (max-width: 768px) {
+  .filter-builder {
+    padding: 16px;
+  }
+
   .builder-header {
     flex-direction: column;
     align-items: stretch;
     gap: 16px;
   }
 
-  .header-actions {
-    justify-content: space-between;
+  .filter-content {
+    flex-direction: column;
   }
 
-  .filter-config-form {
-    min-width: auto;
+  .drag-handle {
+    display: none;
+  }
+
+  .between-values,
+  .date-range-values {
+    flex-direction: column;
+
+    .between-separator,
+    .date-separator {
+      display: none;
+    }
+  }
+
+  .quick-actions {
+    grid-template-columns: 1fr;
   }
 }

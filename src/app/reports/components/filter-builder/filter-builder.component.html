@@ -1,316 +1,363 @@
 <div class="filter-builder">
-  <!-- Header -->
   <div class="builder-header">
     <div class="header-info">
       <mat-icon>filter_list</mat-icon>
-      <h3>Filter Conditions</h3>
+      <h3>Report Filters</h3>
       <span class="filter-count" *ngIf="filters.length > 0">
-            {{ filters.length }} filter{{ filters.length > 1 ? 's' : '' }}
-          </span>
+        {{ getActiveFiltersCount() }} active / {{ filters.length }} total
+      </span>
     </div>
     <div class="header-actions">
-      <button mat-button (click)="addFilterGroup()" class="add-group-btn">
-        <mat-icon>add_circle_outline</mat-icon>
-        Add Filter Group
-      </button>
       <button mat-icon-button
-              (click)="clearAllFilters()"
-              *ngIf="filters.length > 0"
-              matTooltip="Clear all filters">
-        <mat-icon>clear_all</mat-icon>
+              (click)="showQuickActions()"
+              matTooltip="Quick Actions"
+              *ngIf="filters.length > 0">
+        <mat-icon>flash_on</mat-icon>
+      </button>
+      <button mat-raised-button
+              color="primary"
+              (click)="addFilter()"
+              class="add-filter-btn"
+              [disabled]="dataSources.length === 0">
+        <mat-icon>add</mat-icon>
+        Add Filter
       </button>
     </div>
   </div>
 
   <!-- Filter Groups -->
-  <div class="filter-groups" *ngIf="filterGroups.length > 0">
-    <div *ngFor="let group of filterGroups; let groupIndex = index; trackBy: trackByGroup"
-         class="filter-group"
-         [class.or-group]="group.logic === 'OR'">
-
-      <!-- Group Header -->
+  <div class="filter-groups" *ngIf="filters.length > 0">
+    <div *ngFor="let group of filterGroups" class="filter-group">
       <div class="group-header">
-        <mat-button-toggle-group [value]="group.logic"
-                                 (change)="updateGroupLogic(groupIndex, $event.value)"
-                                 class="logic-toggle">
-          <mat-button-toggle value="AND">AND</mat-button-toggle>
-          <mat-button-toggle value="OR">OR</mat-button-toggle>
-        </mat-button-toggle-group>
-
-        <span class="group-label">Group {{ groupIndex + 1 }}</span>
-
-        <button mat-icon-button
-                (click)="removeFilterGroup(groupIndex)"
-                *ngIf="filterGroups.length > 1"
-                matTooltip="Remove group">
-          <mat-icon>delete</mat-icon>
-        </button>
+        <mat-chip class="logic-chip" [class]="'logic-' + group.logic.toLowerCase()">
+          {{ group.logic }}
+        </mat-chip>
+        <span class="group-label">Group {{ group.order + 1 }}</span>
       </div>
 
-      <!-- Filters in Group -->
-      <div class="group-filters">
-        <div *ngFor="let filter of group.filters; let filterIndex = index; trackBy: trackByFilter"
-             class="filter-row">
+      <div class="group-filters"
+           cdkDropList
+           [cdkDropListData]="group.filters"
+           (cdkDropListDropped)="onFilterDrop($event, group)">
 
-          <!-- Field Selection -->
-          <mat-form-field appearance="outline" class="field-select">
-            <mat-label>Field</mat-label>
-            <mat-select [(ngModel)]="filter.field_path"
-                        (ngModelChange)="onFieldChange(filter, groupIndex, filterIndex)">
-              <mat-optgroup *ngFor="let ds of dataSources; trackBy: trackByDataSource" [label]="ds.alias">
-                <mat-option *ngFor="let field of getFieldsForDataSource(ds)"
-                            [value]="field.path">
-                  <mat-icon>{{ getFieldIcon(field.type) }}</mat-icon>
-                  {{ field.verbose_name }}
-                </mat-option>
-              </mat-optgroup>
-            </mat-select>
-          </mat-form-field>
+        <div *ngFor="let filter of group.filters; let i = index"
+             cdkDrag
+             [cdkDragData]="filter"
+             class="filter-item"
+             [class.inactive]="!filter.is_active">
 
-          <!-- Operator Selection -->
-          <mat-form-field appearance="outline" class="operator-select">
-            <mat-label>Operator</mat-label>
-            <mat-select [(ngModel)]="filter.operator"
-                        (selectionChange)="onOperatorChange(filter, groupIndex, filterIndex)">
-              <mat-option *ngFor="let op of getOperatorsForField(filter)"
-                          [value]="op.value">
-                {{ op.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
+          <div class="filter-content">
+            <!-- Drag Handle -->
+            <mat-icon cdkDragHandle class="drag-handle">drag_indicator</mat-icon>
 
-          <!-- Value Input -->
-          <div class="value-input" [ngSwitch]="getValueInputType(filter)">
-            <!-- Text Input -->
-            <mat-form-field appearance="outline" *ngSwitchCase="'text'">
-              <mat-label>Value</mat-label>
-              <input matInput
-                     [(ngModel)]="filter.value"
-                     [placeholder]="getValuePlaceholder(filter)">
-            </mat-form-field>
-
-            <!-- Number Input -->
-            <mat-form-field appearance="outline" *ngSwitchCase="'number'">
-              <mat-label>Value</mat-label>
-              <input matInput
-                     type="number"
-                     [(ngModel)]="filter.value">
-            </mat-form-field>
-
-            <!-- Date Input -->
-            <mat-form-field appearance="outline" *ngSwitchCase="'date'">
-              <mat-label>Date</mat-label>
-              <input matInput
-                     [matDatepicker]="picker"
-                     [(ngModel)]="filter.value">
-              <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-              <mat-datepicker #picker></mat-datepicker>
-            </mat-form-field>
-
-            <!-- Date Range -->
-            <div class="date-range" *ngSwitchCase="'daterange'">
-              <mat-form-field appearance="outline">
-                <mat-label>Start Date</mat-label>
-                <input matInput
-                       [matDatepicker]="startPicker"
-                       [(ngModel)]="filter.value.start">
-                <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
-                <mat-datepicker #startPicker></mat-datepicker>
-              </mat-form-field>
-              <span class="range-separator">to</span>
-              <mat-form-field appearance="outline">
-                <mat-label>End Date</mat-label>
-                <input matInput
-                       [matDatepicker]="endPicker"
-                       [(ngModel)]="filter.value.end">
-                <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
-                <mat-datepicker #endPicker></mat-datepicker>
-              </mat-form-field>
-            </div>
-
-            <!-- Boolean Input -->
-            <mat-form-field appearance="outline" *ngSwitchCase="'boolean'">
-              <mat-label>Value</mat-label>
-              <mat-select [(ngModel)]="filter.value">
-                <mat-option [value]="true">True</mat-option>
-                <mat-option [value]="false">False</mat-option>
-              </mat-select>
-            </mat-form-field>
-
-            <!-- List Input -->
-            <mat-form-field appearance="outline" *ngSwitchCase="'list'">
-              <mat-label>Values</mat-label>
-              <mat-chip-grid #chipGrid>
-                <mat-chip-row *ngFor="let value of getListValues(filter)"
-                              (removed)="removeListValue(filter, value, groupIndex, filterIndex)">
-                  {{ value }}
-                  <button matChipRemove>
-                    <mat-icon>cancel</mat-icon>
-                  </button>
-                </mat-chip-row>
-                <input placeholder="Add value..."
-                       [matChipInputFor]="chipGrid"
-                       [matChipInputSeparatorKeyCodes]="[13, 188]"
-                       (matChipInputTokenEnd)="addListValue(filter, $event, groupIndex, filterIndex)">
-              </mat-chip-grid>
-            </mat-form-field>
-
-            <!-- Between Values -->
-            <div class="between-values" *ngSwitchCase="'between'">
-              <mat-form-field appearance="outline">
-                <mat-label>Min</mat-label>
-                <input matInput
-                       type="number"
-                       [(ngModel)]="filter.value.min">
-              </mat-form-field>
-              <span class="range-separator">to</span>
-              <mat-form-field appearance="outline">
-                <mat-label>Max</mat-label>
-                <input matInput
-                       type="number"
-                       [(ngModel)]="filter.value.max">
-              </mat-form-field>
-            </div>
-
-            <!-- No Value (null checks) -->
-            <div class="no-value" *ngSwitchCase="'none'">
-              <span class="no-value-text">No value required</span>
-            </div>
-          </div>
-
-          <!-- Value Type Toggle -->
-          <mat-button-toggle-group [(ngModel)]="filter.value_type"
-                                   (change)="onValueTypeChange(filter, groupIndex, filterIndex)"
-                                   class="value-type-toggle">
-            <mat-button-toggle value="static" matTooltip="Static value">
-              <mat-icon>edit</mat-icon>
-            </mat-button-toggle>
-            <mat-button-toggle value="parameter" matTooltip="Parameter">
-              <mat-icon>tune</mat-icon>
-            </mat-button-toggle>
-            <mat-button-toggle value="dynamic" matTooltip="Dynamic value">
-              <mat-icon>schedule</mat-icon>
-            </mat-button-toggle>
-          </mat-button-toggle-group>
-
-          <!-- Filter Actions -->
-          <div class="filter-actions">
-            <mat-slide-toggle [(ngModel)]="filter.is_active"
-                              (change)="updateFilter(filter, groupIndex, filterIndex)"
-                              matTooltip="Active">
+            <!-- Filter Toggle -->
+            <mat-slide-toggle
+              [(ngModel)]="filter.is_active"
+              (change)="updateFilter(filter)"
+              color="primary"
+              class="filter-toggle">
             </mat-slide-toggle>
-            <button mat-icon-button
-                    (click)="configureFilter(filter, groupIndex, filterIndex)"
-                    matTooltip="Configure">
-              <mat-icon>settings</mat-icon>
-            </button>
-            <button mat-icon-button
-                    (click)="removeFilter(groupIndex, filterIndex)"
-                    matTooltip="Remove">
-              <mat-icon>delete</mat-icon>
-            </button>
+
+            <!-- Filter Configuration -->
+            <div class="filter-config">
+              <!-- Field Selection -->
+              <mat-form-field appearance="outline" class="field-select">
+                <mat-label>Field</mat-label>
+                <mat-select [(ngModel)]="filter.field_path"
+                            (selectionChange)="onFieldChange(filter)">
+                  <mat-optgroup *ngFor="let ds of dataSources" [label]="ds.alias">
+                    <mat-option *ngFor="let field of getFieldsForDataSource(ds)"
+                                [value]="field.path"
+                                [disabled]="!field.is_relation">
+                      <mat-icon>{{ getFieldIcon(field.type) }}</mat-icon>
+                      {{ field.verbose_name }}
+                    </mat-option>
+                  </mat-optgroup>
+                </mat-select>
+              </mat-form-field>
+
+              <!-- Operator Selection -->
+              <mat-form-field appearance="outline" class="operator-select">
+                <mat-label>Operator</mat-label>
+                <mat-select [(ngModel)]="filter.operator"
+                            (selectionChange)="onOperatorChange(filter)">
+                  <mat-option *ngFor="let op of getOperatorsForField(filter)"
+                              [value]="op.value">
+                    {{ op.label }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <!-- Value Input -->
+              <div class="value-input" [ngSwitch]="filter.operator">
+                <!-- Null/Not Null operators don't need value -->
+                <div *ngSwitchCase="'isnull'" class="no-value">
+                  <mat-chip>No value needed</mat-chip>
+                </div>
+                <div *ngSwitchCase="'isnotnull'" class="no-value">
+                  <mat-chip>No value needed</mat-chip>
+                </div>
+
+                <!-- Between operator needs two values -->
+                <div *ngSwitchCase="'between'" class="between-values">
+                  <mat-form-field appearance="outline">
+                    <mat-label>From</mat-label>
+                    <input matInput
+                           [(ngModel)]="filter.value[0]"
+                           [type]="getInputType(filter)"
+                           (blur)="updateFilter(filter)">
+                  </mat-form-field>
+                  <span class="between-separator">to</span>
+                  <mat-form-field appearance="outline">
+                    <mat-label>To</mat-label>
+                    <input matInput
+                           [(ngModel)]="filter.value[1]"
+                           [type]="getInputType(filter)"
+                           (blur)="updateFilter(filter)">
+                  </mat-form-field>
+                </div>
+
+                <!-- Date Range operator -->
+                <div *ngSwitchCase="'date_range'" class="date-range-values">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Start Date</mat-label>
+                    <input matInput
+                           [matDatepicker]="startPicker"
+                           [(ngModel)]="filter.value.start"
+                           (dateChange)="updateFilter(filter)">
+                    <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #startPicker></mat-datepicker>
+                  </mat-form-field>
+                  <span class="date-separator">to</span>
+                  <mat-form-field appearance="outline">
+                    <mat-label>End Date</mat-label>
+                    <input matInput
+                           [matDatepicker]="endPicker"
+                           [(ngModel)]="filter.value.end"
+                           (dateChange)="updateFilter(filter)">
+                    <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #endPicker></mat-datepicker>
+                  </mat-form-field>
+                </div>
+
+                <!-- In/Not In operators need multiple values -->
+                <div *ngSwitchCase="'in'" class="multi-values">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Values (comma separated)</mat-label>
+                    <textarea matInput
+                              [(ngModel)]="filter.value"
+                              (blur)="updateFilter(filter)"
+                              rows="2">
+                    </textarea>
+                  </mat-form-field>
+                </div>
+                <div *ngSwitchCase="'not_in'" class="multi-values">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Values (comma separated)</mat-label>
+                    <textarea matInput
+                              [(ngModel)]="filter.value"
+                              (blur)="updateFilter(filter)"
+                              rows="2">
+                    </textarea>
+                  </mat-form-field>
+                </div>
+
+                <!-- Default single value input -->
+                <div *ngSwitchDefault class="single-value">
+                  <mat-form-field appearance="outline" *ngIf="filter.value_type === 'static'">
+                    <mat-label>Value</mat-label>
+                    <input matInput
+                           [(ngModel)]="filter.value"
+                           [type]="getInputType(filter)"
+                           (blur)="updateFilter(filter)">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" *ngIf="filter.value_type === 'parameter'">
+                    <mat-label>Parameter</mat-label>
+                    <mat-select [(ngModel)]="filter.value"
+                                (selectionChange)="updateFilter(filter)">
+                      <mat-option *ngFor="let param of parameters" [value]="param.name">
+                        <mat-icon>tune</mat-icon>
+                        {{ param.display_name }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" *ngIf="filter.value_type === 'dynamic'">
+                    <mat-label>Dynamic Value</mat-label>
+                    <mat-select [(ngModel)]="filter.value"
+                                (selectionChange)="updateFilter(filter)">
+                      <mat-optgroup label="Date Values">
+                        <mat-option value="today">Today</mat-option>
+                        <mat-option value="yesterday">Yesterday</mat-option>
+                        <mat-option value="tomorrow">Tomorrow</mat-option>
+                        <mat-option value="current_week_start">Start of Week</mat-option>
+                        <mat-option value="current_week_end">End of Week</mat-option>
+                        <mat-option value="current_month_start">Start of Month</mat-option>
+                        <mat-option value="current_month_end">End of Month</mat-option>
+                        <mat-option value="current_year_start">Start of Year</mat-option>
+                        <mat-option value="current_year_end">End of Year</mat-option>
+                      </mat-optgroup>
+                      <mat-optgroup label="User Values">
+                        <mat-option value="current_user_id">Current User ID</mat-option>
+                        <mat-option value="current_user_email">Current User Email</mat-option>
+                      </mat-optgroup>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" *ngIf="filter.value_type === 'user_attribute'">
+                    <mat-label>User Attribute</mat-label>
+                    <input matInput
+                           [(ngModel)]="filter.value"
+                           placeholder="e.g., department, role"
+                           (blur)="updateFilter(filter)">
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <!-- Value Type Selection -->
+              <mat-button-toggle-group [(ngModel)]="filter.value_type"
+                                       (change)="onValueTypeChange(filter)"
+                                       class="value-type-toggle">
+                <mat-button-toggle value="static" matTooltip="Static Value">
+                  <mat-icon>edit</mat-icon>
+                </mat-button-toggle>
+                <mat-button-toggle value="parameter"
+                                   matTooltip="Parameter"
+                                   [disabled]="parameters.length === 0">
+                  <mat-icon>tune</mat-icon>
+                </mat-button-toggle>
+                <mat-button-toggle value="dynamic" matTooltip="Dynamic Value">
+                  <mat-icon>update</mat-icon>
+                </mat-button-toggle>
+                <mat-button-toggle value="user_attribute" matTooltip="User Attribute">
+                  <mat-icon>person</mat-icon>
+                </mat-button-toggle>
+              </mat-button-toggle-group>
+            </div>
+
+            <!-- Filter Options -->
+            <div class="filter-options">
+              <mat-checkbox [(ngModel)]="filter.is_required"
+                            (change)="updateFilter(filter)"
+                            matTooltip="Required filter (cannot be removed by users)">
+                Required
+              </mat-checkbox>
+            </div>
+
+            <!-- Filter Actions -->
+            <div class="filter-actions">
+              <button mat-icon-button
+                      (click)="duplicateFilter(filter)"
+                      matTooltip="Duplicate">
+                <mat-icon>content_copy</mat-icon>
+              </button>
+              <button mat-icon-button
+                      (click)="removeFilter(filter)"
+                      matTooltip="Remove"
+                      color="warn">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
           </div>
         </div>
-
-        <!-- Add Filter Button -->
-        <button mat-button
-                type="button"
-                (click)="addFilter(groupIndex); $event.stopPropagation()"
-                class="add-filter-btn">
-          <mat-icon>add</mat-icon>
-          Add Filter
-        </button>
       </div>
+
+      <!-- Add to Group -->
+      <button mat-button
+              (click)="addFilterToGroup(group)"
+              class="add-to-group-btn">
+        <mat-icon>add</mat-icon>
+        Add Filter to {{ group.logic }} Group
+      </button>
     </div>
 
-  </div>
-
-  <!-- Group Connectors between groups -->
-  <div *ngFor="let group of filterGroups; let groupIndex = index">
-    <div class="group-connector"
-         *ngIf="groupIndex < filterGroups.length - 1">
-      <span class="connector-text">AND</span>
+    <!-- Add New Group -->
+    <div class="add-group-section">
+      <mat-divider></mat-divider>
+      <button mat-button
+              (click)="addFilterGroup()"
+              class="add-group-btn">
+        <mat-icon>add_circle</mat-icon>
+        Add Filter Group
+      </button>
     </div>
   </div>
 
   <!-- Empty State -->
-  <div class="empty-state" *ngIf="filterGroups.length === 0">
-    <mat-icon>filter_list_off</mat-icon>
+  <div class="empty-state" *ngIf="filters.length === 0">
+    <mat-icon>filter_list</mat-icon>
     <h3>No filters defined</h3>
-    <p>Add filter groups to limit the data in your report</p>
+    <p>Add filters to refine your report data</p>
     <button mat-raised-button
             color="primary"
-            (click)="addFilterGroup()">
+            (click)="addFilter()"
+            [disabled]="dataSources.length === 0">
       <mat-icon>add</mat-icon>
       Add First Filter
     </button>
+    <p class="hint" *ngIf="dataSources.length === 0">
+      <mat-icon>info</mat-icon>
+      Add data sources first to enable filtering
+    </p>
   </div>
 
-  <!-- Dynamic Values Reference -->
-  <mat-expansion-panel class="dynamic-values-panel" *ngIf="filters.length > 0">
-    <mat-expansion-panel-header>
-      <mat-panel-title>
-        <mat-icon>info</mat-icon>
-        Dynamic Values Reference
-      </mat-panel-title>
-    </mat-expansion-panel-header>
-
-    <div class="dynamic-values-grid">
-      <div *ngFor="let dv of dynamicValues" class="dynamic-value-item">
-        <code>{{ getInterpolationString(dv.type) }}</code>
-        <span>{{ dv.label }}</span>
+  <!-- Filter Summary -->
+  <mat-card class="filter-summary" *ngIf="filters.length > 0">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>summarize</mat-icon>
+        Filter Logic Summary
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="logic-preview">
+        <div *ngFor="let group of filterGroups; let isLast = last" class="logic-group">
+          <span class="group-logic">{{ group.logic }}</span>
+          <span class="group-conditions">
+            <span *ngFor="let filter of group.filters; let isLastFilter = last" class="condition">
+              <strong>{{ getFieldDisplayName(filter) }}</strong>
+              {{ getOperatorLabel(filter.operator) }}
+              <em>{{ formatFilterValue(filter) }}</em>
+              <span *ngIf="!isLastFilter" class="logic-separator">{{ group.logic }}</span>
+            </span>
+          </span>
+          <span *ngIf="!isLast" class="group-separator">AND</span>
+        </div>
       </div>
-    </div>
-  </mat-expansion-panel>
+    </mat-card-content>
+  </mat-card>
 </div>
 
-<!-- Filter Configuration Dialog -->
-<ng-template #filterConfigDialog>
+<!-- Filter Quick Actions Dialog -->
+<ng-template #quickActionsDialog>
   <h2 mat-dialog-title>
-    <mat-icon>settings</mat-icon>
-    Configure Filter
+    <mat-icon>flash_on</mat-icon>
+    Quick Filter Actions
   </h2>
 
   <mat-dialog-content>
-    <form [formGroup]="filterConfigForm" class="filter-config-form">
-      <mat-slide-toggle formControlName="is_required" color="primary">
-        <mat-icon>{{ filterConfigForm.get('is_required')?.value ? 'lock' : 'lock_open' }}</mat-icon>
-        Required Filter
-      </mat-slide-toggle>
-
-      <mat-form-field appearance="outline" *ngIf="editingFilter?.value_type === 'parameter'">
-        <mat-label>Parameter Name</mat-label>
-        <mat-select formControlName="parameter_name">
-          <mat-option *ngFor="let param of getAvailableParameters()" [value]="param.name">
-            {{ param.display_name }}
-          </mat-option>
-        </mat-select>
-        <mat-hint>Link this filter to a report parameter</mat-hint>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" *ngIf="editingFilter?.value_type === 'dynamic'">
-        <mat-label>Dynamic Value</mat-label>
-        <mat-select formControlName="dynamic_value">
-          <mat-option *ngFor="let dv of dynamicValues" [value]="dv.type">
-            {{ dv.label }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" *ngIf="editingFilter?.value_type === 'user_attribute'">
-        <mat-label>User Attribute</mat-label>
-        <input matInput formControlName="user_attribute" placeholder="e.g., department, role">
-        <mat-hint>Filter based on current user's attributes</mat-hint>
-      </mat-form-field>
-    </form>
+    <div class="quick-actions">
+      <button mat-stroked-button (click)="addCommonFilters()" class="action-btn">
+        <mat-icon>star</mat-icon>
+        Add Common Filters
+      </button>
+      <button mat-stroked-button (click)="clearAllFilters()" class="action-btn">
+        <mat-icon>clear_all</mat-icon>
+        Clear All Filters
+      </button>
+      <button mat-stroked-button (click)="enableAllFilters()" class="action-btn">
+        <mat-icon>check_circle</mat-icon>
+        Enable All
+      </button>
+      <button mat-stroked-button (click)="disableAllFilters()" class="action-btn">
+        <mat-icon>cancel</mat-icon>
+        Disable All
+      </button>
+    </div>
   </mat-dialog-content>
 
   <mat-dialog-actions align="end">
-    <button mat-button mat-dialog-close>Cancel</button>
-    <button mat-raised-button
-            color="primary"
-            (click)="saveFilterConfig()">
-      Save
-    </button>
+    <button mat-button mat-dialog-close>Close</button>
   </mat-dialog-actions>
 </ng-template>
