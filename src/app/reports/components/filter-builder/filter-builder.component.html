@@ -222,7 +222,10 @@
       </div>
     </div>
 
-    <!-- Group Connector - Now inside the ngFor loop -->
+  </div>
+
+  <!-- Group Connectors between groups -->
+  <div *ngFor="let group of filterGroups; let groupIndex = index">
     <div class="group-connector"
          *ngIf="groupIndex < filterGroups.length - 1">
       <span class="connector-text">AND</span>

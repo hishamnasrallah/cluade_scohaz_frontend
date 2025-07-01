@@ -346,6 +346,10 @@ export class AppComponent implements OnInit {
     this.router.navigate(['/inbox']);
   }
 
+  goToReports(): void {
+    this.router.navigate(['/reports']);
+  }
+
   // Settings navigation
   goToSettings(section: string = ''): void {
     if (section) {

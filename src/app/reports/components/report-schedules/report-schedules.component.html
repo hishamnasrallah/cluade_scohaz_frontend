@@ -204,9 +204,9 @@
               <mat-label>Email Subject</mat-label>
               <input matInput
                      formControlName="email_subject"
-                     placeholder="{{report_name}} - {{date}}">
+                     [placeholder]="emailSubjectPlaceholder">
               <mat-icon matPrefix>subject</mat-icon>
-              <mat-hint>You can use variables: {{report_name}}, {{date}}, {{time}}</mat-hint>
+              <mat-hint>{{ emailVariablesHint }}</mat-hint>
               <mat-error *ngIf="scheduleForm.get('email_subject')?.hasError('required')">
                 Email subject is required
               </mat-error>
@@ -306,8 +306,8 @@
             </mat-icon>
             <span>{{ schedule.schedule_type | titlecase }}</span>
             <span class="schedule-details" *ngIf="schedule.schedule_type === 'weekly'">
-  ({{ daysOfWeek.find(d => d.value === schedule.day_of_week)?.label }})
-</span>
+({{ getDayOfWeekLabel(schedule.day_of_week) }})
+            </span>
             <span class="schedule-details" *ngIf="schedule.schedule_type === 'monthly'">
   (Day {{ schedule.day_of_month }})
 </span>

@@ -119,6 +119,16 @@
           <mat-icon>inbox</mat-icon>
           <span>Inbox</span>
         </button>
+
+        <!-- Reports Menu -->
+        <button mat-button
+                (click)="goToReports()"
+                class="nav-menu-item"
+                matTooltip="Reports"
+                matTooltipPosition="below">
+          <mat-icon>assessment</mat-icon>
+          <span>Reports</span>
+        </button>
       </nav>
 
       <!-- Navigation Breadcrumbs -->
@@ -219,6 +229,14 @@
                   <button mat-menu-item (click)="goToSettings('theme-creator')">
                     <mat-icon>palette</mat-icon>
                     <span>Theme Creator</span>
+                  </button>
+                </div>
+
+                <div class="settings-section">
+                  <span class="section-title">Analytics</span>
+                  <button mat-menu-item (click)="goToReports()">
+                    <mat-icon>assessment</mat-icon>
+                    <span>Reports</span>
                   </button>
                 </div>
 

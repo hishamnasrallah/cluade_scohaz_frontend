@@ -3,7 +3,7 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import {FormControl, FormsModule, ReactiveFormsModule} from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -20,6 +20,9 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { Report, ExecutionResult, ReportExecution } from '../../../models/report.models';
 import { ReportService } from '../../../services/report.service';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
+import {MatSlideToggle} from '@angular/material/slide-toggle';
+import {MatFormField, MatLabel} from '@angular/material/form-field';
+import {MatInput} from '@angular/material/input';
 
 Chart.register(...registerables);
 
@@ -41,7 +44,12 @@ Chart.register(...registerables);
     MatTooltipModule,
     MatMenuModule,
     MatDividerModule,
-    MatDialogModule
+    MatDialogModule,
+    MatSlideToggle,
+    MatFormField,
+    MatLabel,
+    FormsModule,
+    MatInput
   ],
   templateUrl: 'report-viewer.component.html',
   styleUrl: 'report-viewer.component.scss'
@@ -66,6 +74,7 @@ export class ReportViewerComponent implements OnInit {
   // Sharing
   shareUrl = '';
   isPublic = false;
+  displayedColumns: string[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -137,6 +146,7 @@ export class ReportViewerComponent implements OnInit {
     }).subscribe({
       next: (result) => {
         this.executionResult = result;
+        this.displayedColumns = result.columns.map(c => c.name);  // <-- Already here!
         this.isExecuting = false;
 
         if (this.viewMode === 'chart' && result.data.length > 0) {
@@ -194,7 +204,7 @@ export class ReportViewerComponent implements OnInit {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${this.report.name}.${format === 'excel' ? 'xlsx' : format}`;
+        a.download = `${this.report?.name}.${format === 'excel' ? 'xlsx' : format}`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -384,5 +394,9 @@ export class ReportViewerComponent implements OnInit {
   formatDate(dateString?: string): string {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleString();
+  }
+
+  navigateToReports(): void {
+    this.router.navigate(['/reports']);
   }
 }

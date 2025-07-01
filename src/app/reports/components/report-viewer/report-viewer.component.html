@@ -5,7 +5,7 @@
   <div class="viewer-header">
     <div class="header-content">
       <div class="header-left">
-        <button mat-icon-button (click)="router.navigate(['/reports'])" class="back-btn">
+        <button mat-icon-button (click)="navigateToReports()" class="back-btn">
           <mat-icon>arrow_back</mat-icon>
         </button>
         <div class="header-info">
@@ -16,7 +16,7 @@
                 {{ report?.report_type }}
               </mat-chip>
               <mat-chip *ngIf="report?.category" class="category-chip">
-                {{ report.category }}
+                {{ report?.category }}
               </mat-chip>
               <mat-chip class="visibility-chip" [class.public]="isPublic">
                 <mat-icon>{{ isPublic ? 'public' : 'lock' }}</mat-icon>
@@ -119,7 +119,7 @@
     <div class="view-controls">
       <div class="execution-info" *ngIf="executionResult">
         <mat-icon>schedule</mat-icon>
-        <span>Last updated: {{ formatDate(executionResult.parameters_used?.executed_at) }}</span>
+        <span>Last updated: {{ formatDate(executionResult.parameters_used?.['executed_at']) }}</span>
         <span class="separator">•</span>
         <span>{{ executionResult.row_count }} rows</span>
         <span class="separator">•</span>
@@ -184,11 +184,11 @@
     <mat-card class="results-card" *ngIf="viewMode === 'table' && executionResult?.data?.length && !isExecuting">
       <div class="table-container">
         <table mat-table
-               [dataSource]="executionResult.data"
+               [dataSource]="executionResult?.data || []"
                matSort
                class="results-table">
 
-          <ng-container *ngFor="let column of executionResult.columns" [matColumnDef]="column.name">
+          <ng-container *ngFor="let column of executionResult?.columns || []" [matColumnDef]="column.name">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>
               {{ column.display_name }}
             </th>
@@ -197,14 +197,14 @@
             </td>
           </ng-container>
 
-          <tr mat-header-row *matHeaderRowDef="executionResult.columns.map(c => c.name); sticky: true"></tr>
-          <tr mat-row *matRowDef="let row; columns: executionResult.columns.map(c => c.name);"></tr>
+          <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
         </table>
       </div>
 
       <mat-paginator [pageSizeOptions]="[10, 25, 50, 100]"
                      showFirstLastButtons
-                     [length]="executionResult.row_count">
+                     [length]="executionResult?.row_count || 0">
       </mat-paginator>
     </mat-card>
 

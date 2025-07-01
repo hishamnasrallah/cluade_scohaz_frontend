@@ -184,6 +184,19 @@ export const routes: Routes = [
     }
   },
 
+  // Reports Module
+  {
+    path: 'reports',
+    canActivate: [AuthGuard],
+    loadChildren: () => import('./reports/reports.routes').then(m => m.REPORT_ROUTES),
+    data: {
+      title: 'Reports',
+      description: 'Dynamic reporting and analytics',
+      icon: 'assessment',
+      requiresAuth: true
+    }
+  },
+
   // Catch-all route - redirect to dashboard
   {
     path: '**',

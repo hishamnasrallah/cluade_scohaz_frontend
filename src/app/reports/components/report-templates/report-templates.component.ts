@@ -66,7 +66,6 @@ interface ReportTemplate {
   styleUrl: 'report-templates.component.scss'
 })
 export class ReportTemplatesComponent implements OnInit {
-  router = Router;
 
   templates: ReportTemplate[] = [
     {
@@ -321,5 +320,13 @@ export class ReportTemplatesComponent implements OnInit {
       'Marketing': 'campaign'
     };
     return icons[category] || 'category';
+  }
+
+  navigateToCreate(): void {
+    this.router.navigate(['/reports/create']);
+  }
+
+  hasAggregations(template: ReportTemplate): boolean {
+    return template.config.fields.some(f => f.aggregation);
   }
 }

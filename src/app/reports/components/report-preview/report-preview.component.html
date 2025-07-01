@@ -101,7 +101,7 @@
               {{ field.aggregation }}
             </mat-chip>
             <mat-chip *ngIf="field.formatting?.type" class="format-chip">
-              {{ field.formatting.type }}
+              {{ field.formatting?.type }}
             </mat-chip>
           </div>
         </div>
@@ -124,7 +124,7 @@
             <span class="item-name">{{ filter.field_path }}</span>
             <span class="item-meta">
               {{ getOperatorLabel(filter.operator) }}
-              <strong>{{ filter.value_type === 'parameter' ? '{{' + filter.value + '}}' : filter.value }}</strong>
+              <strong>{{ formatFilterValue(filter) }}</strong>
             </span>
           </div>
           <div class="filter-badges">
@@ -231,8 +231,8 @@
               </td>
             </ng-container>
 
-            <tr mat-header-row *matHeaderRowDef="previewData.columns.map(c => c.name)"></tr>
-            <tr mat-row *matRowDef="let row; columns: previewData.columns.map(c => c.name);"></tr>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
           </table>
         </div>
 

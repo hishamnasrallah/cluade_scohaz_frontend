@@ -69,7 +69,15 @@ export class ReportPreviewComponent implements OnInit {
       requiredParameters: this.parameters.filter(p => p.is_required).length
     };
   }
-
+  get displayedColumns(): string[] {
+    return this.previewData?.columns?.map(c => c.name) || [];
+  }
+  formatFilterValue(filter: Filter): string {
+    if (filter.value_type === 'parameter') {
+      return `{{${filter.value}}}`;
+    }
+    return filter.value;
+  }
   runPreview(): void {
     if (!this.report?.id) {
       this.snackBar.open('Please save the report first', 'Close', {

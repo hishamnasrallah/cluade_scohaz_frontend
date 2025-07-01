@@ -128,8 +128,8 @@
                   Hidden
                 </mat-chip>
                 <mat-chip *ngIf="field.formatting?.type" class="format-chip">
-                  <mat-icon>{{ getFormattingIcon(field.formatting.type) }}</mat-icon>
-                  {{ field.formatting.type }}
+                  <mat-icon>{{ getFormattingIcon(field.formatting?.type || '') }}</mat-icon>
+                  {{ field.formatting?.type }}
                 </mat-chip>
               </div>
 

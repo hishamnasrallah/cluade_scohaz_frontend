@@ -16,7 +16,7 @@
       <div class="header-actions">
         <button mat-raised-button
                 color="primary"
-                (click)="router.navigate(['/reports/create'])">
+                (click)="navigateToCreate()">
           <mat-icon>add</mat-icon>
           Create Custom Report
         </button>
@@ -77,7 +77,7 @@
             <mat-icon>view_column</mat-icon>
             <span>{{ template.config.fields.length }} fields</span>
           </div>
-          <div class="detail-item" *ngIf="template.config.parameters?.length">
+          <div class="detail-item" *ngIf="template.config.parameters && template.config.parameters.length > 0">
             <mat-icon>tune</mat-icon>
             <span>{{ template.config.parameters.length }} parameter{{ template.config.parameters.length > 1 ? 's' : '' }}</span>
           </div>
@@ -87,7 +87,7 @@
         <div class="config-preview">
           <h4>Includes:</h4>
           <ul>
-            <li *ngIf="template.config.fields.some(f => f.aggregation)">
+            <li *ngIf="hasAggregations(template)">
               <mat-icon>functions</mat-icon>
               Aggregations & Grouping
             </li>

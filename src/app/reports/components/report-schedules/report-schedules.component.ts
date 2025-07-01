@@ -127,6 +127,8 @@ export class ReportSchedulesComponent implements OnInit {
   availableGroups: Group[] = [];
   filteredUsers: Observable<User[]> | undefined;
   filteredGroups: Observable<Group[]> | undefined;
+  emailSubjectPlaceholder = '{{report_name}} - {{date}}';
+  emailVariablesHint = 'You can use variables: {{report_name}}, {{date}}, {{time}}';
 
   constructor(
     private fb: FormBuilder,
@@ -502,6 +504,12 @@ export class ReportSchedulesComponent implements OnInit {
   ngAfterViewInit(): void {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
+  }
+
+  getDayOfWeekLabel(dayValue: number | undefined): string {
+    if (dayValue === undefined || dayValue === null) return '';
+    const day = this.daysOfWeek.find(d => d.value === dayValue);
+    return day ? day.label : '';
   }
 }
 

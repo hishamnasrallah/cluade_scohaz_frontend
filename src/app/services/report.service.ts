@@ -26,7 +26,7 @@ import {
 })
 export class ReportService {
   private baseUrl = '';
-  private apiPath = '/reporting/api';
+  private apiPath = '/reports/api';
 
   constructor(
     private http: HttpClient,
