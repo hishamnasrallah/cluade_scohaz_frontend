@@ -1,3 +1,5 @@
+<!-- src/app/reports/components/parameter-builder/parameter-builder.component.html -->
+
 <div class="parameter-builder">
   <!-- Header -->
   <div class="builder-header">
@@ -5,393 +7,644 @@
       <mat-icon>tune</mat-icon>
       <h3>Report Parameters</h3>
       <span class="parameter-count" *ngIf="parameters.length > 0">
-            {{ parameters.length }} parameter{{ parameters.length > 1 ? 's' : '' }}
-          </span>
+        {{ parameters.length }} parameter{{ parameters.length > 1 ? 's' : '' }} defined
+      </span>
     </div>
-    <button mat-raised-button
-            color="primary"
-            (click)="addParameter()"
-            class="add-parameter-btn">
-      <mat-icon>add</mat-icon>
-      Add Parameter
-    </button>
+    <div class="header-actions">
+      <button mat-icon-button
+              [matMenuTriggerFor]="parameterMenu"
+              matTooltip="Parameter Actions"
+              *ngIf="parameters.length > 0">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #parameterMenu="matMenu">
+        <button mat-menu-item (click)="importParameters()">
+          <mat-icon>upload</mat-icon>
+          <span>Import Parameters</span>
+        </button>
+        <button mat-menu-item (click)="exportParameters()" [disabled]="parameters.length === 0">
+          <mat-icon>download</mat-icon>
+          <span>Export Parameters</span>
+        </button>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="showParameterTemplates()">
+          <mat-icon>content_copy</mat-icon>
+          <span>Parameter Templates</span>
+        </button>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="clearAllParameters()" [disabled]="parameters.length === 0">
+          <mat-icon>clear_all</mat-icon>
+          <span>Clear All</span>
+        </button>
+      </mat-menu>
+      <button mat-raised-button
+              color="primary"
+              (click)="addParameter()"
+              class="add-parameter-btn">
+        <mat-icon>add</mat-icon>
+        Add Parameter
+      </button>
+    </div>
   </div>
 
   <!-- Parameters List -->
   <div class="parameters-list"
        cdkDropList
+       [cdkDropListData]="parameters"
        (cdkDropListDropped)="onDrop($event)"
        *ngIf="parameters.length > 0">
 
-    <mat-expansion-panel *ngFor="let parameter of parameters; let i = index"
-                         cdkDrag
-                         [cdkDragData]="parameter"
-                         class="parameter-panel">
+    <mat-accordion class="parameter-accordion">
+      <mat-expansion-panel *ngFor="let param of parameters; let i = index"
+                           cdkDrag
+                           [cdkDragData]="param"
+                           class="parameter-panel"
+                           [expanded]="expandedIndex === i"
+                           (opened)="expandedIndex = i"
+                           (closed)="expandedIndex = expandedIndex === i ? -1 : expandedIndex">
 
-      <!-- Panel Header -->
-      <mat-expansion-panel-header>
-        <mat-panel-title>
-          <div class="panel-title-content">
-            <mat-icon cdkDragHandle class="drag-handle">drag_indicator</mat-icon>
-            <mat-icon>{{ getParameterIcon(parameter.parameter_type) }}</mat-icon>
-            <span class="parameter-name">{{ parameter.display_name || parameter.name }}</span>
-            <mat-chip class="type-chip">{{ getParameterTypeLabel(parameter.parameter_type) }}</mat-chip>
-            <mat-icon class="required-indicator"
-                      *ngIf="parameter.is_required"
-                      matTooltip="Required">
-              error_outline
-            </mat-icon>
-          </div>
-        </mat-panel-title>
-      </mat-expansion-panel-header>
-
-      <!-- Panel Content -->
-      <div class="parameter-content">
-        <form [formGroup]="getParameterForm(i)" class="parameter-form">
-          <!-- Basic Info -->
-          <div class="form-section">
-            <h4>Basic Information</h4>
-
-            <div class="form-row">
-              <mat-form-field appearance="outline" class="half-width">
-                <mat-label>Parameter Name</mat-label>
-                <input matInput
-                       formControlName="name"
-                       placeholder="parameter_name"
-                       (blur)="updateParameter(i)">
-                <mat-icon matPrefix>label</mat-icon>
-                <mat-hint>Internal name (no spaces)</mat-hint>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline" class="half-width">
-                <mat-label>Display Name</mat-label>
-                <input matInput
-                       formControlName="display_name"
-                       placeholder="Display Name"
-                       (blur)="updateParameter(i)">
-                <mat-icon matPrefix>text_fields</mat-icon>
-              </mat-form-field>
+        <!-- Panel Header -->
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <div class="panel-title">
+              <mat-icon cdkDragHandle class="drag-handle">drag_indicator</mat-icon>
+              <mat-icon class="param-icon">{{ getParameterIcon(param.parameter_type) }}</mat-icon>
+              <span class="param-name">{{ param.display_name || param.name || 'New Parameter' }}</span>
+              <mat-chip class="param-type-chip">{{ getParameterTypeLabel(param.parameter_type) }}</mat-chip>
+              <mat-icon *ngIf="param.is_required" class="required-icon" matTooltip="Required">error</mat-icon>
             </div>
+          </mat-panel-title>
+          <mat-panel-description>
+            <span class="param-variable">{{ param.name ? '{{' + param.name + '}}' : 'Not configured' }}</span>
+          </mat-panel-description>
+        </mat-expansion-panel-header>
 
-            <mat-form-field appearance="outline">
-              <mat-label>Help Text</mat-label>
-              <textarea matInput
-                        formControlName="help_text"
-                        rows="2"
-                        placeholder="Provide guidance for users..."
-                        (blur)="updateParameter(i)"></textarea>
-              <mat-icon matPrefix>help_outline</mat-icon>
-            </mat-form-field>
+        <!-- Panel Content -->
+        <div class="parameter-content">
+          <form [formGroup]="getParameterForm(i)" class="parameter-form">
 
-            <div class="form-row">
-              <mat-form-field appearance="outline" class="half-width">
-                <mat-label>Parameter Type</mat-label>
-                <mat-select formControlName="parameter_type"
-                            (selectionChange)="onParameterTypeChange(i)">
-                  <mat-option *ngFor="let type of parameterTypes" [value]="type.value">
-                    <mat-icon>{{ type.icon }}</mat-icon>
-                    {{ type.label }}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
+            <!-- Basic Information -->
+            <div class="form-section">
+              <h4 class="section-title">Basic Information</h4>
 
-              <mat-form-field appearance="outline" class="half-width">
-                <mat-label>Placeholder</mat-label>
-                <input matInput
-                       formControlName="placeholder"
-                       (blur)="updateParameter(i)">
-                <mat-icon matPrefix>edit</mat-icon>
-              </mat-form-field>
-            </div>
-
-            <mat-slide-toggle formControlName="is_required"
-                              (change)="updateParameter(i)"
-                              color="primary">
-              <mat-icon>{{ getParameterForm(i).get('is_required')?.value ? 'lock' : 'lock_open' }}</mat-icon>
-              Required Parameter
-            </mat-slide-toggle>
-          </div>
-
-          <!-- Type-Specific Configuration -->
-          <div class="form-section" [ngSwitch]="parameter.parameter_type">
-
-            <!-- Text Configuration -->
-            <div *ngSwitchCase="'text'" class="type-config">
-              <h4>Text Configuration</h4>
-              <mat-form-field appearance="outline">
-                <mat-label>Default Value</mat-label>
-                <input matInput
-                       formControlName="default_value"
-                       (blur)="updateParameter(i)">
-              </mat-form-field>
-
-              <div class="validation-rules" formGroupName="validation_rules">
+              <div class="form-row">
                 <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>Min Length</mat-label>
+                  <mat-label>Parameter Name</mat-label>
                   <input matInput
-                         type="number"
-                         formControlName="min_length"
-                         (blur)="updateParameter(i)">
+                         formControlName="name"
+                         placeholder="e.g., start_date"
+                         (blur)="updateParameterName(param, i)">
+                  <mat-icon matPrefix>code</mat-icon>
+                  <mat-hint>Used in filters and queries as {{name}}</mat-hint>
+                  <mat-error *ngIf="getParameterForm(i).get('name')?.hasError('required')">
+                    Parameter name is required
+                  </mat-error>
+                  <mat-error *ngIf="getParameterForm(i).get('name')?.hasError('pattern')">
+                    Only lowercase letters, numbers, and underscores allowed
+                  </mat-error>
                 </mat-form-field>
+
                 <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>Max Length</mat-label>
+                  <mat-label>Display Name</mat-label>
                   <input matInput
-                         type="number"
-                         formControlName="max_length"
-                         (blur)="updateParameter(i)">
+                         formControlName="display_name"
+                         placeholder="e.g., Start Date">
+                  <mat-icon matPrefix>label</mat-icon>
+                  <mat-hint>Shown to users when running the report</mat-hint>
                 </mat-form-field>
+              </div>
+
+              <div class="form-row">
                 <mat-form-field appearance="outline">
-                  <mat-label>Regex Pattern</mat-label>
-                  <input matInput
-                         formControlName="regex"
-                         placeholder="^[A-Za-z]+$"
-                         (blur)="updateParameter(i)">
-                  <mat-icon matPrefix>pattern</mat-icon>
+                  <mat-label>Help Text</mat-label>
+                  <textarea matInput
+                            formControlName="help_text"
+                            rows="2"
+                            placeholder="Provide guidance for users..."></textarea>
+                  <mat-icon matPrefix>help</mat-icon>
                 </mat-form-field>
               </div>
-            </div>
 
-            <!-- Number Configuration -->
-            <div *ngSwitchCase="'number'" class="type-config">
-              <h4>Number Configuration</h4>
-              <mat-form-field appearance="outline">
-                <mat-label>Default Value</mat-label>
-                <input matInput
-                       type="number"
-                       formControlName="default_value"
-                       (blur)="updateParameter(i)">
-              </mat-form-field>
-
-              <div class="validation-rules" formGroupName="validation_rules">
-                <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>Min Value</mat-label>
-                  <input matInput
-                         type="number"
-                         formControlName="min_value"
-                         (blur)="updateParameter(i)">
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>Max Value</mat-label>
-                  <input matInput
-                         type="number"
-                         formControlName="max_value"
-                         (blur)="updateParameter(i)">
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>Step</mat-label>
-                  <input matInput
-                         type="number"
-                         formControlName="step"
-                         (blur)="updateParameter(i)">
-                </mat-form-field>
-                <mat-checkbox formControlName="allow_decimals"
-                              (change)="updateParameter(i)">
-                  Allow Decimals
-                </mat-checkbox>
-              </div>
-            </div>
-
-            <!-- Date Configuration -->
-            <div *ngSwitchCase="'date'" class="type-config">
-              <h4>Date Configuration</h4>
-              <mat-form-field appearance="outline">
-                <mat-label>Default Value</mat-label>
-                <input matInput
-                       [matDatepicker]="defaultPicker"
-                       formControlName="default_value"
-                       (dateChange)="updateParameter(i)">
-                <mat-datepicker-toggle matIconSuffix [for]="defaultPicker"></mat-datepicker-toggle>
-                <mat-datepicker #defaultPicker></mat-datepicker>
-              </mat-form-field>
-
-              <div class="validation-rules" formGroupName="validation_rules">
-                <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>Min Date</mat-label>
-                  <input matInput
-                         [matDatepicker]="minPicker"
-                         formControlName="min_date"
-                         (dateChange)="updateParameter(i)">
-                  <mat-datepicker-toggle matIconSuffix [for]="minPicker"></mat-datepicker-toggle>
-                  <mat-datepicker #minPicker></mat-datepicker>
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>Max Date</mat-label>
-                  <input matInput
-                         [matDatepicker]="maxPicker"
-                         formControlName="max_date"
-                         (dateChange)="updateParameter(i)">
-                  <mat-datepicker-toggle matIconSuffix [for]="maxPicker"></mat-datepicker-toggle>
-                  <mat-datepicker #maxPicker></mat-datepicker>
-                </mat-form-field>
-                <mat-checkbox formControlName="allow_past"
-                              (change)="updateParameter(i)">
-                  Allow Past Dates
-                </mat-checkbox>
-                <mat-checkbox formControlName="allow_future"
-                              (change)="updateParameter(i)">
-                  Allow Future Dates
-                </mat-checkbox>
-              </div>
-            </div>
-
-            <!-- Date Range Configuration -->
-            <div *ngSwitchCase="'date_range'" class="type-config">
-              <h4>Date Range Configuration</h4>
-              <div class="default-range">
-                <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>Default Start</mat-label>
-                  <mat-select formControlName="default_start"
-                              (selectionChange)="updateParameter(i)">
-                    <mat-option value="">None</mat-option>
-                    <mat-option value="current_month_start">Start of Month</mat-option>
-                    <mat-option value="current_week_start">Start of Week</mat-option>
-                    <mat-option value="current_year_start">Start of Year</mat-option>
-                    <mat-option value="today">Today</mat-option>
-                  </mat-select>
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>Default End</mat-label>
-                  <mat-select formControlName="default_end"
-                              (selectionChange)="updateParameter(i)">
-                    <mat-option value="">None</mat-option>
-                    <mat-option value="current_month_end">End of Month</mat-option>
-                    <mat-option value="current_week_end">End of Week</mat-option>
-                    <mat-option value="current_year_end">End of Year</mat-option>
-                    <mat-option value="today">Today</mat-option>
-                  </mat-select>
-                </mat-form-field>
-              </div>
-            </div>
-
-            <!-- Select Configuration -->
-            <div *ngSwitchCase="'select'" class="type-config">
-              <h4>Select Options</h4>
-
-              <mat-radio-group formControlName="choices_type"
-                               (change)="onChoicesTypeChange(i)"
-                               class="choices-type-radio">
-                <mat-radio-button value="static">Static Choices</mat-radio-button>
-                <mat-radio-button value="dynamic">Dynamic Query</mat-radio-button>
-              </mat-radio-group>
-
-              <!-- Static Choices -->
-              <div *ngIf="getParameterForm(i).get('choices_type')?.value === 'static'"
-                   class="static-choices">
-                <div class="choices-list">
-                  <div *ngFor="let choice of getStaticChoices(i); let choiceIndex = index"
-                       class="choice-item">
-                    <mat-form-field appearance="outline" class="choice-value">
-                      <mat-label>Value</mat-label>
-                      <input matInput
-                             [(ngModel)]="choice.value"
-                             [ngModelOptions]="{standalone: true}"
-                             (blur)="updateStaticChoices(i)">
-                    </mat-form-field>
-                    <mat-form-field appearance="outline" class="choice-label">
-                      <mat-label>Label</mat-label>
-                      <input matInput
-                             [(ngModel)]="choice.label"
-                             [ngModelOptions]="{standalone: true}"
-                             (blur)="updateStaticChoices(i)">
-                    </mat-form-field>
-                    <button mat-icon-button
-                            (click)="removeChoice(i, choiceIndex)"
-                            matTooltip="Remove">
-                      <mat-icon>delete</mat-icon>
-                    </button>
-                  </div>
-                </div>
-                <button mat-button
-                        (click)="addChoice(i)"
-                        class="add-choice-btn">
-                  <mat-icon>add</mat-icon>
-                  Add Choice
-                </button>
-              </div>
-
-              <!-- Dynamic Query -->
-              <div *ngIf="getParameterForm(i).get('choices_type')?.value === 'dynamic'"
-                   class="dynamic-query">
-                <mat-form-field appearance="outline">
-                  <mat-label>Content Type</mat-label>
-                  <mat-select formControlName="query_content_type"
-                              (selectionChange)="updateParameter(i)">
-                    <mat-option *ngFor="let ct of getContentTypes()" [value]="ct.id">
-                      {{ ct.display_name }}
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="type-select">
+                  <mat-label>Parameter Type</mat-label>
+                  <mat-select formControlName="parameter_type"
+                              (selectionChange)="onParameterTypeChange(param, i)">
+                    <mat-option *ngFor="let type of parameterTypes" [value]="type.value">
+                      <mat-icon>{{ type.icon }}</mat-icon>
+                      {{ type.label }}
                     </mat-option>
                   </mat-select>
                 </mat-form-field>
+
+                <mat-slide-toggle formControlName="is_required"
+                                  color="primary"
+                                  class="required-toggle">
+                  <mat-icon>{{ getParameterForm(i).get('is_required')?.value ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+                  Required
+                </mat-slide-toggle>
+              </div>
+            </div>
+
+            <mat-divider></mat-divider>
+
+            <!-- Type-Specific Configuration -->
+            <div class="form-section" [ngSwitch]="param.parameter_type">
+
+              <!-- Text Parameter Configuration -->
+              <div *ngSwitchCase="'text'" class="type-config">
+                <h4 class="section-title">Text Configuration</h4>
+
                 <div class="form-row">
                   <mat-form-field appearance="outline" class="half-width">
-                    <mat-label>Value Field</mat-label>
+                    <mat-label>Default Value</mat-label>
                     <input matInput
-                           formControlName="query_value_field"
-                           placeholder="id"
-                           (blur)="updateParameter(i)">
+                           [(ngModel)]="param.default_value"
+                           [ngModelOptions]="{standalone: true}"
+                           placeholder="Default text">
+                    <mat-icon matPrefix>text_fields</mat-icon>
                   </mat-form-field>
+
                   <mat-form-field appearance="outline" class="half-width">
-                    <mat-label>Label Field</mat-label>
+                    <mat-label>Placeholder</mat-label>
                     <input matInput
-                           formControlName="query_label_field"
-                           placeholder="name"
-                           (blur)="updateParameter(i)">
+                           [(ngModel)]="param.placeholder"
+                           [ngModelOptions]="{standalone: true}"
+                           placeholder="Placeholder text">
+                  </mat-form-field>
+                </div>
+
+                <mat-expansion-panel class="validation-panel">
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>
+                      <mat-icon>rule</mat-icon>
+                      Validation Rules
+                    </mat-panel-title>
+                  </mat-expansion-panel-header>
+
+                  <div class="validation-content">
+                    <div class="form-row">
+                      <mat-form-field appearance="outline" class="small-field">
+                        <mat-label>Min Length</mat-label>
+                        <input matInput
+                               type="number"
+                               min="0"
+                               [(ngModel)]="param.validation_rules!['min_length']"
+                               [ngModelOptions]="{standalone: true}">
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline" class="small-field">
+                        <mat-label>Max Length</mat-label>
+                        <input matInput
+                               type="number"
+                               min="0"
+                               [(ngModel)]="param.validation_rules!['max_length']"
+                               [ngModelOptions]="{standalone: true}">
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline" class="flex-field">
+                        <mat-label>Regex Pattern</mat-label>
+                        <input matInput
+                               [(ngModel)]="param.validation_rules!['regex']"
+                               [ngModelOptions]="{standalone: true}"
+                               placeholder="e.g., ^[A-Z]{3}-\\d{4}$">
+                      </mat-form-field>
+                    </div>
+                  </div>
+                </mat-expansion-panel>
+              </div>
+
+              <!-- Number Parameter Configuration -->
+              <div *ngSwitchCase="'number'" class="type-config">
+                <h4 class="section-title">Number Configuration</h4>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Default Value</mat-label>
+                    <input matInput
+                           type="number"
+                           [(ngModel)]="param.default_value"
+                           [ngModelOptions]="{standalone: true}"
+                           placeholder="Default number">
+                    <mat-icon matPrefix>pin</mat-icon>
+                  </mat-form-field>
+                </div>
+
+                <mat-expansion-panel class="validation-panel">
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>
+                      <mat-icon>rule</mat-icon>
+                      Validation Rules
+                    </mat-panel-title>
+                  </mat-expansion-panel-header>
+
+                  <div class="validation-content">
+                    <div class="form-row">
+                      <mat-form-field appearance="outline" class="half-width">
+                        <mat-label>Minimum Value</mat-label>
+                        <input matInput
+                               type="number"
+                               [(ngModel)]="param.validation_rules!['min_value']"
+                               [ngModelOptions]="{standalone: true}">
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline" class="half-width">
+                        <mat-label>Maximum Value</mat-label>
+                        <input matInput
+                               type="number"
+                               [(ngModel)]="param.validation_rules!['max_value']"
+                               [ngModelOptions]="{standalone: true}">
+                      </mat-form-field>
+                    </div>
+
+                    <div class="form-row">
+                      <mat-slide-toggle [(ngModel)]="param.validation_rules!['integer_only']"
+                                        [ngModelOptions]="{standalone: true}"
+                                        color="primary">
+                        Integer values only
+                      </mat-slide-toggle>
+
+                      <mat-slide-toggle [(ngModel)]="param.validation_rules!['positive_only']"
+                                        [ngModelOptions]="{standalone: true}"
+                                        color="primary">
+                        Positive values only
+                      </mat-slide-toggle>
+                    </div>
+                  </div>
+                </mat-expansion-panel>
+              </div>
+
+              <!-- Date Parameter Configuration -->
+              <div *ngSwitchCase="'date'" class="type-config">
+                <h4 class="section-title">Date Configuration</h4>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Default Value</mat-label>
+                    <mat-select [(ngModel)]="param.default_value"
+                                [ngModelOptions]="{standalone: true}">
+                      <mat-option value="">None</mat-option>
+                      <mat-optgroup label="Dynamic Values">
+                        <mat-option value="today">Today</mat-option>
+                        <mat-option value="yesterday">Yesterday</mat-option>
+                        <mat-option value="tomorrow">Tomorrow</mat-option>
+                        <mat-option value="current_month_start">Start of Month</mat-option>
+                        <mat-option value="current_month_end">End of Month</mat-option>
+                        <mat-option value="current_year_start">Start of Year</mat-option>
+                        <mat-option value="current_year_end">End of Year</mat-option>
+                      </mat-optgroup>
+                      <mat-optgroup label="Static Date">
+                        <mat-option value="custom">Custom Date...</mat-option>
+                      </mat-optgroup>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" *ngIf="param.default_value === 'custom'">
+                    <mat-label>Custom Date</mat-label>
+                    <input matInput
+                           [matDatepicker]="picker"
+                           [(ngModel)]="param.validation_rules!['custom_default']"
+                           [ngModelOptions]="{standalone: true}">
+                    <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                    <mat-datepicker #picker></mat-datepicker>
+                  </mat-form-field>
+                </div>
+
+                <mat-expansion-panel class="validation-panel">
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>
+                      <mat-icon>rule</mat-icon>
+                      Validation Rules
+                    </mat-panel-title>
+                  </mat-expansion-panel-header>
+
+                  <div class="validation-content">
+                    <div class="form-row">
+                      <mat-slide-toggle [(ngModel)]="param.validation_rules!['future_only']"
+                                        [ngModelOptions]="{standalone: true}"
+                                        color="primary"
+                                        (change)="onDateValidationChange(param)">
+                        Future dates only
+                      </mat-slide-toggle>
+
+                      <mat-slide-toggle [(ngModel)]="param.validation_rules!['past_only']"
+                                        [ngModelOptions]="{standalone: true}"
+                                        color="primary"
+                                        (change)="onDateValidationChange(param)">
+                        Past dates only
+                      </mat-slide-toggle>
+                    </div>
+
+                    <div class="form-row">
+                      <mat-form-field appearance="outline" class="half-width">
+                        <mat-label>Earliest Date</mat-label>
+                        <input matInput
+                               [matDatepicker]="minPicker"
+                               [(ngModel)]="param.validation_rules!['min_date']"
+                               [ngModelOptions]="{standalone: true}">
+                        <mat-datepicker-toggle matIconSuffix [for]="minPicker"></mat-datepicker-toggle>
+                        <mat-datepicker #minPicker></mat-datepicker>
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline" class="half-width">
+                        <mat-label>Latest Date</mat-label>
+                        <input matInput
+                               [matDatepicker]="maxPicker"
+                               [(ngModel)]="param.validation_rules!['max_date']"
+                               [ngModelOptions]="{standalone: true}">
+                        <mat-datepicker-toggle matIconSuffix [for]="maxPicker"></mat-datepicker-toggle>
+                        <mat-datepicker #maxPicker></mat-datepicker>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                </mat-expansion-panel>
+              </div>
+
+              <!-- Date Range Parameter Configuration -->
+              <div *ngSwitchCase="'date_range'" class="type-config">
+                <h4 class="section-title">Date Range Configuration</h4>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Default Range</mat-label>
+                    <mat-select [(ngModel)]="selectedDateRangeDefault"
+                                [ngModelOptions]="{standalone: true}"
+                                (selectionChange)="onDateRangeDefaultChange(param)">
+                      <mat-option value="">None</mat-option>
+                      <mat-option value="current_week">Current Week</mat-option>
+                      <mat-option value="current_month">Current Month</mat-option>
+                      <mat-option value="current_quarter">Current Quarter</mat-option>
+                      <mat-option value="current_year">Current Year</mat-option>
+                      <mat-option value="last_7_days">Last 7 Days</mat-option>
+                      <mat-option value="last_30_days">Last 30 Days</mat-option>
+                      <mat-option value="last_90_days">Last 90 Days</mat-option>
+                      <mat-option value="custom">Custom Range...</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row" *ngIf="selectedDateRangeDefault === 'custom'">
+                  <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Default Start Date</mat-label>
+                    <input matInput
+                           [matDatepicker]="startDefaultPicker"
+                           [(ngModel)]="param.default_value!.start"
+                           [ngModelOptions]="{standalone: true}">
+                    <mat-datepicker-toggle matIconSuffix [for]="startDefaultPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #startDefaultPicker></mat-datepicker>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Default End Date</mat-label>
+                    <input matInput
+                           [matDatepicker]="endDefaultPicker"
+                           [(ngModel)]="param.default_value!.end"
+                           [ngModelOptions]="{standalone: true}">
+                    <mat-datepicker-toggle matIconSuffix [for]="endDefaultPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #endDefaultPicker></mat-datepicker>
                   </mat-form-field>
                 </div>
               </div>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Default Selection</mat-label>
-                <input matInput
-                       formControlName="default_value"
-                       (blur)="updateParameter(i)">
-              </mat-form-field>
-            </div>
+              <!-- Select Parameter Configuration -->
+              <div *ngSwitchCase="'select'" class="type-config">
+                <h4 class="section-title">Select Configuration</h4>
 
-            <!-- Multi-Select Configuration -->
-            <div *ngSwitchCase="'multiselect'" class="type-config">
-              <h4>Multi-Select Options</h4>
-              <!-- Similar to select but with multi-selection options -->
-              <div class="validation-rules" formGroupName="validation_rules">
-                <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>Min Selections</mat-label>
-                  <input matInput
-                         type="number"
-                         formControlName="min_selections"
-                         (blur)="updateParameter(i)">
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>Max Selections</mat-label>
-                  <input matInput
-                         type="number"
-                         formControlName="max_selections"
-                         (blur)="updateParameter(i)">
-                </mat-form-field>
+                <mat-tab-group>
+                  <mat-tab label="Static Choices">
+                    <div class="choices-container">
+                      <div class="choices-list">
+                        <div *ngFor="let choice of param.choices_static || []; let j = index"
+                             class="choice-item">
+                          <mat-form-field appearance="outline" class="choice-value">
+                            <mat-label>Value</mat-label>
+                            <input matInput
+                                   [(ngModel)]="choice.value"
+                                   [ngModelOptions]="{standalone: true}">
+                          </mat-form-field>
+                          <mat-form-field appearance="outline" class="choice-label">
+                            <mat-label>Display Label</mat-label>
+                            <input matInput
+                                   [(ngModel)]="choice.label"
+                                   [ngModelOptions]="{standalone: true}">
+                          </mat-form-field>
+                          <button mat-icon-button
+                                  color="warn"
+                                  (click)="removeChoice(param, j)"
+                                  matTooltip="Remove Choice">
+                            <mat-icon>delete</mat-icon>
+                          </button>
+                        </div>
+                      </div>
+                      <button mat-stroked-button
+                              (click)="addChoice(param)"
+                              class="add-choice-btn">
+                        <mat-icon>add</mat-icon>
+                        Add Choice
+                      </button>
+                    </div>
+
+                    <mat-form-field appearance="outline" class="default-select">
+                      <mat-label>Default Selection</mat-label>
+                      <mat-select [(ngModel)]="param.default_value"
+                                  [ngModelOptions]="{standalone: true}">
+                        <mat-option value="">None</mat-option>
+                        <mat-option *ngFor="let choice of param.choices_static || []"
+                                    [value]="choice.value">
+                          {{ choice.label }}
+                        </mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </mat-tab>
+
+                  <mat-tab label="Dynamic Query">
+                    <div class="query-config">
+                      <p class="info-text">
+                        <mat-icon>info</mat-icon>
+                        Configure a query to dynamically populate choices from the database
+                      </p>
+
+                      <div class="form-row">
+                        <mat-form-field appearance="outline">
+                          <mat-label>Data Source</mat-label>
+                          <mat-select [(ngModel)]="param.choices_query!.content_type_id"
+                                      [ngModelOptions]="{standalone: true}"
+                                      (selectionChange)="onQueryDataSourceChange(param)">
+                            <mat-optgroup *ngFor="let group of contentTypeGroups | keyvalue"
+                                          [label]="group.value.label">
+                              <mat-option *ngFor="let ct of group.value.content_types"
+                                          [value]="ct.id">
+                                {{ ct.verbose_name }}
+                              </mat-option>
+                            </mat-optgroup>
+                          </mat-select>
+                        </mat-form-field>
+                      </div>
+
+                      <div class="form-row" *ngIf="param.choices_query?.content_type_id">
+                        <mat-form-field appearance="outline" class="half-width">
+                          <mat-label>Value Field</mat-label>
+                          <mat-select [(ngModel)]="param.choices_query!.value_field"
+                                      [ngModelOptions]="{standalone: true}">
+                            <mat-option *ngFor="let field of getFieldsForContentType(param.choices_query!.content_type_id)"
+                                        [value]="field.name">
+                              {{ field.verbose_name }}
+                            </mat-option>
+                          </mat-select>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="half-width">
+                          <mat-label>Display Field</mat-label>
+                          <mat-select [(ngModel)]="param.choices_query!.label_field"
+                                      [ngModelOptions]="{standalone: true}">
+                            <mat-option *ngFor="let field of getFieldsForContentType(param.choices_query!.content_type_id)"
+                                        [value]="field.name">
+                              {{ field.verbose_name }}
+                            </mat-option>
+                          </mat-select>
+                        </mat-form-field>
+                      </div>
+
+                      <mat-form-field appearance="outline">
+                        <mat-label>Order By</mat-label>
+                        <input matInput
+                               [(ngModel)]="param.choices_query!.order_by"
+                               [ngModelOptions]="{standalone: true}"
+                               placeholder="e.g., name, -created_at">
+                        <mat-icon matPrefix>sort</mat-icon>
+                        <mat-hint>Use - prefix for descending order</mat-hint>
+                      </mat-form-field>
+                    </div>
+                  </mat-tab>
+                </mat-tab-group>
+              </div>
+
+              <!-- Multi-Select Parameter Configuration -->
+              <div *ngSwitchCase="'multiselect'" class="type-config">
+                <h4 class="section-title">Multi-Select Configuration</h4>
+
+                <!-- Similar to select but with additional validation -->
+                <mat-tab-group>
+                  <mat-tab label="Static Choices">
+                    <div class="choices-container">
+                      <div class="choices-list">
+                        <div *ngFor="let choice of param.choices_static || []; let j = index"
+                             class="choice-item">
+                          <mat-form-field appearance="outline" class="choice-value">
+                            <mat-label>Value</mat-label>
+                            <input matInput
+                                   [(ngModel)]="choice.value"
+                                   [ngModelOptions]="{standalone: true}">
+                          </mat-form-field>
+                          <mat-form-field appearance="outline" class="choice-label">
+                            <mat-label>Display Label</mat-label>
+                            <input matInput
+                                   [(ngModel)]="choice.label"
+                                   [ngModelOptions]="{standalone: true}">
+                          </mat-form-field>
+                          <button mat-icon-button
+                                  color="warn"
+                                  (click)="removeChoice(param, j)"
+                                  matTooltip="Remove Choice">
+                            <mat-icon>delete</mat-icon>
+                          </button>
+                        </div>
+                      </div>
+                      <button mat-stroked-button
+                              (click)="addChoice(param)"
+                              class="add-choice-btn">
+                        <mat-icon>add</mat-icon>
+                        Add Choice
+                      </button>
+                    </div>
+
+                    <div class="form-row validation-row">
+                      <mat-form-field appearance="outline" class="small-field">
+                        <mat-label>Min Selections</mat-label>
+                        <input matInput
+                               type="number"
+                               min="0"
+                               [(ngModel)]="param.validation_rules!['min_selections']"
+                               [ngModelOptions]="{standalone: true}">
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline" class="small-field">
+                        <mat-label>Max Selections</mat-label>
+                        <input matInput
+                               type="number"
+                               min="0"
+                               [(ngModel)]="param.validation_rules!['max_selections']"
+                               [ngModelOptions]="{standalone: true}">
+                      </mat-form-field>
+                    </div>
+                  </mat-tab>
+
+                  <mat-tab label="Dynamic Query">
+                    <!-- Same as select dynamic query -->
+                  </mat-tab>
+                </mat-tab-group>
+              </div>
+
+              <!-- Boolean Parameter Configuration -->
+              <div *ngSwitchCase="'boolean'" class="type-config">
+                <h4 class="section-title">Boolean Configuration</h4>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Default Value</mat-label>
+                    <mat-select [(ngModel)]="param.default_value"
+                                [ngModelOptions]="{standalone: true}">
+                      <mat-option [value]="null">None</mat-option>
+                      <mat-option [value]="true">Yes (True)</mat-option>
+                      <mat-option [value]="false">No (False)</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <!-- DateTime Parameter Configuration -->
+              <div *ngSwitchCase="'datetime'" class="type-config">
+                <h4 class="section-title">Date & Time Configuration</h4>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Default Value</mat-label>
+                    <mat-select [(ngModel)]="param.default_value"
+                                [ngModelOptions]="{standalone: true}">
+                      <mat-option value="">None</mat-option>
+                      <mat-option value="now">Current Date & Time</mat-option>
+                      <mat-option value="today_start">Today at 00:00</mat-option>
+                      <mat-option value="today_end">Today at 23:59</mat-option>
+                      <mat-option value="custom">Custom Date & Time...</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
               </div>
             </div>
 
-            <!-- Boolean Configuration -->
-            <div *ngSwitchCase="'boolean'" class="type-config">
-              <h4>Boolean Configuration</h4>
-              <mat-slide-toggle formControlName="default_value"
-                                (change)="updateParameter(i)"
-                                color="primary">
-                Default Value
-              </mat-slide-toggle>
+            <!-- Parameter Actions -->
+            <div class="parameter-actions">
+              <button mat-button
+                      color="warn"
+                      (click)="removeParameter(i)">
+                <mat-icon>delete</mat-icon>
+                Remove Parameter
+              </button>
+              <button mat-button
+                      (click)="duplicateParameter(param, i)">
+                <mat-icon>content_copy</mat-icon>
+                Duplicate
+              </button>
+              <button mat-button
+                      (click)="testParameter(param)">
+                <mat-icon>play_circle</mat-icon>
+                Test
+              </button>
             </div>
-          </div>
-
-          <!-- Parameter Actions -->
-          <div class="parameter-actions">
-            <button mat-button
-                    color="warn"
-                    (click)="removeParameter(i)">
-              <mat-icon>delete</mat-icon>
-              Remove Parameter
-            </button>
-          </div>
-        </form>
-      </div>
-    </mat-expansion-panel>
+          </form>
+        </div>
+      </mat-expansion-panel>
+    </mat-accordion>
   </div>
 
   <!-- Empty State -->
@@ -399,77 +652,163 @@
     <mat-icon>tune</mat-icon>
     <h3>No parameters defined</h3>
     <p>Add parameters to make your report dynamic and reusable</p>
+
     <button mat-raised-button
             color="primary"
             (click)="addParameter()">
       <mat-icon>add</mat-icon>
-      Add First Parameter
+      Add Your First Parameter
     </button>
+
+    <div class="template-suggestions">
+      <p>Or start with a template:</p>
+      <div class="template-chips">
+        <mat-chip (click)="addDateRangeTemplate()">
+          <mat-icon>date_range</mat-icon>
+          Date Range
+        </mat-chip>
+        <mat-chip (click)="addStatusFilterTemplate()">
+          <mat-icon>flag</mat-icon>
+          Status Filter
+        </mat-chip>
+        <mat-chip (click)="addPaginationTemplate()">
+          <mat-icon>view_list</mat-icon>
+          Pagination
+        </mat-chip>
+      </div>
+    </div>
   </div>
 
-  <!-- Preview Section -->
-  <mat-card class="preview-section" *ngIf="parameters.length > 0">
+  <!-- Parameter Preview -->
+  <mat-card class="parameter-preview" *ngIf="parameters.length > 0 && showPreview">
     <mat-card-header>
       <mat-card-title>
         <mat-icon>preview</mat-icon>
         Parameter Preview
       </mat-card-title>
+      <button mat-icon-button (click)="showPreview = false">
+        <mat-icon>close</mat-icon>
+      </button>
     </mat-card-header>
     <mat-card-content>
-      <div class="preview-form">
-        <div *ngFor="let param of parameters" class="preview-field">
-          <div [ngSwitch]="param.parameter_type">
-            <!-- Text Preview -->
-            <mat-form-field appearance="outline" *ngSwitchCase="'text'">
-              <mat-label>{{ param.display_name }}</mat-label>
-              <input matInput
-                     [placeholder]="param.placeholder || ''"
-                     [value]="param.default_value">
-              <mat-hint>{{ param.help_text || '' }}</mat-hint>
-            </mat-form-field>
+      <p class="preview-info">This is how parameters will appear during report execution:</p>
 
-            <!-- Number Preview -->
-            <mat-form-field appearance="outline" *ngSwitchCase="'number'">
-              <mat-label>{{ param.display_name }}</mat-label>
-              <input matInput
-                     type="number"
-                     [placeholder]="param.placeholder || ''"
-                     [value]="param.default_value">
-              <mat-hint>{{ param.help_text || '' }}</mat-hint>
-            </mat-form-field>
+      <form class="preview-form">
+        <div *ngFor="let param of parameters" class="preview-parameter">
+          <mat-form-field appearance="outline" *ngIf="param.parameter_type === 'text'">
+            <mat-label>{{ param.display_name }}</mat-label>
+            <input matInput
+                   [placeholder]="param.placeholder"
+                   [value]="param.default_value"
+                   disabled>
+            <mat-hint>{{ param.help_text }}</mat-hint>
+          </mat-form-field>
 
-            <!-- Date Preview -->
-            <mat-form-field appearance="outline" *ngSwitchCase="'date'">
-              <mat-label>{{ param.display_name }}</mat-label>
-              <input matInput
-                     [matDatepicker]="previewPicker"
-                     [placeholder]="param.placeholder || ''">
-              <mat-datepicker-toggle matIconSuffix [for]="previewPicker"></mat-datepicker-toggle>
-              <mat-datepicker #previewPicker></mat-datepicker>
-              <mat-hint>{{ param.help_text }}</mat-hint>
-            </mat-form-field>
+          <mat-form-field appearance="outline" *ngIf="param.parameter_type === 'select'">
+            <mat-label>{{ param.display_name }}</mat-label>
+            <mat-select [value]="param.default_value" disabled>
+              <mat-option *ngFor="let choice of param.choices_static" [value]="choice.value">
+                {{ choice.label }}
+              </mat-option>
+            </mat-select>
+            <mat-hint>{{ param.help_text }}</mat-hint>
+          </mat-form-field>
 
-            <!-- Select Preview -->
-            <mat-form-field appearance="outline" *ngSwitchCase="'select'">
-              <mat-label>{{ param.display_name }}</mat-label>
-              <mat-select [placeholder]="param.placeholder || ''">
-                <mat-option *ngFor="let choice of param.choices_static" [value]="choice.value">
-                  {{ choice.label }}
-                </mat-option>
-              </mat-select>
-              <mat-hint>{{ param.help_text }}</mat-hint>
-            </mat-form-field>
-
-            <!-- Boolean Preview -->
-            <div class="boolean-preview" *ngSwitchCase="'boolean'">
-              <mat-slide-toggle [checked]="param.default_value">
-                {{ param.display_name }}
-              </mat-slide-toggle>
-              <mat-hint>{{ param.help_text }}</mat-hint>
-            </div>
-          </div>
+          <!-- Add other parameter type previews -->
         </div>
-      </div>
+      </form>
     </mat-card-content>
   </mat-card>
+
+  <!-- Floating Preview Button -->
+  <button mat-fab
+          color="accent"
+          class="preview-fab"
+          (click)="showPreview = !showPreview"
+          *ngIf="parameters.length > 0"
+          matTooltip="Toggle Preview">
+    <mat-icon>{{ showPreview ? 'visibility_off' : 'visibility' }}</mat-icon>
+  </button>
 </div>
+
+<!-- Parameter Templates Dialog -->
+<ng-template #parameterTemplatesDialog>
+  <h2 mat-dialog-title>
+    <mat-icon>content_copy</mat-icon>
+    Parameter Templates
+  </h2>
+
+  <mat-dialog-content>
+    <div class="template-grid">
+      <mat-card *ngFor="let template of parameterTemplates"
+                class="template-card"
+                (click)="applyTemplate(template)">
+        <mat-card-header>
+          <mat-card-title>{{ template.name }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <p>{{ template.description }}</p>
+          <div class="template-params">
+            <mat-chip *ngFor="let param of template.parameters">
+              <mat-icon>{{ getParameterIcon(param.parameter_type) }}</mat-icon>
+              {{ param.display_name }}
+            </mat-chip>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Close</button>
+  </mat-dialog-actions>
+</ng-template>
+
+<!-- Test Parameter Dialog -->
+<ng-template #testParameterDialog>
+  <h2 mat-dialog-title>
+    <mat-icon>play_circle</mat-icon>
+    Test Parameter: {{ testingParameter?.display_name }}
+  </h2>
+
+  <mat-dialog-content>
+    <div class="test-content">
+      <p>Enter a test value to see how it will be processed:</p>
+
+      <mat-form-field appearance="outline" *ngIf="testingParameter?.parameter_type === 'text'">
+        <mat-label>Test Value</mat-label>
+        <input matInput [(ngModel)]="testValue">
+      </mat-form-field>
+
+      <!-- Add other parameter type test inputs -->
+
+      <div class="test-results" *ngIf="testResults">
+        <h4>Results:</h4>
+        <div class="result-item">
+          <strong>Valid:</strong>
+          <mat-icon [color]="testResults.valid ? 'accent' : 'warn'">
+            {{ testResults.valid ? 'check_circle' : 'error' }}
+          </mat-icon>
+        </div>
+        <div class="result-item" *ngIf="!testResults.valid">
+          <strong>Errors:</strong>
+          <ul>
+            <li *ngFor="let error of testResults.errors">{{ error }}</li>
+          </ul>
+        </div>
+        <div class="result-item" *ngIf="testResults.valid">
+          <strong>Processed Value:</strong>
+          <code>{{ testResults.processedValue }}</code>
+        </div>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Close</button>
+    <button mat-raised-button color="primary" (click)="runTest()">
+      <mat-icon>play_arrow</mat-icon>
+      Run Test
+    </button>
+  </mat-dialog-actions>
+</ng-template>
