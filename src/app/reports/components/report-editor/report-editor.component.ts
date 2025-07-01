@@ -1,10 +1,11 @@
 // src/app/reports/components/report-editor/report-editor.component.ts
 
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, forkJoin, of } from 'rxjs';
+import { catchError, finalize } from 'rxjs/operators';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 
 // Material imports
@@ -21,6 +22,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatBadgeModule } from '@angular/material/badge';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 // Services and Models
 import { ReportService } from '../../../services/report.service';
@@ -52,6 +54,7 @@ import { ReportPreviewComponent } from '../report-preview/report-preview.compone
     MatTooltipModule,
     MatSlideToggleModule,
     MatBadgeModule,
+    MatProgressSpinnerModule,
     DataSourceSelectorComponent,
     FieldBuilderComponent,
     FilterBuilderComponent,
@@ -72,6 +75,8 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
   isSaving = false;
   isValid = false;
   progressValue = 0;
+  isLoadingComponents = false;
+  componentsLoaded = false;
 
   // Form
   basicInfoForm: FormGroup;
@@ -91,7 +96,8 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
     private reportService: ReportService,
     private route: ActivatedRoute,
     private router: Router,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private cdr: ChangeDetectorRef
   ) {
     this.basicInfoForm = this.fb.group({
       name: ['', Validators.required],
@@ -112,6 +118,7 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
     } else {
       this.mode = 'create';
       this.initializeNewReport();
+      this.componentsLoaded = true;
     }
 
     // Subscribe to form changes
@@ -129,21 +136,28 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
   }
 
   loadReport(id: number): void {
-    this.reportService.getReport(id).subscribe({
-      next: (report) => {
-        this.report = report;
-        this.populateForm(report);
-        this.loadReportComponents();
-      },
-      error: (err) => {
-        console.error('Error loading report:', err);
-        this.snackBar.open('Error loading report', 'Close', {
-          duration: 3000,
-          panelClass: ['error-snackbar']
-        });
-        this.router.navigate(['/reports']);
-      }
-    });
+    this.isLoadingComponents = true;
+
+    this.reportService.getReport(id)
+      .pipe(
+        takeUntil(this.destroy$),
+        catchError(err => {
+          console.error('Error loading report:', err);
+          this.snackBar.open('Error loading report', 'Close', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
+          this.router.navigate(['/reports']);
+          return of(null);
+        })
+      )
+      .subscribe(report => {
+        if (report) {
+          this.report = report;
+          this.populateForm(report);
+          this.loadReportComponents();
+        }
+      });
   }
 
   initializeNewReport(): void {
@@ -168,38 +182,80 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
       is_public: report.is_public
     });
     this.tags = report.tags || [];
+
+    // Force change detection
+    this.cdr.detectChanges();
   }
 
   loadReportComponents(): void {
-    if (!this.report?.id) return;
+    if (!this.report?.id) {
+      this.isLoadingComponents = false;
+      this.componentsLoaded = true;
+      return;
+    }
 
-    // Load data sources
-    this.reportService.getDataSources(this.report.id).subscribe({
-      next: (dataSources) => {
-        this.dataSources = dataSources;
-      }
-    });
+    this.isLoadingComponents = true;
 
-    // Load fields
-    this.reportService.getFields(this.report.id).subscribe({
-      next: (fields) => {
-        this.fields = fields;
-      }
-    });
+    // Load all components in parallel
+    forkJoin({
+      dataSources: this.reportService.getDataSources(this.report.id).pipe(
+        catchError(err => {
+          console.error('Error loading data sources:', err);
+          return of([]);
+        })
+      ),
+      fields: this.reportService.getFields(this.report.id).pipe(
+        catchError(err => {
+          console.error('Error loading fields:', err);
+          return of([]);
+        })
+      ),
+      filters: this.reportService.getFilters(this.report.id).pipe(
+        catchError(err => {
+          console.error('Error loading filters:', err);
+          return of([]);
+        })
+      ),
+      parameters: this.reportService.getParameters(this.report.id).pipe(
+        catchError(err => {
+          console.error('Error loading parameters:', err);
+          return of([]);
+        })
+      )
+    })
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.isLoadingComponents = false;
+          this.componentsLoaded = true;
+          this.validateReport();
+          // Force change detection to update all bindings
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (result) => {
+          this.dataSources = result.dataSources;
+          this.fields = result.fields;
+          this.filters = result.filters;
+          this.parameters = result.parameters;
 
-    // Load filters
-    this.reportService.getFilters(this.report.id).subscribe({
-      next: (filters) => {
-        this.filters = filters;
-      }
-    });
-
-    // Load parameters
-    this.reportService.getParameters(this.report.id).subscribe({
-      next: (parameters) => {
-        this.parameters = parameters;
-      }
-    });
+          // Log for debugging
+          console.log('Report components loaded:', {
+            dataSources: this.dataSources.length,
+            fields: this.fields.length,
+            filters: this.filters.length,
+            parameters: this.parameters.length
+          });
+        },
+        error: (err) => {
+          console.error('Error loading report components:', err);
+          this.snackBar.open('Error loading report components', 'Close', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
+        }
+      });
   }
 
   onStepChange(event: any): void {
@@ -229,27 +285,31 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
       await this.saveReport(false);
     }
 
-    this.dataSources = dataSources;
+    this.dataSources = [...dataSources]; // Create new array reference
     this.isDirty = true;
     this.validateReport();
+    this.cdr.detectChanges();
   }
 
   onFieldsChange(fields: Field[]): void {
-    this.fields = fields;
+    this.fields = [...fields]; // Create new array reference
     this.isDirty = true;
     this.validateReport();
+    this.cdr.detectChanges();
   }
 
   onFiltersChange(filters: Filter[]): void {
-    this.filters = filters;
+    this.filters = [...filters]; // Create new array reference
     this.isDirty = true;
     this.validateReport();
+    this.cdr.detectChanges();
   }
 
   onParametersChange(parameters: Parameter[]): void {
-    this.parameters = parameters;
+    this.parameters = [...parameters]; // Create new array reference
     this.isDirty = true;
     this.validateReport();
+    this.cdr.detectChanges();
   }
 
   validateReport(): void {
@@ -272,7 +332,7 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
   }
 
   async saveReport(showMessage = true): Promise<void> {
-    if (!this.isValid) return;
+    if (!this.basicInfoForm.valid) return;
 
     this.isSaving = true;
 
@@ -300,7 +360,7 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
           }
 
           // Navigate to edit mode
-          this.router.navigate(['/reports', newReport.id, 'edit']);
+          this.router.navigate(['/reports', newReport.id, 'edit'], { replaceUrl: true });
         }
       } else {
         // Update existing report
