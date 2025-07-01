@@ -30,8 +30,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { debounceTime, distinctUntilChanged, Subject, takeUntil } from 'rxjs';
 import { Report, DataSource, Field, Filter, Parameter, FilterOperator, FieldInfo } from '../../../models/report.models';
 import { ReportService } from '../../../services/report.service';
-import { FilterValueInputComponent } from './filter-value-input/filter-value-input.component';
-import { FilterGroupComponent } from './filter-group/filter-group.component';
+import { FilterValueInputComponent } from '../filter-value-input/filter-value-input.component';
+import { FilterGroupComponent } from '../filter-group/filter-group.component';
 
 interface FilterGroup {
   id: string;
@@ -504,11 +504,13 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
         operator: 'eq',
         value: '',
         value_type: 'static',
-        logic_group: group.logic,
-        group_order: group.order,
+        logic_group: 'AND',
+        group_order: 0,
         is_active: true,
         is_required: false
       };
+// Set ID after object creation to handle the optional id field
+      (tempFilter as any).id = this.tempIdCounter--;
 
       this.filters.push(tempFilter);
       this.organizeFiltersIntoGroups();

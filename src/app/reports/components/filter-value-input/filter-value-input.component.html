@@ -1,0 +1,265 @@
+<!-- src/app/reports/components/filter-builder/filter-value-input/filter-value-input.component.html -->
+
+<div class="filter-value-input">
+  <!-- Value Type Selector -->
+  <mat-form-field appearance="outline" class="value-type-select">
+    <mat-label>Value Type</mat-label>
+    <mat-select [(ngModel)]="filter.value_type" (selectionChange)="onValueTypeChange()">
+      <mat-option value="static">
+        <mat-icon>edit</mat-icon>
+        Static Value
+      </mat-option>
+      <mat-option value="parameter" *ngIf="parameters.length > 0">
+        <mat-icon>tune</mat-icon>
+        Parameter
+      </mat-option>
+      <mat-option value="dynamic">
+        <mat-icon>update</mat-icon>
+        Dynamic
+      </mat-option>
+      <mat-option value="user_attribute">
+        <mat-icon>person</mat-icon>
+        User Attribute
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <!-- Static Value Input -->
+  <div class="value-input" *ngIf="filter.value_type === 'static'" [ngSwitch]="getInputType()">
+
+    <!-- Text Input -->
+    <mat-form-field appearance="outline" *ngSwitchCase="'text'" class="value-field">
+      <mat-label>Value</mat-label>
+      <input matInput
+             [(ngModel)]="filter.value"
+             (ngModelChange)="onValueChange()"
+             [placeholder]="getPlaceholder()">
+    </mat-form-field>
+
+    <!-- Number Input -->
+    <mat-form-field appearance="outline" *ngSwitchCase="'number'" class="value-field">
+      <mat-label>Value</mat-label>
+      <input matInput
+             type="number"
+             [(ngModel)]="filter.value"
+             (ngModelChange)="onValueChange()"
+             [placeholder]="getPlaceholder()">
+    </mat-form-field>
+
+    <!-- Boolean Input -->
+    <mat-slide-toggle *ngSwitchCase="'boolean'"
+                      [(ngModel)]="filter.value"
+                      (ngModelChange)="onValueChange()"
+                      color="primary"
+                      class="boolean-toggle">
+      {{ filter.value ? 'Yes' : 'No' }}
+    </mat-slide-toggle>
+
+    <!-- Date Input -->
+    <mat-form-field appearance="outline" *ngSwitchCase="'date'" class="value-field">
+      <mat-label>Value</mat-label>
+      <input matInput
+             [matDatepicker]="datePicker"
+             [(ngModel)]="filter.value"
+             (ngModelChange)="onValueChange()">
+      <mat-datepicker-toggle matIconSuffix [for]="datePicker"></mat-datepicker-toggle>
+      <mat-datepicker #datePicker></mat-datepicker>
+    </mat-form-field>
+
+    <!-- Date Range Input -->
+    <div *ngSwitchCase="'date_range'" class="date-range-inputs">
+      <mat-form-field appearance="outline" class="date-field">
+        <mat-label>Start Date</mat-label>
+        <input matInput
+               [matDatepicker]="startPicker"
+               [(ngModel)]="dateRangeStart"
+               (ngModelChange)="onDateRangeChange()">
+        <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+        <mat-datepicker #startPicker></mat-datepicker>
+      </mat-form-field>
+
+      <span class="range-separator">to</span>
+
+      <mat-form-field appearance="outline" class="date-field">
+        <mat-label>End Date</mat-label>
+        <input matInput
+               [matDatepicker]="endPicker"
+               [(ngModel)]="dateRangeEnd"
+               (ngModelChange)="onDateRangeChange()"
+               [min]="dateRangeStart">
+        <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
+        <mat-datepicker #endPicker></mat-datepicker>
+      </mat-form-field>
+    </div>
+
+    <!-- Between Input (for numbers) -->
+    <div *ngSwitchCase="'between'" class="between-inputs">
+      <mat-form-field appearance="outline" class="number-field">
+        <mat-label>From</mat-label>
+        <input matInput
+               type="number"
+               [(ngModel)]="betweenStart"
+               (ngModelChange)="onBetweenChange()">
+      </mat-form-field>
+
+      <span class="range-separator">to</span>
+
+      <mat-form-field appearance="outline" class="number-field">
+        <mat-label>To</mat-label>
+        <input matInput
+               type="number"
+               [(ngModel)]="betweenEnd"
+               (ngModelChange)="onBetweenChange()"
+               [min]="betweenStart">
+      </mat-form-field>
+    </div>
+
+    <!-- List Input (for IN/NOT IN operators) -->
+    <div *ngSwitchCase="'list'" class="list-input">
+      <mat-form-field appearance="outline" class="add-value-field">
+        <mat-label>Add Value</mat-label>
+        <input matInput
+               #listInput
+               (keyup.enter)="addListValue(listInput.value); listInput.value = ''">
+        <button mat-icon-button
+                matSuffix
+                (click)="addListValue(listInput.value); listInput.value = ''"
+                [disabled]="!listInput.value">
+          <mat-icon>add_circle</mat-icon>
+        </button>
+      </mat-form-field>
+
+      <div class="list-values" *ngIf="listValues.length > 0">
+        <mat-chip-listbox>
+          <mat-chip-option *ngFor="let value of listValues; let i = index"
+                           [removable]="true"
+                           (removed)="removeListValue(i)">
+            {{ value }}
+            <button matChipRemove>
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </mat-chip-option>
+        </mat-chip-listbox>
+      </div>
+    </div>
+
+    <!-- Select Input (for foreign key fields) -->
+    <mat-form-field appearance="outline" *ngSwitchCase="'select'" class="value-field">
+      <mat-label>Select Value</mat-label>
+      <input matInput
+             [matAutocomplete]="selectAuto"
+             [(ngModel)]="selectSearchValue"
+             (ngModelChange)="filterSelectOptions($event)"
+             placeholder="Search and select...">
+      <mat-autocomplete #selectAuto="matAutocomplete"
+                        [displayWith]="displaySelectOption"
+                        (optionSelected)="onSelectOption($event)">
+        <mat-option *ngFor="let option of filteredSelectOptions | async"
+                    [value]="option">
+          {{ option.label }}
+        </mat-option>
+      </mat-autocomplete>
+      <mat-spinner *ngIf="isLoadingOptions" matSuffix diameter="20"></mat-spinner>
+    </mat-form-field>
+
+    <!-- Multi-Select Input -->
+    <mat-form-field appearance="outline" *ngSwitchCase="'multiselect'" class="value-field">
+      <mat-label>Select Values</mat-label>
+      <mat-select [(ngModel)]="filter.value"
+                  (selectionChange)="onValueChange()"
+                  multiple>
+        <mat-select-trigger>
+          {{ getMultiSelectDisplay() }}
+        </mat-select-trigger>
+        <mat-option class="select-search-option">
+          <input matInput
+                 placeholder="Search..."
+                 (click)="$event.stopPropagation()"
+                 [(ngModel)]="multiSelectSearch"
+                 (ngModelChange)="filterMultiSelectOptions($event)">
+        </mat-option>
+        <mat-option *ngFor="let option of getFilteredMultiSelectOptions()"
+                    [value]="option.value">
+          {{ option.label }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- No Value Required -->
+    <div *ngSwitchCase="'none'" class="no-value-message">
+      <mat-icon>info</mat-icon>
+      <span>No value required for this operator</span>
+    </div>
+  </div>
+
+  <!-- Parameter Value Selection -->
+  <mat-form-field appearance="outline"
+                  *ngIf="filter.value_type === 'parameter'"
+                  class="value-field">
+    <mat-label>Parameter</mat-label>
+    <mat-select [(ngModel)]="filter.value" (selectionChange)="onValueChange()">
+      <mat-option *ngFor="let param of getCompatibleParameters()" [value]="param.name">
+        <mat-icon>tune</mat-icon>
+        {{ param.display_name }}
+        <span class="param-type">({{ param.parameter_type }})</span>
+      </mat-option>
+    </mat-select>
+    <mat-hint *ngIf="!getCompatibleParameters().length">
+      No compatible parameters available
+    </mat-hint>
+  </mat-form-field>
+
+  <!-- Dynamic Value Selection -->
+  <mat-form-field appearance="outline"
+                  *ngIf="filter.value_type === 'dynamic'"
+                  class="value-field">
+    <mat-label>Dynamic Value</mat-label>
+    <mat-select [(ngModel)]="filter.value" (selectionChange)="onValueChange()">
+      <mat-optgroup *ngFor="let group of getDynamicValueGroups()" [label]="group.label">
+        <mat-option *ngFor="let value of group.values" [value]="value.type">
+          <mat-icon>{{ value.icon }}</mat-icon>
+          {{ value.label }}
+        </mat-option>
+      </mat-optgroup>
+    </mat-select>
+  </mat-form-field>
+
+  <!-- User Attribute Selection -->
+  <mat-form-field appearance="outline"
+                  *ngIf="filter.value_type === 'user_attribute'"
+                  class="value-field">
+    <mat-label>User Attribute</mat-label>
+    <mat-select [(ngModel)]="filter.value" (selectionChange)="onValueChange()">
+      <mat-option value="id">
+        <mat-icon>badge</mat-icon>
+        User ID
+      </mat-option>
+      <mat-option value="username">
+        <mat-icon>person</mat-icon>
+        Username
+      </mat-option>
+      <mat-option value="email">
+        <mat-icon>email</mat-icon>
+        Email
+      </mat-option>
+      <mat-option value="department">
+        <mat-icon>business</mat-icon>
+        Department
+      </mat-option>
+      <mat-option value="role">
+        <mat-icon>security</mat-icon>
+        Role
+      </mat-option>
+      <mat-option value="organization">
+        <mat-icon>corporate_fare</mat-icon>
+        Organization
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <!-- Value Preview -->
+  <div class="value-preview" *ngIf="showValuePreview()">
+    <mat-icon>info</mat-icon>
+    <span>{{ getValuePreview() }}</span>
+  </div>
+</div>

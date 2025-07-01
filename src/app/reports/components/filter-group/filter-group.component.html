@@ -1,0 +1,151 @@
+<!-- src/app/reports/components/filter-builder/filter-group/filter-group.component.html -->
+
+<div class="filter-group"
+     [class.root-group]="isRoot"
+     [class.and-group]="group.logic === 'AND'"
+     [class.or-group]="group.logic === 'OR'"
+     cdkDropList
+     [cdkDropListData]="group.children"
+     (cdkDropListDropped)="onDrop($event)">
+
+  <!-- Group Header -->
+  <div class="group-header" *ngIf="!isRoot">
+    <div class="group-controls">
+      <mat-chip class="logic-chip"
+                (click)="toggleLogic()"
+                [class.logic-and]="group.logic === 'AND'"
+                [class.logic-or]="group.logic === 'OR'">
+        {{ group.logic }}
+      </mat-chip>
+
+      <button mat-icon-button
+              class="group-action"
+              [matMenuTriggerFor]="groupMenu"
+              matTooltip="Group Actions">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #groupMenu="matMenu">
+        <button mat-menu-item (click)="addFilter()">
+          <mat-icon>add</mat-icon>
+          Add Filter
+        </button>
+        <button mat-menu-item (click)="addSubGroup()">
+          <mat-icon>folder</mat-icon>
+          Add Sub-group
+        </button>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="deleteGroup()" class="danger-item">
+          <mat-icon>delete</mat-icon>
+          Delete Group
+        </button>
+      </mat-menu>
+    </div>
+  </div>
+
+  <!-- Group Children -->
+  <div class="group-children">
+    <div *ngFor="let child of group.children || []"
+         class="group-child"
+         cdkDrag
+         [cdkDragData]="child">
+
+      <!-- Filter Node -->
+      <div *ngIf="child.type === 'filter'" class="filter-node">
+        <mat-icon cdkDragHandle class="drag-handle">drag_indicator</mat-icon>
+
+        <div class="filter-content">
+          <!-- Field -->
+          <mat-form-field appearance="outline" class="field-select">
+            <mat-label>Field</mat-label>
+            <mat-select [(ngModel)]="child.filter!.field_path"
+                        (selectionChange)="onFieldChange(child.filter!)">
+              <mat-optgroup *ngFor="let ds of dataSources" [label]="ds.alias">
+                <mat-option *ngFor="let field of getFieldsForDataSource(ds)"
+                            [value]="field.path">
+                  <mat-icon>{{ getFieldIcon(field.type) }}</mat-icon>
+                  {{ field.verbose_name }}
+                </mat-option>
+              </mat-optgroup>
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Operator -->
+          <mat-form-field appearance="outline" class="operator-select">
+            <mat-label>Operator</mat-label>
+            <mat-select [(ngModel)]="child.filter!.operator"
+                        (selectionChange)="onOperatorChange(child.filter!)">
+              <mat-option *ngFor="let op of getOperatorsForFilter(child.filter!)"
+                          [value]="op.value">
+                {{ op.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Value -->
+          <div class="value-container">
+            <app-filter-value-input
+              [filter]="child.filter!"
+              [fieldInfo]="getFieldInfo(child.filter!)"
+              [parameters]="parameters"
+              [dataSources]="dataSources"
+              (valueChange)="onFilterValueChange(child.filter!)">
+            </app-filter-value-input>
+          </div>
+
+          <!-- Actions -->
+          <div class="filter-actions">
+            <mat-slide-toggle [(ngModel)]="child.filter!.is_active"
+                              (change)="onFilterChange(child.filter!)"
+                              color="primary"
+                              matTooltip="Enable/Disable">
+            </mat-slide-toggle>
+
+            <button mat-icon-button
+                    (click)="removeFilter(child)"
+                    matTooltip="Remove Filter"
+                    class="remove-btn">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nested Group -->
+      <app-filter-group *ngIf="child.type === 'group'"
+                        [group]="child"
+                        [dataSources]="dataSources"
+                        [parameters]="parameters"
+                        [availableFields]="availableFields"
+                        [isRoot]="false"
+                        (groupChange)="onChildGroupChange($event)"
+                        (filterChange)="onChildFilterChange($event)"
+                        (filterRemove)="onChildFilterRemove($event)">
+      </app-filter-group>
+    </div>
+
+    <!-- Drop Zone Hint -->
+    <div class="drop-zone-hint"
+         *ngIf="(!group.children || group.children.length === 0) && !isRoot">
+      <mat-icon>filter_list</mat-icon>
+      <p>Drop filters here or click add</p>
+    </div>
+  </div>
+
+  <!-- Add Controls -->
+  <div class="group-footer">
+    <button mat-stroked-button
+            (click)="addFilter()"
+            class="add-filter-btn">
+      <mat-icon>add</mat-icon>
+      Add Filter
+    </button>
+
+    <button mat-stroked-button
+            (click)="addSubGroup()"
+            class="add-group-btn"
+            *ngIf="!isRoot || group.children?.length > 0">
+      <mat-icon>folder</mat-icon>
+      Add Group
+    </button>
+  </div>
+</div>

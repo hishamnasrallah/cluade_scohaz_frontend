@@ -1,0 +1,360 @@
+// src/app/reports/components/filter-builder/filter-group/filter-group.component.scss
+
+.filter-group {
+  background: white;
+  border-radius: 12px;
+  border: 2px solid #E5E7EB;
+  padding: 16px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+  position: relative;
+
+  &.root-group {
+    border: 2px dashed rgba(196, 247, 239, 0.5);
+    background: #F9FAFB;
+    min-height: 400px;
+  }
+
+  &.and-group {
+    border-color: rgba(59, 130, 246, 0.3);
+    background: rgba(59, 130, 246, 0.02);
+
+    &:hover {
+      border-color: rgba(59, 130, 246, 0.5);
+    }
+
+    .group-header {
+      background: rgba(59, 130, 246, 0.05);
+    }
+  }
+
+  &.or-group {
+    border-color: rgba(245, 158, 11, 0.3);
+    background: rgba(245, 158, 11, 0.02);
+
+    &:hover {
+      border-color: rgba(245, 158, 11, 0.5);
+    }
+
+    .group-header {
+      background: rgba(245, 158, 11, 0.05);
+    }
+  }
+
+  &.cdk-drop-list-dragging {
+    .group-child:not(.cdk-drag-placeholder) {
+      opacity: 0.5;
+    }
+  }
+}
+
+// Group Header
+.group-header {
+  margin: -16px -16px 16px -16px;
+  padding: 12px 16px;
+  border-radius: 10px 10px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.group-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logic-chip {
+  font-weight: 600;
+  font-size: 0.75rem;
+  height: 28px;
+  padding: 0 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+
+  &.logic-and {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3B82F6;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+
+  &.logic-or {
+    background: rgba(245, 158, 11, 0.15);
+    color: #F59E0B;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+}
+
+.group-action {
+  &:hover {
+    background: rgba(0, 0, 0, 0.04);
+  }
+}
+
+// Group Children
+.group-children {
+  min-height: 60px;
+  position: relative;
+}
+
+.group-child {
+  margin-bottom: 12px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &.cdk-drag-preview {
+    background: white;
+    border: 2px solid #34C5AA;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(52, 197, 170, 0.3);
+    opacity: 0.9;
+  }
+
+  &.cdk-drag-animating {
+    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+// Filter Node
+.filter-node {
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: rgba(52, 197, 170, 0.3);
+    box-shadow: 0 2px 8px rgba(52, 197, 170, 0.1);
+  }
+}
+
+.drag-handle {
+  cursor: move;
+  color: #9CA3AF;
+  margin-top: 8px;
+  flex-shrink: 0;
+
+  &:hover {
+    color: #6B7280;
+  }
+}
+
+.filter-content {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.field-select {
+  flex: 2;
+  min-width: 200px;
+}
+
+.operator-select {
+  flex: 1.5;
+  min-width: 150px;
+}
+
+.value-container {
+  flex: 2;
+  min-width: 200px;
+}
+
+.filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.remove-btn {
+  color: #9CA3AF;
+
+  &:hover {
+    color: #EF4444;
+    background: rgba(239, 68, 68, 0.05);
+  }
+}
+
+// Drop Zone Hint
+.drop-zone-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  border: 2px dashed rgba(196, 247, 239, 0.5);
+  border-radius: 8px;
+  background: rgba(196, 247, 239, 0.05);
+  color: #9CA3AF;
+  text-align: center;
+  padding: 20px;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: rgba(196, 247, 239, 0.8);
+    margin-bottom: 8px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.875rem;
+  }
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.4;
+  background: rgba(52, 197, 170, 0.1);
+  border: 2px dashed #34C5AA;
+}
+
+// Group Footer
+.group-footer {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #E5E7EB;
+}
+
+.add-filter-btn,
+.add-group-btn {
+  flex: 1;
+  border: 2px dashed rgba(107, 114, 128, 0.3);
+  color: #6B7280;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(107, 114, 128, 0.05);
+    border-color: rgba(107, 114, 128, 0.5);
+    color: #4B5563;
+  }
+
+  mat-icon {
+    margin-right: 8px;
+  }
+}
+
+.add-filter-btn {
+  border-color: rgba(52, 197, 170, 0.3);
+  color: #34C5AA;
+
+  &:hover {
+    background: rgba(52, 197, 170, 0.05);
+    border-color: rgba(52, 197, 170, 0.5);
+  }
+}
+
+// Menu Items
+.danger-item {
+  color: #EF4444 !important;
+
+  mat-icon {
+    color: #EF4444 !important;
+  }
+}
+
+// Nested Groups
+app-filter-group {
+  display: block;
+  margin-left: 24px;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: -16px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #E5E7EB;
+  }
+}
+
+// Responsive
+@media (max-width: 1024px) {
+  .filter-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .field-select,
+  .operator-select,
+  .value-container {
+    width: 100%;
+    min-width: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .filter-group {
+    padding: 12px;
+  }
+
+  .group-footer {
+    flex-direction: column;
+  }
+
+  .add-filter-btn,
+  .add-group-btn {
+    width: 100%;
+  }
+
+  app-filter-group {
+    margin-left: 12px;
+
+    &::before {
+      left: -8px;
+    }
+  }
+}
+
+// Material Overrides
+::ng-deep {
+  .filter-group {
+    .mat-mdc-form-field {
+      .mat-mdc-text-field-wrapper {
+        background: white;
+      }
+
+      &.mat-focused .mat-mdc-text-field-wrapper {
+        background: rgba(196, 247, 239, 0.05);
+      }
+    }
+
+    .mat-mdc-select-value {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mat-mdc-option {
+      .mat-icon {
+        margin-right: 8px;
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #6B7280;
+      }
+
+      &.mat-mdc-option-active {
+        background: rgba(52, 197, 170, 0.1);
+      }
+    }
+  }
+}
