@@ -75,7 +75,7 @@
             </div>
           </mat-panel-title>
           <mat-panel-description>
-            <span class="param-variable">{{ param.name ? '{{' + param.name + '}}' : 'Not configured' }}</span>
+            <span class="param-variable">{{ getParameterVariableDisplay(param) }}</span>
           </mat-panel-description>
         </mat-expansion-panel-header>
 
@@ -95,7 +95,7 @@
                          placeholder="e.g., start_date"
                          (blur)="updateParameterName(param, i)">
                   <mat-icon matPrefix>code</mat-icon>
-                  <mat-hint>Used in filters and queries as {{name}}</mat-hint>
+                  <mat-hint>{{ getParameterHintText(i) }}</mat-hint>
                   <mat-error *ngIf="getParameterForm(i).get('name')?.hasError('required')">
                     Parameter name is required
                   </mat-error>
@@ -698,8 +698,8 @@
           <mat-form-field appearance="outline" *ngIf="param.parameter_type === 'text'">
             <mat-label>{{ param.display_name }}</mat-label>
             <input matInput
-                   [placeholder]="param.placeholder"
-                   [value]="param.default_value"
+                   [placeholder]="param.placeholder || ''"
+                   [value]="param.default_value || ''"
                    disabled>
             <mat-hint>{{ param.help_text }}</mat-hint>
           </mat-form-field>
@@ -750,8 +750,8 @@
           <p>{{ template.description }}</p>
           <div class="template-params">
             <mat-chip *ngFor="let param of template.parameters">
-              <mat-icon>{{ getParameterIcon(param.parameter_type) }}</mat-icon>
-              {{ param.display_name }}
+              <mat-icon>{{ getParameterIcon(param.parameter_type || 'text') }}</mat-icon>
+              {{ param.display_name || 'Parameter' }}
             </mat-chip>
           </div>
         </mat-card-content>

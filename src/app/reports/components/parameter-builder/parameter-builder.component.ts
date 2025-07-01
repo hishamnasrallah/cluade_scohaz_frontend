@@ -384,7 +384,7 @@ export class ParameterBuilderComponent implements OnInit {
       // Auto-generate display name if empty
       if (!param.display_name) {
         param.display_name = name.replace(/_/g, ' ')
-          .replace(/\b\w/g, c => c.toUpperCase());
+          .replace(/\b\w/g, (c: string) => c.toUpperCase());
         form.patchValue({ display_name: param.display_name });
       }
 
@@ -915,5 +915,16 @@ export class ParameterBuilderComponent implements OnInit {
   getParameterTypeLabel(type: string): string {
     const typeConfig = this.parameterTypes.find(t => t.value === type);
     return typeConfig?.label || type;
+  }
+
+// Helper method to display parameter variable syntax
+  getParameterVariableDisplay(param: Parameter): string {
+    return param.name ? `{{${param.name}}}` : 'Not configured';
+  }
+
+  // Helper method to display hint text
+  getParameterHintText(index: number): string {
+    const name = this.getParameterForm(index).get('name')?.value || 'name';
+    return `Used in filters and queries as {{${name}}}`;
   }
 }
