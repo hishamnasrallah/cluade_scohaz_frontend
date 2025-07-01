@@ -1,4 +1,10 @@
 <div class="report-editor-container">
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" *ngIf="isLoadingComponents">
+    <mat-spinner></mat-spinner>
+    <p>Loading report components...</p>
+  </div>
+
   <!-- Header -->
   <div class="editor-header">
     <div class="header-content">
@@ -12,18 +18,18 @@
         </div>
       </div>
       <div class="header-actions">
-            <span class="save-status" *ngIf="isDirty">
-              <mat-icon>warning</mat-icon>
-              Unsaved changes
-            </span>
-        <button mat-button (click)="saveDraft()" [disabled]="isSaving">
+        <span class="save-status" *ngIf="isDirty">
+          <mat-icon>warning</mat-icon>
+          Unsaved changes
+        </span>
+        <button mat-button (click)="saveDraft()" [disabled]="isSaving || isLoadingComponents">
           <mat-icon>save</mat-icon>
           Save Draft
         </button>
         <button mat-raised-button
                 color="primary"
                 (click)="saveAndExecute()"
-                [disabled]="!isValid || isSaving">
+                [disabled]="!isValid || isSaving || isLoadingComponents">
           <mat-icon>play_arrow</mat-icon>
           Save & Execute
         </button>
@@ -34,8 +40,8 @@
                       class="step-progress"></mat-progress-bar>
   </div>
 
-  <!-- Stepper -->
-  <mat-card class="stepper-card">
+  <!-- Stepper - Only render when components are loaded -->
+  <mat-card class="stepper-card" [class.loading]="isLoadingComponents" *ngIf="componentsLoaded">
     <mat-stepper #stepper
                  linear="false"
                  (selectionChange)="onStepChange($event)">
@@ -251,6 +257,7 @@
             [report]="report"
             [dataSources]="dataSources"
             [filters]="filters"
+            [parameters]="parameters"
             (filtersChange)="onFiltersChange($event)">
           </app-filter-builder>
 
