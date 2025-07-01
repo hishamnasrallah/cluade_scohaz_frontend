@@ -24,7 +24,7 @@
 
   <!-- Filter Groups -->
   <div class="filter-groups" *ngIf="filterGroups.length > 0">
-    <div *ngFor="let group of filterGroups; let groupIndex = index"
+    <div *ngFor="let group of filterGroups; let groupIndex = index; trackBy: trackByGroup"
          class="filter-group"
          [class.or-group]="group.logic === 'OR'">
 
@@ -49,7 +49,7 @@
 
       <!-- Filters in Group -->
       <div class="group-filters">
-        <div *ngFor="let filter of group.filters; let filterIndex = index"
+        <div *ngFor="let filter of group.filters; let filterIndex = index; trackBy: trackByFilter"
              class="filter-row">
 
           <!-- Field Selection -->
@@ -57,7 +57,7 @@
             <mat-label>Field</mat-label>
             <mat-select [(ngModel)]="filter.field_path"
                         (ngModelChange)="onFieldChange(filter, groupIndex, filterIndex)">
-              <mat-optgroup *ngFor="let ds of dataSources" [label]="ds.alias">
+              <mat-optgroup *ngFor="let ds of dataSources; trackBy: trackByDataSource" [label]="ds.alias">
                 <mat-option *ngFor="let field of getFieldsForDataSource(ds)"
                             [value]="field.path">
                   <mat-icon>{{ getFieldIcon(field.type) }}</mat-icon>

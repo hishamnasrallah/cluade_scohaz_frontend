@@ -1,8 +1,6 @@
-// src/app/reports/components/filter-builder/filter-builder.component.ts
-
-import { Component, Input, Output, EventEmitter, OnInit, ViewChild, TemplateRef, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import {FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators, FormsModule} from '@angular/forms';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ViewChild, TemplateRef, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
+import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
+import { CdkDragDrop, moveItemInArray, transferArrayItem, DragDropModule } from '@angular/cdk/drag-drop';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -19,8 +17,10 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { Report, DataSource, Filter, FilterOperator } from '../../../models/report.models';
+import { Report, DataSource, Field, Filter, FilterOperator } from '../../../models/report.models';
 import { ReportService } from '../../../services/report.service';
+import { Observable } from 'rxjs';
+import {CommonModule} from '@angular/common'; // Import Observable
 
 interface FilterGroup {
   logic: 'AND' | 'OR';
@@ -31,10 +31,11 @@ interface FilterGroup {
 @Component({
   selector: 'app-filter-builder',
   standalone: true,
-  // changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    DragDropModule,
     MatExpansionModule,
     MatIconModule,
     MatButtonModule,
@@ -56,14 +57,12 @@ interface FilterGroup {
   templateUrl: 'filter-builder.component.html',
   styleUrl: 'filter-builder.component.scss'
 })
-
-
-export class FilterBuilderComponent implements OnInit {
+export class FilterBuilderComponent implements OnInit, OnChanges {
   @ViewChild('filterConfigDialog') filterConfigDialog!: TemplateRef<any>;
 
   @Input() report: Report | null = null;
   @Input() dataSources: DataSource[] = [];
-  @Input() filters: Filter[] = [];
+  @Input() filters: Filter[] = []; // Ensure this is correctly typed as an Input
   @Output() filtersChange = new EventEmitter<Filter[]>();
 
   // Filter groups
@@ -71,9 +70,16 @@ export class FilterBuilderComponent implements OnInit {
 
   // Available fields
   availableFields: Map<number, any[]> = new Map();
+  filteredFields: Map<number, any[]> = new Map(); // Declared as class property
 
   // Forms
-  filterConfigForm: FormGroup;
+  fieldForm!: FormGroup;
+  formattingForm!: FormGroup;
+  filterConfigForm!: FormGroup; // Declared as class property
+
+  // UI state
+  searchTerm: string = ''; // Declared as class property
+  editingFieldIndex: number = -1;
 
   // Editing state
   editingFilter: Filter | null = null;
@@ -94,6 +100,55 @@ export class FilterBuilderComponent implements OnInit {
     { type: 'current_user_id', label: 'Current User ID' },
     { type: 'current_user_email', label: 'Current User Email' }
   ];
+// Operator options - defined once as class properties
+  private readonly baseOperators = [
+    { value: 'eq', label: 'Equals' },
+    { value: 'ne', label: 'Not Equals' },
+    { value: 'isnull', label: 'Is Null' },
+    { value: 'isnotnull', label: 'Is Not Null' }
+  ];
+
+  private readonly numericOperators = [
+    { value: 'gt', label: 'Greater Than' },
+    { value: 'gte', label: 'Greater Than or Equal' },
+    { value: 'lt', label: 'Less Than' },
+    { value: 'lte', label: 'Less Than or Equal' },
+    { value: 'between', label: 'Between' }
+  ];
+
+  private readonly textOperators = [
+    { value: 'contains', label: 'Contains' },
+    { value: 'icontains', label: 'Contains (Case Insensitive)' },
+    { value: 'startswith', label: 'Starts With' },
+    { value: 'endswith', label: 'Ends With' },
+    { value: 'regex', label: 'Regex' }
+  ];
+
+  private readonly listOperators = [
+    { value: 'in', label: 'In List' },
+    { value: 'not_in', label: 'Not In List' }
+  ];
+
+  private readonly dateOperators = [
+    { value: 'date_range', label: 'Date Range' },
+    ...this.numericOperators
+  ];
+
+  // Pre-computed operator sets for each field type
+  private readonly operatorsByFieldType: Record<string, Array<{ value: string; label: string }>> = {
+    'integerfield': [...this.baseOperators, ...this.numericOperators],
+    'floatfield': [...this.baseOperators, ...this.numericOperators],
+    'decimalfield': [...this.baseOperators, ...this.numericOperators],
+    'charfield': [...this.baseOperators, ...this.textOperators, ...this.listOperators],
+    'textfield': [...this.baseOperators, ...this.textOperators, ...this.listOperators],
+    'emailfield': [...this.baseOperators, ...this.textOperators, ...this.listOperators],
+    'urlfield': [...this.baseOperators, ...this.textOperators, ...this.listOperators],
+    'datefield': [...this.baseOperators, ...this.dateOperators],
+    'datetimefield': [...this.baseOperators, ...this.dateOperators],
+    'booleanfield': this.baseOperators.filter(op => ['eq', 'ne'].includes(op.value)),
+    'foreignkey': [...this.baseOperators, ...this.listOperators],
+    'manytomanyfield': [...this.baseOperators, ...this.listOperators]
+  };
 
   constructor(
     private fb: FormBuilder,
@@ -102,6 +157,25 @@ export class FilterBuilderComponent implements OnInit {
     private dialog: MatDialog,
     private cdr: ChangeDetectorRef
   ) {
+    this.formattingForm = this.fb.group({
+      type: [''],
+      prefix: ['$'],
+      suffix: [''],
+      decimals: [2],
+      thousands_separator: [true],
+      date_format: ['MM/DD/YYYY'],
+      multiply_by_100: [false]
+    });
+
+    this.fieldForm = this.fb.group({
+      display_name: ['', Validators.required],
+      aggregation: [''],
+      width: [null],
+      order: [0],
+      is_visible: [true],
+      formatting: this.formattingForm
+    });
+
     this.filterConfigForm = this.fb.group({
       is_required: [false],
       parameter_name: [''],
@@ -117,8 +191,15 @@ export class FilterBuilderComponent implements OnInit {
     // Load available fields
     this.loadAvailableFields();
 
-    // Organize existing filters if any
+    // Organize existing filters if any (initial load)
     if (this.filters && this.filters.length > 0) {
+      this.organizeFiltersIntoGroups();
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Reorganize filters into groups when the 'filters' input changes
+    if (changes['filters'] && !changes['filters'].firstChange) {
       this.organizeFiltersIntoGroups();
     }
   }
@@ -136,7 +217,7 @@ export class FilterBuilderComponent implements OnInit {
       this.reportService.getContentTypeFields(dataSource.content_type_id).subscribe({
         next: (response) => {
           this.availableFields.set(key, response.fields);
-          this.cdr.markForCheck();
+          this.filterFields();
         },
         error: (err) => {
           console.error(`Error loading fields for data source ${dataSource.alias}:`, err);
@@ -145,24 +226,45 @@ export class FilterBuilderComponent implements OnInit {
     }
   }
 
+  filterFields(): void {
+    const term = this.searchTerm.toLowerCase();
+
+    if (!term) {
+      this.filteredFields = new Map(this.availableFields);
+    } else {
+      this.filteredFields.clear();
+
+      for (const [dsId, fields] of this.availableFields.entries()) {
+        const filtered = fields.filter(field =>
+          field.verbose_name.toLowerCase().includes(term) ||
+          field.path.toLowerCase().includes(term) ||
+          field.type.toLowerCase().includes(term)
+        );
+
+        if (filtered.length > 0) {
+          this.filteredFields.set(dsId, filtered);
+        }
+      }
+    }
+  }
+
   organizeFiltersIntoGroups(): void {
-    const groups = new Map<number, FilterGroup>();
+    const groupsMap = new Map<number, FilterGroup>();
 
     for (const filter of this.filters) {
       const groupOrder = filter.group_order || 0;
-
-      if (!groups.has(groupOrder)) {
-        groups.set(groupOrder, {
+      if (!groupsMap.has(groupOrder)) {
+        groupsMap.set(groupOrder, {
           logic: filter.logic_group || 'AND',
           filters: [],
           order: groupOrder
         });
       }
-
-      groups.get(groupOrder)!.filters.push(filter);
+      groupsMap.get(groupOrder)!.filters.push(filter);
     }
 
-    this.filterGroups = Array.from(groups.values()).sort((a, b) => a.order - b.order);
+    // Ensure new array reference for filterGroups
+    this.filterGroups = Array.from(groupsMap.values()).sort((a, b) => a.order - b.order);
   }
 
   addFilterGroup(): void {
@@ -175,9 +277,6 @@ export class FilterBuilderComponent implements OnInit {
 
       // Create a new array to avoid mutation issues
       this.filterGroups = [...this.filterGroups, newGroup];
-
-      // Trigger change detection
-      this.cdr.detectChanges();
 
       // Add a filter to the new group after a microtask
       Promise.resolve().then(() => {
@@ -193,31 +292,70 @@ export class FilterBuilderComponent implements OnInit {
   }
 
   removeFilterGroup(groupIndex: number): void {
-    const group = this.filterGroups[groupIndex];
+    const groupToRemove = this.filterGroups[groupIndex];
 
-    // Remove all filters in the group
-    for (const filter of group.filters) {
+    // Collect all delete observables
+    const deleteObservables: Observable<any>[] = [];
+    for (const filter of groupToRemove.filters) {
       if (filter.id) {
-        this.reportService.deleteFilter(filter.id).subscribe();
+        deleteObservables.push(this.reportService.deleteFilter(filter.id));
       }
     }
 
-    this.filterGroups.splice(groupIndex, 1);
-    this.updateFiltersFromGroups();
+    // Execute all deletes and then update the UI
+    if (deleteObservables.length > 0) {
+      Promise.all(deleteObservables.map(obs => obs!.toPromise())).then(() => {
+        this.filterGroups = this.filterGroups.filter((_, i) => i !== groupIndex);
+        this.updateFiltersFromGroups();
+        this.snackBar.open('Filter group removed', 'Close', {
+          duration: 2000,
+          panelClass: ['info-snackbar']
+        });
+      }).catch(err => {
+        console.error('Error deleting filters in group:', err);
+        this.snackBar.open('Error removing filter group', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
+      });
+    } else {
+      // No filters with IDs to delete, just remove from local array
+      this.filterGroups = this.filterGroups.filter((_, i) => i !== groupIndex);
+      this.updateFiltersFromGroups();
+      this.snackBar.open('Filter group removed', 'Close', {
+        duration: 2000,
+        panelClass: ['info-snackbar']
+      });
+    }
   }
 
   updateGroupLogic(groupIndex: number, logic: 'AND' | 'OR'): void {
-    this.filterGroups[groupIndex].logic = logic;
+    const groupToUpdate = this.filterGroups[groupIndex];
 
-    // Update all filters in the group
-    for (const filter of this.filterGroups[groupIndex].filters) {
-      filter.logic_group = logic;
-      if (filter.id) {
-        this.reportService.updateFilter(filter.id, { logic_group: logic }).subscribe();
+    // Create new filter objects for the group's filters
+    const updatedFiltersInGroup = groupToUpdate.filters.map(filter => {
+      const updatedFilter = { ...filter, logic_group: logic };
+      // If filter has an ID, send update to backend
+      if (updatedFilter.id) {
+        this.reportService.updateFilter(updatedFilter.id, { logic_group: logic }).subscribe({
+          error: (err) => console.error('Error updating filter logic_group on backend:', err)
+        });
       }
-    }
+      return updatedFilter;
+    });
 
-    this.updateFiltersFromGroups();
+    // Create a new group object with the updated logic and filters
+    const updatedGroup = { ...groupToUpdate, logic: logic, filters: updatedFiltersInGroup };
+
+    // Create a new filterGroups array with the updated group
+    this.filterGroups = this.filterGroups.map((group, i) => {
+      if (i === groupIndex) {
+        return updatedGroup;
+      }
+      return group;
+    });
+
+    this.updateFiltersFromGroups(); // Propagate changes
   }
 
   addFilter(groupIndex: number): void {
@@ -267,9 +405,6 @@ export class FilterBuilderComponent implements OnInit {
       this.filters = this.filterGroups.flatMap(g => g.filters || []);
       this.filtersChange.emit([...this.filters]);
 
-      // Trigger change detection
-      this.cdr.markForCheck();
-
       this.snackBar.open('Filter added', 'Close', {
         duration: 2000,
         panelClass: ['info-snackbar']
@@ -285,36 +420,47 @@ export class FilterBuilderComponent implements OnInit {
   }
 
   removeFilter(groupIndex: number, filterIndex: number): void {
-    const filter = this.filterGroups[groupIndex].filters[filterIndex];
+    const filterToRemove = this.filterGroups[groupIndex].filters[filterIndex];
 
-    if (filter.id) {
-      this.reportService.deleteFilter(filter.id).subscribe({
-        next: () => {
-          this.filterGroups[groupIndex].filters.splice(filterIndex, 1);
+    const performRemoval = () => {
+      // Create a new filters array for the group
+      const updatedGroupFilters = this.filterGroups[groupIndex].filters.filter((_, i) => i !== filterIndex);
 
-          // Remove group if empty
-          if (this.filterGroups[groupIndex].filters.length === 0) {
-            this.filterGroups.splice(groupIndex, 1);
+      if (updatedGroupFilters.length === 0) {
+        // If group becomes empty, remove the group entirely
+        this.filterGroups = this.filterGroups.filter((_, i) => i !== groupIndex);
+      } else {
+        // Otherwise, update the specific group with its new filters array
+        this.filterGroups = this.filterGroups.map((group, i) => {
+          if (i === groupIndex) {
+            return { ...group, filters: updatedGroupFilters };
           }
+          return group;
+        });
+      }
+      this.updateFiltersFromGroups(); // Propagate changes
+    };
 
-          this.updateFiltersFromGroups();
-
+    if (filterToRemove.id) {
+      this.reportService.deleteFilter(filterToRemove.id).subscribe({
+        next: () => {
+          performRemoval();
           this.snackBar.open('Filter removed', 'Close', {
             duration: 2000,
             panelClass: ['info-snackbar']
+          });
+        },
+        error: (err) => {
+          console.error('Error removing filter:', err);
+          this.snackBar.open('Error removing filter', 'Close', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
           });
         }
       });
     } else {
       // If filter doesn't have ID, just remove from local array
-      this.filterGroups[groupIndex].filters.splice(filterIndex, 1);
-
-      // Remove group if empty
-      if (this.filterGroups[groupIndex].filters.length === 0) {
-        this.filterGroups.splice(groupIndex, 1);
-      }
-
-      this.updateFiltersFromGroups();
+      performRemoval();
     }
   }
 
@@ -377,6 +523,11 @@ export class FilterBuilderComponent implements OnInit {
   }
 
   updateFilter(filter: Filter, groupIndex: number, filterIndex: number): void {
+    // Update the filter in the group's array
+    // Create a new filter object to ensure immutability
+    const updatedFilter = { ...filter };
+    this.filterGroups[groupIndex].filters[filterIndex] = updatedFilter;
+
     if (!filter.id) {
       // If filter doesn't have ID, just update local array
       this.updateFiltersFromGroups();
@@ -482,9 +633,6 @@ export class FilterBuilderComponent implements OnInit {
 
       this.filters = [...allFilters]; // Create new array reference
       this.filtersChange.emit(this.filters);
-
-      // Manually trigger change detection
-      this.cdr.markForCheck();
     } catch (error) {
       console.error('Error updating filters:', error);
     }
@@ -508,7 +656,8 @@ export class FilterBuilderComponent implements OnInit {
     const field = this.findFieldByPath(filter.field_path);
     if (!field) return [{ value: 'eq', label: 'Equals' }];
 
-    return this.reportService.getOperatorOptions(field.type);
+    const fieldTypeLower = field.type.toLowerCase();
+    return this.operatorsByFieldType[fieldTypeLower] || this.baseOperators;
   }
 
   getValueInputType(filter: Filter): string {
@@ -618,5 +767,23 @@ export class FilterBuilderComponent implements OnInit {
 
   getInterpolationString(type: string): string {
     return `{{${type}}}`;
+  }
+
+  // TrackBy functions for performance optimization
+  trackByGroup(index: number, group: FilterGroup): number {
+    return group.order;
+  }
+
+  trackByFilter(index: number, filter: Filter): string {
+    // Use id if available, otherwise create a stable identifier
+    if (filter.id) {
+      return `filter-${filter.id}`;
+    }
+    // For new filters without IDs, use a combination of properties that should remain stable
+    return `new-${index}-${filter.field_path}-${filter.operator}`;
+  }
+
+  trackByDataSource(index: number, dataSource: DataSource): number | string {
+    return dataSource.id || dataSource.content_type_id || index;
   }
 }
