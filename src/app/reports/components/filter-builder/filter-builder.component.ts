@@ -68,6 +68,12 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
   // Filter groups
   filterGroups: FilterGroup[] = [];
 
+  // Add flag to prevent circular updates
+  private isInternalUpdate = false;
+
+  private filterIdCounter = 0;
+  private filterIdMap = new WeakMap<Filter, string>();
+
   // Available fields
   availableFields: Map<number, any[]> = new Map();
   filteredFields: Map<number, any[]> = new Map(); // Declared as class property
@@ -199,8 +205,14 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     // Reorganize filters into groups when the 'filters' input changes
-    if (changes['filters'] && !changes['filters'].firstChange) {
-      this.organizeFiltersIntoGroups();
+    if (changes['filters'] && !changes['filters'].firstChange && !this.isInternalUpdate) {
+      const currentFilters = changes['filters'].currentValue;
+      const previousFilters = changes['filters'].previousValue;
+
+      // Check if the change is substantial (not just a reference change)
+      if (JSON.stringify(currentFilters) !== JSON.stringify(previousFilters)) {
+        this.organizeFiltersIntoGroups();
+      }
     }
   }
 
@@ -401,9 +413,22 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
       // Add filter to group
       group.filters = [...group.filters, newFilter];
 
+      // Set flag before updating
+      this.isInternalUpdate = true;
+
       // Update the filters array
       this.filters = this.filterGroups.flatMap(g => g.filters || []);
       this.filtersChange.emit([...this.filters]);
+
+      // Reset flag
+      Promise.resolve().then(() => {
+        this.isInternalUpdate = false;
+      });
+
+      // Reset flag after a microtask to ensure change detection completes
+      Promise.resolve().then(() => {
+        this.isInternalUpdate = false;
+      });
 
       this.snackBar.open('Filter added', 'Close', {
         duration: 2000,
@@ -438,7 +463,11 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
           return group;
         });
       }
-      this.updateFiltersFromGroups(); // Propagate changes
+      this.isInternalUpdate = true;
+      this.updateFiltersFromGroups();
+      Promise.resolve().then(() => {
+        this.isInternalUpdate = false;
+      });
     };
 
     if (filterToRemove.id) {
@@ -530,7 +559,11 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
 
     if (!filter.id) {
       // If filter doesn't have ID, just update local array
+      this.isInternalUpdate = true;
       this.updateFiltersFromGroups();
+      Promise.resolve().then(() => {
+        this.isInternalUpdate = false;
+      });
       return;
     }
 
@@ -775,12 +808,19 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
   }
 
   trackByFilter(index: number, filter: Filter): string {
-    // Use id if available, otherwise create a stable identifier
+    // Use id if available
     if (filter.id) {
       return `filter-${filter.id}`;
     }
-    // For new filters without IDs, use a combination of properties that should remain stable
-    return `new-${index}-${filter.field_path}-${filter.operator}`;
+
+    // For new filters, use a stable ID from WeakMap
+    let stableId = this.filterIdMap.get(filter);
+    if (!stableId) {
+      stableId = `temp-${++this.filterIdCounter}`;
+      this.filterIdMap.set(filter, stableId);
+    }
+
+    return stableId;
   }
 
   trackByDataSource(index: number, dataSource: DataSource): number | string {
