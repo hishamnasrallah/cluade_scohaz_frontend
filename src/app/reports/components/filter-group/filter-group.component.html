@@ -5,7 +5,7 @@
      [class.and-group]="group.logic === 'AND'"
      [class.or-group]="group.logic === 'OR'"
      cdkDropList
-     [cdkDropListData]="group.children"
+     [cdkDropListData]="group.children || []"
      (cdkDropListDropped)="onDrop($event)">
 
   <!-- Group Header -->
@@ -143,7 +143,7 @@
     <button mat-stroked-button
             (click)="addSubGroup()"
             class="add-group-btn"
-            *ngIf="!isRoot || group.children?.length > 0">
+            *ngIf="!isRoot || (group.children && group.children.length > 0)">
       <mat-icon>folder</mat-icon>
       Add Group
     </button>

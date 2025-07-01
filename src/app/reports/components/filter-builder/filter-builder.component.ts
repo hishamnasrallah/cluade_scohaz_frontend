@@ -146,7 +146,7 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
     children: []
   };
 
-  // UI state
+// UI state
   viewMode: 'visual' | 'list' = 'list';
   showSqlPreview = false;
   copiedFilter: Filter | null = null;
@@ -154,6 +154,9 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
   selectedFilterForMove: Filter | null = null;
   selectedGroupForMove: FilterGroup | 'new' | null = null;
   newGroupLogic: 'AND' | 'OR' = 'AND';
+
+// Track field search terms separately
+  fieldSearchTerms: Map<number | undefined, string> = new Map();
 
   // Forms
   templateForm: FormGroup;
@@ -497,6 +500,7 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
 
     if (!this.report?.id) {
       const tempFilter: Filter = {
+        id: this.tempIdCounter--,
         report: 0,
         data_source: primaryDataSource.id || primaryDataSource.content_type_id!,
         field_path: '',
@@ -509,8 +513,6 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
         is_active: true,
         is_required: false
       };
-// Set ID after object creation to handle the optional id field
-      (tempFilter as any).id = this.tempIdCounter--;
 
       this.filters.push(tempFilter);
       this.organizeFiltersIntoGroups();
@@ -683,19 +685,21 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
   pasteFilter(): void {
     if (!this.copiedFilter) return;
 
-    const newFilter = {
-      ...this.copiedFilter,
-      id: undefined
-    };
-
     if (!this.report?.id) {
-      newFilter.id = this.tempIdCounter--;
-      this.filters.push(newFilter as Filter);
+      const newFilter: Filter = {
+        ...this.copiedFilter,
+        id: this.tempIdCounter--
+      };
+      this.filters.push(newFilter);
       this.organizeFiltersIntoGroups();
       this.buildFilterTree();
       this.filtersChange.emit(this.filters);
       this.saveToHistory();
     } else {
+      const newFilter: Partial<Filter> = {
+        ...this.copiedFilter,
+        id: undefined
+      };
       this.reportService.createFilter(newFilter).subscribe({
         next: (filter) => {
           this.filters.push(filter);
@@ -712,7 +716,6 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
       });
     }
   }
-
   // Drag and Drop
   onFilterDrop(event: CdkDragDrop<Filter[]>, group: FilterGroup): void {
     if (event.previousContainer === event.container) {
@@ -763,6 +766,7 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
 
   // Field Operations
   onFieldSearch(filter: Filter, searchTerm: string): void {
+    this.fieldSearchTerms.set(filter.id, searchTerm);
     this.searchSubject.next(searchTerm);
   }
 
@@ -770,7 +774,7 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
     const field = event.option.value as FieldInfo;
     filter.field_path = field.path;
     filter.field_name = field.name;
-    (filter as any).fieldSearchTerm = field.verbose_name;
+    this.fieldSearchTerms.set(filter.id, field.verbose_name);
 
     // Reset operator and value when field changes
     const operators = this.getOperatorsForField(filter);
@@ -1204,21 +1208,25 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
       this.saveToHistory();
     } else {
       // Save to backend
+      // Save to backend
       const createPromises = newFilters.map(filter =>
         this.reportService.createFilter(filter).toPromise()
       );
 
       Promise.all(createPromises).then(createdFilters => {
-        this.filters.push(...createdFilters);
-        this.organizeFiltersIntoGroups();
-        this.buildFilterTree();
-        this.filtersChange.emit(this.filters);
-        this.saveToHistory();
+        const validFilters: Filter[] = createdFilters.filter((f): f is Filter => f !== null && f !== undefined);
+        if (validFilters.length > 0) {
+          this.filters.push(...validFilters);
+          this.organizeFiltersIntoGroups();
+          this.buildFilterTree();
+          this.filtersChange.emit(this.filters);
+          this.saveToHistory();
 
-        this.snackBar.open(`Applied ${createdFilters.length} filters from template`, 'Close', {
-          duration: 3000,
-          panelClass: ['success-snackbar']
-        });
+          this.snackBar.open(`Applied ${validFilters.length} filters from template`, 'Close', {
+            duration: 3000,
+            panelClass: ['success-snackbar']
+          });
+        }
       });
     }
 
@@ -1345,16 +1353,19 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
       );
 
       Promise.all(createPromises).then(createdFilters => {
-        this.filters.push(...createdFilters);
-        this.organizeFiltersIntoGroups();
-        this.buildFilterTree();
-        this.filtersChange.emit(this.filters);
-        this.saveToHistory();
+        const validFilters: Filter[] = createdFilters.filter((f): f is Filter => f !== null && f !== undefined);
+        if (validFilters.length > 0) {
+          this.filters.push(...validFilters);
+          this.organizeFiltersIntoGroups();
+          this.buildFilterTree();
+          this.filtersChange.emit(this.filters);
+          this.saveToHistory();
 
-        this.snackBar.open(`Added ${createdFilters.length} common filters`, 'Close', {
-          duration: 2000,
-          panelClass: ['success-snackbar']
-        });
+          this.snackBar.open(`Added ${validFilters.length} common filters`, 'Close', {
+            duration: 2000,
+            panelClass: ['success-snackbar']
+          });
+        }
       });
     }
   }
@@ -1639,7 +1650,7 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
 
   formatSqlValue(filter: Filter): string {
     if (filter.value_type === 'parameter') {
-      return `:${filter.value}`;
+      return `:${filter.value || 'param'}`;
     }
 
     if (filter.value_type === 'dynamic') {
@@ -1649,27 +1660,36 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
     const fieldInfo = this.getFieldInfo(filter);
     const isTextual = fieldInfo && ['CharField', 'TextField', 'EmailField', 'URLField'].includes(fieldInfo.type);
 
-    if (filter.operator === 'between' && Array.isArray(filter.value)) {
-      return `${this.quoteSqlValue(filter.value[0], isTextual)} AND ${this.quoteSqlValue(filter.value[1], isTextual)}`;
+    if (filter.operator === 'between' && Array.isArray(filter.value) && filter.value.length >= 2) {
+      const val1 = filter.value[0] !== null && filter.value[0] !== undefined ? filter.value[0] : 'NULL';
+      const val2 = filter.value[1] !== null && filter.value[1] !== undefined ? filter.value[1] : 'NULL';
+      return `${this.quoteSqlValue(val1, isTextual || false)} AND ${this.quoteSqlValue(val2, isTextual || false)}`;
     }
 
     if ((filter.operator === 'in' || filter.operator === 'not_in') && Array.isArray(filter.value)) {
-      return filter.value.map(v => this.quoteSqlValue(v, isTextual)).join(', ');
+      if (filter.value.length === 0) {
+        return '()';
+      }
+      return filter.value.map(v => this.quoteSqlValue(v !== null && v !== undefined ? v : 'NULL', isTextual || false)).join(', ');
     }
 
     if (filter.operator === 'contains' || filter.operator === 'icontains') {
-      return `'%${filter.value}%'`;
+      const val = filter.value !== null && filter.value !== undefined ? filter.value : '';
+      return `'%${val}%'`;
     }
 
     if (filter.operator === 'startswith') {
-      return `'${filter.value}%'`;
+      const val = filter.value !== null && filter.value !== undefined ? filter.value : '';
+      return `'${val}%'`;
     }
 
     if (filter.operator === 'endswith') {
-      return `'%${filter.value}'`;
+      const val = filter.value !== null && filter.value !== undefined ? filter.value : '';
+      return `'%${val}'`;
     }
 
-    return this.quoteSqlValue(filter.value, isTextual);
+    const finalValue = filter.value !== null && filter.value !== undefined ? filter.value : 'NULL';
+    return this.quoteSqlValue(finalValue, isTextual || false);
   }
 
   quoteSqlValue(value: any, isTextual: boolean): string {
@@ -1686,5 +1706,9 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
         panelClass: ['success-snackbar']
       });
     });
+  }
+
+  getFieldSearchTerm(filter: Filter): string {
+    return this.fieldSearchTerms.get(filter.id) || '';
   }
 }

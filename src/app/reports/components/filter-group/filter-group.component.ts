@@ -70,22 +70,35 @@ export class FilterGroupComponent implements OnInit {
     if (!this.group.logic) {
       this.group.logic = 'AND';
     }
+
+    // Ensure the cdkDropListData always has a valid array
+    if (!this.group.children) {
+      this.group.children = [];
+    }
   }
 
   onDrop(event: CdkDragDrop<FilterTreeNode[]>): void {
+    // Ensure children array exists
+    if (!this.group.children) {
+      this.group.children = [];
+    }
+
     if (event.previousContainer === event.container) {
-      moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
+      moveItemInArray(this.group.children, event.previousIndex, event.currentIndex);
     } else {
+      const previousData = event.previousContainer.data || [];
       transferArrayItem(
-        event.previousContainer.data,
-        event.container.data,
+        previousData,
+        this.group.children,
         event.previousIndex,
         event.currentIndex
       );
 
       // Update parent reference
-      const movedItem = event.container.data[event.currentIndex];
-      movedItem.parentId = this.group.id;
+      const movedItem = this.group.children[event.currentIndex];
+      if (movedItem) {
+        movedItem.parentId = this.group.id;
+      }
     }
 
     this.groupChange.emit({ group: this.group, action: 'reorder' });

@@ -143,15 +143,16 @@
             <mat-form-field appearance="outline" class="field-select">
               <mat-label>Field</mat-label>
               <input matInput
+                     #fieldSearchInput
                      [matAutocomplete]="fieldAuto"
-                     [(ngModel)]="filter.fieldSearchTerm"
-                     (ngModelChange)="onFieldSearch(filter, $event)"
+                     [value]="getFieldDisplayName(filter)"
+                     (input)="onFieldSearch(filter, fieldSearchInput.value)"
                      placeholder="Search fields...">
               <mat-autocomplete #fieldAuto="matAutocomplete"
                                 (optionSelected)="onFieldSelect(filter, $event)">
-                <mat-optgroup *ngFor="let ds of getFilteredDataSources(filter.fieldSearchTerm)"
+                <mat-optgroup *ngFor="let ds of getFilteredDataSources(getFieldSearchTerm(filter))"
                               [label]="ds.alias">
-                  <mat-option *ngFor="let field of getFilteredFields(ds, filter.fieldSearchTerm)"
+                  <mat-option *ngFor="let field of getFilteredFields(ds, getFieldSearchTerm(filter))"
                               [value]="field">
                     <mat-icon>{{ getFieldIcon(field.type) }}</mat-icon>
                     <span>{{ field.verbose_name }}</span>
@@ -161,7 +162,6 @@
               </mat-autocomplete>
               <mat-icon matSuffix>search</mat-icon>
             </mat-form-field>
-
             <!-- Enhanced Operator Selection -->
             <mat-form-field appearance="outline" class="operator-select">
               <mat-label>Operator</mat-label>
@@ -382,8 +382,8 @@
             <mat-cell *matCellDef="let row">{{ row[col] }}</mat-cell>
           </ng-container>
 
-          <mat-header-row *matHeaderRowDef="testResults.columns"></mat-header-row>
-          <mat-row *matRowDef="let row; columns: testResults.columns;"></mat-row>
+          <mat-header-row *matHeaderRowDef="testResults?.columns || []"></mat-header-row>
+          <mat-row *matRowDef="let row; columns: testResults?.columns || [];"></mat-row>
         </mat-table>
       </div>
     </mat-card-content>
@@ -409,11 +409,11 @@
             </mat-card-header>
             <mat-card-content>
               <p>{{ template.description }}</p>
-              <mat-chip-list>
-                <mat-chip *ngFor="let field of template.requiredFields">
+              <mat-chip-listbox>
+                <mat-chip-option *ngFor="let field of template.requiredFields">
                   {{ field }}
-                </mat-chip>
-              </mat-chip-list>
+                </mat-chip-option>
+              </mat-chip-listbox>
             </mat-card-content>
           </mat-card>
         </div>
