@@ -29,8 +29,8 @@
           <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
             <button mat-icon-button disabled></button>
             <div class="node-content model-node"
-                 [class.disabled]="isModelAlreadyAdded(node.contentType)"
-                 (click)="selectModel(node.contentType)">
+                 [class.disabled]="node.contentType && isModelAlreadyAdded(node.contentType)"
+                 (click)="node.contentType && selectModel(node.contentType)">
               <mat-icon>table_chart</mat-icon>
               <span class="node-name">{{ node.name }}</span>
               <button mat-icon-button

@@ -1,9 +1,9 @@
 // src/app/reports/components/report-preview/report-preview.component.ts
 
-import { Component, Input, OnInit, OnDestroy, ViewChild, TemplateRef } from '@angular/core';
+import {Component, Input, OnInit, OnDestroy, ViewChild, OnChanges, TemplateRef, SimpleChanges} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { Subject, takeUntil, debounceTime } from 'rxjs';
+import { Subject, takeUntil, debounceTime, firstValueFrom, Subscription } from 'rxjs';
 
 // Material imports
 import { MatCardModule } from '@angular/material/card';
@@ -100,7 +100,8 @@ interface PreviewState {
   templateUrl: 'report-preview.component.html',
   styleUrl: 'report-preview.component.scss'
 })
-export class ReportPreviewComponent implements OnInit, OnDestroy {
+export class ReportPreviewComponent implements OnInit, OnDestroy, OnChanges {
+
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
   @ViewChild('sqlDialog') sqlDialog!: TemplateRef<any>;
@@ -113,6 +114,7 @@ export class ReportPreviewComponent implements OnInit, OnDestroy {
   @Input() parameters: Parameter[] = [];
 
   private destroy$ = new Subject<void>();
+  private columnFilterSubscription?: Subscription;
 
   // State
   isLoading = false;
@@ -192,14 +194,37 @@ export class ReportPreviewComponent implements OnInit, OnDestroy {
       this.runPreview();
     }
   }
+  // Add this method to handle report structure changes
+  public clearCacheAndRefresh(): void {
+    this.resultCache.clear();
+    if (this.report?.id && this.previewData) {
+      this.runPreview();
+    }
+  }
+
+// Add this to watch for input changes
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['fields'] || changes['filters'] || changes['dataSources']) {
+      // Clear cache when report structure changes
+      this.resultCache.clear();
+    }
+  }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
 
+    // Clean up column filter subscription
+    if (this.columnFilterSubscription) {
+      this.columnFilterSubscription.unsubscribe();
+    }
+
     if (this.currentChart) {
       this.currentChart.destroy();
     }
+
+    // Clear cache
+    this.resultCache.clear();
   }
 
   buildConfigSummary(): void {
@@ -288,12 +313,14 @@ export class ReportPreviewComponent implements OnInit, OnDestroy {
     this.error = null;
 
     try {
-      const result = await this.reportService.executeReport(this.report.id, {
-        parameters: this.previewState.parameters,
-        limit: this.previewState.pagination.pageSize,
-        offset: this.previewState.pagination.pageIndex * this.previewState.pagination.pageSize,
-        export_format: 'json'
-      }).toPromise();
+      const result = await firstValueFrom(
+        this.reportService.executeReport(this.report.id, {
+          parameters: this.previewState.parameters,
+          limit: this.previewState.pagination.pageSize,
+          offset: this.previewState.pagination.pageIndex * this.previewState.pagination.pageSize,
+          export_format: 'json'
+        })
+      );
 
       if (result) {
         this.resultCache.set(cacheKey, result);
@@ -330,9 +357,14 @@ export class ReportPreviewComponent implements OnInit, OnDestroy {
     this.updateDisplayedColumns();
 
     // Set up sorting and pagination
-    if (this.paginator) {
+    // Only use client-side pagination if we have all data
+    if (this.paginator && this.totalRows <= this.previewState.pagination.pageSize) {
       this.dataSource.paginator = this.paginator;
+    } else {
+      // For server-side pagination, don't attach paginator to data source
+      this.dataSource.paginator = null;
     }
+
     if (this.sort) {
       this.dataSource.sort = this.sort;
     }
@@ -353,6 +385,11 @@ export class ReportPreviewComponent implements OnInit, OnDestroy {
   }
 
   setupColumnFilterForm(): void {
+    // Unsubscribe from previous subscription if exists
+    if (this.columnFilterSubscription) {
+      this.columnFilterSubscription.unsubscribe();
+    }
+
     const group: any = {};
 
     this.displayedColumns.forEach(col => {
@@ -362,7 +399,7 @@ export class ReportPreviewComponent implements OnInit, OnDestroy {
     this.columnFilterForm = this.fb.group(group);
 
     // Apply column filters
-    this.columnFilterForm.valueChanges
+    this.columnFilterSubscription = this.columnFilterForm.valueChanges
       .pipe(
         debounceTime(300),
         takeUntil(this.destroy$)
@@ -407,7 +444,14 @@ export class ReportPreviewComponent implements OnInit, OnDestroy {
       reportId: this.report?.id,
       parameters: this.previewState.parameters,
       pagination: this.previewState.pagination,
-      sort: this.previewState.sort
+      sort: this.previewState.sort,
+      // Add structural elements to cache key
+      fieldsCount: this.fields.length,
+      filtersCount: this.filters.length,
+      dataSourcesCount: this.dataSources.length,
+      // Add a hash of field configurations
+      fieldsHash: this.fields.map(f => `${f.field_path}_${f.aggregation}_${f.is_visible}`).join('|'),
+      filtersHash: this.filters.map(f => `${f.field_path}_${f.operator}_${f.is_active}`).join('|')
     });
   }
 
@@ -914,6 +958,11 @@ export class ReportPreviewComponent implements OnInit, OnDestroy {
   onPageChange(event: any): void {
     this.previewState.pagination.pageIndex = event.pageIndex;
     this.previewState.pagination.pageSize = event.pageSize;
+
+    // Clear local data source pagination to avoid conflicts
+    this.dataSource.paginator = null;
+
+    // Run preview with new pagination
     this.runPreview();
   }
 

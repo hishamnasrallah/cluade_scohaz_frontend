@@ -4,8 +4,8 @@ import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectorRef } from '@ang
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Subject, takeUntil, forkJoin, of } from 'rxjs';
-import { catchError, finalize } from 'rxjs/operators';
+import { Subject, forkJoin, of } from 'rxjs';
+import { takeUntil, catchError, finalize, switchMap } from 'rxjs/operators';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 
 // Material imports
@@ -90,6 +90,8 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
   // Tags
   tags: string[] = [];
   readonly separatorKeysCodes = [ENTER, COMMA] as const;
+  private reportId: number | null = null;
+
 
   constructor(
     private fb: FormBuilder,
@@ -110,16 +112,42 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Check if editing
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
-      this.mode = 'edit';
-      this.loadReport(parseInt(id));
-    } else {
+    // First check if we're in create or edit mode based on initial route
+    const initialId = this.route.snapshot.paramMap.get('id');
+
+    if (!initialId) {
+      // Create mode - initialize immediately
       this.mode = 'create';
+      this.reportId = null;
       this.initializeNewReport();
       this.componentsLoaded = true;
     }
+
+    // Subscribe to route parameter changes
+    this.route.paramMap.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(params => {
+      const id = params.get('id');
+      const newReportId = id ? parseInt(id) : null;
+
+      // Only process if the report ID has actually changed
+      if (newReportId !== this.reportId) {
+        if (newReportId) {
+          // Switching to edit mode
+          this.reportId = newReportId;
+          this.mode = 'edit';
+          this.resetEditorState();
+          this.loadReport(newReportId);
+        } else if (this.reportId !== null) {
+          // Switching from edit to create mode
+          this.reportId = null;
+          this.mode = 'create';
+          this.resetEditorState();
+          this.initializeNewReport();
+          this.componentsLoaded = true;
+        }
+      }
+    });
 
     // Subscribe to form changes
     this.basicInfoForm.valueChanges
@@ -133,6 +161,37 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+  private resetEditorState(): void {
+    // Reset state
+    this.isDirty = false;
+    this.isSaving = false;
+    this.isValid = false;
+    this.progressValue = 0;
+    this.isLoadingComponents = false;
+    this.componentsLoaded = false;
+
+    // Reset forms
+    this.basicInfoForm.reset({
+      report_type: 'ad_hoc',
+      is_active: true,
+      is_public: false
+    });
+
+    // Reset component data
+    this.tags = [];
+    this.dataSources = [];
+    this.fields = [];
+    this.filters = [];
+    this.parameters = [];
+
+    // Reset report object
+    this.report = null;
+
+    // Reset stepper to first step
+    if (this.stepper) {
+      this.stepper.reset();
+    }
   }
 
   loadReport(id: number): void {
@@ -156,6 +215,9 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
           this.report = report;
           this.populateForm(report);
           this.loadReportComponents();
+        } else {
+          this.isLoadingComponents = false;
+          this.componentsLoaded = false;
         }
       });
   }
@@ -235,18 +297,29 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (result) => {
-          this.dataSources = result.dataSources;
+          // Ensure data sources have all required properties
+          this.dataSources = result.dataSources.map(ds => ({
+            ...ds,
+            // Ensure these properties exist even if not returned by API
+            select_related: ds.select_related || [],
+            prefetch_related: ds.prefetch_related || [],
+            available_fields: ds.available_fields || []
+          }));
+
           this.fields = result.fields;
           this.filters = result.filters;
           this.parameters = result.parameters;
 
           // Log for debugging
           console.log('Report components loaded:', {
-            dataSources: this.dataSources.length,
+            dataSources: this.dataSources,
             fields: this.fields.length,
             filters: this.filters.length,
             parameters: this.parameters.length
           });
+
+          // Force change detection after data is loaded
+          this.cdr.detectChanges();
         },
         error: (err) => {
           console.error('Error loading report components:', err);
@@ -280,10 +353,15 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
   }
 
   async onDataSourcesChange(dataSources: DataSource[]): Promise<void> {
+    console.log('ReportEditor - onDataSourcesChange:', dataSources);
     this.dataSources = [...dataSources]; // Create new array reference
     this.isDirty = true;
     this.validateReport();
-    this.cdr.detectChanges();
+
+    // Force change detection to ensure child components receive the update
+    setTimeout(() => {
+      this.cdr.detectChanges();
+    }, 0);
   }
 
   onFieldsChange(fields: Field[]): void {
@@ -328,6 +406,16 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
 
   async saveReport(showMessage = true, switchToEditMode = true): Promise<void> {
     if (!this.basicInfoForm.valid) return;
+
+    // Validate components
+    const validation = this.validateComponents();
+    if (!validation.valid) {
+      this.snackBar.open(validation.errors.join('. '), 'Close', {
+        duration: 5000,
+        panelClass: ['error-snackbar']
+      });
+      return;
+    }
 
     this.isSaving = true;
 
@@ -378,10 +466,31 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
       this.isDirty = false;
     } catch (error) {
       console.error('Error saving report:', error);
-      this.snackBar.open('Error saving report', 'Close', {
-        duration: 3000,
-        panelClass: ['error-snackbar']
-      });
+
+      // If we created a new report but failed to save components, offer to retry
+      if (this.mode === 'create' && this.report?.id) {
+        const retry = confirm('Failed to save some report components. Would you like to retry?');
+        if (retry) {
+          try {
+            await this.saveReportComponents();
+            this.snackBar.open('Report components saved successfully', 'Close', {
+              duration: 3000,
+              panelClass: ['success-snackbar']
+            });
+          } catch (retryError) {
+            console.error('Retry failed:', retryError);
+            this.snackBar.open('Failed to save some components. Please try editing the report.', 'Close', {
+              duration: 5000,
+              panelClass: ['error-snackbar']
+            });
+          }
+        }
+      } else {
+        this.snackBar.open('Error saving report', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
+      }
     } finally {
       this.isSaving = false;
     }
@@ -390,9 +499,153 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
   async saveReportComponents(): Promise<void> {
     if (!this.report?.id) return;
 
-    // This would typically save all components
-    // For now, we'll assume the sub-components handle their own saving
     console.log('Saving report components...');
+
+    try {
+      // Save data sources
+      const dataSourcePromises = this.dataSources
+        .filter(ds => !ds.id || ds.id < 0) // Only save new data sources (with temp IDs)
+        .map(ds => {
+          const dataSourceData = {
+            ...ds,
+            report: this.report!.id,
+            id: undefined // Remove temporary ID
+          };
+          return this.reportService.createDataSource(dataSourceData).toPromise();
+        });
+
+      const savedDataSources = await Promise.all(dataSourcePromises);
+      console.log('Saved data sources:', savedDataSources);
+
+      // Update local data sources with saved IDs
+      const dataSourceMap = new Map<number, number>(); // Map temp ID to real ID
+      this.dataSources.forEach((ds, index) => {
+        if (ds.id && ds.id < 0) {
+          const saved = savedDataSources.find(s => s?.alias === ds.alias);
+          if (saved && saved.id) {
+            dataSourceMap.set(ds.id, saved.id);
+            this.dataSources[index] = saved;
+          }
+        }
+      });
+
+      // Save fields with updated data source references
+      const fieldPromises = this.fields
+        .filter(field => !field.id || field.id < 0)
+        .map(field => {
+          const fieldData = {
+            ...field,
+            report: this.report!.id,
+            // Update data_source reference if it was a temp ID
+            data_source: dataSourceMap.get(field.data_source) || field.data_source,
+            id: undefined // Remove temporary ID
+          };
+          return this.reportService.createField(fieldData).toPromise();
+        });
+
+      const savedFields = await Promise.all(fieldPromises);
+      console.log('Saved fields:', savedFields);
+
+      // Update local fields with saved data
+      this.fields = this.fields.map(field => {
+        if (field.id && field.id < 0) {
+          const saved = savedFields.find(s =>
+            s?.field_path === field.field_path &&
+            s?.data_source === (dataSourceMap.get(field.data_source) || field.data_source)
+          );
+          return saved || field;
+        }
+        return field;
+      });
+
+      // Save filters with updated data source references
+      const filterPromises = this.filters
+        .filter(filter => !filter.id || filter.id < 0)
+        .map(filter => {
+          const filterData = {
+            ...filter,
+            report: this.report!.id,
+            // Update data_source reference if it was a temp ID
+            data_source: dataSourceMap.get(filter.data_source) || filter.data_source,
+            id: undefined // Remove temporary ID
+          };
+          return this.reportService.createFilter(filterData).toPromise();
+        });
+
+      const savedFilters = await Promise.all(filterPromises);
+      console.log('Saved filters:', savedFilters);
+
+      // Update local filters with saved data
+      this.filters = this.filters.map(filter => {
+        if (filter.id && filter.id < 0) {
+          const saved = savedFilters.find(s =>
+            s?.field_path === filter.field_path &&
+            s?.data_source === (dataSourceMap.get(filter.data_source) || filter.data_source)
+          );
+          return saved || filter;
+        }
+        return filter;
+      });
+
+      // Save parameters
+      const parameterPromises = this.parameters
+        .filter(param => !param.id || param.id < 0)
+        .map(param => {
+          const paramData = {
+            ...param,
+            report: this.report!.id,
+            id: undefined // Remove temporary ID
+          };
+          return this.reportService.createParameter(paramData).toPromise();
+        });
+
+      const savedParameters = await Promise.all(parameterPromises);
+      console.log('Saved parameters:', savedParameters);
+
+      // Update local parameters with saved data
+      this.parameters = this.parameters.map(param => {
+        if (param.id && param.id < 0) {
+          const saved = savedParameters.find(s => s?.name === param.name);
+          return saved || param;
+        }
+        return param;
+      });
+
+    } catch (error) {
+      console.error('Error saving report components:', error);
+      throw error; // Re-throw to be handled by the caller
+    }
+  }
+  private validateComponents(): { valid: boolean; errors: string[] } {
+    const errors: string[] = [];
+
+    // Validate data sources
+    if (this.dataSources.length === 0) {
+      errors.push('At least one data source is required');
+    }
+
+    // Validate fields
+    if (this.fields.length === 0) {
+      errors.push('At least one field is required');
+    }
+
+    // Check for fields without proper data source references
+    const validDataSourceIds = new Set(this.dataSources.map(ds => ds.id || ds.content_type_id));
+    const invalidFields = this.fields.filter(f => !validDataSourceIds.has(f.data_source));
+    if (invalidFields.length > 0) {
+      errors.push(`${invalidFields.length} fields have invalid data source references`);
+    }
+
+    // Check for filters without proper data source references
+    const invalidFilters = this.filters.filter(f => !validDataSourceIds.has(f.data_source));
+    if (invalidFilters.length > 0) {
+      errors.push(`${invalidFilters.length} filters have invalid data source references`);
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors
+    };
   }
 
   async saveAndExecute(): Promise<void> {

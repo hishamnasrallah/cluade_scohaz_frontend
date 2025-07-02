@@ -1174,8 +1174,19 @@ export class FilterBuilderComponent implements OnInit, OnChanges, OnDestroy {
 
   // Helper Methods
   getFieldsForDataSource(dataSource: DataSource): FieldInfo[] {
+    if (!dataSource) {
+      console.warn('getFieldsForDataSource called with null/undefined dataSource');
+      return [];
+    }
+
     const key = dataSource.id || dataSource.content_type_id;
-    return this.availableFields.get(key!) || [];
+    const fields = this.availableFields.get(key!) || [];
+
+    if (fields.length === 0) {
+      console.log(`No fields found for data source ${dataSource.alias} (key: ${key})`);
+    }
+
+    return fields;
   }
 
   getFilteredDataSources(searchTerm?: string): DataSource[] {

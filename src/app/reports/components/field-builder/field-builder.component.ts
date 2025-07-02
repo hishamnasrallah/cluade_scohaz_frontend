@@ -1,6 +1,16 @@
 // src/app/reports/components/field-builder/field-builder.component.ts
 
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, ViewChild, TemplateRef } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  OnInit,
+  OnChanges,
+  ViewChild,
+  TemplateRef,
+  SimpleChanges, ChangeDetectorRef
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import { CdkDragDrop, moveItemInArray, transferArrayItem, DragDropModule } from '@angular/cdk/drag-drop';
@@ -21,6 +31,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatDividerModule } from '@angular/material/divider';
 import { Report, DataSource, Field, FieldInfo } from '../../../models/report.models';
 import { ReportService } from '../../../services/report.service';
+import {MatProgressSpinner} from '@angular/material/progress-spinner';
 
 interface AvailableField extends FieldInfo {
   dataSourceId: number;
@@ -49,7 +60,8 @@ interface AvailableField extends FieldInfo {
     MatBadgeModule,
     MatTabsModule,
     MatDividerModule,
-    FormsModule
+    FormsModule,
+    MatProgressSpinner
   ],
   templateUrl: 'field-builder.component.html',
   styleUrl: 'field-builder.component.scss'
@@ -94,12 +106,14 @@ export class FieldBuilderComponent implements OnInit {
     { value: 'email', label: 'Email', icon: 'email' },
     { value: 'url', label: 'URL', icon: 'link' }
   ];
+  isLoadingFields = false;
 
   constructor(
     private fb: FormBuilder,
     private reportService: ReportService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private cdr: ChangeDetectorRef
   ) {
     this.formattingForm = this.fb.group({
       type: [''],
@@ -122,33 +136,100 @@ export class FieldBuilderComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    if (this.dataSources.length > 0) {
-      this.loadAvailableFields();
-    }
+    // Don't load fields immediately, wait for ngOnChanges
+    console.log('FieldBuilder ngOnInit - dataSources:', this.dataSources);
   }
 
-  ngOnChanges(changes: any): void {
-    if (changes.dataSources && this.dataSources.length > 0) {
-      this.loadAvailableFields();
+  ngOnChanges(changes: SimpleChanges): void {
+    console.log('FieldBuilder ngOnChanges:', changes);
+
+    if (changes['dataSources']) {
+      const currentValue = changes['dataSources'].currentValue;
+      const previousValue = changes['dataSources'].previousValue;
+
+      console.log('DataSources changed from:', previousValue, 'to:', currentValue);
+
+      // Check if we have a real change (not just initialization)
+      if (currentValue && Array.isArray(currentValue) && currentValue.length > 0) {
+        // Check if this is a real change or just the same data
+        const hasChanged = !previousValue ||
+          previousValue.length !== currentValue.length ||
+          JSON.stringify(previousValue) !== JSON.stringify(currentValue);
+
+        if (hasChanged) {
+          console.log('DataSources actually changed, reloading fields...');
+          // Clear previous fields
+          this.availableFields.clear();
+          this.filteredFields.clear();
+
+          // Load fields for new data sources
+          this.loadAvailableFields();
+        }
+      }
+    }
+
+    // Also reload if fields array changes (for edit mode)
+    if (changes['fields'] && !changes['fields'].firstChange) {
+      console.log('Fields input changed:', this.fields);
     }
   }
 
   loadAvailableFields(): void {
-    for (const dataSource of this.dataSources) {
-      if (!dataSource.content_type_id) continue;
+    console.log('Loading available fields for dataSources:', this.dataSources);
 
-      this.reportService.getContentTypeFields(dataSource.content_type_id).subscribe({
-        next: (response) => {
-          // Use content_type_id as key if dataSource doesn't have ID yet
-          const key = dataSource.id || dataSource.content_type_id;
-          this.availableFields.set(key, response.fields);
-          this.filterFields();
-        },
-        error: (err) => {
-          console.error(`Error loading fields for data source ${dataSource.alias}:`, err);
-        }
-      });
+    if (!Array.isArray(this.dataSources) || this.dataSources.length === 0) {
+      console.warn('No data sources available to load fields from');
+      return;
     }
+
+    this.isLoadingFields = true;
+
+    // Track loading promises
+    const loadPromises: Promise<void>[] = [];
+
+    for (const dataSource of this.dataSources) {
+      // Check both content_type_id and content_type object
+      const contentTypeId = dataSource.content_type_id || dataSource.content_type?.id;
+
+      if (!contentTypeId) {
+        console.warn('Data source missing content_type_id:', dataSource);
+        continue;
+      }
+
+      console.log(`Loading fields for data source ${dataSource.alias} (content_type_id: ${contentTypeId})`);
+
+      const promise = this.reportService.getContentTypeFields(contentTypeId)
+        .toPromise()
+        .then(response => {
+          if (response && response.fields) {
+            // Use both possible keys for the map
+            const key = dataSource.id || contentTypeId;
+            this.availableFields.set(key, response.fields);
+
+            // Also set by content_type_id to ensure we can find it
+            if (dataSource.id && dataSource.id !== contentTypeId) {
+              this.availableFields.set(contentTypeId, response.fields);
+            }
+
+            console.log(`Loaded ${response.fields.length} fields for data source ${dataSource.alias} (key: ${key})`);
+          }
+        })
+        .catch(err => {
+          console.error(`Error loading fields for data source ${dataSource.alias}:`, err);
+        });
+
+      loadPromises.push(promise);
+    }
+
+    // After all fields are loaded, filter them
+    Promise.all(loadPromises).then(() => {
+      console.log('All fields loaded. Available fields map:', this.availableFields);
+      this.filterFields();
+      this.isLoadingFields = false;
+
+      // Force change detection
+      this.cdr.detectChanges();
+    });
   }
 
   filterFields(): void {

@@ -58,8 +58,15 @@ export class DataSourceSelectorComponent implements OnInit {
   @ViewChild('editDialog') editDialog!: TemplateRef<any>;
 
   @Input() report: Report | null = null;
-  @Input() dataSources: DataSource[] = [];
+  @Input() set dataSources(value: DataSource[]) {
+    this._dataSources = value || [];
+  }
+  get dataSources(): DataSource[] {
+    return this._dataSources;
+  }
   @Output() dataSourcesChange = new EventEmitter<DataSource[]>();
+
+  private _dataSources: DataSource[] = [];
 
   // Tree data
   treeControl = new NestedTreeControl<ContentTypeNode>(node => node.children);
@@ -91,6 +98,10 @@ export class DataSourceSelectorComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Ensure dataSources is initialized as an array
+    if (!Array.isArray(this.dataSources)) {
+      this._dataSources = [];
+    }
     this.loadContentTypes();
   }
 
@@ -100,7 +111,15 @@ export class DataSourceSelectorComponent implements OnInit {
     this.isLoadingModels = true;
     this.reportService.getContentTypes().subscribe({
       next: (contentTypes) => {
-        this.buildTreeData(contentTypes);
+        console.log('Loaded content types:', contentTypes);
+        if (contentTypes && typeof contentTypes === 'object') {
+          this.buildTreeData(contentTypes);
+        } else {
+          console.error('Invalid content types data:', contentTypes);
+          this.treeData = [];
+          this.filteredTreeData = [];
+          this.dataSource.data = [];
+        }
         this.isLoadingModels = false;
       },
       error: (err) => {
@@ -109,22 +128,30 @@ export class DataSourceSelectorComponent implements OnInit {
           duration: 3000,
           panelClass: ['error-snackbar']
         });
+        this.treeData = [];
+        this.filteredTreeData = [];
+        this.dataSource.data = [];
         this.isLoadingModels = false;
       }
     });
   }
 
   buildTreeData(contentTypes: Record<string, { label: string; content_types: ContentType[] }>): void {
-    this.treeData = Object.entries(contentTypes).map(([app, data]) => ({
-      name: data.label,
-      app: app,
-      level: 0,
-      children: data.content_types.map(ct => ({
-        name: ct.verbose_name || ct.model,
-        contentType: ct,
-        level: 1
+    this.treeData = Object.entries(contentTypes)
+      .filter(([app, data]) => data && data.content_types) // Filter out invalid entries
+      .map(([app, data]) => ({
+        name: data.label || app, // Fallback to app name if label is missing
+        app: app,
+        level: 0,
+        children: data.content_types
+          .filter(ct => ct) // Filter out null/undefined content types
+          .map(ct => ({
+            name: ct.verbose_name || ct.model || 'Unknown Model',
+            contentType: ct,
+            level: 1
+          }))
       }))
-    }));
+      .filter(node => node.children && node.children.length > 0); // Only include apps with models
 
     this.filteredTreeData = [...this.treeData];
     this.dataSource.data = this.filteredTreeData;
@@ -159,6 +186,10 @@ export class DataSourceSelectorComponent implements OnInit {
 
   isModelAlreadyAdded(contentType?: ContentType): boolean {
     if (!contentType) return true;
+    if (!Array.isArray(this.dataSources)) {
+      console.warn('dataSources is not an array:', this.dataSources);
+      return false;
+    }
     return this.dataSources.some(ds => ds.content_type_id === contentType.id);
   }
 

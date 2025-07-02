@@ -18,7 +18,12 @@
 
       <mat-card-content>
         <!-- Tab for each data source -->
-        <mat-tab-group *ngIf="dataSources.length > 0">
+        <div class="loading" *ngIf="isLoadingFields">
+          <mat-spinner diameter="30"></mat-spinner>
+          <p>Loading fields...</p>
+        </div>
+
+        <mat-tab-group *ngIf="dataSources.length > 0 && !isLoadingFields">
           <mat-tab *ngFor="let dataSource of dataSources">
             <ng-template mat-tab-label>
               <mat-icon>{{ dataSource.is_primary ? 'star' : 'table_chart' }}</mat-icon>
