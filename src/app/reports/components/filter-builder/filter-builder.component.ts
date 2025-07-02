@@ -365,23 +365,132 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
       children: []
     };
 
-    // Convert filter groups to tree nodes
-    this.filterGroups.forEach(group => {
+    // Build the tree structure from flat filters
+    this.buildRootGroupFromFilters();
+  }
+
+  private buildRootGroupFromFilters(): void {
+    console.log('Building tree from filters:', this.filters);
+
+    // Clear existing children
+    this.rootGroup.children = [];
+
+    // Create a map to track all groups by their ID
+    const groupMap = new Map<string, FilterTreeNode>();
+    const filtersByGroup = new Map<number, Filter[]>();
+    const nestedGroups = new Map<number, FilterTreeNode[]>();
+
+    // First, organize filters by their group_order
+    this.filters.forEach(filter => {
+      const groupOrder = filter.group_order || 0;
+      if (!filtersByGroup.has(groupOrder)) {
+        filtersByGroup.set(groupOrder, []);
+      }
+      filtersByGroup.get(groupOrder)!.push(filter);
+    });
+
+    // Create group nodes
+    const sortedGroupOrders = Array.from(filtersByGroup.keys()).sort((a, b) => a - b);
+
+    sortedGroupOrders.forEach(groupOrder => {
+      const groupFilters = filtersByGroup.get(groupOrder)!;
+      const groupId = `group-${groupOrder}`;
+
+      // Determine parent
+      const firstFilter = groupFilters[0];
+      const parentGroupId = firstFilter.parent_group;
+
       const groupNode: FilterTreeNode = {
-        id: group.id,
+        id: groupId,
         type: 'group',
-        logic: group.logic,
-        children: group.filters.map(filter => ({
+        logic: firstFilter.logic_group || 'AND',
+        children: [],
+        parentId: parentGroupId ? `group-${parentGroupId}` : 'root'
+      };
+
+      // Add filters to group
+      groupFilters.forEach(filter => {
+        groupNode.children!.push({
           id: `filter-${filter.id || this.tempIdCounter--}`,
           type: 'filter',
           filter: filter,
-          parentId: group.id
-        })),
-        parentId: 'root'
-      };
+          parentId: groupId
+        });
+      });
 
-      this.rootGroup.children!.push(groupNode);
+      groupMap.set(groupId, groupNode);
+
+      // Track nested groups
+      if (parentGroupId !== undefined && parentGroupId !== null) {
+        if (!nestedGroups.has(parentGroupId)) {
+          nestedGroups.set(parentGroupId, []);
+        }
+        nestedGroups.get(parentGroupId)!.push(groupNode);
+      } else {
+        // Root level group
+        this.rootGroup.children!.push(groupNode);
+      }
     });
+
+    // Process nested groups
+    nestedGroups.forEach((childGroups, parentGroupOrder) => {
+      const parentGroupId = `group-${parentGroupOrder}`;
+      const parentGroup = groupMap.get(parentGroupId);
+
+      if (parentGroup) {
+        childGroups.forEach(childGroup => {
+          parentGroup.children!.push(childGroup);
+        });
+      }
+    });
+    console.log('Built tree structure:', this.rootGroup);
+
+  }
+
+  private flattenRootGroupToFilters(): void {
+    const flatFilters: Filter[] = [];
+    const processedGroups = new Set<string>();
+
+    const processNode = (node: FilterTreeNode, parentGroupOrder?: number, depth: number = 0) => {
+      if (node.type === 'filter' && node.filter) {
+        // Direct filter node
+        flatFilters.push(node.filter);
+      } else if (node.type === 'group' && node.children) {
+        // Group node
+        const groupOrder = parseInt(node.id.replace('group-', '')) || depth;
+
+        // Avoid processing the same group twice
+        if (processedGroups.has(node.id)) {
+          return;
+        }
+        processedGroups.add(node.id);
+
+        // Process all children in this group
+        node.children.forEach(child => {
+          if (child.type === 'filter' && child.filter) {
+            // Update filter properties
+            child.filter.group_order = groupOrder;
+            child.filter.logic_group = node.logic || 'AND';
+            child.filter.parent_group = parentGroupOrder;
+            flatFilters.push(child.filter);
+          } else if (child.type === 'group') {
+            // Recursive call for nested groups
+            processNode(child, groupOrder, depth + 1);
+          }
+        });
+      }
+    };
+
+    // Process all root children
+    if (this.rootGroup.children) {
+      this.rootGroup.children.forEach((child, index) => {
+        processNode(child, undefined, index);
+      });
+    }
+
+    // Update the filters array
+    this.filters = flatFilters;
+    this.filtersChange.emit(this.filters);
   }
 
   // History Management
@@ -733,12 +842,6 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
     this.saveToHistory();
   }
 
-  onTreeDrop(event: CdkDragDrop<FilterTreeNode>): void {
-    // Handle tree structure drag and drop
-    this.updateFilterGroups();
-    this.saveToHistory();
-  }
-
   updateFilterGroups(): void {
     // Update all filters with their new group assignments
     const updates: Promise<any>[] = [];
@@ -867,17 +970,43 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
 
   // Tree Operations
   onGroupChange(event: any): void {
+    console.log('Group change event:', event);
+
     // Handle group changes from visual tree
+    if (event.action === 'drag_drop' || event.action === 'reorder') {
+      console.log('Syncing filters after drag/drop');
+      this.flattenRootGroupToFilters();
+    }
+
+    this.updateFilterGroups();
+    this.saveToHistory();
+
+    // User feedback
+    if (event.action === 'add_filter') {
+      this.snackBar.open('Filter added', 'Close', { duration: 2000 });
+    } else if (event.action === 'delete') {
+      this.snackBar.open('Group deleted', 'Close', { duration: 2000 });
+    }
+  }
+
+  onTreeDrop(event: CdkDragDrop<FilterTreeNode>): void {
+    // Handle tree structure drag and drop
+    // After any structural change, flatten the tree
+    this.flattenRootGroupToFilters();
     this.updateFilterGroups();
     this.saveToHistory();
   }
 
   onFilterChange(event: any): void {
+    console.log('Filter change event:', event);
+
     // Handle filter changes from visual tree
     this.updateFilter(event.filter);
   }
 
   onFilterRemove(event: any): void {
+    console.log('Filter remove event:', event);
+
     // Handle filter removal from visual tree
     this.removeFilter(event.filter);
   }
@@ -1714,5 +1843,31 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
 
   getFieldSearchTerm(filter: Filter): string {
     return this.fieldSearchTerms.get(filter.id) || '';
+  }
+
+  // Public methods for parent component integration
+  public syncFiltersFromTree(): void {
+    // Ensure tree structure is flattened to filters array
+    if (this.viewMode === 'visual' && this.rootGroup.children && this.rootGroup.children.length > 0) {
+      this.flattenRootGroupToFilters();
+    }
+  }
+
+  public syncTreeFromFilters(): void {
+    // Rebuild tree structure from filters array
+    this.buildRootGroupFromFilters();
+  }
+
+  public getFilters(): Filter[] {
+    // Ensure filters are synchronized before returning
+    this.syncFiltersFromTree();
+    return this.filters;
+  }
+
+  public setFilters(filters: Filter[]): void {
+    this.filters = filters;
+    this.organizeFiltersIntoGroups();
+    this.buildFilterTree();
+    this.filtersChange.emit(this.filters);
   }
 }

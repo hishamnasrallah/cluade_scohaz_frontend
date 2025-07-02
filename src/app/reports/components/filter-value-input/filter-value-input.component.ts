@@ -239,15 +239,41 @@ export class FilterValueInputComponent implements OnInit, OnChanges {
     this.isLoadingOptions = true;
 
     try {
-      // This would typically load options from the related model
-      // For now, using mock data
-      this.selectOptions = [
-        { value: 1, label: 'Option 1' },
-        { value: 2, label: 'Option 2' },
-        { value: 3, label: 'Option 3' },
-        { value: 4, label: 'Option 4' },
-        { value: 5, label: 'Option 5' }
-      ];
+      // Get the data source to find content type
+      const dataSource = this.dataSources.find(ds =>
+        ds.id === this.filter.data_source || ds.content_type_id === this.filter.data_source
+      );
+
+      if (!dataSource || !dataSource.content_type_id) {
+        throw new Error('Data source or content type not found');
+      }
+
+      // Parse the field path to determine if it's a relation through another model
+      const fieldParts = this.fieldInfo.path.split('__');
+      let targetContentTypeId = dataSource.content_type_id;
+
+      // If the field path has multiple parts, we need to find the related model's content type
+      if (fieldParts.length > 1 && this.fieldInfo.is_relation) {
+        // For now, we'll use the current content type
+        // In a real implementation, the backend would provide the related content type ID
+        console.log('Loading options for related field:', this.fieldInfo.path);
+      }
+
+      // Fetch options from the service
+      const options = await this.reportService.getRelatedFieldOptions(
+        targetContentTypeId,
+        {
+          limit: 100,
+          value_field: 'id',
+          label_field: 'name' // This would be configurable based on the model
+        }
+      ).toPromise();
+
+      if (options) {
+        this.selectOptions = options;
+      } else {
+        this.selectOptions = [];
+      }
 
       this.filteredSelectOptions = of(this.selectOptions);
 
@@ -260,7 +286,9 @@ export class FilterValueInputComponent implements OnInit, OnChanges {
       }
     } catch (error) {
       console.error('Error loading related data:', error);
+      // Provide user feedback
       this.selectOptions = [];
+      this.filteredSelectOptions = of([]);
     } finally {
       this.isLoadingOptions = false;
     }

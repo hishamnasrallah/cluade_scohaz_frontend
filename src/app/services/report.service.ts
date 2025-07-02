@@ -266,6 +266,58 @@ export class ReportService {
     const params = new HttpParams().set('field_type', fieldType);
     return this.http.get<{ lookups: string[] }>(this.getUrl('/field-lookups/'), { params });
   }
+  // Get options for related fields (select/multiselect)
+  getRelatedFieldOptions(contentTypeId: number, params?: {
+    search?: string;
+    limit?: number;
+    value_field?: string;
+    label_field?: string;
+  }): Observable<Array<{ value: any; label: string }>> {
+    let httpParams = new HttpParams();
+
+    if (params) {
+      Object.keys(params).forEach(key => {
+        const value = (params as any)[key];
+        if (value !== null && value !== undefined) {
+          httpParams = httpParams.set(key, value.toString());
+        }
+      });
+    }
+
+    // In a real implementation, this would call a backend endpoint like:
+    // return this.http.get<Array<{ value: any; label: string }>>(
+    //   this.getUrl(`/content-types/${contentTypeId}/options/`),
+    //   { params: httpParams }
+    // );
+
+    // Simulating the API response for now
+    return new Observable(observer => {
+      setTimeout(() => {
+        // Generate mock data based on content type
+        const mockData = Array.from({ length: 20 }, (_, i) => ({
+          value: i + 1,
+          label: `Option ${i + 1} for Type ${contentTypeId}`
+        }));
+
+        // Apply search filter if provided
+        let filtered = mockData;
+        if (params?.search) {
+          const searchLower = params.search.toLowerCase();
+          filtered = mockData.filter(item =>
+            item.label.toLowerCase().includes(searchLower)
+          );
+        }
+
+        // Apply limit if provided
+        if (params?.limit) {
+          filtered = filtered.slice(0, params.limit);
+        }
+
+        observer.next(filtered);
+        observer.complete();
+      }, 500); // Simulate network delay
+    });
+  }
 
   getBuilderData(reportId?: number): Observable<BuilderData> {
     let params = new HttpParams();

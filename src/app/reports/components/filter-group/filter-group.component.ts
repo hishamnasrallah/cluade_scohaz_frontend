@@ -94,14 +94,20 @@ export class FilterGroupComponent implements OnInit {
         event.currentIndex
       );
 
-      // Update parent reference
+      // Update parent reference and filter properties
       const movedItem = this.group.children[event.currentIndex];
       if (movedItem) {
         movedItem.parentId = this.group.id;
+
+        // Update the filter's logic group to match new parent
+        if (movedItem.type === 'filter' && movedItem.filter) {
+          movedItem.filter.logic_group = this.group.logic || 'AND';
+        }
       }
     }
 
-    this.groupChange.emit({ group: this.group, action: 'reorder' });
+    // Emit change with drag_drop action to trigger synchronization
+    this.groupChange.emit({ group: this.group, action: 'drag_drop' });
   }
 
   toggleLogic(): void {
@@ -136,8 +142,8 @@ export class FilterGroupComponent implements OnInit {
       value: '',
       value_type: 'static',
       logic_group: this.group.logic || 'AND',
-      group_order: 0,
-      parent_group: parseInt(this.group.id) || undefined,
+      group_order: this.getGroupOrder(), // Add helper method
+      parent_group: this.isRoot ? undefined : parseInt(this.group.id.replace('group-', '')) || undefined,
       is_active: true,
       is_required: false
     };
@@ -155,6 +161,12 @@ export class FilterGroupComponent implements OnInit {
 
     this.group.children.push(filterNode);
     this.groupChange.emit({ group: this.group, action: 'add_filter' });
+  }
+
+  private getGroupOrder(): number {
+    // Extract group order from group ID or use default
+    const match = this.group.id.match(/group-(\d+)/);
+    return match ? parseInt(match[1]) : 0;
   }
 
   addSubGroup(): void {
@@ -190,18 +202,90 @@ export class FilterGroupComponent implements OnInit {
     }
   }
 
-  onFieldChange(filter: Filter): void {
-    // Reset operator and value when field changes
-    const fieldInfo = this.getFieldInfo(filter);
-    if (fieldInfo) {
-      const operators = this.reportService.getOperatorOptions(fieldInfo.type);
-      if (operators.length > 0 && !operators.find(op => op.value === filter.operator)) {
-        filter.operator = operators[0].value as any;
-      }
-      filter.value = '';
+  onFieldSelectChange(filter: Filter, event: any): void {
+    const fieldInfo = event.value as FieldInfo;
+
+    // Update filter with new field information
+    filter.field_path = fieldInfo.path;
+    filter.field_name = fieldInfo.name;
+
+    // Get valid operators for the new field type
+    const operators = this.reportService.getOperatorOptions(fieldInfo.type);
+
+    if (operators.length > 0) {
+      // Set to first available operator (typically 'eq')
+      filter.operator = operators[0].value as any;
     }
 
+    // Reset value based on field type
+    filter.value = this.getDefaultValueForFieldType(fieldInfo.type, filter.operator);
+    filter.value_type = 'static'; // Reset to static
+
+    // Log for debugging
+    console.log('Field changed:', {
+      field: fieldInfo.path,
+      type: fieldInfo.type,
+      operator: filter.operator,
+      defaultValue: filter.value
+    });
+
     this.filterChange.emit({ filter, group: this.group });
+  }
+
+  private getDefaultValueForFieldType(fieldType: string, operator: string): any {
+    // Special handling for operators that don't need values
+    if (operator === 'isnull' || operator === 'isnotnull') {
+      return null;
+    }
+
+    // Special handling for range operators
+    if (operator === 'between') {
+      return fieldType.toLowerCase().includes('date') ? [null, null] : [0, 0];
+    }
+
+    if (operator === 'date_range') {
+      return { start: null, end: null };
+    }
+
+    if (operator === 'in' || operator === 'not_in') {
+      return [];
+    }
+
+    // Default values by field type
+    switch (fieldType.toLowerCase()) {
+      case 'booleanfield':
+        return false;
+      case 'integerfield':
+      case 'floatfield':
+      case 'decimalfield':
+        return 0;
+      case 'datefield':
+      case 'datetimefield':
+        return null; // Will be handled by date picker
+      default:
+        return '';
+    }
+  }
+
+  getFieldInfo(filter: Filter): FieldInfo | null {
+    const dataSource = this.dataSources.find(ds =>
+      ds.id === filter.data_source || ds.content_type_id === filter.data_source
+    );
+    if (!dataSource) return null;
+
+    const fields = this.getFieldsForDataSource(dataSource);
+    return fields.find(f => f.path === filter.field_path) || null;
+  }
+
+  getOperatorsForFilter(filter: Filter): Array<{ value: string; label: string }> {
+    const fieldInfo = this.getFieldInfo(filter);
+
+    // If no field selected, return empty array to force selection
+    if (!fieldInfo || !filter.field_path) {
+      return [];
+    }
+
+    return this.reportService.getOperatorOptions(fieldInfo.type);
   }
 
   onOperatorChange(filter: Filter): void {
@@ -246,26 +330,26 @@ export class FilterGroupComponent implements OnInit {
     return this.availableFields.get(key!) || [];
   }
 
-  getFieldInfo(filter: Filter): FieldInfo | null {
-    const dataSource = this.dataSources.find(ds =>
-      ds.id === filter.data_source || ds.content_type_id === filter.data_source
-    );
-    if (!dataSource) return null;
-
-    const fields = this.getFieldsForDataSource(dataSource);
-    return fields.find(f => f.path === filter.field_path) || null;
-  }
-
-  getOperatorsForFilter(filter: Filter): Array<{ value: string; label: string }> {
-    const fieldInfo = this.getFieldInfo(filter);
-
-    // If no field selected, return default operators
-    if (!fieldInfo || !filter.field_path) {
-      return this.reportService.getOperatorOptions('default');
-    }
-
-    return this.reportService.getOperatorOptions(fieldInfo.type);
-  }
+  // getFieldInfo(filter: Filter): FieldInfo | null {
+  //   const dataSource = this.dataSources.find(ds =>
+  //     ds.id === filter.data_source || ds.content_type_id === filter.data_source
+  //   );
+  //   if (!dataSource) return null;
+  //
+  //   const fields = this.getFieldsForDataSource(dataSource);
+  //   return fields.find(f => f.path === filter.field_path) || null;
+  // }
+  //
+  // getOperatorsForFilter(filter: Filter): Array<{ value: string; label: string }> {
+  //   const fieldInfo = this.getFieldInfo(filter);
+  //
+  //   // If no field selected, return default operators
+  //   if (!fieldInfo || !filter.field_path) {
+  //     return this.reportService.getOperatorOptions('default');
+  //   }
+  //
+  //   return this.reportService.getOperatorOptions(fieldInfo.type);
+  // }
 
   getFieldIcon(type: string): string {
     const icons: Record<string, string> = {
