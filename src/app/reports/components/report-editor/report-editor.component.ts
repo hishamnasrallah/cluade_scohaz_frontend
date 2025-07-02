@@ -500,122 +500,184 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
     if (!this.report?.id) return;
 
     console.log('Saving report components...');
+    console.log('Data sources before save:', this.dataSources);
 
     try {
-      // Save data sources
-      const dataSourcePromises = this.dataSources
-        .filter(ds => !ds.id || ds.id < 0) // Only save new data sources (with temp IDs)
-        .map(ds => {
+      // Step 1: Save data sources FIRST and wait for all to complete
+      const dataSourceMap = new Map<number, number>(); // Map old ID to new ID
+
+      // Save all new data sources
+      for (const ds of this.dataSources) {
+        if (!ds.id || ds.id < 0) {
+          console.log('Saving data source:', ds);
+
           const dataSourceData = {
-            ...ds,
-            report: this.report!.id,
-            id: undefined // Remove temporary ID
+            report: this.report.id,
+            content_type_id: ds.content_type_id,
+            alias: ds.alias,
+            is_primary: ds.is_primary,
+            select_related: ds.select_related || [],
+            prefetch_related: ds.prefetch_related || []
           };
-          return this.reportService.createDataSource(dataSourceData).toPromise();
-        });
 
-      const savedDataSources = await Promise.all(dataSourcePromises);
-      console.log('Saved data sources:', savedDataSources);
+          try {
+            const saved = await this.reportService.createDataSource(dataSourceData).toPromise();
+            console.log('Saved data source:', saved);
 
-      // Update local data sources with saved IDs
-      const dataSourceMap = new Map<number, number>(); // Map temp ID to real ID
-      this.dataSources.forEach((ds, index) => {
-        if (ds.id && ds.id < 0) {
-          const saved = savedDataSources.find(s => s?.alias === ds.alias);
-          if (saved && saved.id) {
-            dataSourceMap.set(ds.id, saved.id);
-            this.dataSources[index] = saved;
+            if (saved && saved.id) {
+              // Map both the temporary ID and content_type_id to the new ID
+              if (ds.id) {
+                dataSourceMap.set(ds.id, saved.id);
+              }
+              if (ds.content_type_id) {
+                dataSourceMap.set(ds.content_type_id, saved.id);
+              }
+
+              // Update the data source in our array
+              const index = this.dataSources.indexOf(ds);
+              if (index >= 0) {
+                this.dataSources[index] = saved;
+              }
+            }
+          } catch (err) {
+            console.error('Error saving data source:', ds, err);
+            throw new Error(`Failed to save data source: ${ds.alias}`);
           }
         }
-      });
+      }
 
-      // Save fields with updated data source references
-      const fieldPromises = this.fields
-        .filter(field => !field.id || field.id < 0)
-        .map(field => {
+      console.log('Data source map after save:', dataSourceMap);
+      console.log('Updated data sources:', this.dataSources);
+
+      // Step 2: Save fields with corrected data source references
+      for (const field of this.fields) {
+        if (!field.id || field.id < 0) {
+          // Find the correct data source ID
+          let correctedDataSource = field.data_source;
+
+          // Try to map from our saved data sources
+          if (dataSourceMap.has(field.data_source)) {
+            correctedDataSource = dataSourceMap.get(field.data_source)!;
+          } else {
+            // If not in map, find by content_type_id
+            const originalDs = this.dataSources.find(ds =>
+              ds.id === field.data_source ||
+              ds.content_type_id === field.data_source
+            );
+
+            if (originalDs && originalDs.id && originalDs.id > 0) {
+              correctedDataSource = originalDs.id;
+            }
+          }
+
+          console.log(`Field ${field.field_path}: mapping data_source ${field.data_source} to ${correctedDataSource}`);
+
+          // In the save fields section (around line 570)
           const fieldData = {
-            ...field,
-            report: this.report!.id,
-            // Update data_source reference if it was a temp ID
-            data_source: dataSourceMap.get(field.data_source) || field.data_source,
-            id: undefined // Remove temporary ID
+            report: this.report.id,
+            data_source: correctedDataSource,
+            field_path: field.field_path,
+            field_name: field.field_name || field.field_path,
+            display_name: field.display_name,
+            field_type: typeof field.field_type === 'string' && field.field_type.includes('Field')
+              ? this.getFieldTypeCode(field.field_type)
+              : field.field_type, // If it's already a code, use it as is
+            aggregation: field.aggregation || '',
+            order: field.order,
+            is_visible: field.is_visible,
+            width: field.width || null,
+            formatting: field.formatting || {}
           };
-          return this.reportService.createField(fieldData).toPromise();
-        });
 
-      const savedFields = await Promise.all(fieldPromises);
-      console.log('Saved fields:', savedFields);
+          console.log('Creating field with data:', fieldData);
 
-      // Update local fields with saved data
-      this.fields = this.fields.map(field => {
-        if (field.id && field.id < 0) {
-          const saved = savedFields.find(s =>
-            s?.field_path === field.field_path &&
-            s?.data_source === (dataSourceMap.get(field.data_source) || field.data_source)
-          );
-          return saved || field;
+          try {
+            const saved = await this.reportService.createField(fieldData).toPromise();
+            if (saved) {
+              const index = this.fields.indexOf(field);
+              if (index >= 0) {
+                this.fields[index] = saved;
+              }
+            }
+          } catch (err: any) {
+            console.error('Error saving field:', field, err);
+            console.error('Error response:', err.error);
+            throw new Error(`Failed to save field ${field.display_name}: ${JSON.stringify(err.error)}`);
+          }
         }
-        return field;
-      });
+      }
 
-      // Save filters with updated data source references
-      const filterPromises = this.filters
-        .filter(filter => !filter.id || filter.id < 0)
-        .map(filter => {
+      // Step 3: Save filters with corrected data source references
+      for (const filter of this.filters) {
+        if (!filter.id || filter.id < 0) {
+          // Find the correct data source ID
+          let correctedDataSource = filter.data_source;
+
+          if (dataSourceMap.has(filter.data_source)) {
+            correctedDataSource = dataSourceMap.get(filter.data_source)!;
+          } else {
+            const originalDs = this.dataSources.find(ds =>
+              ds.id === filter.data_source ||
+              ds.content_type_id === filter.data_source
+            );
+
+            if (originalDs && originalDs.id && originalDs.id > 0) {
+              correctedDataSource = originalDs.id;
+            }
+          }
+
           const filterData = {
             ...filter,
-            report: this.report!.id,
-            // Update data_source reference if it was a temp ID
-            data_source: dataSourceMap.get(filter.data_source) || filter.data_source,
-            id: undefined // Remove temporary ID
+            report: this.report.id,
+            data_source: correctedDataSource,
+            id: undefined
           };
-          return this.reportService.createFilter(filterData).toPromise();
-        });
 
-      const savedFilters = await Promise.all(filterPromises);
-      console.log('Saved filters:', savedFilters);
-
-      // Update local filters with saved data
-      this.filters = this.filters.map(filter => {
-        if (filter.id && filter.id < 0) {
-          const saved = savedFilters.find(s =>
-            s?.field_path === filter.field_path &&
-            s?.data_source === (dataSourceMap.get(filter.data_source) || filter.data_source)
-          );
-          return saved || filter;
+          try {
+            const saved = await this.reportService.createFilter(filterData).toPromise();
+            if (saved) {
+              const index = this.filters.indexOf(filter);
+              if (index >= 0) {
+                this.filters[index] = saved;
+              }
+            }
+          } catch (err) {
+            console.error('Error saving filter:', filter, err);
+            throw new Error(`Failed to save filter: ${filter.field_path}`);
+          }
         }
-        return filter;
-      });
+      }
 
-      // Save parameters
-      const parameterPromises = this.parameters
-        .filter(param => !param.id || param.id < 0)
-        .map(param => {
+      // Step 4: Save parameters
+      for (const param of this.parameters) {
+        if (!param.id || param.id < 0) {
           const paramData = {
             ...param,
-            report: this.report!.id,
-            id: undefined // Remove temporary ID
+            report: this.report.id,
+            id: undefined
           };
-          return this.reportService.createParameter(paramData).toPromise();
-        });
 
-      const savedParameters = await Promise.all(parameterPromises);
-      console.log('Saved parameters:', savedParameters);
-
-      // Update local parameters with saved data
-      this.parameters = this.parameters.map(param => {
-        if (param.id && param.id < 0) {
-          const saved = savedParameters.find(s => s?.name === param.name);
-          return saved || param;
+          try {
+            const saved = await this.reportService.createParameter(paramData).toPromise();
+            if (saved) {
+              const index = this.parameters.indexOf(param);
+              if (index >= 0) {
+                this.parameters[index] = saved;
+              }
+            }
+          } catch (err) {
+            console.error('Error saving parameter:', param, err);
+            throw new Error(`Failed to save parameter: ${param.name}`);
+          }
         }
-        return param;
-      });
+      }
 
     } catch (error) {
       console.error('Error saving report components:', error);
-      throw error; // Re-throw to be handled by the caller
+      throw error;
     }
   }
+
   private validateComponents(): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
 
@@ -665,4 +727,39 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
       this.router.navigate(['/reports']);
     }
   }
+
+  private getFieldTypeCode(fieldTypeName: string): string {
+    const typeMapping: Record<string, string> = {
+      'BigAutoField': 'NUMBER',
+      'AutoField': 'NUMBER',
+      'IntegerField': 'NUMBER',
+      'BigIntegerField': 'NUMBER',
+      'SmallIntegerField': 'NUMBER',
+      'PositiveIntegerField': 'NUMBER',
+      'PositiveSmallIntegerField': 'NUMBER',
+      'FloatField': 'DECIMAL',
+      'DecimalField': 'DECIMAL',
+      'CharField': 'TEXT',
+      'TextField': 'TEXTAREA',
+      'SlugField': 'SLUG',
+      'BooleanField': 'BOOLEAN',
+      'NullBooleanField': 'BOOLEAN',
+      'DateField': 'DATE',
+      'DateTimeField': 'DATETIME',
+      'TimeField': 'TIME',
+      'EmailField': 'EMAIL',
+      'URLField': 'URL',
+      'FileField': 'FILE',
+      'ImageField': 'IMAGE',
+      'ForeignKey': 'FOREIGN_KEY',
+      'ManyToManyField': 'MANY_TO_MANY',
+      'OneToOneField': 'ONE_TO_ONE',
+      'UUIDField': 'UUID',
+      'GenericIPAddressField': 'IP_ADDRESS',
+      'JSONField': 'JSON'
+    };
+
+    return typeMapping[fieldTypeName] || 'TEXT';
+  }
+
 }

@@ -116,7 +116,7 @@
 
             <div class="field-content">
               <div class="field-main">
-                <mat-icon>{{ getFieldIcon(field.field_type) }}</mat-icon>
+                <mat-icon>{{ getFieldIcon(field.field_type_name || field.field_type) }}</mat-icon>
                 <div class="field-details">
                   <span class="field-display-name">{{ field.display_name }}</span>
                   <span class="field-source">{{ getDataSourceAlias(field.data_source) }}.{{ field.field_path }}</span>

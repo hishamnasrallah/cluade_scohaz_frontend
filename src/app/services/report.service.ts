@@ -266,6 +266,23 @@ export class ReportService {
     const params = new HttpParams().set('field_type', fieldType);
     return this.http.get<{ lookups: string[] }>(this.getUrl('/field-lookups/'), { params });
   }
+
+  // Get field types from backend
+// Get field types from backend
+  getFieldTypes(): Observable<Array<{ id: number; code: string; name: string; name_ara: string; active_ind: boolean }>> {
+    return this.http.get<{
+      count: number;
+      results: Array<{ id: number; code: string; name: string; name_ara: string; active_ind: boolean }>
+    }>(
+      this.getUrl('/field-types/')
+    ).pipe(
+      map(response => response.results || []),
+      catchError(err => {
+        console.error('Error loading field types:', err);
+        return of([]);
+      })
+    );
+  }
   // Get options for related fields (select/multiselect)
   getRelatedFieldOptions(contentTypeId: number, params?: {
     search?: string;

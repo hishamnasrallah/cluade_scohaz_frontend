@@ -68,12 +68,13 @@ export interface Field {
   field_path: string;
   field_name?: string;
   display_name: string;
-  field_type: string;
-  aggregation?: 'count' | 'count_distinct' | 'sum' | 'avg' | 'min' | 'max' | 'group_by' | '';
+  field_type: number | string; // Allow both number and string
+  field_type_name?: string; // Store the original Django field type name for UI
+  aggregation?: string | null;
   order: number;
   is_visible: boolean;
-  width?: number;
-  formatting?: FieldFormatting;
+  width?: number | null;
+  formatting?: any;
 }
 
 export interface Filter {

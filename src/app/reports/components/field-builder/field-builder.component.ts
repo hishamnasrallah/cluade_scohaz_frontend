@@ -107,6 +107,7 @@ export class FieldBuilderComponent implements OnInit {
     { value: 'url', label: 'URL', icon: 'link' }
   ];
   isLoadingFields = false;
+  availableFieldTypes: Array<{ id: number; code: string; name: string; name_ara: string; active_ind: boolean }> = [];
 
   constructor(
     private fb: FormBuilder,
@@ -138,6 +139,94 @@ export class FieldBuilderComponent implements OnInit {
   ngOnInit(): void {
     // Don't load fields immediately, wait for ngOnChanges
     console.log('FieldBuilder ngOnInit - dataSources:', this.dataSources);
+
+    // Load field types from backend
+    this.loadFieldTypes();
+  }
+// Add this method
+  private loadFieldTypes(): void {
+    this.reportService.getFieldTypes().subscribe({
+      next: (response) => {
+        console.log('Loaded field types:', response);
+        this.availableFieldTypes = response;
+      },
+      error: (err) => {
+        console.error('Error loading field types:', err);
+      }
+    });
+  }
+  // Add this helper method
+  private getFieldTypeId(fieldTypeName: string): number | null {
+    // Map Django field types to your backend field type codes
+    const typeMapping: Record<string, string> = {
+      // Integer types
+      'BigAutoField': 'NUMBER',
+      'AutoField': 'NUMBER',
+      'IntegerField': 'NUMBER',
+      'BigIntegerField': 'NUMBER',
+      'SmallIntegerField': 'NUMBER',
+      'PositiveIntegerField': 'NUMBER',
+      'PositiveSmallIntegerField': 'NUMBER',
+
+      // Decimal types
+      'FloatField': 'DECIMAL',
+      'DecimalField': 'DECIMAL',
+
+      // Text types
+      'CharField': 'TEXT',
+      'TextField': 'TEXTAREA',
+      'SlugField': 'SLUG',
+
+      // Boolean
+      'BooleanField': 'BOOLEAN',
+      'NullBooleanField': 'BOOLEAN',
+
+      // Date/Time types
+      'DateField': 'DATE',
+      'DateTimeField': 'DATETIME',
+      'TimeField': 'TIME',
+
+      // Email/URL
+      'EmailField': 'EMAIL',
+      'URLField': 'URL',
+
+      // File types
+      'FileField': 'FILE',
+      'ImageField': 'IMAGE',
+
+      // Relationship types
+      'ForeignKey': 'FOREIGN_KEY',
+      'ManyToManyField': 'MANY_TO_MANY',
+      'OneToOneField': 'ONE_TO_ONE',
+
+      // Other types
+      'UUIDField': 'UUID',
+      'GenericIPAddressField': 'IP_ADDRESS',
+      'JSONField': 'JSON'
+    };
+
+    const mappedCode = typeMapping[fieldTypeName];
+    if (!mappedCode) {
+      console.warn(`No mapping found for field type: ${fieldTypeName}, defaulting to TEXT`);
+      // Default to TEXT for unknown types
+      const textType = this.availableFieldTypes.find(ft => ft.code === 'TEXT');
+      return textType?.id || null;
+    }
+
+    // Find the field type by code
+    const fieldType = this.availableFieldTypes.find(ft =>
+      ft.code === mappedCode && ft.active_ind
+    );
+
+    if (!fieldType) {
+      console.warn(`No field type found for code: ${mappedCode}`);
+      // Try to find TEXT as fallback
+      const textType = this.availableFieldTypes.find(ft => ft.code === 'TEXT');
+      return textType?.id || null;
+    }
+
+    console.log(`Mapped ${fieldTypeName} -> ${mappedCode} -> ID: ${fieldType.id}`);
+    return fieldType.id;
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -268,18 +357,63 @@ export class FieldBuilderComponent implements OnInit {
     return this.fields.some(f => f.field_path === field.path);
   }
 
+// Update the getFieldTypeCode method (add this new method)
+  private getFieldTypeCode(fieldTypeName: string): string {
+    const typeMapping: Record<string, string> = {
+      'BigAutoField': 'NUMBER',
+      'AutoField': 'NUMBER',
+      'IntegerField': 'NUMBER',
+      'BigIntegerField': 'NUMBER',
+      'SmallIntegerField': 'NUMBER',
+      'PositiveIntegerField': 'NUMBER',
+      'FloatField': 'DECIMAL',
+      'DecimalField': 'DECIMAL',
+      'CharField': 'TEXT',
+      'TextField': 'TEXTAREA',
+      'SlugField': 'SLUG',
+      'BooleanField': 'BOOLEAN',
+      'DateField': 'DATE',
+      'DateTimeField': 'DATETIME',
+      'TimeField': 'TIME',
+      'EmailField': 'EMAIL',
+      'URLField': 'URL',
+      'FileField': 'FILE',
+      'ImageField': 'IMAGE',
+      'ForeignKey': 'FOREIGN_KEY',
+      'ManyToManyField': 'MANY_TO_MANY',
+      'OneToOneField': 'ONE_TO_ONE',
+      'UUIDField': 'UUID',
+      'GenericIPAddressField': 'IP_ADDRESS',
+      'JSONField': 'JSON'
+    };
+
+    return typeMapping[fieldTypeName] || 'TEXT';
+  }
+
   quickAddField(field: FieldInfo, dataSource: DataSource): void {
+    // Get the field type code
+    const fieldTypeCode = this.getFieldTypeCode(field.type);
+
+    console.log('Field type mapping:', {
+      originalType: field.type,
+      mappedCode: fieldTypeCode
+    });
+
     if (!this.report?.id || !dataSource.id) {
-      // If report or dataSource doesn't have ID, add to local array
+      // For new reports without ID, add to local array
       const newField: Field = {
         report: this.report?.id || 0,
         data_source: dataSource.id || dataSource.content_type_id!,
         field_path: field.path,
         field_name: field.name,
         display_name: field.verbose_name,
-        field_type: field.type,
+        field_type: fieldTypeCode as any, // Use the code
+        field_type_name: field.type, // Store original type name for UI
         order: this.fields.length,
-        is_visible: true
+        is_visible: true,
+        aggregation: '', // Empty string
+        width: null,
+        formatting: {} // Empty object
       };
 
       this.fields = [...this.fields, newField];
@@ -290,20 +424,27 @@ export class FieldBuilderComponent implements OnInit {
         panelClass: ['info-snackbar']
       });
     } else {
-      // If report has ID, save to backend
-      const newField: Partial<Field> = {
+      // For existing reports, save to backend immediately
+      const newField = {
         report: this.report.id,
         data_source: dataSource.id,
         field_path: field.path,
         field_name: field.name,
         display_name: field.verbose_name,
-        field_type: field.type,
+        field_type: fieldTypeCode, // Send the code like "NUMBER", "TEXT", etc.
+        aggregation: '', // Empty string
         order: this.fields.length,
-        is_visible: true
+        is_visible: true,
+        width: null,
+        formatting: {} // Empty object
       };
+
+      console.log('Creating field with field_type code:', newField);
 
       this.reportService.createField(newField).subscribe({
         next: (createdField) => {
+          // Store the original field type name for UI
+          createdField.field_type_name = field.type;
           this.fields = [...this.fields, createdField];
           this.fieldsChange.emit(this.fields);
 
@@ -314,7 +455,19 @@ export class FieldBuilderComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error adding field:', err);
-          this.snackBar.open('Error adding field', 'Close', {
+          console.error('Error details:', err.error);
+
+          // Show specific error message
+          let errorMessage = 'Error adding field';
+          if (err.error?.field_type) {
+            errorMessage = `Field type error: ${err.error.field_type[0]}`;
+          } else if (err.error?.data_source) {
+            errorMessage = `Data source error: ${err.error.data_source[0]}`;
+          } else if (err.error?.aggregation) {
+            errorMessage = `Aggregation error: ${err.error.aggregation[0]}`;
+          }
+
+          this.snackBar.open(errorMessage, 'Close', {
             duration: 3000,
             panelClass: ['error-snackbar']
           });
@@ -552,7 +705,18 @@ export class FieldBuilderComponent implements OnInit {
     return ds?.alias || 'unknown';
   }
 
-  getFieldIcon(type: string): string {
+  getFieldIcon(type: string | number | undefined): string {
+    // If type is undefined or null, return default icon
+    if (!type) return 'text_fields';
+
+    // If type is a number (field_type ID), we need to map it
+    // For now, return a default icon since we don't have the mapping
+    if (typeof type === 'number') {
+      // TODO: Implement proper mapping from field_type ID to icon
+      return 'text_fields';
+    }
+
+    // Original string-based mapping
     const icons: Record<string, string> = {
       'CharField': 'text_fields',
       'TextField': 'subject',
