@@ -223,43 +223,56 @@ export class FilterGroupComponent implements OnInit {
   }
 
   onFieldSelectChange(filter: Filter, event: any): void {
-    const selectedPath = event.value as string;
+    console.log('onFieldSelectChange - event.value:', event.value);
 
-    // Find the field info from all data sources
-    let fieldInfo: FieldInfo | null = null;
+    const selectedField = event.value as FieldInfo;
+
+    if (!selectedField) {
+      console.error('No field selected');
+      return;
+    }
+
+    // Find which data source this field belongs to
+    let matchingDataSource: DataSource | null = null;
     for (const ds of this.dataSources) {
       const fields = this.getFieldsForDataSource(ds);
-      fieldInfo = fields.find(f => f.path === selectedPath) || null;
-      if (fieldInfo) {
+      if (fields.some(f => f.path === selectedField.path)) {
+        matchingDataSource = ds;
         break;
       }
     }
 
-    if (!fieldInfo) {
-      console.error('Field info not found for path:', selectedPath);
-      return;
+    if (matchingDataSource) {
+      // Update the filter's data_source to match
+      filter.data_source = matchingDataSource.id || matchingDataSource.content_type_id!;
     }
 
     // Update filter with new field information
-    filter.field_path = fieldInfo.path;
-    filter.field_name = fieldInfo.name;
+    filter.field_path = selectedField.path;
+    filter.field_name = selectedField.name;
+    filter.field_type = selectedField.type;
 
     // Get valid operators for the new field type
-    const operators = this.reportService.getOperatorOptions(fieldInfo.type);
+    const operators = this.reportService.getOperatorOptions(selectedField.type);
+
+    // Add console.log AFTER operators is declared
+    console.log('onFieldSelectChange - operators after update:', operators);
 
     if (operators.length > 0) {
       // Set to first available operator (typically 'eq')
       filter.operator = operators[0].value as any;
+    } else {
+      filter.operator = 'eq'; // Fallback to 'eq' if no operators found
     }
 
-    // Reset value based on field type
-    filter.value = this.getDefaultValueForFieldType(fieldInfo.type, filter.operator);
+    // Reset value based on field type and operator
+    filter.value = this.getDefaultValueForFieldType(selectedField.type, filter.operator);
     filter.value_type = 'static'; // Reset to static
 
     // Log for debugging
     console.log('Field changed:', {
-      field: fieldInfo.path,
-      type: fieldInfo.type,
+      field: selectedField.path,
+      type: selectedField.type,
       operator: filter.operator,
       defaultValue: filter.value,
       availableOperators: operators
@@ -336,8 +349,12 @@ export class FilterGroupComponent implements OnInit {
   getOperatorsForFilter(filter: Filter): Array<{ value: string; label: string }> {
     const fieldInfo = this.getFieldInfo(filter);
 
-    // If no field selected, return basic operators
-    if (!fieldInfo || !filter.field_path) {
+    console.log('getOperatorsForFilter - fieldInfo:', fieldInfo);
+    console.log('getOperatorsForFilter - filter:', filter);
+
+    // If no field selected or field type is unknown, return basic operators
+    if (!fieldInfo || !fieldInfo.type) {
+      console.log('getOperatorsForFilter - returning default operators');
       return [
         { value: 'eq', label: 'Equals' },
         { value: 'ne', label: 'Not Equals' },
@@ -347,7 +364,10 @@ export class FilterGroupComponent implements OnInit {
       ];
     }
 
-    return this.reportService.getOperatorOptions(fieldInfo.type);
+    const operators = this.reportService.getOperatorOptions(fieldInfo.type);
+    console.log('getOperatorsForFilter - operators from service:', operators);
+
+    return operators;
   }
 
   onOperatorChange(filter: Filter): void {
@@ -454,9 +474,7 @@ export class FilterGroupComponent implements OnInit {
 
   onToggleChange(filter: Filter, event: any): void {
     filter.is_active = event.checked;
-    // Delay the emission slightly to prevent UI glitches
-    setTimeout(() => {
-      this.filterChange.emit({ filter, group: this.group });
-    }, 0);
+    // Emit directly without setTimeout
+    this.filterChange.emit({ filter, group: this.group });
   }
 }

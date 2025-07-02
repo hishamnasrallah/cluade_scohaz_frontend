@@ -215,7 +215,7 @@
                   class="value-field">
     <mat-label>Dynamic Value</mat-label>
     <mat-select [(ngModel)]="filter.value" (selectionChange)="onValueChange()">
-      <mat-optgroup *ngFor="let group of getDynamicValueGroups()" [label]="group.label">
+      <mat-optgroup *ngFor="let group of dynamicValueGroups" [label]="group.label">
         <mat-option *ngFor="let value of group.values" [value]="value.type">
           <mat-icon>{{ value.icon }}</mat-icon>
           {{ value.label }}

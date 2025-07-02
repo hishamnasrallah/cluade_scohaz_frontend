@@ -1,6 +1,6 @@
 // src/app/reports/components/filter-builder/filter-value-input/filter-value-input.component.ts
 
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges } from '@angular/core';
+import {Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -85,21 +85,57 @@ export class FilterValueInputComponent implements OnInit, OnChanges {
 
   constructor(private reportService: ReportService) {}
 
+  private valueChangeSubject = new Subject<any>();
+  dynamicValueGroups: DynamicValueGroup[] = [];
+
   ngOnInit(): void {
     console.log('FilterValueInput init - fieldInfo:', this.fieldInfo, 'filter:', this.filter);
     this.initializeValues();
+
+    // Initialize dynamic value groups once
+    this.dynamicValueGroups = this.getDynamicValueGroups();
+
+    // Set up debounced value changes
+    this.valueChangeSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged()
+    ).subscribe(value => {
+      this.valueChange.emit(value);
+    });
 
     if (this.needsRelatedData()) {
       this.loadRelatedData();
     }
   }
 
-  ngOnChanges(): void {
-    console.log('FilterValueInput changes - fieldInfo:', this.fieldInfo, 'filter:', this.filter);
-    this.initializeValues();
+  onValueChange(): void {
+    // Use subject for debouncing instead of immediate emit
+    this.valueChangeSubject.next(this.filter.value);
+  }
 
-    if (this.needsRelatedData()) {
+  ngOnChanges(changes: SimpleChanges): void {
+    // Only reinitialize if filter object reference changed or critical properties changed
+    const filterChanged = changes['filter'] &&
+      (changes['filter'].firstChange ||
+        changes['filter'].previousValue?.id !== changes['filter'].currentValue?.id ||
+        changes['filter'].previousValue?.operator !== changes['filter'].currentValue?.operator);
+
+    const fieldInfoChanged = changes['fieldInfo'] &&
+      (changes['fieldInfo'].firstChange ||
+        changes['fieldInfo'].previousValue?.path !== changes['fieldInfo'].currentValue?.path);
+
+    if (filterChanged || fieldInfoChanged) {
+      console.log('FilterValueInput changes - reinitializing:', { filterChanged, fieldInfoChanged });
+      this.initializeValues();
+    }
+
+    // Only load related data if fieldInfo actually changed and it's a relation
+    if (fieldInfoChanged && this.fieldInfo && this.fieldInfo.is_relation && this.needsRelatedData()) {
       this.loadRelatedData();
+    }
+    if (fieldInfoChanged) {
+      // Refresh dynamic value groups when field info changes
+      this.dynamicValueGroups = this.getDynamicValueGroups();
     }
   }
 
@@ -296,10 +332,6 @@ export class FilterValueInputComponent implements OnInit, OnChanges {
     }
   }
 
-  onValueChange(): void {
-    this.valueChange.emit(this.filter.value);
-  }
-
   onValueTypeChange(): void {
     // Reset value when value type changes
     switch (this.filter.value_type) {
@@ -340,11 +372,9 @@ export class FilterValueInputComponent implements OnInit, OnChanges {
     this.listValues = [];
     this.selectSearchValue = '';
 
-    // Emit the change event after a small delay to prevent UI freeze
-    setTimeout(() => {
-      this.valueTypeChange.emit();
-      this.valueChange.emit(this.filter.value);
-    }, 0);
+    // Emit changes directly without setTimeout
+    this.valueTypeChange.emit();
+    this.valueChange.emit(this.filter.value);
   }
 
   onDateRangeChange(): void {
@@ -424,7 +454,7 @@ export class FilterValueInputComponent implements OnInit, OnChanges {
   getDynamicValueGroups(): DynamicValueGroup[] {
     const groups: DynamicValueGroup[] = [];
 
-    // Always show date dynamic values as they're commonly used
+    // Date dynamic values should always be available
     groups.push({
       label: 'Date Values',
       values: [
@@ -440,23 +470,16 @@ export class FilterValueInputComponent implements OnInit, OnChanges {
       ]
     });
 
-    // Show user dynamic values if field is potentially user-related or always as an option
-    if (!this.fieldInfo ||
-      (this.fieldInfo && (
-        this.fieldInfo.path.toLowerCase().includes('user') ||
-        this.fieldInfo.path.toLowerCase().includes('owner') ||
-        this.fieldInfo.path.toLowerCase().includes('created_by') ||
-        this.fieldInfo.path.toLowerCase().includes('assigned')
-      ))) {
-      groups.push({
-        label: 'User Values',
-        values: [
-          { type: 'current_user_id', label: 'Current User ID', icon: 'badge' },
-          { type: 'current_user_email', label: 'Current User Email', icon: 'email' }
-        ]
-      });
-    }
+    // User values should also always be available
+    groups.push({
+      label: 'User Values',
+      values: [
+        { type: 'current_user_id', label: 'Current User ID', icon: 'badge' },
+        { type: 'current_user_email', label: 'Current User Email', icon: 'email' }
+      ]
+    });
 
+    console.log('Dynamic value groups:', groups); // Debug log
     return groups;
   }
 

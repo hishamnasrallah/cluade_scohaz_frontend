@@ -82,6 +82,7 @@ export interface Filter {
   data_source: number;
   field_path: string;
   field_name?: string;
+  field_type?: string;
   operator: FilterOperator;
   value?: any;
   value_type: 'static' | 'parameter' | 'dynamic' | 'user_attribute';

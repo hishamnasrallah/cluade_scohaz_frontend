@@ -61,7 +61,7 @@
                         (selectionChange)="onFieldSelectChange(child.filter!, $event)">
               <mat-optgroup *ngFor="let ds of dataSources" [label]="ds.alias">
                 <mat-option *ngFor="let field of getFieldsForDataSource(ds)"
-                            [value]="field.path">
+                            [value]="field">
                   <mat-icon>{{ getFieldIcon(field.type) }}</mat-icon>
                   {{ field.verbose_name }}
                 </mat-option>

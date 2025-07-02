@@ -379,6 +379,8 @@ export class ReportService {
       case 'integerfield':
       case 'floatfield':
       case 'decimalfield':
+      case 'bigautofield':  // Add this line
+      case 'autofield':     // Add this line
         return [...baseOperators, ...numericOperators];
       case 'charfield':
       case 'textfield':
