@@ -119,7 +119,12 @@ export class ReportService {
   // Data Sources
   getDataSources(reportId: number): Observable<DataSource[]> {
     const params = new HttpParams().set('report', reportId.toString());
-    return this.http.get<DataSource[]>(this.getUrl('/data-sources/'), { params });
+    return this.http.get<any>(this.getUrl('/data-sources/'), { params }).pipe(
+      map(response => {
+        // If the response has a 'results' property, return that, otherwise return the response itself
+        return response.results || response;
+      })
+    );
   }
 
   createDataSource(dataSource: Partial<DataSource>): Observable<DataSource> {
@@ -137,7 +142,12 @@ export class ReportService {
   // Fields
   getFields(reportId: number): Observable<Field[]> {
     const params = new HttpParams().set('report', reportId.toString());
-    return this.http.get<Field[]>(this.getUrl('/fields/'), { params });
+    return this.http.get<any>(this.getUrl('/fields/'), { params }).pipe(
+      map(response => {
+        // If the response has a 'results' property, return that, otherwise return the response itself
+        return response.results || response;
+      })
+    );
   }
 
   createField(field: Partial<Field>): Observable<Field> {
@@ -169,7 +179,12 @@ export class ReportService {
   // Filters
   getFilters(reportId: number): Observable<Filter[]> {
     const params = new HttpParams().set('report', reportId.toString());
-    return this.http.get<Filter[]>(this.getUrl('/filters/'), { params });
+    return this.http.get<any>(this.getUrl('/filters/'), { params }).pipe(
+      map(response => {
+        // If the response has a 'results' property, return that, otherwise return the response itself
+        return response.results || response;
+      })
+    );
   }
 
   createFilter(filter: Partial<Filter>): Observable<Filter> {
@@ -187,7 +202,12 @@ export class ReportService {
   // Parameters
   getParameters(reportId: number): Observable<Parameter[]> {
     const params = new HttpParams().set('report', reportId.toString());
-    return this.http.get<Parameter[]>(this.getUrl('/parameters/'), { params });
+    return this.http.get<any>(this.getUrl('/parameters/'), { params }).pipe(
+      map(response => {
+        // If the response has a 'results' property, return that, otherwise return the response itself
+        return response.results || response;
+      })
+    );
   }
 
   createParameter(parameter: Partial<Parameter>): Observable<Parameter> {

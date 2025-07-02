@@ -1,6 +1,6 @@
 // src/app/reports/components/data-source-selector/data-source-selector.component.ts
 
-import { Component, Input, Output, EventEmitter, OnInit, ViewChild, TemplateRef } from '@angular/core';
+import {Component, Input, Output, EventEmitter, OnInit, ViewChild, TemplateRef, SimpleChanges} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import { MatTreeModule, MatTreeNestedDataSource } from '@angular/material/tree';
@@ -103,6 +103,20 @@ export class DataSourceSelectorComponent implements OnInit {
       this._dataSources = [];
     }
     this.loadContentTypes();
+  }
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['dataSources'] && !changes['dataSources'].firstChange) {
+      console.log('DataSources input changed:', this.dataSources);
+
+      // Ensure the data is properly initialized
+      if (Array.isArray(this.dataSources)) {
+        this._dataSources = this.dataSources.map(ds => ({
+          ...ds,
+          select_related: ds.select_related || [],
+          prefetch_related: ds.prefetch_related || []
+        }));
+      }
+    }
   }
 
   hasChild = (_: number, node: ContentTypeNode) => !!node.children && node.children.length > 0;

@@ -298,7 +298,7 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (result) => {
           // Ensure data sources have all required properties
-          this.dataSources = result.dataSources.map(ds => ({
+          this.dataSources = result.dataSources.map((ds: DataSource) => ({
             ...ds,
             // Ensure these properties exist even if not returned by API
             select_related: ds.select_related || [],
@@ -306,7 +306,14 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
             available_fields: ds.available_fields || []
           }));
 
-          this.fields = result.fields;
+          // Map fields with field_type_name for UI display
+          this.fields = result.fields.map((field: Field) => ({
+            ...field,
+            field_type_name: field.field_type, // Ensure field_type_name is set
+            aggregation: field.aggregation || '', // Ensure aggregation is not null
+            formatting: field.formatting || {} // Ensure formatting is not null
+          }));
+
           this.filters = result.filters;
           this.parameters = result.parameters;
 
@@ -318,8 +325,10 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
             parameters: this.parameters.length
           });
 
-          // Force change detection after data is loaded
-          this.cdr.detectChanges();
+          // Important: Wait for next tick to ensure child components are ready
+          setTimeout(() => {
+            this.cdr.detectChanges();
+          }, 100);
         },
         error: (err) => {
           console.error('Error loading report components:', err);
@@ -579,9 +588,7 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
             field_path: field.field_path,
             field_name: field.field_name || field.field_path,
             display_name: field.display_name,
-            field_type: typeof field.field_type === 'string' && field.field_type.includes('Field')
-              ? this.getFieldTypeCode(field.field_type)
-              : field.field_type, // If it's already a code, use it as is
+            field_type: field.field_type || 'CharField', // Use Django field type directly
             aggregation: field.aggregation || '',
             order: field.order,
             is_visible: field.is_visible,
@@ -726,40 +733,6 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
     } else {
       this.router.navigate(['/reports']);
     }
-  }
-
-  private getFieldTypeCode(fieldTypeName: string): string {
-    const typeMapping: Record<string, string> = {
-      'BigAutoField': 'NUMBER',
-      'AutoField': 'NUMBER',
-      'IntegerField': 'NUMBER',
-      'BigIntegerField': 'NUMBER',
-      'SmallIntegerField': 'NUMBER',
-      'PositiveIntegerField': 'NUMBER',
-      'PositiveSmallIntegerField': 'NUMBER',
-      'FloatField': 'DECIMAL',
-      'DecimalField': 'DECIMAL',
-      'CharField': 'TEXT',
-      'TextField': 'TEXTAREA',
-      'SlugField': 'SLUG',
-      'BooleanField': 'BOOLEAN',
-      'NullBooleanField': 'BOOLEAN',
-      'DateField': 'DATE',
-      'DateTimeField': 'DATETIME',
-      'TimeField': 'TIME',
-      'EmailField': 'EMAIL',
-      'URLField': 'URL',
-      'FileField': 'FILE',
-      'ImageField': 'IMAGE',
-      'ForeignKey': 'FOREIGN_KEY',
-      'ManyToManyField': 'MANY_TO_MANY',
-      'OneToOneField': 'ONE_TO_ONE',
-      'UUIDField': 'UUID',
-      'GenericIPAddressField': 'IP_ADDRESS',
-      'JSONField': 'JSON'
-    };
-
-    return typeMapping[fieldTypeName] || 'TEXT';
   }
 
 }

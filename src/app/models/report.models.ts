@@ -68,8 +68,8 @@ export interface Field {
   field_path: string;
   field_name?: string;
   display_name: string;
-  field_type: number | string; // Allow both number and string
-  field_type_name?: string; // Store the original Django field type name for UI
+  field_type: string; // Django field type name (CharField, IntegerField, etc.)
+  field_type_name?: string; // Optional, can be same as field_type
   aggregation?: string | null;
   order: number;
   is_visible: boolean;

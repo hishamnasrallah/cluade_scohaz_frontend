@@ -75,8 +75,8 @@ export class FieldBuilderComponent implements OnInit {
   @Output() fieldsChange = new EventEmitter<Field[]>();
 
   // Available fields
-  availableFields: Map<number, FieldInfo[]> = new Map();
-  filteredFields: Map<number, FieldInfo[]> = new Map();
+  availableFields: Map<number | string, FieldInfo[]> = new Map();
+  filteredFields: Map<number | string, FieldInfo[]> = new Map();
 
   // UI state
   searchTerm = '';
@@ -155,80 +155,6 @@ export class FieldBuilderComponent implements OnInit {
       }
     });
   }
-  // Add this helper method
-  private getFieldTypeId(fieldTypeName: string): number | null {
-    // Map Django field types to your backend field type codes
-    const typeMapping: Record<string, string> = {
-      // Integer types
-      'BigAutoField': 'NUMBER',
-      'AutoField': 'NUMBER',
-      'IntegerField': 'NUMBER',
-      'BigIntegerField': 'NUMBER',
-      'SmallIntegerField': 'NUMBER',
-      'PositiveIntegerField': 'NUMBER',
-      'PositiveSmallIntegerField': 'NUMBER',
-
-      // Decimal types
-      'FloatField': 'DECIMAL',
-      'DecimalField': 'DECIMAL',
-
-      // Text types
-      'CharField': 'TEXT',
-      'TextField': 'TEXTAREA',
-      'SlugField': 'SLUG',
-
-      // Boolean
-      'BooleanField': 'BOOLEAN',
-      'NullBooleanField': 'BOOLEAN',
-
-      // Date/Time types
-      'DateField': 'DATE',
-      'DateTimeField': 'DATETIME',
-      'TimeField': 'TIME',
-
-      // Email/URL
-      'EmailField': 'EMAIL',
-      'URLField': 'URL',
-
-      // File types
-      'FileField': 'FILE',
-      'ImageField': 'IMAGE',
-
-      // Relationship types
-      'ForeignKey': 'FOREIGN_KEY',
-      'ManyToManyField': 'MANY_TO_MANY',
-      'OneToOneField': 'ONE_TO_ONE',
-
-      // Other types
-      'UUIDField': 'UUID',
-      'GenericIPAddressField': 'IP_ADDRESS',
-      'JSONField': 'JSON'
-    };
-
-    const mappedCode = typeMapping[fieldTypeName];
-    if (!mappedCode) {
-      console.warn(`No mapping found for field type: ${fieldTypeName}, defaulting to TEXT`);
-      // Default to TEXT for unknown types
-      const textType = this.availableFieldTypes.find(ft => ft.code === 'TEXT');
-      return textType?.id || null;
-    }
-
-    // Find the field type by code
-    const fieldType = this.availableFieldTypes.find(ft =>
-      ft.code === mappedCode && ft.active_ind
-    );
-
-    if (!fieldType) {
-      console.warn(`No field type found for code: ${mappedCode}`);
-      // Try to find TEXT as fallback
-      const textType = this.availableFieldTypes.find(ft => ft.code === 'TEXT');
-      return textType?.id || null;
-    }
-
-    console.log(`Mapped ${fieldTypeName} -> ${mappedCode} -> ID: ${fieldType.id}`);
-    return fieldType.id;
-  }
-
   ngOnChanges(changes: SimpleChanges): void {
     console.log('FieldBuilder ngOnChanges:', changes);
 
@@ -238,28 +164,32 @@ export class FieldBuilderComponent implements OnInit {
 
       console.log('DataSources changed from:', previousValue, 'to:', currentValue);
 
-      // Check if we have a real change (not just initialization)
+      // Check if we have a real change
       if (currentValue && Array.isArray(currentValue) && currentValue.length > 0) {
-        // Check if this is a real change or just the same data
-        const hasChanged = !previousValue ||
-          previousValue.length !== currentValue.length ||
-          JSON.stringify(previousValue) !== JSON.stringify(currentValue);
+        console.log('DataSources actually changed, reloading fields...');
 
-        if (hasChanged) {
-          console.log('DataSources actually changed, reloading fields...');
-          // Clear previous fields
-          this.availableFields.clear();
-          this.filteredFields.clear();
+        // Clear previous fields
+        this.availableFields.clear();
+        this.filteredFields.clear();
 
-          // Load fields for new data sources
+        // Wait a bit to ensure data sources are properly initialized
+        setTimeout(() => {
           this.loadAvailableFields();
-        }
+        }, 100);
       }
     }
 
-    // Also reload if fields array changes (for edit mode)
-    if (changes['fields'] && !changes['fields'].firstChange) {
+    // Handle fields array changes for edit mode
+    if (changes['fields']) {
       console.log('Fields input changed:', this.fields);
+
+      // Ensure fields have proper field_type_name
+      this.fields = this.fields.map(field => ({
+        ...field,
+        field_type_name: field.field_type_name || field.field_type,
+        aggregation: field.aggregation || '',
+        formatting: field.formatting || {}
+      }));
     }
   }
 
@@ -268,6 +198,7 @@ export class FieldBuilderComponent implements OnInit {
 
     if (!Array.isArray(this.dataSources) || this.dataSources.length === 0) {
       console.warn('No data sources available to load fields from');
+      this.isLoadingFields = false;
       return;
     }
 
@@ -291,16 +222,20 @@ export class FieldBuilderComponent implements OnInit {
         .toPromise()
         .then(response => {
           if (response && response.fields) {
-            // Use both possible keys for the map
-            const key = dataSource.id || contentTypeId;
-            this.availableFields.set(key, response.fields);
+            // Store fields with multiple keys to ensure we can find them
+            const keys = [
+              dataSource.id,
+              contentTypeId,
+              `${dataSource.id}_${contentTypeId}` // Composite key
+            ].filter(key => key !== undefined && key !== null);
 
-            // Also set by content_type_id to ensure we can find it
-            if (dataSource.id && dataSource.id !== contentTypeId) {
-              this.availableFields.set(contentTypeId, response.fields);
-            }
+            keys.forEach(key => {
+              this.availableFields.set(key!, response.fields);
+              this.filteredFields.set(key!, response.fields);
+            });
 
-            console.log(`Loaded ${response.fields.length} fields for data source ${dataSource.alias} (key: ${key})`);
+            console.log(`Loaded ${response.fields.length} fields for data source ${dataSource.alias}`);
+            console.log('Available keys:', keys);
           }
         })
         .catch(err => {
@@ -310,9 +245,11 @@ export class FieldBuilderComponent implements OnInit {
       loadPromises.push(promise);
     }
 
-    // After all fields are loaded, filter them
+    // After all fields are loaded, update UI
     Promise.all(loadPromises).then(() => {
-      console.log('All fields loaded. Available fields map:', this.availableFields);
+      console.log('All fields loaded. Available fields map size:', this.availableFields.size);
+      console.log('Available fields keys:', Array.from(this.availableFields.keys()));
+
       this.filterFields();
       this.isLoadingFields = false;
 
@@ -344,136 +281,73 @@ export class FieldBuilderComponent implements OnInit {
   }
 
   getAvailableFieldsForDataSource(dataSource: DataSource): FieldInfo[] {
-    const key = dataSource.id || dataSource.content_type_id;
-    return this.availableFields.get(key!) || [];
+    // Try multiple keys to find the fields
+    const keys = [
+      dataSource.id,
+      dataSource.content_type_id,
+      `${dataSource.id}_${dataSource.content_type_id}`
+    ].filter(key => key !== undefined && key !== null);
+
+    for (const key of keys) {
+      const fields = this.availableFields.get(key!);
+      if (fields && fields.length > 0) {
+        console.log(`Found fields for data source ${dataSource.alias} using key: ${key}`);
+        return fields;
+      }
+    }
+
+    console.warn(`No fields found for data source ${dataSource.alias}, tried keys:`, keys);
+    return [];
   }
 
   getFilteredFieldsForDataSource(dataSource: DataSource): FieldInfo[] {
-    const key = dataSource.id || dataSource.content_type_id;
-    return this.filteredFields.get(key!) || [];
+    // Try multiple keys to find the fields
+    const keys = [
+      dataSource.id,
+      dataSource.content_type_id,
+      `${dataSource.id}_${dataSource.content_type_id}`
+    ].filter(key => key !== undefined && key !== null);
+
+    for (const key of keys) {
+      const fields = this.filteredFields.get(key!);
+      if (fields && fields.length > 0) {
+        return fields;
+      }
+    }
+
+    return [];
   }
 
   isFieldSelected(field: FieldInfo): boolean {
     return this.fields.some(f => f.field_path === field.path);
   }
 
-// Update the getFieldTypeCode method (add this new method)
-  private getFieldTypeCode(fieldTypeName: string): string {
-    const typeMapping: Record<string, string> = {
-      'BigAutoField': 'NUMBER',
-      'AutoField': 'NUMBER',
-      'IntegerField': 'NUMBER',
-      'BigIntegerField': 'NUMBER',
-      'SmallIntegerField': 'NUMBER',
-      'PositiveIntegerField': 'NUMBER',
-      'FloatField': 'DECIMAL',
-      'DecimalField': 'DECIMAL',
-      'CharField': 'TEXT',
-      'TextField': 'TEXTAREA',
-      'SlugField': 'SLUG',
-      'BooleanField': 'BOOLEAN',
-      'DateField': 'DATE',
-      'DateTimeField': 'DATETIME',
-      'TimeField': 'TIME',
-      'EmailField': 'EMAIL',
-      'URLField': 'URL',
-      'FileField': 'FILE',
-      'ImageField': 'IMAGE',
-      'ForeignKey': 'FOREIGN_KEY',
-      'ManyToManyField': 'MANY_TO_MANY',
-      'OneToOneField': 'ONE_TO_ONE',
-      'UUIDField': 'UUID',
-      'GenericIPAddressField': 'IP_ADDRESS',
-      'JSONField': 'JSON'
-    };
-
-    return typeMapping[fieldTypeName] || 'TEXT';
-  }
 
   quickAddField(field: FieldInfo, dataSource: DataSource): void {
-    // Get the field type code
-    const fieldTypeCode = this.getFieldTypeCode(field.type);
+    // Always add to local array only, never save immediately
+    const newField: Field = {
+      report: this.report?.id || 0,
+      data_source: dataSource.id || dataSource.content_type_id!,
+      field_path: field.path,
+      field_name: field.name,
+      display_name: field.verbose_name,
+      field_type: this.mapFieldTypeToValidChoice(field.type), // Map to valid choice
+      field_type_name: field.type, // Store original type for reference
+      order: this.fields.length,
+      is_visible: true,
+      aggregation: '', // Empty string
+      width: null,
+      formatting: {} // Empty object
+    };
 
-    console.log('Field type mapping:', {
-      originalType: field.type,
-      mappedCode: fieldTypeCode
+    // Add to local array
+    this.fields = [...this.fields, newField];
+    this.fieldsChange.emit(this.fields);
+
+    this.snackBar.open('Field added', 'Close', {
+      duration: 2000,
+      panelClass: ['success-snackbar']
     });
-
-    if (!this.report?.id || !dataSource.id) {
-      // For new reports without ID, add to local array
-      const newField: Field = {
-        report: this.report?.id || 0,
-        data_source: dataSource.id || dataSource.content_type_id!,
-        field_path: field.path,
-        field_name: field.name,
-        display_name: field.verbose_name,
-        field_type: fieldTypeCode as any, // Use the code
-        field_type_name: field.type, // Store original type name for UI
-        order: this.fields.length,
-        is_visible: true,
-        aggregation: '', // Empty string
-        width: null,
-        formatting: {} // Empty object
-      };
-
-      this.fields = [...this.fields, newField];
-      this.fieldsChange.emit(this.fields);
-
-      this.snackBar.open('Field added (will be saved with report)', 'Close', {
-        duration: 2000,
-        panelClass: ['info-snackbar']
-      });
-    } else {
-      // For existing reports, save to backend immediately
-      const newField = {
-        report: this.report.id,
-        data_source: dataSource.id,
-        field_path: field.path,
-        field_name: field.name,
-        display_name: field.verbose_name,
-        field_type: fieldTypeCode, // Send the code like "NUMBER", "TEXT", etc.
-        aggregation: '', // Empty string
-        order: this.fields.length,
-        is_visible: true,
-        width: null,
-        formatting: {} // Empty object
-      };
-
-      console.log('Creating field with field_type code:', newField);
-
-      this.reportService.createField(newField).subscribe({
-        next: (createdField) => {
-          // Store the original field type name for UI
-          createdField.field_type_name = field.type;
-          this.fields = [...this.fields, createdField];
-          this.fieldsChange.emit(this.fields);
-
-          this.snackBar.open('Field added', 'Close', {
-            duration: 2000,
-            panelClass: ['success-snackbar']
-          });
-        },
-        error: (err) => {
-          console.error('Error adding field:', err);
-          console.error('Error details:', err.error);
-
-          // Show specific error message
-          let errorMessage = 'Error adding field';
-          if (err.error?.field_type) {
-            errorMessage = `Field type error: ${err.error.field_type[0]}`;
-          } else if (err.error?.data_source) {
-            errorMessage = `Data source error: ${err.error.data_source[0]}`;
-          } else if (err.error?.aggregation) {
-            errorMessage = `Aggregation error: ${err.error.aggregation[0]}`;
-          }
-
-          this.snackBar.open(errorMessage, 'Close', {
-            duration: 3000,
-            panelClass: ['error-snackbar']
-          });
-        }
-      });
-    }
   }
 
   onDrop(event: CdkDragDrop<any[]>): void {
@@ -496,22 +370,12 @@ export class FieldBuilderComponent implements OnInit {
   }
 
   updateFieldOrders(): void {
-    const updates = this.fields.map((field, index) => {
-      if (field.id && field.order !== index) {
-        return this.reportService.updateField(field.id, { order: index });
-      }
-      return null;
-    }).filter(obs => obs !== null);
-
-    if (updates.length > 0) {
-      Promise.all(updates.map(obs => obs!.toPromise())).then(() => {
-        this.fields = this.fields.map((field, index) => ({
-          ...field,
-          order: index
-        }));
-        this.fieldsChange.emit(this.fields);
-      });
-    }
+    // Just update the order locally
+    this.fields = this.fields.map((field, index) => ({
+      ...field,
+      order: index
+    }));
+    this.fieldsChange.emit(this.fields);
   }
 
   editField(field: Field, index: number): void {
@@ -547,52 +411,33 @@ export class FieldBuilderComponent implements OnInit {
     if (!this.fieldForm.valid || this.editingFieldIndex < 0) return;
 
     const field = this.fields[this.editingFieldIndex];
-    if (!field.id) return;
 
     const updates: Partial<Field> = {
       ...this.fieldForm.value,
       formatting: this.formattingForm.value.type ? this.formattingForm.value : null
     };
 
-    this.reportService.updateField(field.id, updates).subscribe({
-      next: (updatedField) => {
-        this.fields[this.editingFieldIndex] = updatedField;
-        this.fieldsChange.emit(this.fields);
+    // Update locally only
+    this.fields[this.editingFieldIndex] = {
+      ...field,
+      ...updates
+    };
 
-        this.dialog.closeAll();
-        this.snackBar.open('Field updated', 'Close', {
-          duration: 2000,
-          panelClass: ['success-snackbar']
-        });
-      },
-      error: (err) => {
-        console.error('Error updating field:', err);
-        this.snackBar.open('Error updating field', 'Close', {
-          duration: 3000,
-          panelClass: ['error-snackbar']
-        });
-      }
+    this.fieldsChange.emit(this.fields);
+    this.dialog.closeAll();
+
+    this.snackBar.open('Field updated', 'Close', {
+      duration: 2000,
+      panelClass: ['success-snackbar']
     });
   }
 
   toggleVisibility(field: Field, index: number): void {
-    if (!field.id) return;
-
-    const updates = { is_visible: !field.is_visible };
-
-    this.reportService.updateField(field.id, updates).subscribe({
-      next: (updatedField) => {
-        this.fields[index] = updatedField;
-        this.fieldsChange.emit(this.fields);
-      },
-      error: (err) => {
-        console.error('Error toggling visibility:', err);
-        this.snackBar.open('Error updating field', 'Close', {
-          duration: 3000,
-          panelClass: ['error-snackbar']
-        });
-      }
-    });
+    this.fields[index] = {
+      ...field,
+      is_visible: !field.is_visible
+    };
+    this.fieldsChange.emit(this.fields);
   }
 
   removeField(index: number): void {
@@ -623,18 +468,12 @@ export class FieldBuilderComponent implements OnInit {
 
   clearAllFields(): void {
     if (confirm('Remove all fields?')) {
-      const deletions = this.fields
-        .filter(field => field.id)
-        .map(field => this.reportService.deleteField(field.id!));
+      this.fields = [];
+      this.fieldsChange.emit(this.fields);
 
-      Promise.all(deletions.map(obs => obs.toPromise())).then(() => {
-        this.fields = [];
-        this.fieldsChange.emit(this.fields);
-
-        this.snackBar.open('All fields removed', 'Close', {
-          duration: 2000,
-          panelClass: ['info-snackbar']
-        });
+      this.snackBar.open('All fields removed', 'Close', {
+        duration: 2000,
+        panelClass: ['info-snackbar']
       });
     }
   }
@@ -754,5 +593,24 @@ export class FieldBuilderComponent implements OnInit {
 
   getVisibleFieldsCount(): number {
     return this.fields.filter(f => f.is_visible).length;
+  }
+  private mapFieldTypeToValidChoice(fieldType: string): string {
+    // Map Django field types that aren't in FIELD_TYPE_CHOICES to valid ones
+    const fieldTypeMapping: Record<string, string> = {
+      'BigAutoField': 'BigIntegerField',
+      'AutoField': 'IntegerField',
+      'PositiveIntegerField': 'IntegerField',
+      'PositiveSmallIntegerField': 'SmallIntegerField',
+      'NullBooleanField': 'BooleanField',
+      'SlugField': 'CharField',
+      'GenericIPAddressField': 'CharField',
+      'FileField': 'CharField',
+      'ImageField': 'CharField',
+      'DurationField': 'CharField',
+      'BinaryField': 'TextField'
+    };
+
+    // Return mapped type or original if not in mapping
+    return fieldTypeMapping[fieldType] || fieldType;
   }
 }
