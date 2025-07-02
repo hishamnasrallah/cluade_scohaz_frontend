@@ -788,7 +788,15 @@ export class FilterBuilderComponent implements OnInit, OnChanges, OnDestroy {
       });
     }, 500); // Debounce for 500ms
   }
-
+  debugOperators(filter: Filter): void {
+    const fieldInfo = this.getFieldInfoForFilter(filter);
+    console.log('Debug - Filter:', filter);
+    console.log('Debug - FieldInfo:', fieldInfo);
+    if (fieldInfo) {
+      const operators = this.reportService.getOperatorOptions(fieldInfo.type);
+      console.log('Debug - Operators:', operators);
+    }
+  }
   removeFilter(filter: Filter): void {
     if (!filter.id || filter.id < 0) {
       // For filters without ID (new report), just remove locally

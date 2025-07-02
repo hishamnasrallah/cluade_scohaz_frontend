@@ -342,6 +342,8 @@ export class ReportService {
   }
 
   getOperatorOptions(fieldType: string): Array<{ value: string; label: string }> {
+    console.log('getOperatorOptions called with fieldType:', fieldType);
+
     const baseOperators = [
       { value: 'eq', label: 'Equals' },
       { value: 'ne', label: 'Not Equals' },
@@ -375,31 +377,46 @@ export class ReportService {
       ...numericOperators
     ];
 
-    switch (fieldType.toLowerCase()) {
-      case 'integerfield':
-      case 'floatfield':
-      case 'decimalfield':
-      case 'bigautofield':  // Add this line
-      case 'autofield':     // Add this line
-        return [...baseOperators, ...numericOperators];
-      case 'charfield':
-      case 'textfield':
-      case 'emailfield':
-      case 'urlfield':
-        return [...baseOperators, ...textOperators, ...listOperators];
-      case 'datefield':
-      case 'datetimefield':
-        return [...baseOperators, ...dateOperators];
-      case 'booleanfield':
-        return baseOperators.filter(op => ['eq', 'ne'].includes(op.value));
-      case 'foreignkey':
-      case 'manytomanyfield':
-        return [...baseOperators, ...listOperators];
-      default:
-        return baseOperators;
-    }
-  }
+    let result: Array<{ value: string; label: string }> = [];
 
+    // Convert to lowercase and remove 'Field' suffix for comparison
+    const normalizedType = fieldType.toLowerCase().replace('field', '');
+
+    switch (normalizedType) {
+      case 'integer':
+      case 'float':
+      case 'decimal':
+      case 'bigauto':
+      case 'auto':
+      case 'biginteger':
+        result = [...baseOperators, ...numericOperators];
+        break;
+      case 'char':
+      case 'text':
+      case 'email':
+      case 'url':
+        result = [...baseOperators, ...textOperators, ...listOperators];
+        break;
+      case 'date':
+      case 'datetime':
+        result = [...baseOperators, ...dateOperators];
+        break;
+      case 'boolean':
+        result = baseOperators.filter(op => ['eq', 'ne'].includes(op.value));
+        break;
+      case 'foreignkey':
+      case 'manytomany':
+        result = [...baseOperators, ...listOperators];
+        break;
+      default:
+        console.warn('Unknown field type, using default operators:', fieldType);
+        result = baseOperators;
+        break;
+    }
+
+    console.log('getOperatorOptions returning:', result);
+    return result;
+  }
   getParameterTypeOptions(): Array<{ value: string; label: string }> {
     return [
       { value: 'text', label: 'Text' },

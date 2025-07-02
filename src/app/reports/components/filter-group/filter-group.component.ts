@@ -16,6 +16,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { Filter, DataSource, Parameter, FieldInfo } from '../../../models/report.models';
 import { ReportService } from '../../../services/report.service';
 import { FilterValueInputComponent } from '../filter-value-input/filter-value-input.component';
+import { ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 
 interface FilterTreeNode {
   id: string;
@@ -45,7 +46,9 @@ interface FilterTreeNode {
     FilterValueInputComponent
   ],
   templateUrl: 'filter-group.component.html',
-  styleUrl: 'filter-group.component.scss'
+  styleUrl: 'filter-group.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
+
 })
 export class FilterGroupComponent implements OnInit {
   @Input() group!: FilterTreeNode;
@@ -59,8 +62,13 @@ export class FilterGroupComponent implements OnInit {
   @Output() filterRemove = new EventEmitter<{ filter: Filter; group: FilterTreeNode }>();
 
   private idCounter = 0;
+  private operatorsCache = new Map<string, Array<{ value: string; label: string }>>();
 
-  constructor(private reportService: ReportService) {}
+  constructor(
+    private reportService: ReportService,
+    private cdr: ChangeDetectorRef
+
+  ) {}
 
   ngOnInit(): void {
     // Ensure group has required properties
@@ -85,6 +93,11 @@ export class FilterGroupComponent implements OnInit {
         const fields = this.availableFields.get(key!);
         console.log(`Data source ${ds.alias} (key: ${key}) has ${fields?.length || 0} fields`);
       });
+
+      // Force change detection
+      if (this.cdr) {
+        this.cdr.detectChanges();
+      }
     }, 1000);
   }
 
@@ -158,6 +171,7 @@ export class FilterGroupComponent implements OnInit {
       data_source: primaryDataSource.id || primaryDataSource.content_type_id!,
       field_path: defaultField.path,
       field_name: defaultField.name,
+      field_type: defaultField.type, // Ensure this is set
       operator: 'eq',
       value: '',
       value_type: 'static',
@@ -279,6 +293,7 @@ export class FilterGroupComponent implements OnInit {
     });
 
     this.filterChange.emit({ filter, group: this.group });
+    this.cdr.detectChanges();
   }
 
   private getDefaultValueForFieldType(fieldType: string, operator: string): any {
@@ -317,44 +332,58 @@ export class FilterGroupComponent implements OnInit {
   }
 
   getFieldInfo(filter: Filter): FieldInfo | null {
-    if (!filter.field_path) return null;
+    // First check if filter already has the field info we need
+    if (filter.field_type && filter.field_path) {
+      console.log('getFieldInfo: Using filter field_type directly:', filter.field_type);
+      return {
+        name: filter.field_name || filter.field_path,
+        path: filter.field_path,
+        verbose_name: filter.field_name || filter.field_path,
+        type: filter.field_type,
+        is_relation: false
+      };
+    }
 
-    // Find the data source for this filter
+    if (!filter.data_source || !filter.field_path) {
+      console.warn('getFieldInfo: Missing data_source or field_path', filter);
+      return null;
+    }
+
     const dataSource = this.dataSources.find(ds =>
       ds.id === filter.data_source || ds.content_type_id === filter.data_source
     );
 
     if (!dataSource) {
-      console.error('Data source not found for filter:', filter.data_source);
+      console.warn('getFieldInfo: Data source not found for filter:', filter.data_source);
       return null;
     }
 
-    // Get fields from availableFields Map
-    const fields = this.availableFields.get(dataSource.id || dataSource.content_type_id!);
+    const key = dataSource.id || dataSource.content_type_id;
+    const fields = this.availableFields.get(key!);
 
     if (!fields || fields.length === 0) {
-      console.error('No fields found for data source:', dataSource);
+      console.warn('getFieldInfo: No fields found for data source:', dataSource.alias, 'key:', key);
       return null;
     }
 
     const fieldInfo = fields.find(f => f.path === filter.field_path);
 
-    if (!fieldInfo) {
-      console.error('Field not found:', filter.field_path, 'in fields:', fields);
+    if (fieldInfo) {
+      console.log('getFieldInfo: Found field:', fieldInfo);
+      // Update the filter's field_type to match
+      if (filter.field_type !== fieldInfo.type) {
+        filter.field_type = fieldInfo.type;
+      }
+    } else {
+      console.warn('getFieldInfo: Field not found for path:', filter.field_path);
     }
 
     return fieldInfo || null;
   }
-
   getOperatorsForFilter(filter: Filter): Array<{ value: string; label: string }> {
     const fieldInfo = this.getFieldInfo(filter);
 
-    console.log('getOperatorsForFilter - fieldInfo:', fieldInfo);
-    console.log('getOperatorsForFilter - filter:', filter);
-
-    // If no field selected or field type is unknown, return basic operators
     if (!fieldInfo || !fieldInfo.type) {
-      console.log('getOperatorsForFilter - returning default operators');
       return [
         { value: 'eq', label: 'Equals' },
         { value: 'ne', label: 'Not Equals' },
@@ -364,9 +393,28 @@ export class FilterGroupComponent implements OnInit {
       ];
     }
 
-    const operators = this.reportService.getOperatorOptions(fieldInfo.type);
-    console.log('getOperatorsForFilter - operators from service:', operators);
+    // Check cache first
+    if (this.operatorsCache.has(fieldInfo.type)) {
+      return this.operatorsCache.get(fieldInfo.type)!;
+    }
 
+    // Get operators and cache them
+    const operators = this.reportService.getOperatorOptions(fieldInfo.type);
+    this.operatorsCache.set(fieldInfo.type, operators);
+
+    return operators || [];
+  }
+
+  getOperatorsForFilterCached(filter: Filter): Array<{ value: string; label: string }> {
+    // Create a unique key for this filter
+    const key = `${filter.data_source}_${filter.field_path}_${filter.field_type || 'unknown'}`;
+
+    if (this.operatorsCache.has(key)) {
+      return this.operatorsCache.get(key)!;
+    }
+
+    const operators = this.getOperatorsForFilter(filter);
+    this.operatorsCache.set(key, operators);
     return operators;
   }
 
@@ -385,6 +433,7 @@ export class FilterGroupComponent implements OnInit {
     }
 
     this.filterChange.emit({ filter, group: this.group });
+    this.cdr.detectChanges();
   }
 
   onFilterChange(filter: Filter): void {
@@ -453,7 +502,9 @@ export class FilterGroupComponent implements OnInit {
   //
   //   return this.reportService.getOperatorOptions(fieldInfo.type);
   // }
-
+  compareOperators(o1: any, o2: any): boolean {
+    return o1 === o2;
+  }
   getFieldIcon(type: string): string {
     const icons: Record<string, string> = {
       'CharField': 'text_fields',

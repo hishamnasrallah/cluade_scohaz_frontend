@@ -73,13 +73,15 @@
           <mat-form-field appearance="outline" class="operator-select">
             <mat-label>Operator</mat-label>
             <mat-select [(ngModel)]="child.filter!.operator"
-                        (selectionChange)="onOperatorChange(child.filter!)">
-              <mat-option *ngFor="let op of getOperatorsForFilter(child.filter!)"
+                        (selectionChange)="onOperatorChange(child.filter!)"
+                        [compareWith]="compareOperators">
+              <mat-option *ngFor="let op of getOperatorsForFilterCached(child.filter!)"
                           [value]="op.value">
                 {{ op.label }}
               </mat-option>
             </mat-select>
           </mat-form-field>
+
 
           <!-- Value -->
           <div class="value-container">
