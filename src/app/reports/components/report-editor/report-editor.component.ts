@@ -280,11 +280,6 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
   }
 
   async onDataSourcesChange(dataSources: DataSource[]): Promise<void> {
-    // If report doesn't have an ID yet, save it first
-    if (!this.report?.id && this.basicInfoForm.valid) {
-      await this.saveReport(false);
-    }
-
     this.dataSources = [...dataSources]; // Create new array reference
     this.isDirty = true;
     this.validateReport();
@@ -331,7 +326,7 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
     await this.saveReport(false);
   }
 
-  async saveReport(showMessage = true): Promise<void> {
+  async saveReport(showMessage = true, switchToEditMode = true): Promise<void> {
     if (!this.basicInfoForm.valid) return;
 
     this.isSaving = true;
@@ -347,7 +342,6 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
         const newReport = await this.reportService.createReport(reportData).toPromise();
         if (newReport) {
           this.report = newReport;
-          this.mode = 'edit';
 
           // Save components
           await this.saveReportComponents();
@@ -359,8 +353,12 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
             });
           }
 
-          // Navigate to edit mode
-          this.router.navigate(['/reports', newReport.id, 'edit'], { replaceUrl: true });
+          // Only switch to edit mode if explicitly requested
+          if (switchToEditMode) {
+            this.mode = 'edit';
+            // Navigate to edit mode
+            this.router.navigate(['/reports', newReport.id, 'edit'], { replaceUrl: true });
+          }
         }
       } else {
         // Update existing report

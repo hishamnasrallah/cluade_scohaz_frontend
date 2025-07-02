@@ -258,7 +258,11 @@ export class FilterGroupComponent implements OnInit {
 
   getOperatorsForFilter(filter: Filter): Array<{ value: string; label: string }> {
     const fieldInfo = this.getFieldInfo(filter);
-    if (!fieldInfo) return [];
+
+    // If no field selected, return default operators
+    if (!fieldInfo || !filter.field_path) {
+      return this.reportService.getOperatorOptions('default');
+    }
 
     return this.reportService.getOperatorOptions(fieldInfo.type);
   }
