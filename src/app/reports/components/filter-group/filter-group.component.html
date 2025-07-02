@@ -57,11 +57,11 @@
           <!-- Field -->
           <mat-form-field appearance="outline" class="field-select">
             <mat-label>Field</mat-label>
-            <mat-select [ngModel]="child.filter!.field_path"
+            <mat-select [value]="child.filter!.field_path"
                         (selectionChange)="onFieldSelectChange(child.filter!, $event)">
               <mat-optgroup *ngFor="let ds of dataSources" [label]="ds.alias">
                 <mat-option *ngFor="let field of getFieldsForDataSource(ds)"
-                            [value]="field">
+                            [value]="field.path">
                   <mat-icon>{{ getFieldIcon(field.type) }}</mat-icon>
                   {{ field.verbose_name }}
                 </mat-option>
@@ -88,14 +88,14 @@
               [fieldInfo]="getFieldInfo(child.filter!)"
               [parameters]="parameters"
               [dataSources]="dataSources"
-              (valueChange)="onFilterValueChange(child.filter!)">
+              (valueChange)="onFilterValueChange(child.filter!, $event)">
             </app-filter-value-input>
           </div>
 
           <!-- Actions -->
           <div class="filter-actions">
-            <mat-slide-toggle [(ngModel)]="child.filter!.is_active"
-                              (change)="onFilterChange(child.filter!)"
+            <mat-slide-toggle [checked]="child.filter!.is_active"
+                              (change)="onToggleChange(child.filter!, $event)"
                               color="primary"
                               matTooltip="Enable/Disable">
             </mat-slide-toggle>

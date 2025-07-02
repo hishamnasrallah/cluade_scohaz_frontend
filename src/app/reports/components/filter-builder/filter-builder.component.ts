@@ -1,6 +1,16 @@
 // src/app/reports/components/filter-builder/filter-builder.component.ts
 
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, ViewChild, TemplateRef } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  OnInit,
+  OnChanges,
+  ViewChild,
+  TemplateRef,
+  SimpleChanges, OnDestroy
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CdkDragDrop, moveItemInArray, transferArrayItem, DragDropModule } from '@angular/cdk/drag-drop';
@@ -122,7 +132,7 @@ interface OperatorGroup {
   templateUrl: 'filter-builder.component.html',
   styleUrl: 'filter-builder.component.scss'
 })
-export class FilterBuilderComponent implements OnInit, OnChanges {
+export class FilterBuilderComponent implements OnInit, OnChanges, OnDestroy {
   @ViewChild('filterTemplatesDialog') filterTemplatesDialog!: TemplateRef<any>;
   @ViewChild('saveTemplateDialog') saveTemplateDialog!: TemplateRef<any>;
   @ViewChild('moveToGroupDialog') moveToGroupDialog!: TemplateRef<any>;
@@ -164,6 +174,7 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
   // Search/Filter
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
+  private currentSearchTerm = '';
 
   // Templates
   commonFilterTemplates: FilterTemplate[] = [
@@ -246,7 +257,8 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
   private filterHistory: Filter[][] = [];
   private historyIndex = -1;
   private maxHistorySize = 50;
-
+  private fieldsLoaded = false;
+  private updateTimeout: any;
   constructor(
     private fb: FormBuilder,
     private reportService: ReportService,
@@ -261,20 +273,34 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
   }
 
   ngOnInit(): void {
-    this.loadAvailableFields();
-    this.organizeFiltersIntoGroups();
-    this.buildFilterTree();
+    // Load available fields first, then build the tree
+    this.loadAvailableFields().then(() => {
+      console.log('Available fields loaded:', this.availableFields);
+      this.organizeFiltersIntoGroups();
+      this.buildFilterTree();
+    });
+
     this.loadSavedTemplates();
     this.setupSearch();
     this.saveToHistory();
   }
 
-  ngOnChanges(): void {
-    if (this.dataSources.length > 0) {
+  ngOnChanges(changes: SimpleChanges): void {
+    // Only rebuild if data sources or filters actually changed
+    if (changes['dataSources'] && !changes['dataSources'].firstChange) {
       this.loadAvailableFields();
     }
-    this.organizeFiltersIntoGroups();
-    this.buildFilterTree();
+
+    if (changes['filters'] && !changes['filters'].firstChange) {
+      // Check if filters actually changed
+      const prev = changes['filters'].previousValue;
+      const curr = changes['filters'].currentValue;
+
+      if (JSON.stringify(prev) !== JSON.stringify(curr)) {
+        this.organizeFiltersIntoGroups();
+        this.buildFilterTree();
+      }
+    }
   }
 
   ngOnDestroy(): void {
@@ -290,25 +316,46 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
         takeUntil(this.destroy$)
       )
       .subscribe(searchTerm => {
+        this.currentSearchTerm = searchTerm; // Store the current search term
         this.filterAvailableFields(searchTerm);
       });
   }
+  get isReady(): boolean {
+    return this.fieldsLoaded && this.dataSources.length > 0;
+  }
 
-  loadAvailableFields(): void {
+  loadAvailableFields(): Promise<void> {
+    // Reset the flag
+    this.fieldsLoaded = false;
+
+    const promises: Promise<any>[] = [];
+
     for (const dataSource of this.dataSources) {
       if (!dataSource.content_type_id) continue;
 
-      this.reportService.getContentTypeFields(dataSource.content_type_id).subscribe({
-        next: (response) => {
-          const key = dataSource.id || dataSource.content_type_id;
-          this.availableFields.set(key, response.fields);
-          this.filteredFields.set(key, response.fields);
-        },
-        error: (err) => {
+      const promise = this.reportService.getContentTypeFields(dataSource.content_type_id).toPromise()
+        .then(response => {
+          if (response) {
+            const key = dataSource.id || dataSource.content_type_id;
+            this.availableFields.set(key, response.fields);
+            this.filteredFields.set(key, response.fields);
+            console.log(`Loaded ${response.fields.length} fields for data source ${dataSource.alias} (key: ${key})`);
+          }
+        })
+        .catch(err => {
           console.error(`Error loading fields for data source ${dataSource.alias}:`, err);
-        }
-      });
+        });
+
+      promises.push(promise);
     }
+
+    // Return a promise that resolves when all fields are loaded
+    return Promise.all(promises).then(() => {
+      console.log('All fields loaded. Available fields map:', this.availableFields);
+      this.fieldsLoaded = true;
+      // Use the stored search term instead of subject.value
+      this.filterAvailableFields(this.currentSearchTerm);
+    });
   }
 
   filterAvailableFields(searchTerm: string): void {
@@ -541,14 +588,21 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
 
     const primaryDataSource = this.dataSources.find(ds => ds.is_primary) || this.dataSources[0];
 
+    // Get the first available field as default
+    const availableFields = this.availableFields.get(
+      primaryDataSource.id || primaryDataSource.content_type_id!
+    ) || [];
+
+    const defaultField = availableFields[0];
+
     if (!this.report?.id) {
       // For new reports without ID, create a temporary filter
       const tempFilter: Filter = {
         id: this.tempIdCounter--,
         report: 0,
         data_source: primaryDataSource.id || primaryDataSource.content_type_id!,
-        field_path: '',
-        field_name: '',
+        field_path: defaultField ? defaultField.path : '',
+        field_name: defaultField ? defaultField.name : '',
         operator: 'eq',
         value: '',
         value_type: 'static',
@@ -568,7 +622,8 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
       const newFilter: Partial<Filter> = {
         report: this.report.id,
         data_source: primaryDataSource.id!,
-        field_path: '',
+        field_path: defaultField ? defaultField.path : '',
+        field_name: defaultField ? defaultField.name : '',
         operator: 'eq',
         value: '',
         value_type: 'static',
@@ -664,41 +719,74 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
     });
   }
 
+  private updateInProgress = new Set<number | undefined>();
+
   updateFilter(filter: Filter): void {
-    if (!filter.id || filter.id < 0) {
-      // For filters without ID (new report), just update locally
-      this.filtersChange.emit(this.filters);
-      this.saveToHistory();
+    // Prevent infinite update loops
+    const filterId = filter.id;
+    if (this.updateInProgress.has(filterId)) {
       return;
     }
 
-    const updates: Partial<Filter> = {
-      field_path: filter.field_path,
-      operator: filter.operator,
-      value: filter.value,
-      value_type: filter.value_type,
-      logic_group: filter.logic_group,
-      is_active: filter.is_active,
-      is_required: filter.is_required
-    };
+    this.updateInProgress.add(filterId);
 
-    this.reportService.updateFilter(filter.id, updates).subscribe({
-      next: (updated) => {
-        const index = this.filters.findIndex(f => f.id === updated.id);
-        if (index >= 0) {
-          this.filters[index] = updated;
-          this.filtersChange.emit(this.filters);
-          this.saveToHistory();
-        }
-      },
-      error: (err) => {
-        console.error('Error updating filter:', err);
-        this.snackBar.open('Error updating filter', 'Close', {
-          duration: 3000,
-          panelClass: ['error-snackbar']
-        });
+    // For filters without ID (new report), just update locally without API call
+    if (!filter.id || filter.id < 0) {
+      const index = this.filters.findIndex(f => f === filter);
+      if (index >= 0) {
+        // Update immutably to prevent re-renders
+        this.filters = [
+          ...this.filters.slice(0, index),
+          { ...filter },
+          ...this.filters.slice(index + 1)
+        ];
       }
-    });
+      // Remove from in-progress after a delay
+      setTimeout(() => this.updateInProgress.delete(filterId), 100);
+      this.filtersChange.emit(this.filters);
+      return;
+    }
+
+    // For existing filters, debounce the API calls
+    if (this.updateTimeout) {
+      clearTimeout(this.updateTimeout);
+    }
+
+    this.updateTimeout = setTimeout(() => {
+      const updates: Partial<Filter> = {
+        field_path: filter.field_path,
+        operator: filter.operator,
+        value: filter.value,
+        value_type: filter.value_type,
+        logic_group: filter.logic_group,
+        is_active: filter.is_active,
+        is_required: filter.is_required
+      };
+
+      this.reportService.updateFilter(filter.id!, updates).subscribe({
+        next: (updated) => {
+          const index = this.filters.findIndex(f => f.id === updated.id);
+          if (index >= 0) {
+            // Update immutably
+            this.filters = [
+              ...this.filters.slice(0, index),
+              updated,
+              ...this.filters.slice(index + 1)
+            ];
+            this.filtersChange.emit(this.filters);
+          }
+          this.updateInProgress.delete(filterId);
+        },
+        error: (err) => {
+          console.error('Error updating filter:', err);
+          this.snackBar.open('Error updating filter', 'Close', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
+          this.updateInProgress.delete(filterId);
+        }
+      });
+    }, 500); // Debounce for 500ms
   }
 
   removeFilter(filter: Filter): void {
@@ -1843,6 +1931,39 @@ export class FilterBuilderComponent implements OnInit, OnChanges {
 
   getFieldSearchTerm(filter: Filter): string {
     return this.fieldSearchTerms.get(filter.id) || '';
+  }
+  getFieldInfoForFilter(filter: Filter): FieldInfo | null {
+    if (!filter.field_path || !filter.data_source) {
+      console.log('No field path or data source for filter:', filter);
+      return null;
+    }
+
+    // Find the data source
+    const dataSource = this.dataSources.find(ds =>
+      ds.id === filter.data_source || ds.content_type_id === filter.data_source
+    );
+
+    if (!dataSource) {
+      console.log('Data source not found:', filter.data_source);
+      return null;
+    }
+
+    // Get fields from the Map
+    const key = dataSource.id || dataSource.content_type_id;
+    const fields = this.availableFields.get(key!);
+
+    if (!fields || fields.length === 0) {
+      console.log('No fields found for data source key:', key);
+      return null;
+    }
+
+    const fieldInfo = fields.find(f => f.path === filter.field_path);
+
+    if (!fieldInfo) {
+      console.log('Field not found:', filter.field_path, 'in', fields.length, 'fields');
+    }
+
+    return fieldInfo || null;
   }
 
   // Public methods for parent component integration

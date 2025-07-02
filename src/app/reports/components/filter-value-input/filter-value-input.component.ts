@@ -86,6 +86,7 @@ export class FilterValueInputComponent implements OnInit, OnChanges {
   constructor(private reportService: ReportService) {}
 
   ngOnInit(): void {
+    console.log('FilterValueInput init - fieldInfo:', this.fieldInfo, 'filter:', this.filter);
     this.initializeValues();
 
     if (this.needsRelatedData()) {
@@ -94,6 +95,7 @@ export class FilterValueInputComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(): void {
+    console.log('FilterValueInput changes - fieldInfo:', this.fieldInfo, 'filter:', this.filter);
     this.initializeValues();
 
     if (this.needsRelatedData()) {
@@ -300,14 +302,49 @@ export class FilterValueInputComponent implements OnInit, OnChanges {
 
   onValueTypeChange(): void {
     // Reset value when value type changes
-    this.filter.value = null;
+    switch (this.filter.value_type) {
+      case 'parameter':
+        this.filter.value = ''; // Parameter name
+        break;
+      case 'dynamic':
+        this.filter.value = ''; // Dynamic value type
+        break;
+      case 'user_attribute':
+        this.filter.value = 'id'; // Default user attribute
+        break;
+      case 'static':
+      default:
+        // Reset to appropriate default for field type
+        const inputType = this.getInputType();
+        if (inputType === 'boolean') {
+          this.filter.value = false;
+        } else if (inputType === 'number') {
+          this.filter.value = 0;
+        } else if (inputType === 'date_range') {
+          this.filter.value = { start: null, end: null };
+        } else if (inputType === 'between') {
+          this.filter.value = [null, null];
+        } else if (inputType === 'list' || inputType === 'multiselect') {
+          this.filter.value = [];
+        } else {
+          this.filter.value = '';
+        }
+        break;
+    }
+
+    // Reset component state
     this.dateRangeStart = null;
     this.dateRangeEnd = null;
     this.betweenStart = null;
     this.betweenEnd = null;
     this.listValues = [];
+    this.selectSearchValue = '';
 
-    this.valueTypeChange.emit();
+    // Emit the change event after a small delay to prevent UI freeze
+    setTimeout(() => {
+      this.valueTypeChange.emit();
+      this.valueChange.emit(this.filter.value);
+    }, 0);
   }
 
   onDateRangeChange(): void {
@@ -385,32 +422,32 @@ export class FilterValueInputComponent implements OnInit, OnChanges {
   }
 
   getDynamicValueGroups(): DynamicValueGroup[] {
-    if (!this.fieldInfo) return [];
-
     const groups: DynamicValueGroup[] = [];
 
-    // Date dynamic values
-    if (['DateField', 'DateTimeField'].includes(this.fieldInfo.type)) {
-      groups.push({
-        label: 'Date Values',
-        values: [
-          { type: 'today', label: 'Today', icon: 'today' },
-          { type: 'yesterday', label: 'Yesterday', icon: 'event' },
-          { type: 'tomorrow', label: 'Tomorrow', icon: 'event' },
-          { type: 'current_week_start', label: 'Start of Week', icon: 'first_page' },
-          { type: 'current_week_end', label: 'End of Week', icon: 'last_page' },
-          { type: 'current_month_start', label: 'Start of Month', icon: 'first_page' },
-          { type: 'current_month_end', label: 'End of Month', icon: 'last_page' },
-          { type: 'current_year_start', label: 'Start of Year', icon: 'first_page' },
-          { type: 'current_year_end', label: 'End of Year', icon: 'last_page' }
-        ]
-      });
-    }
+    // Always show date dynamic values as they're commonly used
+    groups.push({
+      label: 'Date Values',
+      values: [
+        { type: 'today', label: 'Today', icon: 'today' },
+        { type: 'yesterday', label: 'Yesterday', icon: 'event' },
+        { type: 'tomorrow', label: 'Tomorrow', icon: 'event' },
+        { type: 'current_week_start', label: 'Start of Week', icon: 'first_page' },
+        { type: 'current_week_end', label: 'End of Week', icon: 'last_page' },
+        { type: 'current_month_start', label: 'Start of Month', icon: 'first_page' },
+        { type: 'current_month_end', label: 'End of Month', icon: 'last_page' },
+        { type: 'current_year_start', label: 'Start of Year', icon: 'first_page' },
+        { type: 'current_year_end', label: 'End of Year', icon: 'last_page' }
+      ]
+    });
 
-    // User dynamic values (for user-related fields)
-    if (this.fieldInfo.path.toLowerCase().includes('user') ||
-      this.fieldInfo.path.toLowerCase().includes('owner') ||
-      this.fieldInfo.path.toLowerCase().includes('created_by')) {
+    // Show user dynamic values if field is potentially user-related or always as an option
+    if (!this.fieldInfo ||
+      (this.fieldInfo && (
+        this.fieldInfo.path.toLowerCase().includes('user') ||
+        this.fieldInfo.path.toLowerCase().includes('owner') ||
+        this.fieldInfo.path.toLowerCase().includes('created_by') ||
+        this.fieldInfo.path.toLowerCase().includes('assigned')
+      ))) {
       groups.push({
         label: 'User Values',
         values: [

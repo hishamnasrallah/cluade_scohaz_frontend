@@ -71,10 +71,21 @@ export class FilterGroupComponent implements OnInit {
       this.group.logic = 'AND';
     }
 
-    // Ensure the cdkDropListData always has a valid array
-    if (!this.group.children) {
-      this.group.children = [];
-    }
+    // Debug available fields
+    console.log('FilterGroup initialized');
+    console.log('Available fields Map:', this.availableFields);
+    console.log('Available fields size:', this.availableFields?.size || 0);
+    console.log('Data sources:', this.dataSources);
+
+    // Check fields after a delay
+    setTimeout(() => {
+      console.log('FilterGroup - checking fields after delay:');
+      this.dataSources.forEach(ds => {
+        const key = ds.id || ds.content_type_id;
+        const fields = this.availableFields.get(key!);
+        console.log(`Data source ${ds.alias} (key: ${key}) has ${fields?.length || 0} fields`);
+      });
+    }, 1000);
   }
 
   onDrop(event: CdkDragDrop<FilterTreeNode[]>): void {
@@ -133,16 +144,25 @@ export class FilterGroupComponent implements OnInit {
     const primaryDataSource = this.dataSources.find(ds => ds.is_primary) || this.dataSources[0];
     if (!primaryDataSource) return;
 
+    // Get first available field as default
+    const availableFields = this.getFieldsForDataSource(primaryDataSource);
+    const defaultField = availableFields[0];
+
+    if (!defaultField) {
+      console.error('No fields available for data source:', primaryDataSource);
+      return;
+    }
+
     const newFilter: Filter = {
       report: 0, // Will be set by parent
       data_source: primaryDataSource.id || primaryDataSource.content_type_id!,
-      field_path: '',
-      field_name: '',
+      field_path: defaultField.path,
+      field_name: defaultField.name,
       operator: 'eq',
       value: '',
       value_type: 'static',
       logic_group: this.group.logic || 'AND',
-      group_order: this.getGroupOrder(), // Add helper method
+      group_order: this.getGroupOrder(),
       parent_group: this.isRoot ? undefined : parseInt(this.group.id.replace('group-', '')) || undefined,
       is_active: true,
       is_required: false
@@ -203,7 +223,22 @@ export class FilterGroupComponent implements OnInit {
   }
 
   onFieldSelectChange(filter: Filter, event: any): void {
-    const fieldInfo = event.value as FieldInfo;
+    const selectedPath = event.value as string;
+
+    // Find the field info from all data sources
+    let fieldInfo: FieldInfo | null = null;
+    for (const ds of this.dataSources) {
+      const fields = this.getFieldsForDataSource(ds);
+      fieldInfo = fields.find(f => f.path === selectedPath) || null;
+      if (fieldInfo) {
+        break;
+      }
+    }
+
+    if (!fieldInfo) {
+      console.error('Field info not found for path:', selectedPath);
+      return;
+    }
 
     // Update filter with new field information
     filter.field_path = fieldInfo.path;
@@ -226,7 +261,8 @@ export class FilterGroupComponent implements OnInit {
       field: fieldInfo.path,
       type: fieldInfo.type,
       operator: filter.operator,
-      defaultValue: filter.value
+      defaultValue: filter.value,
+      availableOperators: operators
     });
 
     this.filterChange.emit({ filter, group: this.group });
@@ -268,21 +304,47 @@ export class FilterGroupComponent implements OnInit {
   }
 
   getFieldInfo(filter: Filter): FieldInfo | null {
+    if (!filter.field_path) return null;
+
+    // Find the data source for this filter
     const dataSource = this.dataSources.find(ds =>
       ds.id === filter.data_source || ds.content_type_id === filter.data_source
     );
-    if (!dataSource) return null;
 
-    const fields = this.getFieldsForDataSource(dataSource);
-    return fields.find(f => f.path === filter.field_path) || null;
+    if (!dataSource) {
+      console.error('Data source not found for filter:', filter.data_source);
+      return null;
+    }
+
+    // Get fields from availableFields Map
+    const fields = this.availableFields.get(dataSource.id || dataSource.content_type_id!);
+
+    if (!fields || fields.length === 0) {
+      console.error('No fields found for data source:', dataSource);
+      return null;
+    }
+
+    const fieldInfo = fields.find(f => f.path === filter.field_path);
+
+    if (!fieldInfo) {
+      console.error('Field not found:', filter.field_path, 'in fields:', fields);
+    }
+
+    return fieldInfo || null;
   }
 
   getOperatorsForFilter(filter: Filter): Array<{ value: string; label: string }> {
     const fieldInfo = this.getFieldInfo(filter);
 
-    // If no field selected, return empty array to force selection
+    // If no field selected, return basic operators
     if (!fieldInfo || !filter.field_path) {
-      return [];
+      return [
+        { value: 'eq', label: 'Equals' },
+        { value: 'ne', label: 'Not Equals' },
+        { value: 'contains', label: 'Contains' },
+        { value: 'isnull', label: 'Is Null' },
+        { value: 'isnotnull', label: 'Is Not Null' }
+      ];
     }
 
     return this.reportService.getOperatorOptions(fieldInfo.type);
@@ -306,10 +368,24 @@ export class FilterGroupComponent implements OnInit {
   }
 
   onFilterChange(filter: Filter): void {
-    this.filterChange.emit({ filter, group: this.group });
+    // Don't emit change for toggle updates - handle locally
+    if (event && (event as any).source?.checked !== undefined) {
+      // This is a toggle change, handle it differently
+      this.updateFilterLocally(filter);
+    } else {
+      this.filterChange.emit({ filter, group: this.group });
+    }
+  }
+  private updateFilterLocally(filter: Filter): void {
+    // Update filter locally without emitting to parent
+    // This prevents re-renders that cause focus loss
+    setTimeout(() => {
+      this.filterChange.emit({ filter, group: this.group });
+    }, 100);
   }
 
-  onFilterValueChange(filter: Filter): void {
+  onFilterValueChange(filter: Filter, value: any): void {
+    filter.value = value;
     this.filterChange.emit({ filter, group: this.group });
   }
 
@@ -327,7 +403,14 @@ export class FilterGroupComponent implements OnInit {
 
   getFieldsForDataSource(dataSource: DataSource): FieldInfo[] {
     const key = dataSource.id || dataSource.content_type_id;
-    return this.availableFields.get(key!) || [];
+    if (!key) {
+      console.error('No key for data source:', dataSource);
+      return [];
+    }
+
+    const fields = this.availableFields.get(key) || [];
+    console.log(`Getting fields for data source ${dataSource.alias} (key: ${key}):`, fields.length, 'fields');
+    return fields;
   }
 
   // getFieldInfo(filter: Filter): FieldInfo | null {
@@ -367,5 +450,13 @@ export class FilterGroupComponent implements OnInit {
       'ManyToManyField': 'call_split'
     };
     return icons[type] || 'text_fields';
+  }
+
+  onToggleChange(filter: Filter, event: any): void {
+    filter.is_active = event.checked;
+    // Delay the emission slightly to prevent UI glitches
+    setTimeout(() => {
+      this.filterChange.emit({ filter, group: this.group });
+    }, 0);
   }
 }

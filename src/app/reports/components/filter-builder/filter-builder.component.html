@@ -56,7 +56,7 @@
   </div>
 
   <!-- Visual Filter Builder -->
-  <div class="visual-builder" *ngIf="filters.length > 0 && viewMode === 'visual'">
+  <div class="visual-builder" *ngIf="filters.length > 0 && viewMode === 'visual' && isReady">
     <div class="view-toggle">
       <mat-button-toggle-group [(ngModel)]="viewMode">
         <mat-button-toggle value="visual">
@@ -84,6 +84,13 @@
         (filterChange)="onFilterChange($event)"
         (filterRemove)="onFilterRemove($event)">
       </app-filter-group>
+    </div>
+  </div>
+  <!-- Show loading state if not ready -->
+  <div class="visual-builder" *ngIf="filters.length > 0 && viewMode === 'visual' && !isReady">
+    <div class="loading-state">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading fields...</p>
     </div>
   </div>
 
@@ -182,13 +189,14 @@
             <div class="value-input-container">
               <app-filter-value-input
                 [filter]="filter"
-                [fieldInfo]="getFieldInfo(filter)"
+                [fieldInfo]="getFieldInfoForFilter(filter)"
                 [parameters]="parameters"
                 [dataSources]="dataSources"
                 (valueChange)="onFilterValueChange(filter, $event)"
                 (valueTypeChange)="onValueTypeChange(filter)">
               </app-filter-value-input>
             </div>
+
 
             <!-- Filter Actions -->
             <div class="filter-actions">
