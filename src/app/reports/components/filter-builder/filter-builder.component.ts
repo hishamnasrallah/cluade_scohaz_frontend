@@ -259,6 +259,10 @@ export class FilterBuilderComponent implements OnInit, OnChanges, OnDestroy {
   private maxHistorySize = 50;
   private fieldsLoaded = false;
   private updateTimeout: any;
+
+  // Add this property after other properties (around line 100)
+  private operatorsCache = new Map<string, Array<{ value: string; label: string }>>();
+
   constructor(
     private fb: FormBuilder,
     private reportService: ReportService,
@@ -973,6 +977,11 @@ export class FilterBuilderComponent implements OnInit, OnChanges, OnDestroy {
     const field = event.option.value as FieldInfo;
     filter.field_path = field.path;
     filter.field_name = field.name;
+    filter.field_type = field.type;
+
+    const cacheKey = `${filter.id}_${filter.field_path}_${filter.field_type || 'unknown'}`;
+    this.operatorsCache.delete(cacheKey);
+
     this.fieldSearchTerms.set(filter.id, field.verbose_name);
 
     // Reset operator and value when field changes
@@ -1972,6 +1981,21 @@ export class FilterBuilderComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     return fieldInfo || null;
+  }
+  getCachedOperatorsForFilter(filter: Filter): Array<{ value: string; label: string }> {
+    // Create a unique key for this filter
+    const cacheKey = `${filter.id}_${filter.field_path}_${filter.field_type || 'unknown'}`;
+
+    // Check cache first
+    if (this.operatorsCache.has(cacheKey)) {
+      return this.operatorsCache.get(cacheKey)!;
+    }
+
+    // Get operators and cache them
+    const operators = this.getOperatorsForField(filter);
+    this.operatorsCache.set(cacheKey, operators);
+
+    return operators;
   }
 
   // Public methods for parent component integration

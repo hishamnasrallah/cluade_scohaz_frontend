@@ -74,6 +74,7 @@
          cdkDropList
          [cdkDropListData]="rootGroup"
          (cdkDropListDropped)="onTreeDrop($event)">
+      <div>DEBUG: About to render filter-group. DataSources: {{ dataSources.length }}, AvailableFields size: {{ availableFields.size }}</div>
       <app-filter-group
         [group]="rootGroup"
         [dataSources]="dataSources"
@@ -169,22 +170,17 @@
               </mat-autocomplete>
               <mat-icon matSuffix>search</mat-icon>
             </mat-form-field>
-            <!-- Enhanced Operator Selection -->
+            <!-- Operator Selection -->
             <mat-form-field appearance="outline" class="operator-select">
               <mat-label>Operator</mat-label>
               <mat-select [(ngModel)]="filter.operator"
                           (selectionChange)="onOperatorChange(filter)">
-                <mat-optgroup *ngFor="let group of getGroupedOperators(filter)"
-                              [label]="group.label">
-                  <mat-option *ngFor="let op of group.operators"
-                              [value]="op.value">
-                    <mat-icon>{{ op.icon }}</mat-icon>
-                    {{ op.label }}
-                  </mat-option>
-                </mat-optgroup>
+                <mat-option *ngFor="let op of getCachedOperatorsForFilter(filter)"
+                            [value]="op.value">
+                  {{ op.label }}
+                </mat-option>
               </mat-select>
             </mat-form-field>
-
             <!-- Enhanced Value Input -->
             <div class="value-input-container">
               <app-filter-value-input

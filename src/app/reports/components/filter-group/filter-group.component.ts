@@ -65,6 +65,7 @@ export class FilterGroupComponent implements OnInit {
   private operatorsCache = new Map<string, Array<{ value: string; label: string }>>();
   private filterOperators = new Map<string, Array<{ value: string; label: string }>>();
   filterOperatorsMap = new Map<string, Array<{ value: string; label: string }>>();
+  private groupedOperatorsCache = new Map<string, Array<{ label: string; operators: Array<{ value: string; label: string; icon: string }> }>>();
 
   constructor(
     private reportService: ReportService,
@@ -73,6 +74,12 @@ export class FilterGroupComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    console.log('=== FILTER-GROUP COMPONENT INITIALIZED ===');
+    console.log('Group:', this.group);
+    console.log('DataSources:', this.dataSources);
+    console.log('Available Fields:', this.availableFields);
+    console.log('Is Root:', this.isRoot);
+
     // Ensure group has required properties
     if (!this.group.children) {
       this.group.children = [];
@@ -274,9 +281,10 @@ export class FilterGroupComponent implements OnInit {
     filter.field_path = selectedField.path;
     filter.field_name = selectedField.name;
     filter.field_type = selectedField.type;
-
+    // Clear the grouped operators cache for this filter
+    const cacheKey = `${filter.id}_${filter.field_path}_${filter.field_type || 'unknown'}`;
+    this.groupedOperatorsCache.delete(cacheKey);
     // Clear the operators cache for this filter to force refresh
-    const cacheKey = `${filter.data_source}_${filter.field_path}_${filter.field_type || 'unknown'}`;
     this.operatorsCache.delete(cacheKey);
 
 // Get valid operators for the new field type
@@ -332,11 +340,166 @@ export class FilterGroupComponent implements OnInit {
     const fieldInfo = this.getFieldInfo(filter);
     const fieldType = fieldInfo?.type || filter.field_type || 'CharField';
 
+    console.log('getFilterOperators - using field type:', fieldType, 'for filter:', filter);
+
     // Get operators based on the correct field type
     const operators = this.reportService.getOperatorOptions(fieldType);
     this.filterOperatorsMap.set(filterKey, operators);
 
     return operators;
+  }
+  getGroupedOperators(filter: Filter): Array<{ label: string; operators: Array<{ value: string; label: string; icon: string }> }> {
+    console.log('DEBUG: getGroupedOperators - FUNCTION CALLED');
+
+    try {
+      console.log('DEBUG: getGroupedOperators - Input filter:', filter);
+
+      // Check if filter exists
+      if (!filter) {
+        console.error('DEBUG: getGroupedOperators - Filter is null or undefined!');
+        return [];
+      }
+
+      // Get the flat list of operators
+      const operators = this.getFilterOperators(filter);
+      console.log('DEBUG: getGroupedOperators - Operators received:', operators);
+
+      // Check if operators is valid
+      if (!operators || !Array.isArray(operators)) {
+        console.error('DEBUG: getGroupedOperators - Invalid operators:', operators);
+        return [];
+      }
+
+      // Group operators by category
+      const groups: Array<{ label: string; operators: Array<{ value: string; label: string; icon: string }> }> = [];
+
+      // Basic operators (always included)
+      const basicOps = operators.filter(op => op && ['eq', 'ne'].includes(op.value));
+      console.log('DEBUG: getGroupedOperators - Basic operators:', basicOps);
+      if (basicOps.length > 0) {
+        groups.push({
+          label: 'Basic',
+          operators: basicOps.map(op => ({
+            value: op.value,
+            label: op.label,
+            icon: this.getOperatorIcon(op.value)
+          }))
+        });
+      }
+
+      // Comparison operators
+      const comparisonOps = operators.filter(op =>
+        op && ['gt', 'gte', 'lt', 'lte', 'between'].includes(op.value)
+      );
+      console.log('DEBUG: getGroupedOperators - Comparison operators:', comparisonOps);
+      if (comparisonOps.length > 0) {
+        groups.push({
+          label: 'Comparison',
+          operators: comparisonOps.map(op => ({
+            value: op.value,
+            label: op.label,
+            icon: this.getOperatorIcon(op.value)
+          }))
+        });
+      }
+
+      // Text operators
+      const textOps = operators.filter(op =>
+        op && ['contains', 'icontains', 'startswith', 'endswith', 'regex'].includes(op.value)
+      );
+      console.log('DEBUG: getGroupedOperators - Text operators:', textOps);
+      if (textOps.length > 0) {
+        groups.push({
+          label: 'Text',
+          operators: textOps.map(op => ({
+            value: op.value,
+            label: op.label,
+            icon: this.getOperatorIcon(op.value)
+          }))
+        });
+      }
+
+      // List operators
+      const listOps = operators.filter(op => op && ['in', 'not_in'].includes(op.value));
+      console.log('DEBUG: getGroupedOperators - List operators:', listOps);
+      if (listOps.length > 0) {
+        groups.push({
+          label: 'List',
+          operators: listOps.map(op => ({
+            value: op.value,
+            label: op.label,
+            icon: this.getOperatorIcon(op.value)
+          }))
+        });
+      }
+
+      // Null check operators
+      const nullOps = operators.filter(op => op && ['isnull', 'isnotnull'].includes(op.value));
+      console.log('DEBUG: getGroupedOperators - Null operators:', nullOps);
+      if (nullOps.length > 0) {
+        groups.push({
+          label: 'Null Check',
+          operators: nullOps.map(op => ({
+            value: op.value,
+            label: op.label,
+            icon: this.getOperatorIcon(op.value)
+          }))
+        });
+      }
+
+      // Date operators
+      const dateOps = operators.filter(op => op && ['date_range'].includes(op.value));
+      console.log('DEBUG: getGroupedOperators - Date operators:', dateOps);
+      if (dateOps.length > 0) {
+        groups.push({
+          label: 'Date',
+          operators: dateOps.map(op => ({
+            value: op.value,
+            label: op.label,
+            icon: this.getOperatorIcon(op.value)
+          }))
+        });
+      }
+
+      console.log('DEBUG: getGroupedOperators - Final groups:', groups);
+      console.log('DEBUG: getGroupedOperators - Number of groups:', groups.length);
+
+      return groups;
+
+    } catch (error: any) {
+      console.error('DEBUG: getGroupedOperators - ERROR:', error);
+      console.error('DEBUG: getGroupedOperators - Error stack:', error?.stack);
+      console.error('DEBUG: getGroupedOperators - Error message:', error?.message);
+      return [];
+    }
+  }
+
+  testMethod(): string {
+    console.log('DEBUG: testMethod called from template');
+    return 'TEST';
+  }
+
+  private getOperatorIcon(operator: string): string {
+    const icons: Record<string, string> = {
+      'eq': 'drag_handle',
+      'ne': 'not_equal',
+      'gt': 'keyboard_arrow_right',
+      'gte': 'keyboard_double_arrow_right',
+      'lt': 'keyboard_arrow_left',
+      'lte': 'keyboard_double_arrow_left',
+      'in': 'library_add',
+      'not_in': 'library_add_check',
+      'contains': 'search',
+      'icontains': 'manage_search',
+      'startswith': 'first_page',
+      'endswith': 'last_page',
+      'isnull': 'check_box_outline_blank',
+      'isnotnull': 'check_box',
+      'between': 'unfold_more',
+      'date_range': 'date_range',
+      'regex': 'pattern'
+    };
+    return icons[operator] || 'help_outline';
   }
 
   private getDefaultValueForFieldType(fieldType: string, operator: string): any {
@@ -580,5 +743,20 @@ export class FilterGroupComponent implements OnInit {
     filter.is_active = event.checked;
     // Emit directly without setTimeout
     this.filterChange.emit({ filter, group: this.group });
+  }
+  getCachedGroupedOperators(filter: Filter): Array<{ label: string; operators: Array<{ value: string; label: string; icon: string }> }> {
+    // Create a unique key for this filter
+    const cacheKey = `${filter.id}_${filter.field_path}_${filter.field_type || 'unknown'}`;
+
+    // Check cache first
+    if (this.groupedOperatorsCache.has(cacheKey)) {
+      return this.groupedOperatorsCache.get(cacheKey)!;
+    }
+
+    // Get grouped operators and cache them
+    const groups = this.getGroupedOperators(filter);
+    this.groupedOperatorsCache.set(cacheKey, groups);
+
+    return groups;
   }
 }

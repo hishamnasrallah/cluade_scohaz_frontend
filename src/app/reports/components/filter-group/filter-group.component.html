@@ -1,5 +1,4 @@
 <!-- src/app/reports/components/filter-builder/filter-group/filter-group.component.html -->
-
 <div class="filter-group"
      [class.root-group]="isRoot"
      [class.and-group]="group.logic === 'AND'"
@@ -75,10 +74,14 @@
             <mat-select [(ngModel)]="child.filter!.operator"
                         (selectionChange)="onOperatorChange(child.filter!)"
                         [compareWith]="compareOperators">
-              <mat-option *ngFor="let op of getFilterOperators(child.filter!)"
-                          [value]="op.value">
-                {{ op.label }}
-              </mat-option>
+              <mat-optgroup *ngFor="let group of getCachedGroupedOperators(child.filter!)"
+                            [label]="group.label">
+                <mat-option *ngFor="let op of group.operators"
+                            [value]="op.value">
+                  <mat-icon>{{ op.icon }}</mat-icon>
+                  {{ op.label }}
+                </mat-option>
+              </mat-optgroup>
             </mat-select>
           </mat-form-field>
 
