@@ -133,6 +133,7 @@ export class FilterValueInputComponent implements OnInit, OnChanges {
     if (fieldInfoChanged && this.fieldInfo && this.fieldInfo.is_relation && this.needsRelatedData()) {
       this.loadRelatedData();
     }
+
     if (fieldInfoChanged) {
       // Refresh dynamic value groups when field info changes
       this.dynamicValueGroups = this.getDynamicValueGroups();

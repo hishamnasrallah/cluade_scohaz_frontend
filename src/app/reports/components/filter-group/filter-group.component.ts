@@ -47,7 +47,7 @@ interface FilterTreeNode {
   ],
   templateUrl: 'filter-group.component.html',
   styleUrl: 'filter-group.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  // changeDetection: ChangeDetectionStrategy.OnPush
 
 })
 export class FilterGroupComponent implements OnInit {
@@ -63,6 +63,8 @@ export class FilterGroupComponent implements OnInit {
 
   private idCounter = 0;
   private operatorsCache = new Map<string, Array<{ value: string; label: string }>>();
+  private filterOperators = new Map<string, Array<{ value: string; label: string }>>();
+  filterOperatorsMap = new Map<string, Array<{ value: string; label: string }>>();
 
   constructor(
     private reportService: ReportService,
@@ -171,7 +173,7 @@ export class FilterGroupComponent implements OnInit {
       data_source: primaryDataSource.id || primaryDataSource.content_type_id!,
       field_path: defaultField.path,
       field_name: defaultField.name,
-      field_type: defaultField.type, // Ensure this is set
+      field_type: defaultField.type, // IMPORTANT: Set the field type from the field info
       operator: 'eq',
       value: '',
       value_type: 'static',
@@ -194,7 +196,14 @@ export class FilterGroupComponent implements OnInit {
     }
 
     this.group.children.push(filterNode);
+
+    // Pre-populate operators for the new filter
+    const filterKey = `filter_${newFilter.id || filterNode.id}`;
+    const operators = this.reportService.getOperatorOptions(defaultField.type);
+    this.filterOperatorsMap.set(filterKey, operators);
+
     this.groupChange.emit({ group: this.group, action: 'add_filter' });
+    this.cdr.markForCheck();
   }
 
   private getGroupOrder(): number {
@@ -266,8 +275,16 @@ export class FilterGroupComponent implements OnInit {
     filter.field_name = selectedField.name;
     filter.field_type = selectedField.type;
 
-    // Get valid operators for the new field type
+    // Clear the operators cache for this filter to force refresh
+    const cacheKey = `${filter.data_source}_${filter.field_path}_${filter.field_type || 'unknown'}`;
+    this.operatorsCache.delete(cacheKey);
+
+// Get valid operators for the new field type
     const operators = this.reportService.getOperatorOptions(selectedField.type);
+
+// Store operators in the map using filter's unique identifier
+    const filterKey = `filter_${filter.id || Date.now()}`;
+    this.filterOperatorsMap.set(filterKey, operators);
 
     // Add console.log AFTER operators is declared
     console.log('onFieldSelectChange - operators after update:', operators);
@@ -293,7 +310,33 @@ export class FilterGroupComponent implements OnInit {
     });
 
     this.filterChange.emit({ filter, group: this.group });
-    this.cdr.detectChanges();
+
+    // Force change detection after a microtask to ensure bindings are updated
+    setTimeout(() => {
+      this.cdr.detectChanges();
+    }, 0);
+  }
+  private getFilterKey(filter: Filter): string {
+    return `${filter.id || 'temp'}_${filter.field_path}_${filter.field_type}`;
+  }
+
+  getFilterOperators(filter: Filter): Array<{ value: string; label: string }> {
+    const filterKey = `filter_${filter.id || 'temp'}`;
+
+    // Check if we have stored operators for this filter
+    if (this.filterOperatorsMap.has(filterKey)) {
+      return this.filterOperatorsMap.get(filterKey)!;
+    }
+
+    // Get the field info to determine the correct type
+    const fieldInfo = this.getFieldInfo(filter);
+    const fieldType = fieldInfo?.type || filter.field_type || 'CharField';
+
+    // Get operators based on the correct field type
+    const operators = this.reportService.getOperatorOptions(fieldType);
+    this.filterOperatorsMap.set(filterKey, operators);
+
+    return operators;
   }
 
   private getDefaultValueForFieldType(fieldType: string, operator: string): any {
@@ -371,8 +414,10 @@ export class FilterGroupComponent implements OnInit {
     if (fieldInfo) {
       console.log('getFieldInfo: Found field:', fieldInfo);
       // Update the filter's field_type to match
-      if (filter.field_type !== fieldInfo.type) {
+      if (!filter.field_type || filter.field_type !== fieldInfo.type) {
         filter.field_type = fieldInfo.type;
+        // Emit change to update the filter
+        this.filterChange.emit({ filter, group: this.group });
       }
     } else {
       console.warn('getFieldInfo: Field not found for path:', filter.field_path);
@@ -380,6 +425,7 @@ export class FilterGroupComponent implements OnInit {
 
     return fieldInfo || null;
   }
+
   getOperatorsForFilter(filter: Filter): Array<{ value: string; label: string }> {
     const fieldInfo = this.getFieldInfo(filter);
 
@@ -406,15 +452,22 @@ export class FilterGroupComponent implements OnInit {
   }
 
   getOperatorsForFilterCached(filter: Filter): Array<{ value: string; label: string }> {
-    // Create a unique key for this filter
-    const key = `${filter.data_source}_${filter.field_path}_${filter.field_type || 'unknown'}`;
+    const filterKey = this.getFilterKey(filter);
 
-    if (this.operatorsCache.has(key)) {
-      return this.operatorsCache.get(key)!;
+    // First check the filterOperators map
+    if (this.filterOperators.has(filterKey)) {
+      return this.filterOperators.get(filterKey)!;
+    }
+
+    // Then check the cache
+    const cacheKey = `${filter.data_source}_${filter.field_path}_${filter.field_type || 'unknown'}`;
+    if (this.operatorsCache.has(cacheKey)) {
+      return this.operatorsCache.get(cacheKey)!;
     }
 
     const operators = this.getOperatorsForFilter(filter);
-    this.operatorsCache.set(key, operators);
+    this.operatorsCache.set(cacheKey, operators);
+    this.filterOperators.set(filterKey, operators);
     return operators;
   }
 
