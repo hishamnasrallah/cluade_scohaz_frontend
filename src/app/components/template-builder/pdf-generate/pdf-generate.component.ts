@@ -108,7 +108,7 @@ interface UserOption {
                           <mat-label>{{ param.display_name }}</mat-label>
                           <input matInput
                                  [formControlName]="param.parameter_key"
-                                 [placeholder]="param.description"
+                                 [placeholder]="param.description || ''"
                                  [required]="param.is_required">
                           <mat-hint *ngIf="param.description">{{ param.description }}</mat-hint>
                           <mat-error>{{ getErrorMessage(param) }}</mat-error>
@@ -120,7 +120,7 @@ interface UserOption {
                           <input matInput
                                  type="number"
                                  [formControlName]="param.parameter_key"
-                                 [placeholder]="param.description"
+                                 [placeholder]="param.description || ''"
                                  [required]="param.is_required">
                           <mat-hint *ngIf="param.description">{{ param.description }}</mat-hint>
                           <mat-error>{{ getErrorMessage(param) }}</mat-error>
@@ -191,7 +191,7 @@ interface UserOption {
                           <mat-label>{{ param.display_name }}</mat-label>
                           <input matInput
                                  [formControlName]="param.parameter_key"
-                                 [placeholder]="param.description"
+                                 [placeholder]="param.description || ''"
                                  [required]="param.is_required">
                           <mat-hint>Widget: {{ param.widget_type }}</mat-hint>
                         </mat-form-field>

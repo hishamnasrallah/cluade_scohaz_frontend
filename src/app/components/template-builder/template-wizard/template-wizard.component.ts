@@ -270,7 +270,7 @@ import { PDFTemplateService } from '../../../services/pdf-template.service';
                 <mat-label>SQL Query</mat-label>
                 <textarea matInput formControlName="raw_sql_query" rows="6"
                           placeholder="SELECT * FROM ..."></textarea>
-                <mat-hint>Use ${parameter_name} for parameters</mat-hint>
+
               </mat-form-field>
             </div>
 
@@ -1092,8 +1092,8 @@ export class TemplateWizardComponent implements OnInit {
       ...data.basicInfo,
 
       // Page setup
-      page_size: data.pageSetup.page_size,
-      orientation: data.pageSetup.orientation,
+      page_size: data.pageSetup.page_size as 'A4' | 'A3' | 'letter' | 'legal',
+      orientation: data.pageSetup.orientation as 'portrait' | 'landscape',
       margin_top: data.pageSetup.margins.top,
       margin_bottom: data.pageSetup.margins.bottom,
       margin_left: data.pageSetup.margins.left,
@@ -1104,7 +1104,11 @@ export class TemplateWizardComponent implements OnInit {
       watermark_text: data.pageSetup.watermark_text,
 
       // Data source
-      ...data.dataSource,
+      data_source_type: data.dataSource.data_source_type as 'model' | 'raw_sql' | 'custom_function' | 'api',
+      content_type: data.dataSource.content_type,
+      query_filter: data.dataSource.query_filter,
+      custom_function_path: data.dataSource.custom_function_path,
+      raw_sql_query: data.dataSource.raw_sql_query,
 
       // Parameters and sources
       parameters: data.parameters,
