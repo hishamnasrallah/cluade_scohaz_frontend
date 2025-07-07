@@ -1,5 +1,9 @@
 // src/app/models/pdf-template.models.ts
 
+// ============================================
+// Main Template Interface
+// ============================================
+
 export interface PDFTemplate {
   id?: number;
   name: string;
@@ -9,6 +13,8 @@ export interface PDFTemplate {
   code: string;
   primary_language: 'en' | 'ar';
   supports_bilingual: boolean;
+
+  // Page configuration
   page_size: 'A4' | 'A3' | 'letter' | 'legal';
   orientation: 'portrait' | 'landscape';
   margin_top: number;
@@ -19,12 +25,16 @@ export interface PDFTemplate {
   footer_enabled: boolean;
   watermark_enabled: boolean;
   watermark_text?: string;
+
+  // Data source configuration
   data_source_type: 'model' | 'raw_sql' | 'custom_function' | 'api';
   content_type?: number;
   content_type_display?: string;
   query_filter?: Record<string, any>;
   custom_function_path?: string;
   raw_sql_query?: string;
+
+  // Metadata
   created_by?: number;
   created_by_name?: string;
   groups?: number[];
@@ -36,27 +46,42 @@ export interface PDFTemplate {
   active_ind: boolean;
   created_at?: string;
   updated_at?: string;
+
+  // Relationships
   elements?: PDFTemplateElement[];
   variables?: PDFTemplateVariable[];
   parameters?: PDFTemplateParameter[];
   data_sources?: PDFTemplateDataSource[];
+
+  // Permissions for current user
   can_edit?: boolean;
   can_delete?: boolean;
   can_generate_self?: boolean;
   can_generate_others?: boolean;
+
+  // Additional properties
   parameter_schema?: ParameterSchema;
 }
+
+// ============================================
+// Template Element Interface
+// ============================================
 
 export interface PDFTemplateElement {
   id?: number;
   template?: number;
   element_type: ElementType;
   element_key: string;
+
+  // Position and dimensions
   x_position: number;
   y_position: number;
   width?: number;
   height?: number;
   rotation?: number;
+  z_index: number;
+
+  // Text properties
   text_content?: string;
   text_content_ara?: string;
   font_family: string;
@@ -67,22 +92,39 @@ export interface PDFTemplateElement {
   is_underline: boolean;
   text_align: 'left' | 'center' | 'right' | 'justify';
   line_height: number;
+
+  // Shape properties
   fill_color?: string;
   stroke_color: string;
   stroke_width: number;
+
+  // Image properties
   image_source?: string;
   maintain_aspect_ratio: boolean;
+
+  // Table configuration
   table_config?: TableConfig;
+
+  // Loop configuration
   loop_config?: LoopConfig;
+
+  // Dynamic properties
   data_source?: string;
   condition?: string;
+
+  // Hierarchy
   parent_element?: number;
   child_elements?: PDFTemplateElement[];
-  z_index: number;
+
+  // Page settings
   is_repeatable: boolean;
   page_number?: number;
   active_ind: boolean;
 }
+
+// ============================================
+// Template Parameter Interface
+// ============================================
 
 export interface PDFTemplateParameter {
   id?: number;
@@ -107,6 +149,10 @@ export interface PDFTemplateParameter {
   choices?: ParameterChoice[];
 }
 
+// ============================================
+// Template Data Source Interface
+// ============================================
+
 export interface PDFTemplateDataSource {
   id?: number;
   template?: number;
@@ -124,6 +170,10 @@ export interface PDFTemplateDataSource {
   active_ind: boolean;
 }
 
+// ============================================
+// Template Variable Interface
+// ============================================
+
 export interface PDFTemplateVariable {
   id?: number;
   template?: number;
@@ -139,6 +189,10 @@ export interface PDFTemplateVariable {
   is_required: boolean;
   resolved_value?: any;
 }
+
+// ============================================
+// Generation Log Interface
+// ============================================
 
 export interface PDFGenerationLog {
   id: number;
@@ -160,6 +214,10 @@ export interface PDFGenerationLog {
   generation_time?: number;
 }
 
+// ============================================
+// Template Category Interface
+// ============================================
+
 export interface TemplateCategory {
   self_service: PDFTemplate[];
   my_templates: PDFTemplate[];
@@ -171,6 +229,10 @@ export interface TemplateCategory {
     can_generate_others: boolean;
   };
 }
+
+// ============================================
+// API Request/Response Interfaces
+// ============================================
 
 export interface GeneratePDFRequest {
   template_id: number;
@@ -185,6 +247,30 @@ export interface ParameterSchema {
   properties: Record<string, any>;
 }
 
+export interface TemplatePreview {
+  template: PDFTemplate;
+  data: Record<string, any>;
+  parameters_used: Record<string, any>;
+}
+
+export interface PreviewDataRequest {
+  parameters: Record<string, any>;
+}
+
+export interface ValidateParametersRequest {
+  parameters: Record<string, any>;
+}
+
+export interface ValidateParametersResponse {
+  valid: boolean;
+  message?: string;
+  error?: string;
+}
+
+// ============================================
+// Designer Data Interface
+// ============================================
+
 export interface DesignerData {
   fonts: Array<{ value: string; label: string }>;
   element_types: Array<{ value: string; label: string; icon: string }>;
@@ -198,6 +284,10 @@ export interface DesignerData {
   fetch_methods: Array<{ value: string; label: string }>;
   default_colors: string[];
 }
+
+// ============================================
+// Content Type Model Interface
+// ============================================
 
 export interface ContentTypeModel {
   id: number;
@@ -215,23 +305,53 @@ export interface ModelField {
   related_model?: string;
 }
 
-// Type definitions
+// ============================================
+// Type Definitions
+// ============================================
+
 export type ElementType =
-  | 'text' | 'dynamic_text' | 'image' | 'dynamic_image'
-  | 'line' | 'rectangle' | 'circle' | 'table' | 'chart'
-  | 'barcode' | 'qrcode' | 'signature' | 'page_break'
-  | 'loop' | 'conditional';
+  | 'text'
+  | 'dynamic_text'
+  | 'image'
+  | 'dynamic_image'
+  | 'line'
+  | 'rectangle'
+  | 'circle'
+  | 'table'
+  | 'chart'
+  | 'barcode'
+  | 'qrcode'
+  | 'signature'
+  | 'page_break'
+  | 'loop'
+  | 'conditional';
 
 export type ParameterType =
-  | 'integer' | 'string' | 'date' | 'datetime'
-  | 'boolean' | 'float' | 'uuid' | 'model_id' | 'user_id';
+  | 'integer'
+  | 'string'
+  | 'date'
+  | 'datetime'
+  | 'boolean'
+  | 'float'
+  | 'uuid'
+  | 'model_id'
+  | 'user_id';
 
 export type WidgetType =
-  | 'text' | 'number' | 'date' | 'datetime'
-  | 'select' | 'radio' | 'checkbox'
-  | 'user_search' | 'model_search';
+  | 'text'
+  | 'number'
+  | 'date'
+  | 'datetime'
+  | 'select'
+  | 'radio'
+  | 'checkbox'
+  | 'user_search'
+  | 'model_search';
 
-// Widget configuration interfaces
+// ============================================
+// Widget Configuration Interfaces
+// ============================================
+
 export interface WidgetConfig {
   placeholder?: string;
   maxlength?: number;
@@ -263,6 +383,10 @@ export interface ValidationRules {
   maxlength?: number;
 }
 
+// ============================================
+// Configuration Interfaces
+// ============================================
+
 export interface TableConfig {
   data_source: string;
   headers: string[];
@@ -276,28 +400,10 @@ export interface LoopConfig {
   index_variable?: string;
 }
 
-// Template preview interfaces
-export interface TemplatePreview {
-  template: PDFTemplate;
-  data: Record<string, any>;
-  parameters_used: Record<string, any>;
-}
+// ============================================
+// Builder Specific Interfaces
+// ============================================
 
-export interface PreviewDataRequest {
-  parameters: Record<string, any>;
-}
-
-export interface ValidateParametersRequest {
-  parameters: Record<string, any>;
-}
-
-export interface ValidateParametersResponse {
-  valid: boolean;
-  message?: string;
-  error?: string;
-}
-
-// Builder specific interfaces
 export interface BuilderState {
   template: Partial<PDFTemplate>;
   currentStep?: number;
@@ -322,7 +428,10 @@ export interface DragData {
   isNew: boolean;
 }
 
-// Wizard step interfaces
+// ============================================
+// Wizard Interfaces
+// ============================================
+
 export interface WizardStep {
   label: string;
   icon: string;
@@ -375,3 +484,20 @@ export interface WizardData {
     allow_other_generation: boolean;
   };
 }
+
+// ============================================
+// User Search Interface (for parameter widgets)
+// ============================================
+
+export interface UserOption {
+  id: number;
+  username: string;
+  email: string;
+  full_name: string;
+}
+
+// ============================================
+// Export all interfaces for easy importing
+// ============================================
+
+export * from './pdf-template.models';

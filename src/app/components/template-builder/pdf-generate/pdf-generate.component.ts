@@ -29,6 +29,8 @@ interface UserOption {
   username: string;
   email: string;
   full_name: string;
+  first_name?: string;
+  last_name?: string;
 }
 
 @Component({
@@ -61,7 +63,7 @@ interface UserOption {
         </button>
         <div class="header-info">
           <h1>Generate PDF Report</h1>
-          <p *ngIf="template">{{ template.name }}</p>
+          <p *ngIf="template">{{ template.name || '' }}</p>
         </div>
       </div>
 
@@ -299,11 +301,11 @@ interface UserOption {
                   <h3>Template</h3>
                   <div class="review-item">
                     <span class="label">Name:</span>
-                    <span class="value">{{ template.name }}</span>
+                    <span class="value">{{ template.name || '' }}</span>
                   </div>
                   <div class="review-item">
                     <span class="label">Code:</span>
-                    <span class="value code">{{ template.code }}</span>
+                    <span class="value">{{ template.code || '' }}</span>
                   </div>
                 </div>
 

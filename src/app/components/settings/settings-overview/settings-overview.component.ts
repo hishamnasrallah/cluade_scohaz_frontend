@@ -766,6 +766,15 @@ export class SettingsOverviewComponent implements OnInit {
       status: 'active'
     },
     {
+      id: 'pdf-templates',
+      title: 'PDF Templates',
+      description: 'Create and manage PDF report templates',
+      icon: 'description',
+      color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      route: '/settings/pdf-templates',
+      status: 'active'
+    },
+    {
       id: 'field-types',
       title: 'Field Types',
       description: 'Configure field types for forms',

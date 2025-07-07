@@ -79,7 +79,7 @@ import { PDFTemplateService } from '../../../services/pdf-template.service';
                       <mat-form-field appearance="outline" *ngSwitchCase="'text'">
                         <mat-label>{{ param.display_name }}</mat-label>
                         <input matInput [formControlName]="param.parameter_key"
-                               [placeholder]="param.description"
+                               [placeholder]="param.description || ''"
                                [required]="param.is_required">
                         <mat-hint *ngIf="param.description">{{ param.description }}</mat-hint>
                         <mat-error>{{ param.display_name }} is required</mat-error>
@@ -88,9 +88,9 @@ import { PDFTemplateService } from '../../../services/pdf-template.service';
                       <!-- Number Input -->
                       <mat-form-field appearance="outline" *ngSwitchCase="'number'">
                         <mat-label>{{ param.display_name }}</mat-label>
-                        <input matInput type="number"
+                        <input matInput
                                [formControlName]="param.parameter_key"
-                               [placeholder]="param.description"
+                               [placeholder]="param.description || ''"
                                [required]="param.is_required">
                         <mat-hint *ngIf="param.description">{{ param.description }}</mat-hint>
                         <mat-error>{{ param.display_name }} is required</mat-error>
@@ -136,7 +136,7 @@ import { PDFTemplateService } from '../../../services/pdf-template.service';
                       <mat-form-field appearance="outline" *ngSwitchDefault>
                         <mat-label>{{ param.display_name }}</mat-label>
                         <input matInput [formControlName]="param.parameter_key"
-                               [placeholder]="param.description"
+                               [placeholder]="param.description || ''"
                                [required]="param.is_required">
                         <mat-hint>Widget type: {{ param.widget_type }}</mat-hint>
                       </mat-form-field>

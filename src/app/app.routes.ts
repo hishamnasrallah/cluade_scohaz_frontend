@@ -110,6 +110,13 @@ export const routes: Routes = [
         data: { title: 'Theme Creator', icon: 'theme' }
       },
       {
+        path: 'pdf-templates',
+        loadChildren: () =>
+          import('./components/template-builder/template-builder.routes')
+            .then(m => m.templateBuilderRoutes),
+        data: { title: 'PDF Templates', icon: 'description' }
+      },
+      {
         path: 'logo-info',
         loadComponent: () => import('./components/logo/logo.component').then(m => m.LogoComponent),
         data: { title: 'Logo', icon: 'theme' }

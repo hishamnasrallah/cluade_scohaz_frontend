@@ -20,6 +20,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs'; // ✅ NEW: Added for <mat-tab-group>
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import {MatStepperModule} from '@angular/material/stepper';
+import {MatAutocompleteModule} from '@angular/material/autocomplete';
+import {MatExpansionModule} from '@angular/material/expansion';
+import {MatDatepickerModule} from '@angular/material/datepicker';
+import {MatNativeDateModule} from '@angular/material/core';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -45,6 +50,11 @@ export const appConfig: ApplicationConfig = {
     // ✅ Material modules required by builder
     importProvidersFrom(MatIconModule),
     importProvidersFrom(MatTabsModule),   // ✅ Added for tab support
-    importProvidersFrom(DragDropModule)
+    importProvidersFrom(DragDropModule),
+    importProvidersFrom(MatStepperModule),
+    importProvidersFrom(MatAutocompleteModule),
+    importProvidersFrom(MatExpansionModule),
+    importProvidersFrom(MatDatepickerModule),
+    importProvidersFrom(MatNativeDateModule)
   ]
 };

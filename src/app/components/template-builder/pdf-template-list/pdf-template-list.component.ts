@@ -24,6 +24,7 @@ import { FormsModule } from '@angular/forms';
 import { PDFTemplate, TemplateCategory } from '../../../models/pdf-template.models';
 import { PDFTemplateService } from '../../../services/pdf-template.service';
 import { TemplatePreviewDialogComponent } from '../template-preview-dialog/template-preview-dialog.component';
+import {MatDivider} from '@angular/material/divider';
 
 @Component({
   selector: 'app-pdf-template-list',
@@ -47,7 +48,8 @@ import { TemplatePreviewDialogComponent } from '../template-preview-dialog/templ
     MatProgressSpinnerModule,
     MatDialogModule,
     MatSnackBarModule,
-    MatTabsModule
+    MatTabsModule,
+    MatDivider
   ],
   template: `
     <div class="template-list-container">

@@ -2,7 +2,7 @@
 
 import { Component, Input, Output, EventEmitter, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule} from '@angular/forms';
 import { CdkDragDrop, moveItemInArray, transferArrayItem, DragDropModule, CdkDrag } from '@angular/cdk/drag-drop';
 import { MatSidenavModule, MatDrawer } from '@angular/material/sidenav';
 import { MatButtonModule } from '@angular/material/button';
@@ -48,6 +48,7 @@ interface PaletteItem {
     CommonModule,
     ReactiveFormsModule,
     DragDropModule,
+    CdkDrag,
     MatSidenavModule,
     MatButtonModule,
     MatIconModule,
@@ -65,7 +66,8 @@ interface PaletteItem {
     MatSliderModule,
     MatRadioModule,
     MatDialogModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    FormsModule
   ],
   template: `
     <div class="designer-container">
@@ -90,8 +92,8 @@ interface PaletteItem {
             min="50"
             max="200"
             step="10"
-            [(value)]="zoom"
-            (input)="onZoomChange($event)"
+            [ngModel]="zoom"
+            (ngModelChange)="onZoomChange($event)"
             class="zoom-slider">
           </mat-slider>
           <span class="zoom-label">{{ zoom }}%</span>
@@ -127,7 +129,7 @@ interface PaletteItem {
                 <div
                   *ngFor="let item of getPaletteItems('basic')"
                   class="palette-item"
-                  [cdkDrag]="true"
+                  cdkDrag
                   [cdkDragData]="{ elementType: item.type, isNew: true }"
                   (cdkDragStarted)="onDragStarted($event)">
                   <mat-icon>{{ item.icon }}</mat-icon>
@@ -142,7 +144,7 @@ interface PaletteItem {
                 <div
                   *ngFor="let item of getPaletteItems('dynamic')"
                   class="palette-item"
-                  [cdkDrag]="true"
+                  cdkDrag
                   [cdkDragData]="{ elementType: item.type, isNew: true }"
                   (cdkDragStarted)="onDragStarted($event)">
                   <mat-icon>{{ item.icon }}</mat-icon>
@@ -157,7 +159,7 @@ interface PaletteItem {
                 <div
                   *ngFor="let item of getPaletteItems('layout')"
                   class="palette-item"
-                  [cdkDrag]="true"
+                  cdkDrag
                   [cdkDragData]="{ elementType: item.type, isNew: true }"
                   (cdkDragStarted)="onDragStarted($event)">
                   <mat-icon>{{ item.icon }}</mat-icon>
@@ -172,7 +174,7 @@ interface PaletteItem {
                 <div
                   *ngFor="let item of getPaletteItems('special')"
                   class="palette-item"
-                  [cdkDrag]="true"
+                  cdkDrag
                   [cdkDragData]="{ elementType: item.type, isNew: true }"
                   (cdkDragStarted)="onDragStarted($event)">
                   <mat-icon>{{ item.icon }}</mat-icon>
@@ -254,7 +256,7 @@ interface PaletteItem {
                        [style.font-size.px]="element.font_size"
                        [style.color]="element.font_color">
                     <mat-icon class="dynamic-icon">code</mat-icon>
-                    {{ element.data_source || '{{variable}}' }}
+                    <span>{{ getDynamicTextDisplay(element) }}</span>
                   </div>
 
                   <!-- Image Element -->
@@ -1112,6 +1114,7 @@ export class TemplateDragDropComponent implements OnInit {
       y_position: position?.y || 100,
       z_index: this.elements.length,
       active_ind: true,
+      is_repeatable: false,
 
       // Defaults based on type
       font_family: 'Helvetica',
@@ -1153,6 +1156,7 @@ export class TemplateDragDropComponent implements OnInit {
         baseElement.width = 400;
         baseElement.height = 200;
         baseElement.table_config = {
+          data_source: 'items',
           headers: ['Column 1', 'Column 2', 'Column 3'],
           columns: ['field1', 'field2', 'field3']
         };
@@ -1297,8 +1301,8 @@ export class TemplateDragDropComponent implements OnInit {
     this.snapToGrid = !this.snapToGrid;
   }
 
-  onZoomChange(event: any): void {
-    this.zoom = event.value;
+  onZoomChange(value: number): void {
+    this.zoom = value;
   }
 
   undo(): void {
@@ -1360,5 +1364,9 @@ export class TemplateDragDropComponent implements OnInit {
     };
 
     this.save.emit(template);
+  }
+
+  getDynamicTextDisplay(element: PDFTemplateElement): string {
+    return element.data_source || '{{variable}}';
   }
 }
