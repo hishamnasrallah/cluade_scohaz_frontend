@@ -247,6 +247,15 @@ export interface ContentTypeModel {
   app_label: string;
   model: string;
   display_name: string;
+  model_fields?: ModelField[];
+}
+
+export interface ModelField {
+  name: string;
+  type: string;
+  verbose_name: string;
+  is_relation: boolean;
+  related_model: string | null;
 }
 
 export interface ElementPosition {

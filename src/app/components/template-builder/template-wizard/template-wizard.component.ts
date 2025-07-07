@@ -2,7 +2,7 @@
 
 import { Component, Input, Output, EventEmitter, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
+import {ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray, FormsModule} from '@angular/forms';
 import { MatStepperModule, MatStepper } from '@angular/material/stepper';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,6 +20,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 import {
   PDFTemplate,
@@ -32,6 +33,8 @@ import {
   PDFTemplateVariable
 } from '../../../models/pdf-template.models';
 import { PDFTemplateService } from '../../../services/pdf-template.service';
+import { Subject } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 
 @Component({
   selector: 'app-template-wizard',
@@ -39,6 +42,7 @@ import { PDFTemplateService } from '../../../services/pdf-template.service';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     MatStepperModule,
     MatButtonModule,
     MatIconModule,
@@ -150,10 +154,11 @@ import { PDFTemplateService } from '../../../services/pdf-template.service';
               <mat-form-field appearance="outline">
                 <mat-label>Page Size</mat-label>
                 <mat-select formControlName="page_size">
-                  <mat-option *ngFor="let size of designerData?.page_sizes" [value]="size.value">
+                  <mat-option *ngFor="let size of designerData?.page_sizes || defaultPageSizes" [value]="size.value">
                     {{ size.label }}
                   </mat-option>
                 </mat-select>
+                <mat-hint *ngIf="!designerData && !loadingDesignerData">Using default page sizes</mat-hint>
               </mat-form-field>
 
               <mat-form-field appearance="outline">
@@ -243,11 +248,14 @@ import { PDFTemplateService } from '../../../services/pdf-template.service';
             <div *ngIf="dataSourceForm.get('data_source_type')?.value === 'model'" class="model-config">
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Select Model</mat-label>
-                <mat-select formControlName="content_type">
+                <mat-select formControlName="content_type" (selectionChange)="onModelSelected($event.value)">
                   <mat-option *ngFor="let ct of contentTypes" [value]="ct.id">
-                    {{ ct.display_name }}
+                    <span class="model-option">
+                      <strong>{{ ct.app_label }}</strong>.{{ ct.model }}
+                    </span>
                   </mat-option>
                 </mat-select>
+                <mat-hint *ngIf="contentTypes.length === 0">No models available. Check API connection.</mat-hint>
               </mat-form-field>
 
               <div class="query-filter-section">
@@ -255,11 +263,60 @@ import { PDFTemplateService } from '../../../services/pdf-template.service';
                 <p class="hint-text">Add filters that will be applied by default</p>
 
                 <div class="filter-builder">
-                  <!-- Simple filter UI for now -->
-                  <button mat-stroked-button (click)="addQueryFilter()">
+                  <!-- Existing filters -->
+                  <div class="filters-list" *ngIf="queryFilters.length > 0">
+                    <div *ngFor="let filter of queryFilters; let i = index" class="filter-row">
+                      <!-- Field selection -->
+                      <mat-form-field appearance="outline" class="filter-field">
+                        <mat-label>Field</mat-label>
+                        <mat-select [(ngModel)]="filter.field"
+                                    (selectionChange)="onFilterFieldChange(filter)"
+                                    [ngModelOptions]="{standalone: true}">
+                          <mat-option *ngFor="let field of selectedContentType?.model_fields" [value]="field.name">
+                            {{ field.verbose_name }} ({{ field.name }})
+                          </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+
+                      <!-- Operator selection -->
+                      <mat-form-field appearance="outline" class="filter-operator" *ngIf="filter.field">
+                        <mat-label>Operator</mat-label>
+                        <mat-select [(ngModel)]="filter.operator"
+                                    (selectionChange)="onFilterOperatorChange(filter)"
+                                    [ngModelOptions]="{standalone: true}">
+                          <mat-option *ngFor="let op of getOperatorsForFilter(filter)" [value]="op.value">
+                            {{ op.label }}
+                          </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+
+                      <!-- Value input -->
+                      <mat-form-field appearance="outline" class="filter-value" *ngIf="filter.field">
+                        <mat-label>Value</mat-label>
+                        <input matInput
+                               [(ngModel)]="filter.value"
+                               (blur)="onFilterValueChange(filter)"
+                               [ngModelOptions]="{standalone: true}">
+                      </mat-form-field>
+
+                      <!-- Remove button -->
+                      <button mat-icon-button color="warn" (click)="removeQueryFilter(i)" matTooltip="Remove filter">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Add filter button -->
+                  <button mat-stroked-button (click)="addQueryFilter()" class="add-filter-btn">
                     <mat-icon>add</mat-icon>
                     Add Filter
                   </button>
+
+                  <!-- Show current query filter JSON -->
+                  <div class="query-preview" *ngIf="dataSourceForm.get('query_filter')?.value && Object.keys(dataSourceForm.get('query_filter')?.value).length > 0">
+                    <h4>Query Preview:</h4>
+                    <pre>{{ dataSourceForm.get('query_filter')?.value | json }}</pre>
+                  </div>
                 </div>
               </div>
             </div>
@@ -751,6 +808,62 @@ import { PDFTemplateService } from '../../../services/pdf-template.service';
         grid-template-columns: repeat(2, 1fr);
       }
     }
+    /* Query Filter Styles */
+    .query-filter-section {
+      margin-top: 24px;
+      padding: 16px;
+      background: #f9fafb;
+      border-radius: 8px;
+    }
+
+    .filters-list {
+      margin-bottom: 16px;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .filter-field {
+      flex: 2;
+    }
+
+    .filter-operator {
+      flex: 1;
+    }
+
+    .filter-value {
+      flex: 2;
+    }
+
+    .add-filter-btn {
+      width: 100%;
+      border-style: dashed;
+      margin-top: 8px;
+    }
+
+    .query-preview {
+      margin-top: 16px;
+      padding: 12px;
+      background: #f3f4f6;
+      border-radius: 4px;
+
+      h4 {
+        margin: 0 0 8px 0;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #4b5563;
+      }
+
+      pre {
+        margin: 0;
+        font-size: 0.875rem;
+        color: #1f2937;
+      }
+    }
   `]
 })
 export class TemplateWizardComponent implements OnInit {
@@ -768,18 +881,30 @@ export class TemplateWizardComponent implements OnInit {
   dataSourcesForm!: FormGroup;
   permissionsForm!: FormGroup;
 
-  // Data
+// Data
   designerData: DesignerData | null = null;
   contentTypes: ContentTypeModel[] = [];
   availableGroups: any[] = []; // This should come from your auth/user service
 
+// Default values for dropdowns
+  defaultPageSizes = [
+    { value: 'A4', label: 'A4 (210 × 297 mm)' },
+    { value: 'A3', label: 'A3 (297 × 420 mm)' },
+    { value: 'letter', label: 'Letter (8.5 × 11 in)' },
+    { value: 'legal', label: 'Legal (8.5 × 14 in)' }
+  ];
+
   // Loading states
   loadingDesignerData = false;
   loadingContentTypes = false;
+  queryFilters: any[] = [];
+  selectedContentType: ContentTypeModel | null = null;
+  private filterUpdateSubject = new Subject<void>();
 
   constructor(
     private fb: FormBuilder,
-    private pdfTemplateService: PDFTemplateService
+    private pdfTemplateService: PDFTemplateService,
+    private snackBar: MatSnackBar
   ) {
     this.initializeForms();
   }
@@ -789,6 +914,17 @@ export class TemplateWizardComponent implements OnInit {
     if (this.template) {
       this.populateFormsFromTemplate();
     }
+
+    // Add this subscription to debounce filter updates
+    this.filterUpdateSubject.pipe(
+      debounceTime(300)
+    ).subscribe(() => {
+      this.performQueryFilterUpdate();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.filterUpdateSubject.complete();
   }
 
   private initializeForms(): void {
@@ -853,23 +989,69 @@ export class TemplateWizardComponent implements OnInit {
     this.pdfTemplateService.getDesignerData().subscribe({
       next: (data) => {
         this.designerData = data;
+        // Use defaults if backend doesn't provide values
+        if (!this.designerData.page_sizes || this.designerData.page_sizes.length === 0) {
+          this.designerData.page_sizes = this.defaultPageSizes;
+        }
         this.loadingDesignerData = false;
       },
       error: (error) => {
         console.error('Error loading designer data:', error);
+        // Use default values on error
+        this.designerData = {
+          page_sizes: this.defaultPageSizes,
+          fonts: [
+            { value: 'Helvetica', label: 'Helvetica' },
+            { value: 'Arial', label: 'Arial' },
+            { value: 'Times New Roman', label: 'Times New Roman' },
+            { value: 'Courier', label: 'Courier' },
+            { value: 'Verdana', label: 'Verdana' }
+          ],
+          text_aligns: [
+            { value: 'left', label: 'Left' },
+            { value: 'center', label: 'Center' },
+            { value: 'right', label: 'Right' },
+            { value: 'justify', label: 'Justify' }
+          ],
+          parameter_types: [
+            { value: 'string', label: 'Text' },
+            { value: 'integer', label: 'Number' },
+            { value: 'float', label: 'Decimal' },
+            { value: 'date', label: 'Date' },
+            { value: 'datetime', label: 'Date & Time' },
+            { value: 'boolean', label: 'Yes/No' }
+          ],
+          widget_types: [
+            { value: 'text', label: 'Text Input' },
+            { value: 'number', label: 'Number Input' },
+            { value: 'date', label: 'Date Picker' },
+            { value: 'select', label: 'Dropdown' },
+            { value: 'checkbox', label: 'Checkbox' },
+            { value: 'radio', label: 'Radio Buttons' }
+          ],
+          fetch_methods: [
+            { value: 'model_query', label: 'Model Query' },
+            { value: 'raw_sql', label: 'Raw SQL' },
+            { value: 'custom_function', label: 'Custom Function' },
+            { value: 'api', label: 'External API' }
+          ]
+        };
         this.loadingDesignerData = false;
       }
     });
 
-    // Load content types
+// Load content types
     this.loadingContentTypes = true;
     this.pdfTemplateService.getContentTypes().subscribe({
       next: (types) => {
+        console.log('Loaded content types:', types); // Debug log
         this.contentTypes = types;
         this.loadingContentTypes = false;
       },
       error: (error) => {
         console.error('Error loading content types:', error);
+        console.error('Error details:', error.message, error.status); // More debug info
+        this.contentTypes = []; // Ensure empty array on error
         this.loadingContentTypes = false;
       }
     });
@@ -1019,21 +1201,120 @@ export class TemplateWizardComponent implements OnInit {
   // Event handlers
   onDataSourceTypeChange(): void {
     const type = this.dataSourceForm.get('data_source_type')?.value;
+
+    // Clear filters when changing data source type
+    this.queryFilters = [];
+    this.selectedContentType = null;
+
     // Reset fields based on type
     if (type !== 'model') {
-      this.dataSourceForm.patchValue({ content_type: null });
+      this.dataSourceForm.patchValue({ content_type: null, query_filter: {} }, { emitEvent: false });
     }
     if (type !== 'raw_sql') {
-      this.dataSourceForm.patchValue({ raw_sql_query: '' });
+      this.dataSourceForm.patchValue({ raw_sql_query: '' }, { emitEvent: false });
     }
     if (type !== 'custom_function') {
-      this.dataSourceForm.patchValue({ custom_function_path: '' });
+      this.dataSourceForm.patchValue({ custom_function_path: '' }, { emitEvent: false });
     }
   }
 
+
   addQueryFilter(): void {
-    // TODO: Implement query filter builder dialog
-    console.log('Add query filter');
+    const contentTypeId = this.dataSourceForm.get('content_type')?.value;
+    if (!contentTypeId) {
+      this.snackBar.open('Please select a model first', 'Close', { duration: 3000 });
+      return;
+    }
+
+    this.selectedContentType = this.contentTypes.find(ct => ct.id === contentTypeId) || null;
+
+    if (!this.selectedContentType || !this.selectedContentType.model_fields) {
+      this.snackBar.open('No fields available for this model', 'Close', { duration: 3000 });
+      return;
+    }
+
+    const newFilter = {
+      id: Date.now(),
+      field: '',
+      fieldType: '',
+      operator: 'exact',
+      value: ''
+    };
+
+    this.queryFilters.push(newFilter);
+    // Don't update immediately when adding empty filter
+  }
+
+  removeQueryFilter(index: number): void {
+    this.queryFilters.splice(index, 1);
+    this.scheduleQueryFilterUpdate();
+  }
+  onFilterFieldChange(filter: any): void {
+    const field = this.selectedContentType?.model_fields?.find(f => f.name === filter.field);
+    if (field) {
+      filter.fieldType = field.type;
+      filter.operator = 'exact'; // Reset operator when field changes
+      filter.value = ''; // Reset value when field changes
+    }
+    this.scheduleQueryFilterUpdate();
+  }
+  onFilterOperatorChange(filter: any): void {
+    this.scheduleQueryFilterUpdate();
+  }
+
+  onFilterValueChange(filter: any): void {
+    this.scheduleQueryFilterUpdate();
+  }
+
+  scheduleQueryFilterUpdate(): void {
+    this.filterUpdateSubject.next();
+  }
+  updateQueryFilter(): void {
+    // Convert filters array to Django query format
+    const queryFilter: any = {};
+
+    this.queryFilters.forEach(filter => {
+      if (filter.field && filter.value !== '') {
+        const key = filter.operator === 'exact' ? filter.field : `${filter.field}__${filter.operator}`;
+        queryFilter[key] = filter.value;
+      }
+    });
+
+    this.dataSourceForm.patchValue({ query_filter: queryFilter });
+  }
+
+  getOperatorsForField(fieldType: string): Array<{value: string, label: string}> {
+    const operators: Record<string, Array<{value: string, label: string}>> = {
+      'CharField': [
+        { value: 'exact', label: 'Equals' },
+        { value: 'icontains', label: 'Contains' },
+        { value: 'istartswith', label: 'Starts with' },
+        { value: 'iendswith', label: 'Ends with' }
+      ],
+      'IntegerField': [
+        { value: 'exact', label: 'Equals' },
+        { value: 'gt', label: 'Greater than' },
+        { value: 'gte', label: 'Greater than or equal' },
+        { value: 'lt', label: 'Less than' },
+        { value: 'lte', label: 'Less than or equal' }
+      ],
+      'DateField': [
+        { value: 'exact', label: 'Equals' },
+        { value: 'gt', label: 'After' },
+        { value: 'gte', label: 'On or after' },
+        { value: 'lt', label: 'Before' },
+        { value: 'lte', label: 'On or before' }
+      ],
+      'BooleanField': [
+        { value: 'exact', label: 'Equals' }
+      ],
+      'ForeignKey': [
+        { value: 'exact', label: 'Equals' },
+        { value: 'in', label: 'In list' }
+      ]
+    };
+
+    return operators[fieldType] || [{ value: 'exact', label: 'Equals' }];
   }
 
   getAvailableWidgets(parameterType: string): any[] {
@@ -1125,4 +1406,43 @@ export class TemplateWizardComponent implements OnInit {
       active_ind: true
     };
   }
+
+  onModelSelected(contentTypeId: number): void {
+    const selectedModel = this.contentTypes.find(ct => ct.id === contentTypeId);
+    if (selectedModel && selectedModel.model_fields) {
+      console.log('Selected model fields:', selectedModel.model_fields);
+      // You can store these fields for later use in query building
+      // this.selectedModelFields = selectedModel.model_fields;
+    }
+  }
+  getFieldType(fieldName: string): string {
+    if (!this.selectedContentType || !this.selectedContentType.model_fields) {
+      return '';
+    }
+    const field = this.selectedContentType.model_fields.find(f => f.name === fieldName);
+    return field ? field.type : '';
+  }
+
+  getOperatorsForFilter(filter: any): Array<{value: string, label: string}> {
+    return this.getOperatorsForField(filter.fieldType || '');
+  }
+
+  performQueryFilterUpdate(): void {
+    const queryFilter: any = {};
+
+    this.queryFilters.forEach(filter => {
+      if (filter.field && filter.value !== '' && filter.value !== null && filter.value !== undefined) {
+        const key = filter.operator === 'exact' ? filter.field : `${filter.field}__${filter.operator}`;
+        queryFilter[key] = filter.value;
+      }
+    });
+
+    // Only update if the value actually changed
+    const currentValue = this.dataSourceForm.get('query_filter')?.value;
+    if (JSON.stringify(currentValue) !== JSON.stringify(queryFilter)) {
+      this.dataSourceForm.patchValue({ query_filter: queryFilter }, { emitEvent: false });
+    }
+  }
+
+  protected readonly Object = Object;
 }

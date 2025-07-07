@@ -33,16 +33,45 @@ export interface ListResponse<T> {
   providedIn: 'root'
 })
 export class PDFTemplateService {
-  private apiUrl = '/api/pdf';
+  private apiUrl = 'reports';
 
   constructor(
     private http: HttpClient,
     private configService: ConfigService
-  ) {}
+  ) {
+    // Debug logging
+    console.log('ConfigService base URL:', this.configService.getBaseUrl());
+    console.log('Sample full URL:', this.getFullUrl('/test/'));
+  }
 
+  private isValidUrl(url: string): boolean {
+    try {
+      // For relative URLs
+      if (url.startsWith('/')) {
+        return true;
+      }
+      // For absolute URLs
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  }
   private getFullUrl(endpoint: string): string {
-    const baseUrl = this.configService.getBaseUrl();
-    return `${baseUrl}${this.apiUrl}${endpoint}`;
+    const baseUrl = this.configService.getBaseUrl() || '';
+
+    // If baseUrl is empty or just '/', use a relative URL
+    if (!baseUrl || baseUrl === '/') {
+      return `${this.apiUrl}${endpoint}`;
+    }
+
+    // Ensure baseUrl doesn't end with slash and apiUrl starts with slash
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const cleanApiUrl = this.apiUrl.startsWith('/') ? this.apiUrl : '/' + this.apiUrl;
+
+    console.log('PDF Template Service URL:', `${cleanBaseUrl}${cleanApiUrl}${endpoint}`); // Debug log
+
+    return `${cleanBaseUrl}${cleanApiUrl}${endpoint}`;
   }
 
   // Template CRUD operations
@@ -82,9 +111,22 @@ export class PDFTemplateService {
     );
   }
 
-  // My templates
   getMyTemplates(): Observable<TemplateCategory> {
-    return this.http.get<TemplateCategory>(this.getFullUrl('/my-templates/'));
+    const url = this.getFullUrl('/my-templates/');
+    if (!this.isValidUrl(url)) {
+      console.error('Invalid URL for getMyTemplates:', url);
+      return throwError(() => new Error('Invalid API URL configuration'));
+    }
+    return this.http.get<TemplateCategory>(url);
+  }
+
+  getDesignerData(): Observable<DesignerData> {
+    const url = this.getFullUrl('/designer-data/');
+    if (!this.isValidUrl(url)) {
+      console.error('Invalid URL for getDesignerData:', url);
+      return throwError(() => new Error('Invalid API URL configuration'));
+    }
+    return this.http.get<DesignerData>(url);
   }
 
   // Parameter operations
@@ -238,12 +280,10 @@ export class PDFTemplateService {
   }
 
   // Utility endpoints
-  getDesignerData(): Observable<DesignerData> {
-    return this.http.get<DesignerData>(this.getFullUrl('/designer-data/'));
-  }
-
   getContentTypes(): Observable<ContentTypeModel[]> {
-    return this.http.get<ContentTypeModel[]>(this.getFullUrl('/content-types/'));
+    // Use the correct backend endpoint
+    const baseUrl = this.configService.getBaseUrl();
+    return this.http.get<ContentTypeModel[]>(`${baseUrl}/reports/content-types/`);
   }
 
   // Updated getGenerationLogs to accept both HttpParams and plain objects
