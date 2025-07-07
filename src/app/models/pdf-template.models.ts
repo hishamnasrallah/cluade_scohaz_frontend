@@ -495,7 +495,49 @@ export interface UserOption {
   email: string;
   full_name: string;
 }
+export interface PaginatedResponse<T> {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: T[];
+}
 
+export interface FilterParams {
+  [key: string]: any;
+}
+
+export interface PaginationParams {
+  page?: number;
+  page_size?: number;
+  ordering?: string;
+}
+
+export interface ValidateParametersResponse {
+  valid: boolean;
+  errors?: string[];
+  warnings?: string[];
+}
+
+export interface TemplatePreview {
+  data: any;
+  parameters_used: any;
+  sample_output?: string;
+}
+
+export interface GeneratePDFRequest {
+  template_id: number;
+  parameters?: any;
+  language?: 'en' | 'ar';
+  filename?: string;
+  generate_for_user_id?: number;
+}
+
+export interface TemplateParameterSchema {
+  parameters: PDFTemplateParameter[];
+  sample_values?: any;
+  required: string[];
+  properties: { [key: string]: any };
+}
 // ============================================
 // Export all interfaces for easy importing
 // ============================================

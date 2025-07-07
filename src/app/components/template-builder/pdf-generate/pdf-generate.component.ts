@@ -18,7 +18,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { Observable, debounceTime, switchMap, map, startWith } from 'rxjs';
+import { Observable, debounceTime, switchMap, map, startWith, of, catchError } from 'rxjs';
+import { HttpParams } from '@angular/common/http';
 
 import { PDFTemplate, PDFGenerationLog } from '../../../models/pdf-template.models';
 import { PDFTemplateService } from '../../../services/pdf-template.service';
@@ -769,13 +770,46 @@ export class PDFGenerateComponent implements OnInit {
     this.pdfTemplateService.getTemplate(this.templateId).subscribe({
       next: (template) => {
         this.template = template;
-        this.initializeForms();
+
+        if (template.requires_parameters) {
+          // Load parameter schema with sample values
+          this.loadParameterSchema();
+        } else {
+          this.initializeForms();
+          this.loading = false;
+        }
+
         this.loadRecentLogs();
-        this.loading = false;
       },
       error: (error) => {
         console.error('Error loading template:', error);
         this.error = 'Failed to load template. Please try again.';
+        this.loading = false;
+      }
+    });
+  }
+
+  private loadParameterSchema(): void {
+    this.pdfTemplateService.getParameterSchema(this.templateId, true).subscribe({
+      next: (schema) => {
+        // Update template with schema parameters if needed
+        if (schema.parameters) {
+          this.template!.parameters = schema.parameters;
+        }
+
+        // Initialize forms with sample values
+        this.initializeForms();
+
+        // Set sample values if available
+        if (schema.sample_values) {
+          this.parametersForm.patchValue(schema.sample_values);
+        }
+
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error loading parameter schema:', error);
+        this.initializeForms();
         this.loading = false;
       }
     });
@@ -853,26 +887,36 @@ export class PDFGenerateComponent implements OnInit {
   private searchUsers(query: string | UserOption): Observable<UserOption[]> {
     const searchTerm = typeof query === 'string' ? query : query?.username || '';
 
-    // Mock user search - replace with actual API call
-    return new Observable(observer => {
-      // Simulate API delay
-      setTimeout(() => {
-        const mockUsers: UserOption[] = [
-          { id: 1, username: 'john.doe', email: 'john@example.com', full_name: 'John Doe' },
-          { id: 2, username: 'jane.smith', email: 'jane@example.com', full_name: 'Jane Smith' },
-          { id: 3, username: 'bob.wilson', email: 'bob@example.com', full_name: 'Bob Wilson' }
-        ];
-
-        const filtered = mockUsers.filter(user =>
-          user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.full_name.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-
-        observer.next(filtered);
+    if (!searchTerm || searchTerm.length < 2) {
+      return new Observable(observer => {
+        observer.next([]);
         observer.complete();
-      }, 500);
-    });
+      });
+    }
+
+    // Use actual API endpoint for user search
+    const params = new HttpParams()
+      .set('search', searchTerm)
+      .set('limit', '10');
+
+    return this.apiService.get<any>('/users/search/', { params }).pipe(
+      map((response: any) => {
+        // Map API response to UserOption format
+        const results = response.results || response;
+        return results.map((user: any) => ({
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          full_name: user.full_name || `${user.first_name || ''} ${user.last_name || ''}`.trim(),
+          first_name: user.first_name,
+          last_name: user.last_name
+        }));
+      }),
+      catchError(() => {
+        // Return empty array on error
+        return of([]);
+      })
+    );
   }
 
   displayUser(user: UserOption | null): string {
@@ -950,20 +994,41 @@ export class PDFGenerateComponent implements OnInit {
   }
 
   generatePDF(): void {
-    if (!this.parametersForm.valid || !this.template) return;
+    if (!this.parametersForm.valid || !this.template) {
+      this.markFormGroupTouched(this.parametersForm);
+      return;
+    }
 
     this.generating = true;
 
-    const parameters = this.parametersForm.value;
-    // Remove display fields
-    Object.keys(parameters).forEach(key => {
-      if (key.endsWith('_display')) {
-        delete parameters[key];
+    const parameters = this.getCleanParameters();
+
+    // First validate parameters
+    this.pdfTemplateService.validateParameters(this.template.id!, parameters).subscribe({
+      next: (validation) => {
+        if (validation.valid) {
+          this.performGeneration(parameters);
+        } else {
+          this.generating = false;
+          this.snackBar.open(
+            validation.errors?.join(', ') || 'Invalid parameters',
+            'Close',
+            { duration: 5000 }
+          );
+        }
+      },
+      error: (error) => {
+        this.generating = false;
+        console.error('Error validating parameters:', error);
+        // Continue with generation anyway
+        this.performGeneration(parameters);
       }
     });
+  }
 
+  private performGeneration(parameters: any): void {
     const request = {
-      template_id: this.template.id!,
+      template_id: this.template!.id!,
       parameters,
       language: this.optionsForm.get('language')?.value,
       filename: this.getFilename(),
@@ -973,17 +1038,71 @@ export class PDFGenerateComponent implements OnInit {
     this.pdfTemplateService.generatePDF(request).subscribe({
       next: (response) => {
         const blob = response.body;
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = request.filename!;
+
+        // Extract filename from Content-Disposition if available
+        if (contentDisposition) {
+          const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
+          if (matches != null && matches[1]) {
+            filename = matches[1].replace(/['"]/g, '');
+          }
+        }
+
         if (blob) {
-          this.pdfTemplateService.downloadPDF(blob, request.filename!);
+          this.pdfTemplateService.downloadPDF(blob, filename);
           this.generationSuccess = true;
           this.generating = false;
           this.loadRecentLogs();
+
+          this.snackBar.open('PDF generated successfully!', 'Close', {
+            duration: 3000,
+            panelClass: 'success-snackbar'
+          });
         }
       },
       error: (error) => {
         console.error('Error generating PDF:', error);
-        this.snackBar.open('Failed to generate PDF', 'Close', { duration: 3000 });
+        const errorMessage = error.error?.detail || error.error?.message || 'Failed to generate PDF';
+        this.snackBar.open(errorMessage, 'Close', {
+          duration: 5000,
+          panelClass: 'error-snackbar'
+        });
         this.generating = false;
+      }
+    });
+  }
+
+  private getCleanParameters(): any {
+    const parameters = { ...this.parametersForm.value };
+
+    // Remove display fields
+    Object.keys(parameters).forEach(key => {
+      if (key.endsWith('_display')) {
+        delete parameters[key];
+      }
+    });
+
+    // Convert dates to ISO strings if needed
+    this.template?.parameters?.forEach(param => {
+      if ((param.parameter_type === 'date' || param.parameter_type === 'datetime') && parameters[param.parameter_key]) {
+        const value = parameters[param.parameter_key];
+        if (value instanceof Date) {
+          parameters[param.parameter_key] = value.toISOString();
+        }
+      }
+    });
+
+    return parameters;
+  }
+
+  private markFormGroupTouched(formGroup: FormGroup): void {
+    Object.keys(formGroup.controls).forEach(key => {
+      const control = formGroup.get(key);
+      control?.markAsTouched();
+
+      if (control instanceof FormGroup) {
+        this.markFormGroupTouched(control);
       }
     });
   }
@@ -997,14 +1116,19 @@ export class PDFGenerateComponent implements OnInit {
   private loadRecentLogs(): void {
     if (!this.template) return;
 
-    const params = new URLSearchParams({
-      template: this.template.id!.toString(),
-      generated_by: 'current_user' // This should use actual user ID
-    });
+    // Get current user ID from auth service
+    const currentUserId = this.getCurrentUserId();
 
-    this.pdfTemplateService.getGenerationLogs().subscribe({
+    const filters = {
+      template: this.template.id!,
+      generated_by: currentUserId,
+      ordering: '-created_at',
+      page_size: 5
+    };
+
+    this.pdfTemplateService.getGenerationLogs(filters).subscribe({
       next: (response) => {
-        this.recentLogs = response.results.slice(0, 5);
+        this.recentLogs = response.results;
       },
       error: (error) => {
         console.error('Error loading logs:', error);
@@ -1012,6 +1136,11 @@ export class PDFGenerateComponent implements OnInit {
     });
   }
 
+  private getCurrentUserId(): number {
+    // TODO: Get from auth service
+    // For now, return a placeholder
+    return 1;
+  }
   formatDate(dateString: string): string {
     const date = new Date(dateString);
     return date.toLocaleString();
