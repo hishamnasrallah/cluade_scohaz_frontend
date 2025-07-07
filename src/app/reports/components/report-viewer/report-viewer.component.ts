@@ -126,8 +126,10 @@ export class ReportViewerComponent implements OnInit {
     if (!this.report?.id) return;
 
     this.reportService.getExecutions(this.report.id).subscribe({
-      next: (executions) => {
-        this.executions = executions.sort((a, b) =>
+      next: (response: any) => {
+        // Handle both array and paginated response
+        const executions = Array.isArray(response) ? response : response.results || [];
+        this.executions = executions.sort((a: ReportExecution, b: ReportExecution) =>
           new Date(b.executed_at).getTime() - new Date(a.executed_at).getTime()
         );
       }
@@ -146,7 +148,7 @@ export class ReportViewerComponent implements OnInit {
     }).subscribe({
       next: (result) => {
         this.executionResult = result;
-        this.displayedColumns = result.columns.map(c => c.name);  // <-- Already here!
+        this.displayedColumns = result.columns.map(c => c.display_name);
         this.isExecuting = false;
 
         if (this.viewMode === 'chart' && result.data.length > 0) {
@@ -244,6 +246,10 @@ export class ReportViewerComponent implements OnInit {
     const data = this.executionResult.data;
     const columns = this.executionResult.columns;
 
+    // Debug logging
+    console.log('Chart update - columns:', columns);
+    console.log('Chart update - sample data:', data[0]);
+
     // Find suitable columns for chart
     const labelColumn = columns.find(c => c.type === 'CharField' || c.aggregation === 'group_by');
     const valueColumns = columns.filter(c =>
@@ -251,15 +257,19 @@ export class ReportViewerComponent implements OnInit {
       ['sum', 'count', 'avg'].includes(c.aggregation || '')
     );
 
+    console.log('Label column:', labelColumn);
+    console.log('Value columns:', valueColumns);
+
     if (!labelColumn || valueColumns.length === 0) {
+      console.warn('No suitable columns found for chart');
       return;
     }
 
     // Prepare chart data
-    const labels = data.map(row => row[labelColumn.name]);
+    const labels = data.map(row => row[labelColumn.display_name]);
     const datasets = valueColumns.map((col, index) => ({
       label: col.display_name,
-      data: data.map(row => row[col.name]),
+      data: data.map(row => row[col.display_name]),
       backgroundColor: this.getChartColor(index, 0.2),
       borderColor: this.getChartColor(index, 1),
       borderWidth: 2

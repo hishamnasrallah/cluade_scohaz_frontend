@@ -297,10 +297,11 @@
               <mat-card-content>
                 <div class="table-container">
                   <table mat-table [dataSource]="executionResult.data.slice(0, 10)" class="preview-table">
-                    <ng-container *ngFor="let column of executionResult.columns" [matColumnDef]="column.name">
+                    <ng-container *ngFor="let column of executionResult.columns" [matColumnDef]="column.display_name">
+
                       <th mat-header-cell *matHeaderCellDef>{{ column.display_name }}</th>
                       <td mat-cell *matCellDef="let row">
-                        {{ formatValue(row[column.name], column.formatting) }}
+                        {{ formatValue(row[column.display_name], column.formatting) }}
                       </td>
                     </ng-container>
 

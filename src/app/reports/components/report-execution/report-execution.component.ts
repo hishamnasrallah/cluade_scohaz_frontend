@@ -173,6 +173,22 @@ export class ReportExecutionComponent implements OnInit {
         }
       }
 
+      // Handle number fields - convert empty strings to null
+      if (param.parameter_type === 'number' || param.parameter_type === 'user') {
+        if (defaultValue === '' || defaultValue === undefined) {
+          defaultValue = null;
+        } else if (typeof defaultValue === 'string' && defaultValue.trim() !== '') {
+          defaultValue = parseFloat(defaultValue);
+        }
+      }
+
+      // Handle select/multiselect fields
+      if (param.parameter_type === 'select' || param.parameter_type === 'multiselect') {
+        if (defaultValue === '' || defaultValue === undefined) {
+          defaultValue = param.parameter_type === 'multiselect' ? [] : null;
+        }
+      }
+
       group[param.name] = [defaultValue, validators];
     }
 
@@ -229,18 +245,140 @@ export class ReportExecutionComponent implements OnInit {
     this.isExecuting = true;
     this.error = null;
 
-    const executionParams = {
-      parameters: this.parametersForm.value,
+    // ADD THE DEBUG LOGGING HERE ↓↓↓
+
+    // Debug logging
+    console.log('Report ID:', this.report.id);
+    console.log('Full Report:', this.report);
+    console.log('Report parameters:', this.report.parameters);
+    console.log('Report data sources:', this.report.data_sources);
+    console.log('Report fields:', this.report.fields);
+    console.log('Report filters:', this.report.filters);
+
+    // Add detailed filter logging
+    if (this.report.filters && this.report.filters.length > 0) {
+      this.report.filters.forEach((filter, index) => {
+        console.log(`Filter ${index}:`, {
+          field_path: filter.field_path,
+          operator: filter.operator,
+          value: filter.value,
+          value_type: filter.value_type,
+          field_type: filter.field_type
+        });
+      });
+    }
+
+    // Clean parameters - handle all types properly
+    const cleanedParameters: any = {};
+    if (this.report.parameters) {
+      for (const param of this.report.parameters) {
+        let value = this.parametersForm.value[param.name];
+
+        // Handle different parameter types
+        switch (param.parameter_type) {
+          case 'number':
+          case 'user':
+            // Convert empty strings to null for numeric fields
+            if (value === '' || value === undefined || value === null) {
+              value = null;
+            } else if (typeof value === 'string') {
+              const parsed = parseFloat(value);
+              value = isNaN(parsed) ? null : parsed;
+            }
+            break;
+
+          case 'select':
+            // For select, empty string should be null
+            if (value === '' || value === undefined) {
+              value = null;
+            }
+            break;
+
+          case 'multiselect':
+            // For multiselect, ensure it's an array
+            if (!value || value === '') {
+              value = [];
+            } else if (!Array.isArray(value)) {
+              value = [value];
+            }
+            // Filter out empty strings from the array
+            value = value.filter((v: any) => v !== '' && v !== null && v !== undefined);
+            break;
+
+          case 'date':
+          case 'datetime':
+            // Convert date objects to ISO strings
+            if (value instanceof Date) {
+              value = value.toISOString();
+            } else if (value === '' || value === undefined) {
+              value = null;
+            }
+            break;
+
+          case 'boolean':
+            // Ensure boolean is actually boolean
+            value = !!value;
+            break;
+
+          case 'text':
+          default:
+            // For text, empty string is okay unless required
+            if (value === undefined || value === null) {
+              value = '';
+            }
+            break;
+        }
+
+        cleanedParameters[param.name] = value;
+      }
+    }
+
+    // Build execution params based on whether we're saving results
+    const saveResult = this.optionsForm.get('save_result')?.value;
+
+    const executionParams: any = {
+      parameters: cleanedParameters,
       limit: this.optionsForm.get('limit')?.value || 1000,
-      export_format: this.selectedFormat,
-      save_result: this.optionsForm.get('save_result')?.value,
-      result_name: this.optionsForm.get('result_name')?.value
+      offset: 0,
+      export_format: this.selectedFormat
     };
+
+
+    // Only include save_result and result_name if user wants to save
+    if (saveResult) {
+      executionParams.save_result = true;
+      const resultName = this.optionsForm.get('result_name')?.value?.trim();
+      if (!resultName) {
+        this.snackBar.open('Please provide a name for saved results', 'Close', {
+          duration: 3000,
+          panelClass: ['warning-snackbar']
+        });
+        this.isExecuting = false;
+        return;
+      }
+      executionParams.result_name = resultName;
+    }
 
     this.reportService.executeReport(this.report.id, executionParams).subscribe({
       next: (result) => {
         this.executionResult = result;
-        this.displayedColumns = result.columns.map(c => c.name);
+        // Ensure we have valid columns before setting displayedColumns
+        if (result.columns && result.columns.length > 0) {
+          this.displayedColumns = result.columns.map(c => c.display_name || c.name);
+          console.log('Set displayedColumns to:', this.displayedColumns);
+        } else {
+          this.displayedColumns = [];
+          console.warn('No columns in result');
+        }
+        this.displayedColumns = result.columns.map(c => c.display_name);
+
+        console.log('Column display names:', result.columns.map(c => ({ name: c.name, display: c.display_name })));
+
+        // Debug: Check column names and data structure
+        console.log('Result columns:', result.columns);
+        console.log('Display columns:', this.displayedColumns);
+        console.log('Sample data row:', result.data[0]);
+        console.log('Data keys:', result.data[0] ? Object.keys(result.data[0]) : []);
 
         this.isExecuting = false;
 
