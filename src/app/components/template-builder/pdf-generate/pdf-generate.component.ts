@@ -144,9 +144,9 @@ interface UserOption {
                         <mat-form-field appearance="outline" *ngSwitchCase="'select'">
                           <mat-label>{{ param.display_name }}</mat-label>
                           <mat-select [formControlName]="param.parameter_key"
-                                     [required]="param.is_required">
+                                      [required]="param.is_required">
                             <mat-option *ngFor="let choice of param.choices"
-                                       [value]="choice.value">
+                                        [value]="choice.value">
                               {{ choice.label }}
                             </mat-option>
                           </mat-select>
@@ -173,10 +173,10 @@ interface UserOption {
                                  [required]="param.is_required"
                                  placeholder="Search by name or email">
                           <mat-autocomplete #userAuto="matAutocomplete"
-                                           [displayWith]="displayUser"
-                                           (optionSelected)="onUserSelected($event, param.parameter_key)">
+                                            [displayWith]="displayUser"
+                                            (optionSelected)="onUserSelected($event, param.parameter_key)">
                             <mat-option *ngFor="let user of filteredUsers$ | async"
-                                       [value]="user">
+                                        [value]="user">
                               <div class="user-option">
                                 <span class="user-name">{{ user.full_name || user.username }}</span>
                                 <span class="user-email">{{ user.email }}</span>
@@ -258,10 +258,10 @@ interface UserOption {
                              [matAutocomplete]="targetUserAuto"
                              placeholder="Leave empty to generate for yourself">
                       <mat-autocomplete #targetUserAuto="matAutocomplete"
-                                       [displayWith]="displayUser"
-                                       (optionSelected)="onTargetUserSelected($event)">
+                                        [displayWith]="displayUser"
+                                        (optionSelected)="onTargetUserSelected($event)">
                         <mat-option *ngFor="let user of filteredTargetUsers$ | async"
-                                   [value]="user">
+                                    [value]="user">
                           <div class="user-option">
                             <span class="user-name">{{ user.full_name || user.username }}</span>
                             <span class="user-email">{{ user.email }}</span>
@@ -377,7 +377,7 @@ interface UserOption {
             <div class="log-item" *ngFor="let log of recentLogs">
               <mat-icon [class]="'status-' + log.status">
                 {{ log.status === 'completed' ? 'check_circle' :
-                   log.status === 'failed' ? 'error' : 'pending' }}
+                log.status === 'failed' ? 'error' : 'pending' }}
               </mat-icon>
               <div class="log-info">
                 <span class="log-filename">{{ log.file_name }}</span>
@@ -888,29 +888,34 @@ export class PDFGenerateComponent implements OnInit {
     const searchTerm = typeof query === 'string' ? query : query?.username || '';
 
     if (!searchTerm || searchTerm.length < 2) {
-      return new Observable(observer => {
-        observer.next([]);
-        observer.complete();
-      });
+      return of([]);
     }
 
-    // Use actual API endpoint for user search
+    // Build URL with query parameters
     const params = new HttpParams()
       .set('search', searchTerm)
       .set('limit', '10');
 
-    return this.apiService.get<any>('/users/search/', { params }).pipe(
+    // Construct the full URL with parameters
+    const endpoint = `/api/users/search/?${params.toString()}`;
+
+    return this.apiService.executeApiCall(endpoint, 'GET').pipe(
       map((response: any) => {
-        // Map API response to UserOption format
-        const results = response.results || response;
-        return results.map((user: any) => ({
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          full_name: user.full_name || `${user.first_name || ''} ${user.last_name || ''}`.trim(),
-          first_name: user.first_name,
-          last_name: user.last_name
-        }));
+        // Handle different response structures
+        const results = response.results || response.data || response;
+
+        if (Array.isArray(results)) {
+          return results.map((user: any) => ({
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            full_name: user.full_name || `${user.first_name || ''} ${user.last_name || ''}`.trim(),
+            first_name: user.first_name,
+            last_name: user.last_name
+          }));
+        }
+
+        return [];
       }),
       catchError(() => {
         // Return empty array on error
@@ -1141,6 +1146,7 @@ export class PDFGenerateComponent implements OnInit {
     // For now, return a placeholder
     return 1;
   }
+
   formatDate(dateString: string): string {
     const date = new Date(dateString);
     return date.toLocaleString();

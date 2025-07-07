@@ -246,10 +246,25 @@ export class PDFTemplateService {
     return this.http.get<ContentTypeModel[]>(this.getFullUrl('/content-types/'));
   }
 
-  getGenerationLogs(params?: HttpParams): Observable<ListResponse<PDFGenerationLog>> {
+  // Updated getGenerationLogs to accept both HttpParams and plain objects
+  getGenerationLogs(params?: HttpParams | any): Observable<ListResponse<PDFGenerationLog>> {
+    // Convert plain object to HttpParams if needed
+    let httpParams: HttpParams | undefined;
+
+    if (params && !(params instanceof HttpParams)) {
+      httpParams = new HttpParams();
+      Object.keys(params).forEach(key => {
+        if (params[key] !== null && params[key] !== undefined) {
+          httpParams = httpParams!.set(key, params[key].toString());
+        }
+      });
+    } else {
+      httpParams = params;
+    }
+
     return this.http.get<ListResponse<PDFGenerationLog>>(
       this.getFullUrl('/logs/'),
-      { params }
+      { params: httpParams }
     );
   }
 
