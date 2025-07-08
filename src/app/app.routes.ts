@@ -116,6 +116,7 @@ export const routes: Routes = [
             .then(m => m.templateBuilderRoutes),
         data: { title: 'PDF Templates', icon: 'description' }
       },
+
       {
         path: 'logo-info',
         loadComponent: () => import('./components/logo/logo.component').then(m => m.LogoComponent),
@@ -197,12 +198,23 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     loadChildren: () => import('./reports/reports.routes').then(m => m.REPORT_ROUTES),
     data: {
-      title: 'Reports',
+      title: 'Statistics',
       description: 'Dynamic reporting and analytics',
       icon: 'assessment',
       requiresAuth: true
     }
   },
+  // {
+  //   path: 'pdf-templates',
+  //   canActivate: [AuthGuard],
+  //   loadChildren: () => import('./components/template-builder/template-builder.routes').then(m => m.templateBuilderRoutes),
+  //   data: {
+  //     title: 'Statidsadsastics',
+  //     description: 'Dynamic reportisdng and analytics',
+  //     icon: 'assessment',
+  //     requiresAuth: true
+  //   }
+  // },
 
   // Catch-all route - redirect to dashboard
   {

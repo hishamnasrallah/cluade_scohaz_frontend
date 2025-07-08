@@ -125,7 +125,12 @@ interface PaletteItem {
           <mat-tab-group>
             <!-- Basic Elements -->
             <mat-tab label="Basic">
-              <div class="palette-grid">
+              <div class="palette-grid"
+                   cdkDropList
+                   #basicList="cdkDropList"
+                   [cdkDropListData]="getPaletteItems('basic')"
+                   [cdkDropListConnectedTo]="[canvasList]"
+                   [cdkDropListSortingDisabled]="true">
                 <div
                   *ngFor="let item of getPaletteItems('basic')"
                   class="palette-item"
@@ -134,13 +139,19 @@ interface PaletteItem {
                   (cdkDragStarted)="onDragStarted($event)">
                   <mat-icon>{{ item.icon }}</mat-icon>
                   <span>{{ item.label }}</span>
+                  <div class="palette-item-drag-placeholder" *cdkDragPlaceholder></div>
                 </div>
               </div>
             </mat-tab>
 
             <!-- Dynamic Elements -->
             <mat-tab label="Dynamic">
-              <div class="palette-grid">
+              <div class="palette-grid"
+                   cdkDropList
+                   #dynamicList="cdkDropList"
+                   [cdkDropListData]="getPaletteItems('dynamic')"
+                   [cdkDropListConnectedTo]="[canvasList]"
+                   [cdkDropListSortingDisabled]="true">
                 <div
                   *ngFor="let item of getPaletteItems('dynamic')"
                   class="palette-item"
@@ -149,13 +160,19 @@ interface PaletteItem {
                   (cdkDragStarted)="onDragStarted($event)">
                   <mat-icon>{{ item.icon }}</mat-icon>
                   <span>{{ item.label }}</span>
+                  <div class="palette-item-drag-placeholder" *cdkDragPlaceholder></div>
                 </div>
               </div>
             </mat-tab>
 
             <!-- Layout Elements -->
             <mat-tab label="Layout">
-              <div class="palette-grid">
+              <div class="palette-grid"
+                   cdkDropList
+                   #layoutList="cdkDropList"
+                   [cdkDropListData]="getPaletteItems('layout')"
+                   [cdkDropListConnectedTo]="[canvasList]"
+                   [cdkDropListSortingDisabled]="true">
                 <div
                   *ngFor="let item of getPaletteItems('layout')"
                   class="palette-item"
@@ -164,13 +181,19 @@ interface PaletteItem {
                   (cdkDragStarted)="onDragStarted($event)">
                   <mat-icon>{{ item.icon }}</mat-icon>
                   <span>{{ item.label }}</span>
+                  <div class="palette-item-drag-placeholder" *cdkDragPlaceholder></div>
                 </div>
               </div>
             </mat-tab>
 
             <!-- Special Elements -->
             <mat-tab label="Special">
-              <div class="palette-grid">
+              <div class="palette-grid"
+                   cdkDropList
+                   #specialList="cdkDropList"
+                   [cdkDropListData]="getPaletteItems('special')"
+                   [cdkDropListConnectedTo]="[canvasList]"
+                   [cdkDropListSortingDisabled]="true">
                 <div
                   *ngFor="let item of getPaletteItems('special')"
                   class="palette-item"
@@ -179,6 +202,7 @@ interface PaletteItem {
                   (cdkDragStarted)="onDragStarted($event)">
                   <mat-icon>{{ item.icon }}</mat-icon>
                   <span>{{ item.label }}</span>
+                  <div class="palette-item-drag-placeholder" *cdkDragPlaceholder></div>
                 </div>
               </div>
             </mat-tab>
@@ -191,7 +215,9 @@ interface PaletteItem {
             <div
               class="design-canvas"
               cdkDropList
+              #canvasList="cdkDropList"
               [cdkDropListData]="elements"
+              [cdkDropListConnectedTo]="[basicList, dynamicList, layoutList, specialList]"
               (cdkDropListDropped)="onDrop($event)"
               [style.width.px]="canvasWidth"
               [style.height.px]="canvasHeight"
@@ -230,9 +256,11 @@ interface PaletteItem {
                 [style.transform]="'rotate(' + (element.rotation || 0) + 'deg)'"
                 [style.z-index]="element.z_index"
                 cdkDrag
+                [cdkDragBoundary]="'.design-canvas'"
                 [cdkDragData]="{ element: element, isNew: false }"
                 (cdkDragStarted)="onElementDragStarted($event, element)"
                 (cdkDragEnded)="onElementDragEnded($event, element)"
+                (cdkDragMoved)="onElementDragMoved($event, element)"
                 (click)="selectElement(element, $event)">
 
                 <!-- Element Content -->
@@ -523,7 +551,28 @@ interface PaletteItem {
     </div>
   `,
   styles: [`
-    .designer-container {
+    .design-canvas.cdk-drop-list-dragging {
+      border: 2px dashed #34c5aa;
+      background-color: rgba(52, 197, 170, 0.05);
+    }
+
+    .cdk-drag-animating {
+      transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+    }
+    .palette-item-drag-placeholder {
+      background: #f3f4f6;
+      border: 2px dashed #d1d5db;
+      border-radius: 8px;
+      opacity: 0.5;
+    }
+
+    .palette-item.cdk-drag-preview {
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      opacity: 0.8;
+      background: white;
+    }
+
+      .designer-container {
       height: 100%;
       display: flex;
       flex-direction: column;
@@ -877,6 +926,36 @@ interface PaletteItem {
         color: #34c5aa;
       }
     }
+    .template-element {
+      position: absolute;
+      cursor: move;
+      user-select: none;
+      min-width: 20px;
+      min-height: 20px;
+
+      &.cdk-drag-dragging {
+        z-index: 1000 !important;
+        cursor: grabbing;
+      }
+
+      &:hover {
+        outline: 1px solid #34c5aa;
+      }
+
+      &.selected {
+        outline: 2px solid #34c5aa;
+        box-shadow: 0 0 0 4px rgba(52, 197, 170, 0.1);
+      }
+
+      &.cdk-drag-preview {
+        opacity: 0.8;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      &.cdk-drag-placeholder {
+        opacity: 0.5;
+      }
+    }
   `]
 })
 export class TemplateDragDropComponent implements OnInit {
@@ -1069,7 +1148,7 @@ export class TemplateDragDropComponent implements OnInit {
     this.isDragging = true;
   }
 
-  onDrop(event: CdkDragDrop<PDFTemplateElement[]>): void {
+  onDrop(event: CdkDragDrop<PDFTemplateElement[] | any[]>): void {
     if (event.previousContainer === event.container) {
       // Reordering within canvas
       moveItemInArray(this.elements, event.previousIndex, event.currentIndex);
@@ -1077,7 +1156,25 @@ export class TemplateDragDropComponent implements OnInit {
       // New element from palette
       const dragData = event.item.data as DragData;
       if (dragData.isNew && dragData.elementType) {
-        const newElement = this.createNewElement(dragData.elementType, event.dropPoint);
+        // Calculate drop position relative to canvas
+        const canvasRect = event.container.element.nativeElement.getBoundingClientRect();
+        const dropX = event.dropPoint.x - canvasRect.left;
+        const dropY = event.dropPoint.y - canvasRect.top;
+
+        // Account for zoom
+        const actualX = dropX / (this.zoom / 100);
+        const actualY = dropY / (this.zoom / 100);
+
+        // Apply grid snapping if enabled
+        let finalX = actualX;
+        let finalY = actualY;
+
+        if (this.snapToGrid) {
+          finalX = Math.round(actualX / this.gridSize) * this.gridSize;
+          finalY = Math.round(actualY / this.gridSize) * this.gridSize;
+        }
+
+        const newElement = this.createNewElement(dragData.elementType, { x: finalX, y: finalY });
         this.elements.push(newElement);
         this.selectElement(newElement);
         this.saveToHistory();
@@ -1091,27 +1188,56 @@ export class TemplateDragDropComponent implements OnInit {
   }
 
   onElementDragEnded(event: any, element: PDFTemplateElement): void {
-    // Update position
-    const rect = event.source.element.nativeElement.getBoundingClientRect();
-    const canvasRect = event.source.element.nativeElement.parentElement.getBoundingClientRect();
+    // Get the final transform from the drag
+    const transform = event.source.element.nativeElement.style.transform;
+    const regex = /translate3d\((-?\d+(?:\.\d+)?)px,\s*(-?\d+(?:\.\d+)?)px,\s*0px\)/;
+    const match = transform.match(regex);
 
-    element.x_position = rect.left - canvasRect.left;
-    element.y_position = rect.top - canvasRect.top;
+    if (match) {
+      const deltaX = parseFloat(match[1]);
+      const deltaY = parseFloat(match[2]);
 
-    if (this.snapToGrid) {
-      element.x_position = Math.round(element.x_position / this.gridSize) * this.gridSize;
-      element.y_position = Math.round(element.y_position / this.gridSize) * this.gridSize;
+      // Update the element position
+      element.x_position += deltaX / (this.zoom / 100);
+      element.y_position += deltaY / (this.zoom / 100);
+
+      // Apply grid snapping if enabled
+      if (this.snapToGrid) {
+        element.x_position = Math.round(element.x_position / this.gridSize) * this.gridSize;
+        element.y_position = Math.round(element.y_position / this.gridSize) * this.gridSize;
+      }
+
+      // Ensure element stays within canvas bounds
+      element.x_position = Math.max(0, Math.min(element.x_position, this.canvasWidth - (element.width || 100)));
+      element.y_position = Math.max(0, Math.min(element.y_position, this.canvasHeight - (element.height || 50)));
+
+      // Update the properties form
+      if (this.selectedElement === element) {
+        this.propertiesForm.patchValue({
+          x_position: element.x_position,
+          y_position: element.y_position
+        }, { emitEvent: false });
+      }
     }
 
+    // Reset the transform
+    event.source.reset();
     this.saveToHistory();
+  }
+
+  onElementDragMoved(event: any, element: PDFTemplateElement): void {
+    // Optional: Add visual feedback during drag
+    if (this.snapToGrid) {
+      // You can add grid snapping preview here
+    }
   }
 
   private createNewElement(type: ElementType, position?: { x: number; y: number }): PDFTemplateElement {
     const baseElement: PDFTemplateElement = {
       element_type: type,
       element_key: `${type}_${Date.now()}`,
-      x_position: position?.x || 100,
-      y_position: position?.y || 100,
+      x_position: position?.x ?? 100,
+      y_position: position?.y ?? 100,
       z_index: this.elements.length,
       active_ind: true,
       is_repeatable: false,

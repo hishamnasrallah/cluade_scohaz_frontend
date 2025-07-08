@@ -122,12 +122,12 @@
 
         <!-- Reports Menu -->
         <button mat-button
-                (click)="goToReports()"
+                (click)="goToStatistics()"
                 class="nav-menu-item"
-                matTooltip="Reports"
+                matTooltip="Statistics"
                 matTooltipPosition="below">
           <mat-icon>assessment</mat-icon>
-          <span>Reports</span>
+          <span>Statistics</span>
         </button>
       </nav>
 
@@ -234,7 +234,7 @@
 
                 <div class="settings-section">
                   <span class="section-title">Analytics</span>
-                  <button mat-menu-item (click)="goToReports()">
+                  <button mat-menu-item (click)="goToSettings('pdf-templates')">
                     <mat-icon>assessment</mat-icon>
                     <span>Reports</span>
                   </button>

@@ -7,7 +7,7 @@ export const REPORT_ROUTES: Routes = [
   {
     path: '',
     data: {
-      title: 'Reports',
+      title: 'Statistics',
       icon: 'assessment',
       requiresAuth: true
     },
