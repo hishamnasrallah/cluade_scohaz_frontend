@@ -108,7 +108,69 @@ import { LookupService } from '../../../../services/lookup.service';
                 </div>
               </mat-card-content>
             </mat-card>
+            <!-- Parallel Approval Information Card -->
+            <mat-card class="info-card" *ngIf="caseData.approval_info && caseData.approval_info.type === 'parallel'">
+              <mat-card-header>
+                <div class="card-header">
+                  <mat-icon class="card-icon">groups</mat-icon>
+                  <h3>Parallel Approval Progress</h3>
+                </div>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="info-grid">
+                  <div class="info-item">
+                    <span class="label">Approval Type</span>
+                    <span class="value">Parallel Approval Required</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="label">Progress</span>
+                    <span class="value">
+          {{ caseData.approval_info?.current_approvals || 0 }} of
+                      {{ caseData.approval_info?.required_approvals || 0 }} approvals
+        </span>
+                  </div>
+                  <div class="info-item" *ngIf="caseData.approval_info?.user_has_approved">
+                    <span class="label">Your Status</span>
+                    <span class="value">
+          <mat-icon class="boolean-true">check_circle</mat-icon>
+          You have approved
+        </span>
+                  </div>
+                  <div class="info-item" *ngIf="hasRemainingApprovals()">
+                    <span class="label">Remaining</span>
+                    <span class="value">{{ caseData.approval_info?.remaining_approvals }} more approval(s) needed</span>
+                  </div>
+                </div>
 
+                <!-- Approvers List -->
+                <div class="approvers-section" *ngIf="hasApprovers()">
+                  <h4>Approval History</h4>
+                  <div class="approvers-list">
+                    <div *ngFor="let approver of getApprovers()" class="approver-item">
+                      <mat-icon class="approver-icon">person_check</mat-icon>
+                      <div class="approver-details">
+                        <span class="approver-name">{{ approver.user }}</span>
+                        <span class="approver-info">
+          {{ approver.department || 'Unknown Department' }} •
+                          {{ formatDateTime(approver.approved_at) }}
+        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Pending Groups -->
+                <div class="pending-groups" *ngIf="hasPendingGroups()">
+                  <h4>Pending Approvals From</h4>
+                  <div class="groups-list">
+                    <mat-chip *ngFor="let group of getPendingGroups()" class="group-chip">
+                      <mat-icon class="chip-icon">group</mat-icon>
+                      {{ group.name }}
+                    </mat-chip>
+                  </div>
+                </div>
+              </mat-card-content>
+            </mat-card>
             <!-- Applicant Information Card -->
             <mat-card class="info-card" *ngIf="caseData.case_data">
               <mat-card-header>
@@ -459,5 +521,25 @@ export class CaseDetailComponent implements OnInit {
       return `ID: ${id}`;
     }
     return this.lookupCache[type][id] || `ID: ${id}`;
+  }
+  // Add these methods to the component class
+  hasRemainingApprovals(): boolean {
+    return (this.caseData?.approval_info?.remaining_approvals ?? 0) > 0;
+  }
+
+  hasApprovers(): boolean {
+    return (this.caseData?.approval_info?.approvers?.length ?? 0) > 0;
+  }
+
+  hasPendingGroups(): boolean {
+    return (this.caseData?.approval_info?.pending_groups?.length ?? 0) > 0;
+  }
+
+  getApprovers(): any[] {
+    return this.caseData?.approval_info?.approvers ?? [];
+  }
+
+  getPendingGroups(): any[] {
+    return this.caseData?.approval_info?.pending_groups ?? [];
   }
 }

@@ -727,3 +727,91 @@
     color: #6B7280;
   }
 }
+/* Approvers Section */
+.approvers-section {
+  margin-top: 24px;
+
+  h4 {
+    color: #4B5563;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+  }
+}
+
+.approvers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.approver-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #F9FAFB;
+  border-radius: 8px;
+  border: 1px solid rgba(229, 231, 235, 0.8);
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(196, 247, 239, 0.2);
+    border-color: rgba(52, 197, 170, 0.3);
+  }
+}
+
+.approver-icon {
+  color: #16A34A;
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+.approver-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.approver-name {
+  color: #2F4858;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.approver-info {
+  color: #6B7280;
+  font-size: 0.8rem;
+}
+
+/* Pending Groups */
+.pending-groups {
+  margin-top: 24px;
+
+  h4 {
+    color: #4B5563;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+  }
+}
+
+.groups-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.group-chip {
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563EB;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+
+  .chip-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    margin-right: 6px;
+  }
+}

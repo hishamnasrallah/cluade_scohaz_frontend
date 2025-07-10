@@ -669,3 +669,42 @@
     }
   }
 }
+/* Parallel Approval Badge */
+.parallel-badge {
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 12px;
+  margin-left: 8px;
+  height: 28px;
+
+  .chip-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+  }
+}
+
+/* UI Status Chips */
+.ui-status-green {
+  background: rgba(34, 197, 94, 0.1);
+  color: #16A34A;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  margin-left: 8px;
+}
+
+.ui-status-orange {
+  background: rgba(245, 158, 11, 0.1);
+  color: #D97706;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  margin-left: 8px;
+}
+
+.ui-status-default {
+  background: rgba(107, 114, 128, 0.08);
+  color: #6B7280;
+  border: 1px solid rgba(107, 114, 128, 0.2);
+  margin-left: 8px;
+}

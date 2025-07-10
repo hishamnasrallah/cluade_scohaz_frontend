@@ -47,7 +47,7 @@ import { CaseDetailComponent } from '../case-detail/case-detail.component';
           <p class="empty-message">
             {{ showAssignButton
             ? 'There are no cases available for assignment at the moment.'
-            : 'You don\'t have any assigned cases right now.' }}
+            : "You don\'t have any assigned cases right now." }}
           </p>
           <button mat-button (click)="onRefresh.emit()" class="refresh-btn">
             <mat-icon>refresh</mat-icon>
@@ -98,6 +98,7 @@ import { CaseDetailComponent } from '../case-detail/case-detail.component';
             </ng-container>
 
             <!-- Status Column -->
+            <!-- Status Column -->
             <ng-container matColumnDef="status">
               <th mat-header-cell *matHeaderCellDef>
                 <div class="header-content">
@@ -109,6 +110,18 @@ import { CaseDetailComponent } from '../case-detail/case-detail.component';
                 <div class="cell-content">
                   <mat-chip [class]="'status-' + getStatusClass(case.status)">
                     {{ getLookupValue('status', case.status) }}
+                  </mat-chip>
+                  <!-- Parallel Approval Badge -->
+                  <mat-chip *ngIf="case.approval_info?.type === 'parallel'"
+                            class="parallel-badge"
+                            [matTooltip]="getParallelTooltip(case)">
+                    <mat-icon class="chip-icon">groups</mat-icon>
+                    {{ case.approval_info.current_approvals || 0 }}/{{ case.approval_info.required_approvals || 0 }}
+                  </mat-chip>
+                  <!-- User Status for Parallel Approvals -->
+                  <mat-chip *ngIf="case.ui_status"
+                            [class]="'ui-status-' + (case.ui_status_color || 'default')">
+                    {{ case.ui_status }}
                   </mat-chip>
                 </div>
               </td>
@@ -422,5 +435,30 @@ export class CaseTableComponent implements OnInit {
       return `ID: ${id}`;
     }
     return this.lookupCache[type][id] || `ID: ${id}`;
+  }
+
+  getParallelTooltip(caseData: CaseData): string {
+    if (!caseData.approval_info || caseData.approval_info.type !== 'parallel') {
+      return '';
+    }
+
+    const info = caseData.approval_info;
+    const approved = info.current_approvals || 0;
+    const required = info.required_approvals || 0;
+    const remaining = info.remaining_approvals || 0;
+
+    let tooltip = `Parallel Approval: ${approved} of ${required} approvals received`;
+
+    if (info.user_has_approved) {
+      tooltip += '\n✓ You have already approved';
+    } else if (info.can_approve) {
+      tooltip += '\n⚡ You can approve this case';
+    }
+
+    if (remaining > 0) {
+      tooltip += `\n⏳ Waiting for ${remaining} more approval(s)`;
+    }
+
+    return tooltip;
   }
 }

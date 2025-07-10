@@ -43,6 +43,28 @@ export interface CaseData {
     code: string;
     active_ind: boolean;
   }>;
+  // New fields for parallel approval
+  assignment_type?: 'directly_assigned' | 'parallel_approval' | 'available';
+  assignment_display?: string;
+  approval_info?: {
+    type: 'parallel' | 'sequential';
+    required_approvals?: number;
+    current_approvals?: number;
+    remaining_approvals?: number;
+    user_has_approved?: boolean;
+    can_approve?: boolean;
+    approvers?: Array<{
+      user: string;
+      approved_at: string;
+      department: string | null;
+    }>;
+    pending_groups?: Array<{
+      id: number;
+      name: string;
+    }>;
+  };
+  ui_status?: string;
+  ui_status_color?: string;
 }
 
 export interface CasesResponse {
@@ -130,6 +152,12 @@ export interface CasesResponse {
                             class="count-chip"
                             [matBadge]="myCasesCount">
                     {{ myCasesCount }}
+                  </mat-chip>
+                  <mat-chip *ngIf="parallelApprovalCount > 0"
+                            class="count-chip parallel"
+                            matTooltip="Cases awaiting your parallel approval">
+                    <mat-icon class="chip-icon">groups</mat-icon>
+                    {{ parallelApprovalCount }}
                   </mat-chip>
                 </div>
               </ng-template>
@@ -292,5 +320,12 @@ export class ApplicationsInboxComponent implements OnInit, OnDestroy {
           });
         }
       });
+  }
+  get parallelApprovalCount(): number {
+    if (!this.myCases) return 0;
+    return this.myCases.filter(c =>
+      c.assignment_type === 'parallel_approval' &&
+      c.approval_info?.can_approve
+    ).length;
   }
 }
