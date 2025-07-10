@@ -1226,7 +1226,7 @@ export class FieldsManagementComponent implements OnInit {
 
   private loadParentLookups(): void {
     const baseUrl = this.configService.getBaseUrl();
-    this.http.get<LookupItem[]>(`${baseUrl}/lookups/lookup/parents/`)
+    this.http.get<LookupItem[]>(`${baseUrl}/lookups/management/parents/`)
       .subscribe({
         next: (response) => {
           this.parentLookups = response;

@@ -281,9 +281,12 @@ export class PDFTemplateService {
 
   // Utility endpoints
   getContentTypes(): Observable<ContentTypeModel[]> {
-    // Use the correct backend endpoint
-    const baseUrl = this.configService.getBaseUrl();
-    return this.http.get<ContentTypeModel[]>(`${baseUrl}/reports/content-types/`);
+    const url = this.getFullUrl('/reports/content-types/');
+    if (!this.isValidUrl(url)) {
+      console.error('Invalid URL for getContentTypes:', url);
+      return throwError(() => new Error('Invalid API URL configuration'));
+    }
+    return this.http.get<ContentTypeModel[]>(url);
   }
 
   // Updated getGenerationLogs to accept both HttpParams and plain objects

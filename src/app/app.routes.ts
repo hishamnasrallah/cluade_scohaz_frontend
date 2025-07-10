@@ -10,6 +10,7 @@ import { ApplicationDetailComponent } from './components/application-detail/appl
 import { ApplicationsInboxComponent } from './components/applications-inbox/applications-inbox.component';
 import { ThemeCreatorComponent } from './components/theme-creator/theme-creator.component';
 import {LogoComponent} from './components/logo/logo.component';
+import {simplePdfRoutes} from './components/simple-pdf/simple-pdf.routes';
 
 export const routes: Routes = [
   // Default route - redirect to dashboard
@@ -115,6 +116,13 @@ export const routes: Routes = [
           import('./components/template-builder/template-builder.routes')
             .then(m => m.templateBuilderRoutes),
         data: { title: 'PDF Templates', icon: 'description' }
+      },
+      {
+        path: 'simple-pdf',
+        loadChildren: () =>
+          import('./components/simple-pdf/simple-pdf.routes').then(m => m.simplePdfRoutes),
+        data: { title: 'PDF Templates', icon: 'dashboard' }
+
       },
 
       {
