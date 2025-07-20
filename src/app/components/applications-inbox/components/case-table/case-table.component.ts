@@ -1,4 +1,4 @@
-// components/applications-inbox/components/case-table/case-table.component.ts
+// components/applications-inbox/components/case-table/case-table.component.ts - COMPLETE WITH TRANSLATIONS
 import { Component, Input, Output, EventEmitter, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
@@ -14,6 +14,8 @@ import { MatBadgeModule } from '@angular/material/badge';
 
 import { CaseData } from '../../applications-inbox.component';
 import { LookupService } from '../../../../services/lookup.service';
+import { TranslationService } from '../../../../services/translation.service';
+import { TranslatePipe } from '../../../../pipes/translate.pipe';
 import { CaseDetailComponent } from '../case-detail/case-detail.component';
 
 @Component({
@@ -31,7 +33,8 @@ import { CaseDetailComponent } from '../case-detail/case-detail.component';
     MatChipsModule,
     MatProgressSpinnerModule,
     MatBadgeModule,
-    CaseDetailComponent
+    CaseDetailComponent,
+    TranslatePipe
   ],
   template: `
     <div class="case-table-container">
@@ -42,16 +45,14 @@ import { CaseDetailComponent } from '../case-detail/case-detail.component';
             <mat-icon>{{ showAssignButton ? 'inbox' : 'assignment' }}</mat-icon>
           </div>
           <h3 class="empty-title">
-            {{ showAssignButton ? 'No Available Cases' : 'No Assigned Cases' }}
+            {{ showAssignButton ? ('no_available_cases' | translate) : ('no_assigned_cases' | translate) }}
           </h3>
           <p class="empty-message">
-            {{ showAssignButton
-            ? 'There are no cases available for assignment at the moment.'
-            : "You don\'t have any assigned cases right now." }}
+            {{ showAssignButton ? ('no_available_cases_desc' | translate) : ('no_assigned_cases_desc' | translate) }}
           </p>
           <button mat-button (click)="onRefresh.emit()" class="refresh-btn">
             <mat-icon>refresh</mat-icon>
-            Refresh
+            {{ 'refresh' | translate }}
           </button>
         </div>
       </div>
@@ -59,7 +60,7 @@ import { CaseDetailComponent } from '../case-detail/case-detail.component';
       <!-- Loading State -->
       <div class="loading-overlay" *ngIf="loading">
         <mat-spinner diameter="40"></mat-spinner>
-        <p>Loading cases...</p>
+        <p>{{ 'loading_cases' | translate }}...</p>
       </div>
 
       <!-- Cases Table -->
@@ -72,7 +73,7 @@ import { CaseDetailComponent } from '../case-detail/case-detail.component';
               <th mat-header-cell *matHeaderCellDef mat-sort-header>
                 <div class="header-content">
                   <mat-icon class="header-icon">tag</mat-icon>
-                  <span>Serial Number</span>
+                  <span>{{ 'serial_number' | translate }}</span>
                 </div>
               </th>
               <td mat-cell *matCellDef="let case">
@@ -87,29 +88,28 @@ import { CaseDetailComponent } from '../case-detail/case-detail.component';
               <th mat-header-cell *matHeaderCellDef>
                 <div class="header-content">
                   <mat-icon class="header-icon">category</mat-icon>
-                  <span>Case Type</span>
+                  <span>{{ 'case_type' | translate }}</span>
                 </div>
               </th>
               <td mat-cell *matCellDef="let case">
                 <div class="cell-content">
-                  <span class="lookup-value">{{ getLookupValue('case_type', case.case_type) }}</span>
+                  <span class="lookup-value">{{ getCaseTypeName(case.case_type) }}</span>
                 </div>
               </td>
             </ng-container>
 
             <!-- Status Column -->
-            <!-- Status Column -->
             <ng-container matColumnDef="status">
               <th mat-header-cell *matHeaderCellDef>
                 <div class="header-content">
                   <mat-icon class="header-icon">info</mat-icon>
-                  <span>Status</span>
+                  <span>{{ 'status' | translate }}</span>
                 </div>
               </th>
               <td mat-cell *matCellDef="let case">
                 <div class="cell-content">
                   <mat-chip [class]="'status-' + getStatusClass(case.status)">
-                    {{ getLookupValue('status', case.status) }}
+                    {{ getStatusName(case.status) }}
                   </mat-chip>
                   <!-- Parallel Approval Badge -->
                   <mat-chip *ngIf="case.approval_info?.type === 'parallel'"
@@ -132,7 +132,7 @@ import { CaseDetailComponent } from '../case-detail/case-detail.component';
               <th mat-header-cell *matHeaderCellDef>
                 <div class="header-content">
                   <mat-icon class="header-icon">person</mat-icon>
-                  <span>Applicant</span>
+                  <span>{{ 'applicant' | translate }}</span>
                 </div>
               </th>
               <td mat-cell *matCellDef="let case">
@@ -142,14 +142,14 @@ import { CaseDetailComponent } from '../case-detail/case-detail.component';
                       {{ formatApplicantName(case.case_data) }}
                     </div>
                     <div class="applicant-details">
-                    <span *ngIf="case.case_data?.age" class="detail-item">
-                      <mat-icon class="detail-icon">cake</mat-icon>
-                      {{ case.case_data.age }} years
-                    </span>
+                      <span *ngIf="case.case_data?.age" class="detail-item">
+                        <mat-icon class="detail-icon">cake</mat-icon>
+                        {{ case.case_data.age }} {{ 'years' | translate }}
+                      </span>
                       <span *ngIf="case.case_data?.gender" class="detail-item">
-                      <mat-icon class="detail-icon">wc</mat-icon>
-                        {{ getLookupValue('gender', case.case_data.gender) }}
-                    </span>
+                        <mat-icon class="detail-icon">wc</mat-icon>
+                        {{ getGenderName(case.case_data.gender) }}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -161,7 +161,7 @@ import { CaseDetailComponent } from '../case-detail/case-detail.component';
               <th mat-header-cell *matHeaderCellDef mat-sort-header>
                 <div class="header-content">
                   <mat-icon class="header-icon">schedule</mat-icon>
-                  <span>Created</span>
+                  <span>{{ 'created' | translate }}</span>
                 </div>
               </th>
               <td mat-cell *matCellDef="let case">
@@ -179,7 +179,7 @@ import { CaseDetailComponent } from '../case-detail/case-detail.component';
               <th mat-header-cell *matHeaderCellDef>
                 <div class="header-content">
                   <mat-icon class="header-icon">settings</mat-icon>
-                  <span>Actions</span>
+                  <span>{{ 'actions' | translate }}</span>
                 </div>
               </th>
               <td mat-cell *matCellDef="let case">
@@ -189,9 +189,9 @@ import { CaseDetailComponent } from '../case-detail/case-detail.component';
                           *ngIf="showAssignButton"
                           color="primary"
                           (click)="assignCase(case)"
-                          class="header-actions">
+                          class="assign-btn">
                     <mat-icon>assignment_ind</mat-icon>
-                    Assign to Me
+                    {{ 'assign_to_me' | translate }}
                   </button>
 
                   <!-- Action Buttons for My Cases -->
@@ -200,9 +200,9 @@ import { CaseDetailComponent } from '../case-detail/case-detail.component';
                             *ngFor="let action of case.available_actions"
                             [class]="'action-btn action-' + getActionClass(action.code)"
                             (click)="performAction(case, action)"
-                            [matTooltip]="action.name_ara">
+                            [matTooltip]="getCurrentLanguage() === 'ar' ? action.name_ara : action.name">
                       <mat-icon>{{ getActionIcon(action.code) }}</mat-icon>
-                      {{ action.name }}
+                      {{ getCurrentLanguage() === 'ar' ? action.name_ara : action.name }}
                     </button>
                   </div>
 
@@ -216,11 +216,11 @@ import { CaseDetailComponent } from '../case-detail/case-detail.component';
                   <mat-menu #moreMenu="matMenu">
                     <button mat-menu-item (click)="viewCase(case)">
                       <mat-icon>visibility</mat-icon>
-                      <span>View Details</span>
+                      <span>{{ 'view_details' | translate }}</span>
                     </button>
                     <button mat-menu-item (click)="viewHistory(case)">
                       <mat-icon>history</mat-icon>
-                      <span>View History</span>
+                      <span>{{ 'view_history' | translate }}</span>
                     </button>
                   </mat-menu>
                 </div>
@@ -277,7 +277,10 @@ export class CaseTableComponent implements OnInit {
   // Lookup cache for dynamic display values
   lookupCache: { [key: string]: { [id: number]: string } } = {};
 
-  constructor(private lookupService: LookupService) {}
+  constructor(
+    private lookupService: LookupService,
+    private translationService: TranslationService
+  ) {}
 
   ngOnInit(): void {
     this.dataSource.data = this.cases;
@@ -295,6 +298,10 @@ export class CaseTableComponent implements OnInit {
 
   ngOnChanges(): void {
     this.dataSource.data = this.cases;
+  }
+
+  getCurrentLanguage(): string {
+    return this.translationService.getCurrentLanguage();
   }
 
   assignCase(caseData: CaseData): void {
@@ -326,7 +333,7 @@ export class CaseTableComponent implements OnInit {
   }
 
   formatApplicantName(caseData: any): string {
-    if (!caseData) return 'Unknown';
+    if (!caseData) return this.translationService.instant('unknown_applicant');
 
     const firstName = caseData.first_name || '';
     const lastName = caseData.last_name || '';
@@ -339,14 +346,22 @@ export class CaseTableComponent implements OnInit {
       return lastName;
     }
 
-    return 'Unknown Applicant';
+    return this.translationService.instant('unknown_applicant');
   }
 
   formatDate(dateString: string): string {
     if (!dateString) return '';
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      const currentLang = this.getCurrentLanguage();
+
+      // Use locale-specific date formatting
+      return date.toLocaleDateString(currentLang === 'ar' ? 'ar-SA' : 'en-US') +
+        ' ' +
+        date.toLocaleTimeString(currentLang === 'ar' ? 'ar-SA' : 'en-US', {
+          hour: '2-digit',
+          minute:'2-digit'
+        });
     } catch {
       return dateString;
     }
@@ -360,10 +375,11 @@ export class CaseTableComponent implements OnInit {
       const diffTime = Math.abs(now.getTime() - date.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-      if (diffDays === 1) return 'Yesterday';
-      if (diffDays < 7) return `${diffDays} days ago`;
-      if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`;
-      return `${Math.ceil(diffDays / 30)} months ago`;
+      // Translate relative time
+      if (diffDays === 1) return this.translationService.instant('yesterday');
+      if (diffDays < 7) return this.translationService.instant('days_ago', { days: diffDays });
+      if (diffDays < 30) return this.translationService.instant('weeks_ago', { weeks: Math.ceil(diffDays / 7) });
+      return this.translationService.instant('months_ago', { months: Math.ceil(diffDays / 30) });
     } catch {
       return '';
     }
@@ -402,7 +418,7 @@ export class CaseTableComponent implements OnInit {
     return statusMap[status] || 'default';
   }
 
-  // Dynamic lookup methods
+  // Dynamic lookup methods with language support
   loadLookupData(): void {
     // Load lookup data for dynamic display
     this.lookupService.getCaseTypes().subscribe(data => {
@@ -416,25 +432,51 @@ export class CaseTableComponent implements OnInit {
     this.lookupService.getGenders().subscribe(data => {
       this.lookupCache['gender'] = this.mapLookupData(data);
     });
+
+    // Subscribe to language changes to reload lookups
+    this.translationService.languageChange$.subscribe(() => {
+      this.loadLookupData(); // Reload when language changes
+    });
   }
 
   private mapLookupData(data: any[]): { [id: number]: string } {
     const map: { [id: number]: string } = {};
+    const currentLang = this.getCurrentLanguage();
+
     if (Array.isArray(data)) {
       data.forEach(item => {
-        if (item.id && item.name) {
-          map[item.id] = item.name;
+        if (item.id) {
+          // Use Arabic name if current language is Arabic and it exists
+          if (currentLang === 'ar' && item.name_ara) {
+            map[item.id] = item.name_ara;
+          } else {
+            map[item.id] = item.name || `ID: ${item.id}`;
+          }
         }
       });
     }
     return map;
   }
 
-  getLookupValue(type: string, id: number): string {
-    if (!this.lookupCache[type] || !id) {
-      return `ID: ${id}`;
+  getCaseTypeName(id: number): string {
+    if (!this.lookupCache['case_type'] || !id) {
+      return this.translationService.instant('unknown_type');
     }
-    return this.lookupCache[type][id] || `ID: ${id}`;
+    return this.lookupCache['case_type'][id] || this.translationService.instant('unknown_type');
+  }
+
+  getStatusName(id: number): string {
+    if (!this.lookupCache['status'] || !id) {
+      return this.translationService.instant('unknown_status');
+    }
+    return this.lookupCache['status'][id] || this.translationService.instant('unknown_status');
+  }
+
+  getGenderName(id: number): string {
+    if (!this.lookupCache['gender'] || !id) {
+      return this.translationService.instant('unknown_gender');
+    }
+    return this.lookupCache['gender'][id] || this.translationService.instant('unknown_gender');
   }
 
   getParallelTooltip(caseData: CaseData): string {
@@ -447,16 +489,19 @@ export class CaseTableComponent implements OnInit {
     const required = info.required_approvals || 0;
     const remaining = info.remaining_approvals || 0;
 
-    let tooltip = `Parallel Approval: ${approved} of ${required} approvals received`;
+    let tooltip = this.translationService.instant('parallel_approval_progress', {
+      approved,
+      required
+    });
 
     if (info.user_has_approved) {
-      tooltip += '\n✓ You have already approved';
+      tooltip += '\n✓ ' + this.translationService.instant('you_have_approved');
     } else if (info.can_approve) {
-      tooltip += '\n⚡ You can approve this case';
+      tooltip += '\n⚡ ' + this.translationService.instant('you_can_approve');
     }
 
     if (remaining > 0) {
-      tooltip += `\n⏳ Waiting for ${remaining} more approval(s)`;
+      tooltip += '\n⏳ ' + this.translationService.instant('waiting_for_approvals', { remaining });
     }
 
     return tooltip;

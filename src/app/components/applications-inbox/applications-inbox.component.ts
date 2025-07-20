@@ -1,4 +1,4 @@
-// components/applications-inbox/applications-inbox.component.ts
+// components/applications-inbox/applications-inbox.component.ts - WITH TRANSLATIONS
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
@@ -16,6 +16,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 
 import { CaseService } from '../../services/case.service';
+import { TranslationService } from '../../services/translation.service';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 import { CaseTableComponent } from './components/case-table/case-table.component';
 import { CaseDetailComponent } from './components/case-detail/case-detail.component';
 
@@ -65,19 +67,44 @@ export interface CaseData {
   };
   ui_status?: string;
   ui_status_color?: string;
+  approval_history?: Array<{
+    approval_step: {
+      id: number;
+      status: string;
+      group: string;
+      step_type: string;
+      type: 'parallel' | 'sequential' | 'unknown';
+      required_approvals?: number;
+    };
+    approvals: Array<{
+      approved_by: string;
+      approved_at: string;
+      action_taken: string;
+      department: string | null;
+    }>;
+  }>;
 }
 
 export interface CasesResponse {
   my_cases: {
-    count: number;
-    next: string | null;
-    previous: string | null;
-    results: CaseData[];
+    total_count: number;
+    categories: {
+      assigned_to_me: {
+        count: number;
+        results: CaseData[];
+      };
+      pending_my_approval: {
+        count: number;
+        results: CaseData[];
+      };
+      already_approved: {
+        count: number;
+        results: CaseData[];
+      };
+    };
   };
   available_cases: {
     count: number;
-    next: string | null;
-    previous: string | null;
     results: CaseData[];
   };
 }
@@ -98,6 +125,7 @@ export interface CasesResponse {
     MatChipsModule,
     MatDividerModule,
     CaseTableComponent,
+    TranslatePipe
     // CaseDetailComponent
   ],
   template: `
@@ -110,8 +138,8 @@ export interface CasesResponse {
               <mat-icon>inbox</mat-icon>
             </div>
             <div class="header-text">
-              <h1 class="page-title">Applications</h1>
-              <p class="page-subtitle">Manage your cases and available assignments</p>
+              <h1 class="page-title">{{ 'applications' | translate }}</h1>
+              <p class="page-subtitle">{{ 'manage_cases' | translate }}</p>
             </div>
           </div>
 
@@ -121,7 +149,7 @@ export interface CasesResponse {
                     class="refresh-btn"
                     [disabled]="loading">
               <mat-icon [class.spinning]="loading">refresh</mat-icon>
-              <span>Refresh</span>
+              <span>{{ 'refresh' | translate }}</span>
             </button>
           </div>
         </div>
@@ -131,7 +159,7 @@ export interface CasesResponse {
       <div class="loading-overlay" *ngIf="loading && !casesData">
         <div class="loading-content">
           <mat-spinner diameter="48"></mat-spinner>
-          <p class="loading-text">Loading applications...</p>
+          <p class="loading-text">{{ 'loading_applications' | translate }}...</p>
         </div>
       </div>
 
@@ -147,42 +175,94 @@ export interface CasesResponse {
               <ng-template mat-tab-label>
                 <div class="tab-label">
                   <mat-icon>assignment</mat-icon>
-                  <span>My Applications</span>
+                  <span>{{ 'my_applications' | translate }}</span>
                   <mat-chip *ngIf="myCasesCount > 0"
-                            class="count-chip"
-                            [matBadge]="myCasesCount">
+                            class="count-chip">
                     {{ myCasesCount }}
-                  </mat-chip>
-                  <mat-chip *ngIf="parallelApprovalCount > 0"
-                            class="count-chip parallel"
-                            matTooltip="Cases awaiting your parallel approval">
-                    <mat-icon class="chip-icon">groups</mat-icon>
-                    {{ parallelApprovalCount }}
                   </mat-chip>
                 </div>
               </ng-template>
 
               <div class="tab-content">
-                <app-case-table
-                  [cases]="myCases"
-                  [loading]="loading"
-                  [showAssignButton]="false"
-                  [showActions]="true"
-                  (onAction)="handleCaseAction($event)"
-                  (onRefresh)="refreshData()">
-                </app-case-table>
+                <!-- Category Tabs -->
+                <mat-tab-group class="category-tabs"
+                               [selectedIndex]="selectedCategoryIndex"
+                               (selectedTabChange)="onCategoryTabChange($event)">
+
+                  <!-- Assigned to Me -->
+                  <mat-tab>
+                    <ng-template mat-tab-label>
+                      <div class="tab-label">
+                        <span>{{ 'assigned_to_me' | translate }}</span>
+                        <mat-chip *ngIf="assignedToMeCount > 0"
+                                  class="count-chip">
+                          {{ assignedToMeCount }}
+                        </mat-chip>
+                      </div>
+                    </ng-template>
+                    <app-case-table
+                      [cases]="assignedToMeCases"
+                      [loading]="loading"
+                      [showAssignButton]="false"
+                      [showActions]="true"
+                      (onAction)="handleCaseAction($event)"
+                      (onRefresh)="refreshData()">
+                    </app-case-table>
+                  </mat-tab>
+
+                  <!-- Pending My Approval -->
+                  <mat-tab>
+                    <ng-template mat-tab-label>
+                      <div class="tab-label">
+                        <span>{{ 'pending_my_approval' | translate }}</span>
+                        <mat-chip *ngIf="pendingMyApprovalCount > 0"
+                                  class="count-chip">
+                          {{ pendingMyApprovalCount }}
+                        </mat-chip>
+                      </div>
+                    </ng-template>
+                    <app-case-table
+                      [cases]="pendingMyApprovalCases"
+                      [loading]="loading"
+                      [showAssignButton]="false"
+                      [showActions]="true"
+                      (onAction)="handleCaseAction($event)"
+                      (onRefresh)="refreshData()">
+                    </app-case-table>
+                  </mat-tab>
+
+                  <!-- Already Approved -->
+                  <mat-tab>
+                    <ng-template mat-tab-label>
+                      <div class="tab-label">
+                        <span>{{ 'already_approved' | translate }}</span>
+                        <mat-chip *ngIf="alreadyApprovedCount > 0"
+                                  class="count-chip">
+                          {{ alreadyApprovedCount }}
+                        </mat-chip>
+                      </div>
+                    </ng-template>
+                    <app-case-table
+                      [cases]="alreadyApprovedCases"
+                      [loading]="loading"
+                      [showAssignButton]="false"
+                      [showActions]="false"
+                      (onAction)="handleCaseAction($event)"
+                      (onRefresh)="refreshData()">
+                    </app-case-table>
+                  </mat-tab>
+                </mat-tab-group>
               </div>
             </mat-tab>
 
-            <!-- New Cases Tab -->
+            <!-- Available Cases Tab -->
             <mat-tab>
               <ng-template mat-tab-label>
                 <div class="tab-label">
                   <mat-icon>add_task</mat-icon>
-                  <span>New Cases</span>
+                  <span>{{ 'available_cases' | translate }}</span>
                   <mat-chip *ngIf="availableCasesCount > 0"
-                            class="count-chip"
-                            [matBadge]="availableCasesCount">
+                            class="count-chip available">
                     {{ availableCasesCount }}
                   </mat-chip>
                 </div>
@@ -210,12 +290,14 @@ export class ApplicationsInboxComponent implements OnInit, OnDestroy {
   casesData: CasesResponse | null = null;
   loading = false;
   selectedTabIndex = 0;
+  selectedCategoryIndex = 0;
 
   private destroy$ = new Subject<void>();
 
   constructor(
     private caseService: CaseService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private translationService: TranslationService
   ) {}
 
   ngOnInit(): void {
@@ -227,20 +309,44 @@ export class ApplicationsInboxComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  get myCases(): CaseData[] {
-    return this.casesData?.my_cases?.results || [];
+  get assignedToMeCases(): CaseData[] {
+    return this.casesData?.my_cases?.categories?.assigned_to_me?.results || [];
+  }
+
+  get pendingMyApprovalCases(): CaseData[] {
+    return this.casesData?.my_cases?.categories?.pending_my_approval?.results || [];
+  }
+
+  get alreadyApprovedCases(): CaseData[] {
+    return this.casesData?.my_cases?.categories?.already_approved?.results || [];
   }
 
   get availableCases(): CaseData[] {
     return this.casesData?.available_cases?.results || [];
   }
 
+  get assignedToMeCount(): number {
+    return this.casesData?.my_cases?.categories?.assigned_to_me?.count || 0;
+  }
+
+  get pendingMyApprovalCount(): number {
+    return this.casesData?.my_cases?.categories?.pending_my_approval?.count || 0;
+  }
+
+  get alreadyApprovedCount(): number {
+    return this.casesData?.my_cases?.categories?.already_approved?.count || 0;
+  }
+
   get myCasesCount(): number {
-    return this.casesData?.my_cases?.count || 0;
+    return this.casesData?.my_cases?.total_count || 0;
   }
 
   get availableCasesCount(): number {
     return this.casesData?.available_cases?.count || 0;
+  }
+
+  onCategoryTabChange(event: any): void {
+    this.selectedCategoryIndex = event.index;
   }
 
   onTabChange(event: any): void {
@@ -261,7 +367,8 @@ export class ApplicationsInboxComponent implements OnInit, OnDestroy {
         error: (error) => {
           console.error('Error loading cases:', error);
           this.loading = false;
-          this.snackBar.open('Failed to load applications', 'Close', {
+          const errorMessage = this.translationService.instant('failed_to_load_applications');
+          this.snackBar.open(errorMessage, this.translationService.instant('close'), {
             duration: 5000,
             panelClass: ['error-snackbar']
           });
@@ -280,7 +387,10 @@ export class ApplicationsInboxComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          this.snackBar.open(`Case ${caseData.serial_number} assigned successfully`, 'Close', {
+          const successMessage = this.translationService.instant('case_assigned_success', {
+            serial: caseData.serial_number
+          });
+          this.snackBar.open(successMessage, this.translationService.instant('close'), {
             duration: 3000,
             panelClass: ['success-snackbar']
           });
@@ -289,7 +399,8 @@ export class ApplicationsInboxComponent implements OnInit, OnDestroy {
         error: (error) => {
           console.error('Error assigning case:', error);
           this.loading = false;
-          this.snackBar.open('Failed to assign case', 'Close', {
+          const errorMessage = this.translationService.instant('failed_to_assign');
+          this.snackBar.open(errorMessage, this.translationService.instant('close'), {
             duration: 5000,
             panelClass: ['error-snackbar']
           });
@@ -305,7 +416,15 @@ export class ApplicationsInboxComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          this.snackBar.open(`Action "${action.name}" completed successfully`, 'Close', {
+          // Use appropriate name based on current language
+          const actionName = this.translationService.getCurrentLanguage() === 'ar' && action.name_ara
+            ? action.name_ara
+            : action.name;
+
+          const successMessage = this.translationService.instant('action_completed_success', {
+            action: actionName
+          });
+          this.snackBar.open(successMessage, this.translationService.instant('close'), {
             duration: 3000,
             panelClass: ['success-snackbar']
           });
@@ -314,18 +433,19 @@ export class ApplicationsInboxComponent implements OnInit, OnDestroy {
         error: (error) => {
           console.error('Error performing case action:', error);
           this.loading = false;
-          this.snackBar.open(`Failed to perform action: ${action.name}`, 'Close', {
+
+          const actionName = this.translationService.getCurrentLanguage() === 'ar' && action.name_ara
+            ? action.name_ara
+            : action.name;
+
+          const errorMessage = this.translationService.instant('failed_to_perform_action', {
+            action: actionName
+          });
+          this.snackBar.open(errorMessage, this.translationService.instant('close'), {
             duration: 5000,
             panelClass: ['error-snackbar']
           });
         }
       });
-  }
-  get parallelApprovalCount(): number {
-    if (!this.myCases) return 0;
-    return this.myCases.filter(c =>
-      c.assignment_type === 'parallel_approval' &&
-      c.approval_info?.can_approve
-    ).length;
   }
 }

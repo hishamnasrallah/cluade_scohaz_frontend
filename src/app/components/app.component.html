@@ -147,6 +147,77 @@
 
       <!-- Action Section -->
       <div class="actions-section">
+        <!-- Language Selector -->
+        <div class="language-selector" *ngIf="isAuthenticated">
+          <button mat-icon-button
+                  [matMenuTriggerFor]="languageMenuRef"
+                  class="language-btn"
+                  [matTooltip]="'change_language' | translate"
+                  matTooltipPosition="below">
+            <mat-icon>language</mat-icon>
+            <span class="language-indicator">{{ currentLanguage.toUpperCase() }}</span>
+          </button>
+
+          <mat-menu #languageMenuRef="matMenu" class="language-dropdown ocean-mint-menu">
+            <div class="language-menu-header gradient-header">
+              <mat-icon>translate</mat-icon>
+              <span>{{ 'select_language' | translate }}</span>
+            </div>
+
+            <div class="language-list">
+              <button mat-menu-item
+                      *ngFor="let lang of availableLanguages"
+                      (click)="changeLanguage(lang)"
+                      class="language-item"
+                      [class.active]="currentLanguage === lang.code">
+                <div class="language-content">
+                  <span class="language-flag">{{ lang.flag }}</span>
+                  <div class="language-details">
+                    <span class="language-name">{{ lang.name }}</span>
+                    <span class="language-native">{{ lang.nativeName }}</span>
+                  </div>
+                  <mat-icon *ngIf="currentLanguage === lang.code" class="check-icon">check</mat-icon>
+                </div>
+              </button>
+            </div>
+          </mat-menu>
+        </div>
+
+        <!-- For non-authenticated users, add it before the Login button: -->
+        <div class="language-selector" *ngIf="!isAuthenticated">
+          <button mat-icon-button
+                  [matMenuTriggerFor]="languageMenuRef"
+                  class="language-btn"
+                  [matTooltip]="'change_language' | translate"
+                  matTooltipPosition="below">
+            <mat-icon>language</mat-icon>
+            <span class="language-indicator">{{ currentLanguage.toUpperCase() }}</span>
+          </button>
+
+          <mat-menu #languageMenuRef="matMenu" class="language-dropdown ocean-mint-menu">
+            <div class="language-menu-header gradient-header">
+              <mat-icon>translate</mat-icon>
+              <span>{{ 'select_language' | translate }}</span>
+            </div>
+
+            <div class="language-list">
+              <button mat-menu-item
+                      *ngFor="let lang of availableLanguages"
+                      (click)="changeLanguage(lang)"
+                      class="language-item"
+                      [class.active]="currentLanguage === lang.code">
+                <div class="language-content">
+                  <span class="language-flag">{{ lang.flag }}</span>
+                  <div class="language-details">
+                    <span class="language-name">{{ lang.name }}</span>
+                    <span class="language-native">{{ lang.nativeName }}</span>
+                  </div>
+                  <mat-icon *ngIf="currentLanguage === lang.code" class="check-icon">check</mat-icon>
+                </div>
+              </button>
+            </div>
+          </mat-menu>
+        </div>
         <!-- Configuration Button for non-authenticated -->
         <button mat-icon-button
                 *ngIf="showConfigButton && !isAuthenticated"

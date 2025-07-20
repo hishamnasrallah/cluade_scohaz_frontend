@@ -1467,3 +1467,406 @@
     transform: scale(1.05);
   }
 }
+/* Language Selector Styles */
+.language-selector {
+  margin-right: 16px;
+}
+
+.language-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 12px;
+  min-width: auto;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+  }
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .language-indicator {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+}
+
+/* Language Dropdown Menu */
+.language-dropdown {
+  .language-menu-header {
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #34C5AA 0%, #2BA99B 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 600;
+    font-size: 0.95rem;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  .language-list {
+    padding: 8px;
+  }
+
+  .language-item {
+    border-radius: 8px;
+    margin-bottom: 4px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(196, 247, 239, 0.3);
+      transform: translateX(4px);
+    }
+
+    &.active {
+      background: rgba(52, 197, 170, 0.1);
+      color: #34C5AA;
+    }
+
+    .language-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 8px 0;
+
+      .language-flag {
+        font-size: 1.5rem;
+        width: 32px;
+        text-align: center;
+      }
+
+      .language-details {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+
+        .language-name {
+          font-weight: 600;
+          font-size: 0.95rem;
+        }
+
+        .language-native {
+          font-size: 0.8rem;
+          color: #6B7280;
+        }
+      }
+
+      .check-icon {
+        color: #34C5AA;
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+}
+
+/* RTL Support Styles */
+:host-context(body.rtl) {
+  .app-layout {
+    direction: rtl;
+  }
+
+  // Header adjustments for RTL
+  .header-content {
+    flex-direction: row-reverse;
+  }
+
+  .brand-section {
+    flex-direction: row-reverse;
+
+    .logo-container {
+      flex-direction: row-reverse;
+
+      .logo-icon {
+        margin-right: 0;
+        margin-left: 12px;
+      }
+    }
+  }
+
+  .main-navigation {
+    flex-direction: row-reverse;
+  }
+
+  .actions-section {
+    flex-direction: row-reverse;
+  }
+
+  // Menu icons for RTL
+  .nav-menu-item {
+    flex-direction: row-reverse;
+
+    mat-icon {
+      margin-right: 0;
+      margin-left: 8px;
+    }
+
+    .dropdown-icon {
+      margin-left: 0;
+      margin-right: 8px;
+      transform: rotate(180deg);
+    }
+  }
+
+  // Language selector for RTL
+  .language-selector {
+    margin-right: 0;
+    margin-left: 16px;
+  }
+
+  .language-btn {
+    flex-direction: row-reverse;
+  }
+
+  // User menu for RTL
+  .user-menu-trigger {
+    flex-direction: row-reverse;
+  }
+
+  // Breadcrumbs for RTL
+  .breadcrumb-nav {
+    flex-direction: row-reverse;
+
+    .breadcrumb-separator mat-icon {
+      transform: rotate(180deg);
+    }
+  }
+
+  // Menu items for RTL
+  .mat-menu-item {
+    flex-direction: row-reverse;
+    text-align: right;
+
+    mat-icon {
+      margin-right: 0;
+      margin-left: 12px;
+    }
+  }
+
+  // Language menu items for RTL
+  .language-item {
+    &:hover {
+      transform: translateX(-4px);
+    }
+
+    .language-content {
+      flex-direction: row-reverse;
+
+      .check-icon {
+        margin-right: 8px;
+        margin-left: 0;
+      }
+    }
+  }
+
+  // Progress bar for RTL
+  .progress-indicator {
+    animation: progressRTL 2s ease-in-out infinite;
+  }
+
+  // Footer for RTL
+  .footer-content {
+    direction: rtl;
+  }
+
+  .footer-grid {
+    direction: rtl;
+    text-align: right;
+  }
+
+  .social-links {
+    flex-direction: row-reverse;
+  }
+
+  .footer-links {
+    flex-direction: row-reverse;
+  }
+}
+
+/* RTL Progress Animation */
+@keyframes progressRTL {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+/* Global RTL Styles */
+body.rtl {
+  direction: rtl;
+  text-align: right;
+
+  // Material form fields for RTL
+  .mat-mdc-form-field {
+    text-align: right;
+  }
+
+  // Material buttons for RTL
+  .mat-mdc-button,
+  .mat-mdc-raised-button {
+    .mat-mdc-button-state {
+      flex-direction: row-reverse;
+    }
+
+    mat-icon {
+      margin-right: 0;
+      margin-left: 8px;
+    }
+  }
+
+  // Material tabs for RTL
+  .mat-mdc-tab-labels {
+    flex-direction: row-reverse;
+  }
+
+  // Material chips for RTL
+  .mat-mdc-chip {
+    flex-direction: row-reverse;
+
+    mat-icon {
+      margin-right: 0;
+      margin-left: 8px;
+    }
+  }
+
+  // Material table for RTL
+  .mat-mdc-table {
+    direction: rtl;
+
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      text-align: right;
+    }
+  }
+
+  // Material cards for RTL
+  .mat-mdc-card {
+    direction: rtl;
+    text-align: right;
+  }
+
+  // Material dialogs for RTL
+  .mat-mdc-dialog-container {
+    direction: rtl;
+    text-align: right;
+  }
+
+  // Material snackbar for RTL
+  .mat-mdc-snack-bar-container {
+    direction: rtl;
+    text-align: right;
+  }
+}
+
+/* Additional Language-specific adjustments */
+body[lang="ar"] {
+  font-family: 'Noto Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif;
+}
+
+// Add smooth transition for direction change
+body {
+  transition: direction 0.3s ease;
+}
+
+// Fix for Material icons in RTL
+body.rtl {
+  .mat-icon {
+    direction: ltr; // Keep icons in LTR
+  }
+}
+
+// Header text alignment for RTL
+body.rtl {
+  .page-title,
+  .page-subtitle,
+  .brand-subtitle {
+    text-align: right;
+  }
+}
+
+// Navigation alignment for RTL
+body.rtl {
+  .navigation-section {
+    margin-left: 0;
+    margin-right: auto;
+  }
+}
+
+// User profile section for RTL
+body.rtl {
+  .user-profile-section {
+    flex-direction: row-reverse;
+    text-align: right;
+  }
+
+  .user-info {
+    text-align: right;
+  }
+
+  .settings-sections {
+    text-align: right;
+  }
+
+  .settings-section {
+    .mat-menu-item {
+      flex-direction: row-reverse;
+    }
+  }
+}
+
+// Application menu for RTL
+body.rtl {
+  .applications-dropdown {
+    .app-item-content {
+      flex-direction: row-reverse;
+    }
+
+    .app-action {
+      margin-left: 0;
+      margin-right: auto;
+
+      .arrow-icon {
+        transform: rotate(180deg);
+      }
+    }
+  }
+}
+
+// Loading states for RTL
+body.rtl {
+  .loading-dots span {
+    animation: dotFlashRTL 1.4s infinite;
+  }
+}
+
+@keyframes dotFlashRTL {
+  0%, 80%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

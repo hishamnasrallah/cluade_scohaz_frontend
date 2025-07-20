@@ -14,6 +14,7 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { filter } from 'rxjs/operators';
 import {MatDivider} from '@angular/material/divider';
 import { HttpClient } from '@angular/common/http';
+import {TranslatePipe} from '../pipes/translate.pipe';
 
 // ... (keep all your existing interfaces - ApiResponse, ApplicationSummary, etc.)
 interface ApiResponse {
@@ -96,6 +97,14 @@ interface UserProfile {
   };
 }
 
+interface Language {
+  code: string;
+  name: string;
+  nativeName: string;
+  flag: string;
+  direction: 'ltr' | 'rtl';
+}
+
 @Component({
   selector: 'app-root',
   templateUrl: 'app.component.html',
@@ -111,7 +120,9 @@ interface UserProfile {
     MatMenuModule,
     MatTooltipModule,
     MatBadgeModule,
-    MatDivider
+    MatDivider,
+    TranslatePipe,
+    // TranslatePipe
   ],
   styleUrl:'app.component.scss'
 })
@@ -131,6 +142,16 @@ export class AppComponent implements OnInit {
   userProfile: UserProfile | null = null;
   userDisplayName = '';
   userEmail = '';
+
+  // Language support
+  currentLanguage = 'en';
+  availableLanguages: Language[] = [
+    { code: 'en', name: 'English', nativeName: 'English', flag: '🇺🇸', direction: 'ltr' },
+    { code: 'ar', name: 'Arabic', nativeName: 'العربية', flag: '🇸🇦', direction: 'rtl' },
+    { code: 'de', name: 'German', nativeName: 'Deutsch', flag: '🇩🇪', direction: 'ltr' },
+    { code: 'fr', name: 'French', nativeName: 'Français', flag: '🇫🇷', direction: 'ltr' },
+    { code: 'es', name: 'Spanish', nativeName: 'Español', flag: '🇪🇸', direction: 'ltr' }
+  ];
 
   // Applications data for dynamic menu
   applications: ApplicationSummary[] = [];
@@ -164,8 +185,8 @@ export class AppComponent implements OnInit {
       return;
     }
 
-    // Initialize translations with default language
-    this.translationService.initializeWithDefaults().subscribe();
+    // Initialize translations with user's preferred language or default
+    this.initializeTranslations();
 
     // Subscribe to authentication state
     this.authService.isAuthenticated$.subscribe(
@@ -194,6 +215,45 @@ export class AppComponent implements OnInit {
       console.log('AppComponent: User not authenticated, redirecting to login');
       this.router.navigate(['/login']);
     }
+
+    // Subscribe to language changes
+    this.translationService.languageChange$.subscribe(lang => {
+      this.currentLanguage = lang;
+      console.log('AppComponent: Language changed to:', lang);
+    });
+  }
+
+  // Initialize translations
+  private initializeTranslations(): void {
+    // Check for saved language preference
+    const savedLang = localStorage.getItem('preferredLanguage');
+
+    if (savedLang && this.availableLanguages.some(l => l.code === savedLang)) {
+      this.currentLanguage = savedLang;
+      this.translationService.setLanguage(savedLang).subscribe();
+    } else {
+      // Initialize with default language
+      this.translationService.initializeWithDefaults().subscribe();
+    }
+  }
+
+  // Change language
+  changeLanguage(language: Language): void {
+    this.currentLanguage = language.code;
+    this.translationService.setLanguage(language.code).subscribe({
+      next: () => {
+        console.log('Language changed to:', language.name);
+        // The TranslationService will handle RTL/LTR direction
+      },
+      error: (err) => {
+        console.error('Error changing language:', err);
+      }
+    });
+  }
+
+  // Get current language object
+  getCurrentLanguageObject(): Language | undefined {
+    return this.availableLanguages.find(l => l.code === this.currentLanguage);
   }
 
   // Load user profile from API
@@ -218,6 +278,17 @@ export class AppComponent implements OnInit {
             : profile.username;
 
           this.userEmail = profile.email || `${profile.username}@praxelo.com`;
+
+          // Set language from user preference
+          if (profile.preference?.lang) {
+            this.changeLanguage({
+              code: profile.preference.lang,
+              name: '',
+              nativeName: '',
+              flag: '',
+              direction: profile.preference.lang === 'ar' ? 'rtl' : 'ltr'
+            });
+          }
 
           console.log('AppComponent: User profile loaded:', profile);
         },

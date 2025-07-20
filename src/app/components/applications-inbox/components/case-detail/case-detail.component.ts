@@ -171,6 +171,59 @@ import { LookupService } from '../../../../services/lookup.service';
                 </div>
               </mat-card-content>
             </mat-card>
+            <!-- Approval History Card -->
+            <mat-card class="info-card" *ngIf="caseData.approval_history && caseData.approval_history.length > 0">
+              <mat-card-header>
+                <div class="card-header">
+                  <mat-icon class="card-icon">history</mat-icon>
+                  <h3>Approval History</h3>
+                </div>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="approval-history-timeline">
+                  <div *ngFor="let step of caseData.approval_history; let i = index" class="history-step">
+                    <div class="step-header">
+                      <div class="step-info">
+                        <span class="step-status">{{ step.approval_step.status }}</span>
+                        <span class="step-group">{{ step.approval_step.group }}</span>
+                        <mat-chip *ngIf="step.approval_step.type === 'parallel'" class="parallel-indicator">
+                          <mat-icon class="chip-icon">groups</mat-icon>
+                          Parallel ({{ step.approvals.length }}/{{ step.approval_step.required_approvals || '?' }})
+                        </mat-chip>
+                      </div>
+                    </div>
+
+                    <div class="step-approvals">
+                      <div *ngFor="let approval of step.approvals" class="approval-entry">
+                        <mat-icon class="approval-icon" [class.approved]="approval.action_taken === 'Approve'">
+                          {{ getActionIcon(approval.action_taken) }}
+                        </mat-icon>
+                        <div class="approval-details">
+                          <div class="approval-main">
+                            <span class="approver-name">{{ approval.approved_by }}</span>
+                            <span class="action-taken" [class]="'action-' + getActionClass(approval.action_taken)">
+                              {{ approval.action_taken }}
+                            </span>
+                          </div>
+                          <div class="approval-meta">
+                            <span *ngIf="approval.department" class="department">
+                              <mat-icon class="meta-icon">business</mat-icon>
+                              {{ approval.department }}
+                            </span>
+                            <span class="approval-time">
+                              <mat-icon class="meta-icon">schedule</mat-icon>
+                              {{ formatDateTime(approval.approved_at) }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="timeline-connector" *ngIf="i < caseData.approval_history.length - 1"></div>
+                  </div>
+                </div>
+              </mat-card-content>
+            </mat-card>
             <!-- Applicant Information Card -->
             <mat-card class="info-card" *ngIf="caseData.case_data">
               <mat-card-header>
@@ -417,27 +470,6 @@ export class CaseDetailComponent implements OnInit {
     return classMap[status] || 'default';
   }
 
-  getActionIcon(actionCode: string): string {
-    const iconMap: { [key: string]: string } = {
-      '01': 'check_circle',
-      '02': 'pending',
-      '03': 'cancel',
-      '04': 'undo',
-      '05': 'send'
-    };
-    return iconMap[actionCode] || 'play_arrow';
-  }
-
-  getActionClass(actionCode: string): string {
-    const classMap: { [key: string]: string } = {
-      '01': 'approve',
-      '02': 'pending',
-      '03': 'reject',
-      '04': 'return',
-      '05': 'submit'
-    };
-    return classMap[actionCode] || 'default';
-  }
 
   getFileIcon(fileType: string): string {
     const iconMap: { [key: string]: string } = {
@@ -541,5 +573,26 @@ export class CaseDetailComponent implements OnInit {
 
   getPendingGroups(): any[] {
     return this.caseData?.approval_info?.pending_groups ?? [];
+  }
+  getActionIcon(action: string): string {
+    const iconMap: { [key: string]: string } = {
+      'Approve': 'check_circle',
+      'Reject': 'cancel',
+      'Return to Applicant': 'undo',
+      'Submit': 'send',
+      'Pending': 'pending'
+    };
+    return iconMap[action] || 'play_arrow';
+  }
+
+  getActionClass(action: string): string {
+    const classMap: { [key: string]: string } = {
+      'Approve': 'approve',
+      'Reject': 'reject',
+      'Return to Applicant': 'return',
+      'Submit': 'submit',
+      'Pending': 'pending'
+    };
+    return classMap[action] || 'default';
   }
 }

@@ -1,10 +1,13 @@
-// components/login/login.component.ts - ENHANCED with Ocean Mint Theme
-import { Component } from '@angular/core';
+// components/login/login.component.ts - COMPLETE WITH TRANSLATIONS
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AuthService } from '../../services/auth.service';
+import { TranslationService } from '../../services/translation.service';
+import { TranslatePipe } from '../../pipes/translate.pipe';
+import { Subject, takeUntil } from 'rxjs';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
@@ -13,6 +16,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatRippleModule } from '@angular/material/core';
+import { MatMenuModule } from '@angular/material/menu';
+import {MatTooltip} from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-login',
@@ -26,7 +31,10 @@ import { MatRippleModule } from '@angular/material/core';
     MatIconModule,
     MatProgressSpinnerModule,
     MatCheckboxModule,
-    MatRippleModule
+    MatRippleModule,
+    MatMenuModule,
+    TranslatePipe,
+    MatTooltip
   ],
   template: `
     <div class="login-layout">
@@ -50,14 +58,13 @@ import { MatRippleModule } from '@angular/material/core';
                 <mat-icon>dashboard</mat-icon>
               </div>
               <h1 class="brand-name">PraXelo</h1>
-              <p class="brand-cheer">Where code meets life, dreams come alive</p>
-<!--              <p class="brand-tagline">Enterprise Platform</p>-->
+              <p class="brand-cheer">{{ 'brand_tagline' | translate }}</p>
             </div>
 
             <div class="features-showcase">
-              <h2 class="showcase-title">Build Faster, Deploy Smarter</h2>
+              <h2 class="showcase-title">{{ 'build_faster_deploy_smarter' | translate }}</h2>
               <p class="showcase-subtitle">
-                Transform your ideas into powerful applications with our enterprise-grade low-code platform.
+                {{ 'platform_description' | translate }}
               </p>
 
               <div class="feature-cards">
@@ -66,8 +73,8 @@ import { MatRippleModule } from '@angular/material/core';
                     <mat-icon>speed</mat-icon>
                   </div>
                   <div class="feature-content">
-                    <h4>10x Faster</h4>
-                    <p>Rapid development</p>
+                    <h4>{{ 'feature_faster' | translate }}</h4>
+                    <p>{{ 'feature_faster_desc' | translate }}</p>
                   </div>
                 </div>
 
@@ -76,8 +83,8 @@ import { MatRippleModule } from '@angular/material/core';
                     <mat-icon>api</mat-icon>
                   </div>
                   <div class="feature-content">
-                    <h4>API First</h4>
-                    <p>RESTful architecture</p>
+                    <h4>{{ 'feature_api' | translate }}</h4>
+                    <p>{{ 'feature_api_desc' | translate }}</p>
                   </div>
                 </div>
 
@@ -86,15 +93,15 @@ import { MatRippleModule } from '@angular/material/core';
                     <mat-icon>security</mat-icon>
                   </div>
                   <div class="feature-content">
-                    <h4>Enterprise Secure</h4>
-                    <p>Bank-grade security</p>
+                    <h4>{{ 'feature_secure' | translate }}</h4>
+                    <p>{{ 'feature_secure_desc' | translate }}</p>
                   </div>
                 </div>
               </div>
             </div>
 
             <div class="branding-footer">
-              <p>&copy; 2025 PraXelo. All rights reserved.</p>
+              <p>&copy; 2025 PraXelo. {{ 'all_rights_reserved' | translate }}</p>
             </div>
           </div>
         </div>
@@ -102,14 +109,29 @@ import { MatRippleModule } from '@angular/material/core';
         <!-- Right Side - Login Form -->
         <div class="form-section">
           <div class="form-wrapper">
+            <!-- Language Selector -->
+            <div class="language-selector">
+              <button mat-icon-button [matMenuTriggerFor]="languageMenu" matTooltip="{{ 'change_language' | translate }}">
+                <mat-icon>language</mat-icon>
+              </button>
+              <mat-menu #languageMenu="matMenu">
+                <button mat-menu-item *ngFor="let lang of availableLanguages" (click)="changeLanguage(lang.code)">
+                  <span class="language-option">
+                    <span class="flag">{{ lang.flag }}</span>
+                    <span>{{ lang.name }}</span>
+                  </span>
+                </button>
+              </mat-menu>
+            </div>
+
             <!-- Compact Header -->
             <div class="form-header">
               <div class="header-icon">
                 <mat-icon>login</mat-icon>
               </div>
               <div class="header-text">
-                <h2>Welcome Back</h2>
-                <p>Sign in to continue to your account</p>
+                <h2>{{ 'login_title' | translate }}</h2>
+                <p>{{ 'login_subtitle' | translate }}</p>
               </div>
             </div>
 
@@ -117,24 +139,24 @@ import { MatRippleModule } from '@angular/material/core';
             <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="login-form">
               <!-- Username Field -->
               <mat-form-field appearance="outline" class="form-field-ocean">
-                <mat-label>Username</mat-label>
+                <mat-label>{{ 'username' | translate }}</mat-label>
                 <input matInput
                        formControlName="username"
-                       placeholder="Enter your username"
+                       [placeholder]="'enter_username' | translate"
                        autocomplete="username">
                 <mat-icon matPrefix>person</mat-icon>
                 <mat-error *ngIf="loginForm.get('username')?.hasError('required')">
-                  Username is required
+                  {{ 'username_required' | translate }}
                 </mat-error>
               </mat-form-field>
 
               <!-- Password Field -->
               <mat-form-field appearance="outline" class="form-field-ocean">
-                <mat-label>Password</mat-label>
+                <mat-label>{{ 'password' | translate }}</mat-label>
                 <input matInput
                        [type]="hidePassword ? 'password' : 'text'"
                        formControlName="password"
-                       placeholder="Enter your password"
+                       [placeholder]="'enter_password' | translate"
                        autocomplete="current-password">
                 <mat-icon matPrefix>lock</mat-icon>
                 <button mat-icon-button
@@ -145,20 +167,20 @@ import { MatRippleModule } from '@angular/material/core';
                   <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
                 </button>
                 <mat-error *ngIf="loginForm.get('password')?.hasError('required')">
-                  Password is required
+                  {{ 'password_required' | translate }}
                 </mat-error>
                 <mat-error *ngIf="loginForm.get('password')?.hasError('minlength')">
-                  Password must be at least 6 characters
+                  {{ 'password_min_length' | translate }}
                 </mat-error>
               </mat-form-field>
 
               <!-- Options Row -->
               <div class="form-options">
                 <mat-checkbox formControlName="rememberMe" class="remember-checkbox">
-                  Remember me
+                  {{ 'remember_me' | translate }}
                 </mat-checkbox>
                 <a href="#" class="forgot-link" (click)="$event.preventDefault()">
-                  Forgot password?
+                  {{ 'forgot_password' | translate }}
                 </a>
               </div>
 
@@ -170,7 +192,7 @@ import { MatRippleModule } from '@angular/material/core';
                 <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
                 <span *ngIf="!isLoading">
                   <mat-icon>login</mat-icon>
-                  Sign In
+                  {{ 'sign_in' | translate }}
                 </span>
               </button>
 
@@ -183,9 +205,9 @@ import { MatRippleModule } from '@angular/material/core';
 
             <!-- Footer -->
             <div class="form-footer">
-              <p>Don't have an account?</p>
+              <p>{{ 'no_account' | translate }}</p>
               <a href="#" class="contact-link" (click)="$event.preventDefault()">
-                Contact your administrator
+                {{ 'contact_admin' | translate }}
               </a>
             </div>
           </div>
@@ -407,7 +429,6 @@ import { MatRippleModule } from '@angular/material/core';
       margin: 4px 0 0 0;
       font-size: 0.95rem;
       font-weight: 500;
-      //text-transform: uppercase;
       letter-spacing: 0.03rem;
     }
 
@@ -510,6 +531,25 @@ import { MatRippleModule } from '@angular/material/core';
     .form-wrapper {
       width: 100%;
       max-width: 380px;
+      position: relative;
+    }
+
+    /* Language Selector */
+    .language-selector {
+      position: absolute;
+      top: -32px;
+      right: -16px;
+      z-index: 10;
+    }
+
+    .language-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .flag {
+        font-size: 1.2rem;
+      }
     }
 
     .form-header {
@@ -800,19 +840,47 @@ import { MatRippleModule } from '@angular/material/core';
         align-items: center;
       }
     }
+    :host-context(body.rtl) {
+      // Your RTL-specific styles
+      .header {
+        flex-direction: row-reverse;
+      }
+
+      .content {
+        text-align: right;
+      }
+
+      // Flip margins and paddings
+      .element {
+        margin-left: 0;
+        margin-right: 16px;
+        padding-left: 0;
+        padding-right: 20px;
+      }
+    }
   `]
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit, OnDestroy {
   loginForm: FormGroup;
   hidePassword = true;
   isLoading = false;
   errorMessage = '';
+  private destroy$ = new Subject<void>();
+
+  availableLanguages = [
+    { code: 'en', name: 'English', flag: '🇺🇸' },
+    { code: 'ar', name: 'العربية', flag: '🇸🇦' },
+    { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+    { code: 'fr', name: 'Français', flag: '🇫🇷' },
+    { code: 'es', name: 'Español', flag: '🇪🇸' }
+  ];
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
     private snackBar: MatSnackBar,
-    private authService: AuthService
+    private authService: AuthService,
+    private translationService: TranslationService
   ) {
     this.loginForm = this.fb.group({
       username: ['', [Validators.required]],
@@ -821,8 +889,29 @@ export class LoginComponent {
     });
   }
 
+  ngOnInit(): void {
+    // Subscribe to language changes to update error messages
+    this.translationService.languageChange$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        // Re-translate error message if it exists
+        if (this.errorMessage) {
+          this.updateErrorMessage();
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   togglePasswordVisibility(): void {
     this.hidePassword = !this.hidePassword;
+  }
+
+  changeLanguage(languageCode: string): void {
+    this.translationService.setLanguage(languageCode).subscribe();
   }
 
   onLogin(): void {
@@ -837,7 +926,8 @@ export class LoginComponent {
 
       this.authService.login(credentials).subscribe({
         next: () => {
-          this.snackBar.open('✅ Welcome back! Login successful.', 'Close', {
+          const successMessage = this.translationService.instant('login_success');
+          this.snackBar.open(`✅ ${successMessage}`, 'Close', {
             duration: 3000,
             panelClass: ['success-snackbar']
           });
@@ -846,19 +936,10 @@ export class LoginComponent {
         },
         error: (err) => {
           console.error('Login error:', err);
+          this.setErrorMessage(err.status);
 
-          // Set user-friendly error messages
-          if (err.status === 401) {
-            this.errorMessage = 'Invalid username or password. Please try again.';
-          } else if (err.status === 403) {
-            this.errorMessage = 'Access denied. Please contact your administrator.';
-          } else if (err.status === 0) {
-            this.errorMessage = 'Unable to connect to server. Please check your connection.';
-          } else {
-            this.errorMessage = 'Login failed. Please try again later.';
-          }
-
-          this.snackBar.open('❌ Login failed. Please check your credentials.', 'Close', {
+          const errorTitle = this.translationService.instant('login_failed');
+          this.snackBar.open(`❌ ${errorTitle}`, 'Close', {
             duration: 4000,
             panelClass: ['error-snackbar']
           });
@@ -873,11 +954,32 @@ export class LoginComponent {
         control?.markAsTouched();
       });
 
-      this.errorMessage = 'Please fill in all required fields correctly.';
-      this.snackBar.open('Please complete all required fields', 'Close', {
+      this.errorMessage = this.translationService.instant('fill_required_fields');
+      const warningMessage = this.translationService.instant('complete_all_fields');
+      this.snackBar.open(warningMessage, 'Close', {
         duration: 3000,
         panelClass: ['warning-snackbar']
       });
+    }
+  }
+
+  private setErrorMessage(status: number): void {
+    if (status === 401) {
+      this.errorMessage = this.translationService.instant('invalid_credentials');
+    } else if (status === 403) {
+      this.errorMessage = this.translationService.instant('access_denied');
+    } else if (status === 0) {
+      this.errorMessage = this.translationService.instant('connection_error');
+    } else {
+      this.errorMessage = this.translationService.instant('login_failed');
+    }
+  }
+
+  private updateErrorMessage(): void {
+    // Re-translate the current error message
+    if (this.errorMessage) {
+      // This will re-apply the translation for the current error
+      this.setErrorMessage(401); // Default to generic error
     }
   }
 }
