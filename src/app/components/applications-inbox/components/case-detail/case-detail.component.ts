@@ -1,5 +1,5 @@
 // components/applications-inbox/components/case-detail/case-detail.component.ts
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,6 +12,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { CaseData } from '../../applications-inbox.component';
 import { LookupService } from '../../../../services/lookup.service';
 import { NotesListComponent } from '../notes-list/notes-list.component';
+import { ApiService } from '../../../../services/api.service';
+import { ConfigService } from '../../../../services/config.service';
 
 @Component({
   selector: 'app-case-detail',
@@ -236,42 +238,9 @@ import { NotesListComponent } from '../notes-list/notes-list.component';
               </mat-card-header>
               <mat-card-content>
                 <div class="info-grid">
-                  <div class="info-item" *ngIf="caseData.case_data.first_name || caseData.case_data.last_name">
-                    <span class="label">Full Name</span>
-                    <span class="value">{{ formatApplicantName(caseData.case_data) }}</span>
-                  </div>
-                  <div class="info-item" *ngIf="caseData.case_data.age">
-                    <span class="label">Age</span>
-                    <span class="value">{{ caseData.case_data.age }} years</span>
-                  </div>
-                  <div class="info-item" *ngIf="caseData.case_data.gender">
-                    <span class="label">Gender</span>
-                    <span class="value">{{ getLookupValue('gender', caseData.case_data.gender) }}</span>
-                  </div>
-                  <div class="info-item" *ngIf="caseData.case_data.salary">
-                    <span class="label">Salary</span>
-                    <span class="value">{{ formatCurrency(caseData.case_data.salary) }}</span>
-                  </div>
-                  <div class="info-item" *ngIf="caseData.case_data.tax_percentage">
-                    <span class="label">Tax Percentage</span>
-                    <span class="value">{{ caseData.case_data.tax_percentage }}%</span>
-                  </div>
-                  <div class="info-item" *ngIf="caseData.case_data.spouse_name">
-                    <span class="label">Spouse Name</span>
-                    <span class="value">{{ caseData.case_data.spouse_name }}</span>
-                  </div>
-                  <div class="info-item" *ngIf="caseData.case_data.has_children !== undefined">
-                    <span class="label">Has Children</span>
-                    <span class="value">
-                      <mat-icon [class]="caseData.case_data.has_children ? 'boolean-true' : 'boolean-false'">
-                        {{ caseData.case_data.has_children ? 'check_circle' : 'cancel' }}
-                      </mat-icon>
-                      {{ caseData.case_data.has_children ? 'Yes' : 'No' }}
-                    </span>
-                  </div>
-                  <div class="info-item" *ngIf="caseData.case_data.number_of_children">
-                    <span class="label">Number of Children</span>
-                    <span class="value">{{ caseData.case_data.number_of_children }}</span>
+                  <div class="info-item" *ngFor="let item of getFormattedCaseData()">
+                    <span class="label">{{ item.label }}</span>
+                    <span class="value" [innerHTML]="item.displayValue"></span>
                   </div>
                 </div>
               </mat-card-content>
@@ -408,7 +377,12 @@ export class CaseDetailComponent implements OnInit {
   // Lookup cache for dynamic display values
   lookupCache: { [key: string]: { [id: number]: string } } = {};
 
-  constructor(private lookupService: LookupService) {}
+  constructor(
+    private lookupService: LookupService,
+    private apiService: ApiService,
+    private cdr: ChangeDetectorRef,
+    private configService: ConfigService
+  ) {}
 
   ngOnInit(): void {
     this.loadLookupData();
@@ -517,14 +491,39 @@ export class CaseDetailComponent implements OnInit {
   }
 
   viewFile(fileUrl: string): void {
-    window.open(fileUrl, '_blank');
+    const fullUrl = this.getFullFileUrl(fileUrl);
+    window.open(fullUrl, '_blank');
   }
 
   downloadFile(fileUrl: string): void {
+    const fullUrl = this.getFullFileUrl(fileUrl);
+
+    // Create a temporary anchor element for download
     const link = document.createElement('a');
-    link.href = fileUrl;
+    link.href = fullUrl;
     link.download = this.getFileName(fileUrl);
+    link.target = '_blank';
+
+    // Add to DOM, click, and remove
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
+  }
+
+  private getFullFileUrl(fileUrl: string): string {
+    // If URL is already absolute, return as is
+    if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
+      return fileUrl;
+    }
+
+    // Get base URL from config service
+    const baseUrl = this.configService.getBaseUrl();
+
+    // Remove trailing slash from base URL and leading slash from file URL
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const cleanFileUrl = fileUrl.startsWith('/') ? fileUrl : '/' + fileUrl;
+
+    return `${cleanBaseUrl}${cleanFileUrl}`;
   }
 
   printCase(): void {
@@ -543,19 +542,173 @@ export class CaseDetailComponent implements OnInit {
 
   // Dynamic lookup methods
   loadLookupData(): void {
-    this.lookupService.getCaseTypes().subscribe(data => {
-      this.lookupCache['case_type'] = this.mapLookupData(data);
-    });
+    if (!this.caseData) return;
 
-    this.lookupService.getStatuses().subscribe(data => {
-      this.lookupCache['status'] = this.mapLookupData(data);
-    });
+    // Initialize cache
+    this.lookupCache = {};
 
-    this.lookupService.getGenders().subscribe(data => {
-      this.lookupCache['gender'] = this.mapLookupData(data);
+    // First, fetch the service flow to understand field definitions
+    this.fetchServiceFlowAndLoadLookups();
+  }
+
+  private fetchServiceFlowAndLoadLookups(): void {
+    // Get service code from case type
+    this.apiService.executeApiCall(`lookups/?id=${this.caseData.case_type}`, 'GET').subscribe({
+      next: (response: any) => {
+        if (response.results && response.results.length > 0) {
+          const serviceCode = response.results[0].code;
+
+          // Fetch service flow
+          this.apiService.executeApiCall(`dynamic/service_flow/?service=["${serviceCode}"]`, 'GET').subscribe({
+            next: (flowResponse: any) => {
+              this.processServiceFlowForLookups(flowResponse.service_flow);
+            },
+            error: (error) => {
+              console.error('Failed to load service flow:', error);
+              // Fallback to loading known system lookups
+              this.loadSystemLookups();
+            }
+          });
+        }
+      },
+      error: () => {
+        // Fallback to loading known system lookups
+        this.loadSystemLookups();
+      }
     });
   }
 
+  private processServiceFlowForLookups(serviceFlow: any[]): void {
+    // Extract all lookup fields from service flow
+    const lookupFields = new Map<string, number>(); // fieldName -> lookupId
+
+    serviceFlow.forEach(step => {
+      step.categories?.forEach((category: any) => {
+        category.fields?.forEach((field: any) => {
+          if (field.lookup) {
+            lookupFields.set(field.name, field.lookup);
+          }
+        });
+      });
+    });
+
+    // Load system lookups first
+    this.loadSystemLookups();
+
+    // Now load lookups for all fields in case_data that match lookup fields
+    if (this.caseData.case_data) {
+      Object.entries(this.caseData.case_data).forEach(([fieldName, value]) => {
+        if (lookupFields.has(fieldName) && typeof value === 'number') {
+          const lookupId = lookupFields.get(fieldName)!;
+
+          // Initialize cache for this field type if not exists
+          if (!this.lookupCache[fieldName]) {
+            this.lookupCache[fieldName] = {};
+          }
+
+          // Load the specific lookup value
+          this.loadLookupItem(fieldName, value);
+        }
+      });
+    }
+  }
+
+  private loadSystemLookups(): void {
+    // Load standard system lookups that aren't in case_data
+
+    // Case type
+    if (this.caseData.case_type) {
+      if (!this.lookupCache['case_type']) this.lookupCache['case_type'] = {};
+      this.loadLookupItem('case_type', this.caseData.case_type);
+    }
+
+    // Status
+    if (this.caseData.status) {
+      if (!this.lookupCache['status']) this.lookupCache['status'] = {};
+      this.loadLookupItem('status', this.caseData.status);
+    }
+
+    // Sub-status
+    if (this.caseData.sub_status) {
+      if (!this.lookupCache['sub_status']) this.lookupCache['sub_status'] = {};
+      this.loadLookupItem('sub_status', this.caseData.sub_status);
+    }
+
+    // Assigned group - Use groups endpoint
+    if (this.caseData.assigned_group) {
+      if (!this.lookupCache['assigned_group']) this.lookupCache['assigned_group'] = {};
+      this.loadGroupInfo(this.caseData.assigned_group);
+    }
+
+    // Assigned employee - Use users endpoint
+    if (this.caseData.assigned_emp) {
+      if (!this.lookupCache['assigned_emp']) this.lookupCache['assigned_emp'] = {};
+      this.loadUserInfo(this.caseData.assigned_emp);
+    }
+
+    // Applicant type
+    if (this.caseData.applicant_type) {
+      if (!this.lookupCache['applicant_type']) this.lookupCache['applicant_type'] = {};
+      this.loadLookupItem('applicant_type', this.caseData.applicant_type);
+    }
+  }
+
+// Add these new methods for loading user and group info
+  private loadUserInfo(userId: number): void {
+    // Try to get user info from users endpoint
+    this.apiService.executeApiCall(`auth/users/${userId}/`, 'GET').subscribe({
+      next: (response: any) => {
+        const displayName = response.full_name || response.username || `User ${userId}`;
+        this.lookupCache['assigned_emp'][userId] = displayName;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        // Fallback: try to get from a different endpoint or use ID
+        this.lookupCache['assigned_emp'][userId] = `Employee ${userId}`;
+      }
+    });
+  }
+
+  private loadGroupInfo(groupId: number): void {
+    // Try to get group info from groups endpoint
+    this.apiService.executeApiCall(`auth/groups/${groupId}/`, 'GET').subscribe({
+      next: (response: any) => {
+        this.lookupCache['assigned_group'][groupId] = response.name || `Group ${groupId}`;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        // Fallback: try lookups endpoint for groups
+        this.apiService.executeApiCall(`lookups/?id=${groupId}`, 'GET').subscribe({
+          next: (response: any) => {
+            if (response.results && response.results.length > 0) {
+              this.lookupCache['assigned_group'][groupId] = response.results[0].name;
+              this.cdr.detectChanges();
+            } else {
+              this.lookupCache['assigned_group'][groupId] = `Group ${groupId}`;
+            }
+          },
+          error: () => {
+            this.lookupCache['assigned_group'][groupId] = `Group ${groupId}`;
+          }
+        });
+      }
+    });
+  }
+  private loadLookupItem(type: string, id: number): void {
+    this.apiService.executeApiCall(`lookups/?id=${id}`, 'GET').subscribe({
+      next: (response: any) => {
+        if (response.results && response.results.length > 0) {
+          const item = response.results[0];
+          this.lookupCache[type][id] = item.name;
+          // Force change detection to update the view
+          this.cdr.detectChanges();
+        }
+      },
+      error: () => {
+        this.lookupCache[type][id] = `ID: ${id}`;
+      }
+    });
+  }
   private mapLookupData(data: any[]): { [id: number]: string } {
     const map: { [id: number]: string } = {};
     if (Array.isArray(data)) {
@@ -627,5 +780,47 @@ export class CaseDetailComponent implements OnInit {
 
   onNoteDeleted(noteId: number): void {
     console.log('Note deleted:', noteId);
+  }
+
+  getFormattedCaseData(): any[] {
+    if (!this.caseData.case_data) return [];
+
+    const formattedItems: any[] = [];
+
+    Object.entries(this.caseData.case_data).forEach(([key, value]) => {
+      // Skip internal fields
+      if (key === 'uploaded_files' || key.startsWith('_')) return;
+
+      let displayValue = value;
+      let label = this.formatFieldLabel(key);
+
+      // Check if this field has a lookup value
+      if (this.lookupCache[key] && typeof value === 'number') {
+        displayValue = this.lookupCache[key][value] || value;
+      } else if (typeof value === 'boolean') {
+        displayValue = `<mat-icon class="${value ? 'boolean-true' : 'boolean-false'}">
+        ${value ? 'check_circle' : 'cancel'}
+      </mat-icon> ${value ? 'Yes' : 'No'}`;
+      } else if (value === null || value === undefined) {
+        displayValue = 'N/A';
+      }
+
+      formattedItems.push({
+        key,
+        label,
+        value,
+        displayValue
+      });
+    });
+
+    return formattedItems;
+  }
+
+  private formatFieldLabel(fieldName: string): string {
+    // Convert snake_case to Title Case
+    return fieldName
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   }
 }

@@ -1,5 +1,5 @@
 // components/applications-inbox/components/case-table/case-table.component.ts - COMPLETE WITH TRANSLATIONS
-import { Component, Input, Output, EventEmitter, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, ViewChild, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,6 +17,7 @@ import { LookupService } from '../../../../services/lookup.service';
 import { TranslationService } from '../../../../services/translation.service';
 import { TranslatePipe } from '../../../../pipes/translate.pipe';
 import { CaseDetailComponent } from '../case-detail/case-detail.component';
+import { ApiService } from '../../../../services/api.service';
 
 @Component({
   selector: 'app-case-table',
@@ -138,18 +139,9 @@ import { CaseDetailComponent } from '../case-detail/case-detail.component';
               <td mat-cell *matCellDef="let case">
                 <div class="cell-content">
                   <div class="applicant-info">
-                    <div class="applicant-name" *ngIf="case.case_data?.first_name || case.case_data?.last_name">
+                    <!-- Only show applicant name -->
+                    <div class="applicant-name">
                       {{ formatApplicantName(case.case_data) }}
-                    </div>
-                    <div class="applicant-details">
-                      <span *ngIf="case.case_data?.age" class="detail-item">
-                        <mat-icon class="detail-icon">cake</mat-icon>
-                        {{ case.case_data.age }} {{ 'years' | translate }}
-                      </span>
-                      <span *ngIf="case.case_data?.gender" class="detail-item">
-                        <mat-icon class="detail-icon">wc</mat-icon>
-                        {{ getGenderName(case.case_data.gender) }}
-                      </span>
                     </div>
                   </div>
                 </div>
@@ -276,17 +268,24 @@ export class CaseTableComponent implements OnInit {
 
   // Lookup cache for dynamic display values
   lookupCache: { [key: string]: { [id: number]: string } } = {};
+  private languageSubscription: any;
 
   constructor(
     private lookupService: LookupService,
-    private translationService: TranslationService
+    private translationService: TranslationService,
+    private apiService: ApiService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     this.dataSource.data = this.cases;
     this.loadLookupData();
   }
-
+  ngOnDestroy(): void {
+    if (this.languageSubscription) {
+      this.languageSubscription.unsubscribe();
+    }
+  }
   ngAfterViewInit(): void {
     if (this.paginator) {
       this.dataSource.paginator = this.paginator;
@@ -420,22 +419,127 @@ export class CaseTableComponent implements OnInit {
 
   // Dynamic lookup methods with language support
   loadLookupData(): void {
-    // Load lookup data for dynamic display
-    this.lookupService.getCaseTypes().subscribe(data => {
-      this.lookupCache['case_type'] = this.mapLookupData(data);
+    // Initialize cache
+    this.lookupCache = {};
+
+    // Get unique case types to fetch their service flows
+    const caseTypes = [...new Set(this.cases.map(c => c.case_type).filter(id => id))];
+
+    // For each case type, load its service flow and extract lookup fields
+    caseTypes.forEach(caseTypeId => {
+      this.loadServiceFlowLookups(caseTypeId);
     });
 
-    this.lookupService.getStatuses().subscribe(data => {
-      this.lookupCache['status'] = this.mapLookupData(data);
+    // Load system lookups
+    this.loadSystemLookups();
+  }
+
+  private loadServiceFlowLookups(caseTypeId: number): void {
+    // First get the service code
+    this.apiService.executeApiCall(`lookups/?id=${caseTypeId}`, 'GET').subscribe({
+      next: (response: any) => {
+        if (response.results && response.results.length > 0) {
+          const serviceCode = response.results[0].code;
+
+          // Fetch service flow
+          this.apiService.executeApiCall(`dynamic/service_flow/?service=["${serviceCode}"]`, 'GET').subscribe({
+            next: (flowResponse: any) => {
+              this.processServiceFlowForCases(flowResponse.service_flow, caseTypeId);
+            },
+            error: (error) => {
+              console.error('Failed to load service flow for case type:', caseTypeId, error);
+            }
+          });
+        }
+      }
+    });
+  }
+
+  private processServiceFlowForCases(serviceFlow: any[], caseTypeId: number): void {
+    // Extract all lookup fields from service flow
+    const lookupFields = new Map<string, number>(); // fieldName -> lookupId
+
+    serviceFlow.forEach(step => {
+      step.categories?.forEach((category: any) => {
+        category.fields?.forEach((field: any) => {
+          if (field.lookup) {
+            lookupFields.set(field.name, field.lookup);
+          }
+        });
+      });
     });
 
-    this.lookupService.getGenders().subscribe(data => {
-      this.lookupCache['gender'] = this.mapLookupData(data);
-    });
+    // Process cases of this type
+    this.cases
+      .filter(c => c.case_type === caseTypeId)
+      .forEach(caseData => {
+        if (caseData.case_data) {
+          Object.entries(caseData.case_data).forEach(([fieldName, value]) => {
+            if (lookupFields.has(fieldName) && typeof value === 'number') {
+              // Initialize cache for this field if not exists
+              if (!this.lookupCache[fieldName]) {
+                this.lookupCache[fieldName] = {};
+              }
 
-    // Subscribe to language changes to reload lookups
-    this.translationService.languageChange$.subscribe(() => {
-      this.loadLookupData(); // Reload when language changes
+              // Load lookup value if not already cached
+              if (!this.lookupCache[fieldName][value]) {
+                this.loadLookupValue(fieldName, value);
+              }
+            }
+          });
+        }
+      });
+  }
+
+  private loadSystemLookups(): void {
+    // Get unique IDs for system lookups
+    const statusIds = [...new Set(this.cases.map(c => c.status).filter(id => id))];
+    const assignedGroupIds = [...new Set(this.cases.map(c => c.assigned_group).filter(id => id))];
+    const caseTypeIds = [...new Set(this.cases.map(c => c.case_type).filter(id => id))];
+
+    // Initialize caches
+    if (!this.lookupCache['status']) this.lookupCache['status'] = {};
+    if (!this.lookupCache['assigned_group']) this.lookupCache['assigned_group'] = {};
+    if (!this.lookupCache['case_type']) this.lookupCache['case_type'] = {};
+
+    // Load values
+    statusIds.forEach(id => this.loadLookupValue('status', id));
+    caseTypeIds.forEach(id => this.loadLookupValue('case_type', id));
+
+    // Load assigned groups using proper endpoint
+    assignedGroupIds.forEach(id => this.loadGroupInfo(id));
+  }
+
+// Add this method
+  private loadGroupInfo(groupId: number): void {
+    // Try groups endpoint first
+    this.apiService.executeApiCall(`auth/groups/${groupId}/`, 'GET').subscribe({
+      next: (response: any) => {
+        this.lookupCache['assigned_group'][groupId] = response.name || `Group ${groupId}`;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        // Fallback to lookups
+        this.loadLookupValue('assigned_group', groupId);
+      }
+    });
+  }
+
+  private loadLookupValue(type: string, id: number): void {
+    this.apiService.executeApiCall(`lookups/?id=${id}`, 'GET').subscribe({
+      next: (response: any) => {
+        if (response.results && response.results.length > 0) {
+          const item = response.results[0];
+          this.lookupCache[type][id] = this.getCurrentLanguage() === 'ar' && item.name_ara
+            ? item.name_ara : item.name;
+
+          // Trigger change detection
+          this.cdr.detectChanges();
+        }
+      },
+      error: () => {
+        this.lookupCache[type][id] = `${type} ${id}`;
+      }
     });
   }
 

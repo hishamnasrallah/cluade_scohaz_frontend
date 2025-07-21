@@ -708,3 +708,18 @@
   border: 1px solid rgba(107, 114, 128, 0.2);
   margin-left: 8px;
 }
+
+.applicant-display {
+  font-weight: 500;
+  color: #2c3e50;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.applicant-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 13px;
+  color: #7f8c8d;
+}
