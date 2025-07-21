@@ -20,6 +20,8 @@ import { TranslationService } from '../../services/translation.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { CaseTableComponent } from './components/case-table/case-table.component';
 import { CaseDetailComponent } from './components/case-detail/case-detail.component';
+import { MatDialog } from '@angular/material/dialog';
+import { ActionNotesDialogComponent } from './components/action-notes-dialog/action-notes-dialog.component';
 
 export interface CaseData {
   id: number;
@@ -37,6 +39,7 @@ export interface CaseData {
   case_data: any;
   serial_number: string;
   created_at: string;
+  notes_count?: number;
   updated_at: string;
   available_actions?: Array<{
     id: number;
@@ -65,6 +68,14 @@ export interface CaseData {
       name: string;
     }>;
   };
+  approval_records?: Array<{
+    id: number;
+    case: number;
+    approval_step: number;
+    approved_by: number;
+    action_taken: number;
+    approved_at: string;
+  }>;
   ui_status?: string;
   ui_status_color?: string;
   approval_history?: Array<{
@@ -297,7 +308,8 @@ export class ApplicationsInboxComponent implements OnInit, OnDestroy {
   constructor(
     private caseService: CaseService,
     private snackBar: MatSnackBar,
-    private translationService: TranslationService
+    private translationService: TranslationService,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -410,42 +422,64 @@ export class ApplicationsInboxComponent implements OnInit, OnDestroy {
 
   handleCaseAction(event: { case: CaseData; action: any }): void {
     const { case: caseData, action } = event;
-    this.loading = true;
 
-    this.caseService.performCaseAction(caseData.id, action.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          // Use appropriate name based on current language
-          const actionName = this.translationService.getCurrentLanguage() === 'ar' && action.name_ara
-            ? action.name_ara
-            : action.name;
+    // Check if action requires notes (you might get this from backend)
+    const noteMandatory = action.notes_mandatory || false;
 
-          const successMessage = this.translationService.instant('action_completed_success', {
-            action: actionName
-          });
-          this.snackBar.open(successMessage, this.translationService.instant('close'), {
-            duration: 3000,
-            panelClass: ['success-snackbar']
-          });
-          this.refreshData();
-        },
-        error: (error) => {
-          console.error('Error performing case action:', error);
-          this.loading = false;
+    // Open notes dialog
+    const dialogRef = this.dialog.open(ActionNotesDialogComponent, {
+      width: '500px',
+      data: {
+        actionName: this.translationService.getCurrentLanguage() === 'ar' && action.name_ara
+          ? action.name_ara
+          : action.name,
+        caseSerial: caseData.serial_number,
+        mandatory: noteMandatory
+      }
+    });
 
-          const actionName = this.translationService.getCurrentLanguage() === 'ar' && action.name_ara
-            ? action.name_ara
-            : action.name;
+    dialogRef.afterClosed().subscribe(notes => {
+      // If mandatory and no notes provided, don't proceed
+      if (noteMandatory && !notes) {
+        return;
+      }
 
-          const errorMessage = this.translationService.instant('failed_to_perform_action', {
-            action: actionName
-          });
-          this.snackBar.open(errorMessage, this.translationService.instant('close'), {
-            duration: 5000,
-            panelClass: ['error-snackbar']
-          });
-        }
-      });
+      this.loading = true;
+
+      this.caseService.performCaseAction(caseData.id, action.id, notes)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            const actionName = this.translationService.getCurrentLanguage() === 'ar' && action.name_ara
+              ? action.name_ara
+              : action.name;
+
+            const successMessage = this.translationService.instant('action_completed_success', {
+              action: actionName
+            });
+            this.snackBar.open(successMessage, this.translationService.instant('close'), {
+              duration: 3000,
+              panelClass: ['success-snackbar']
+            });
+            this.refreshData();
+          },
+          error: (error) => {
+            console.error('Error performing case action:', error);
+            this.loading = false;
+
+            const actionName = this.translationService.getCurrentLanguage() === 'ar' && action.name_ara
+              ? action.name_ara
+              : action.name;
+
+            const errorMessage = this.translationService.instant('failed_to_perform_action', {
+              action: actionName
+            });
+            this.snackBar.open(errorMessage, this.translationService.instant('close'), {
+              duration: 5000,
+              panelClass: ['error-snackbar']
+            });
+          }
+        });
+    });
   }
 }

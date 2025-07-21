@@ -1,0 +1,271 @@
+// src/app/components/applications-inbox/components/notes-list/notes-list.component.scss
+.notes-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 20px;
+  max-height: 600px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(229, 231, 235, 0.3);
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(52, 197, 170, 0.4);
+    border-radius: 4px;
+
+    &:hover {
+      background: rgba(52, 197, 170, 0.6);
+    }
+  }
+}
+
+.add-note-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(47, 72, 88, 0.05);
+  border: 1px solid rgba(196, 247, 239, 0.4);
+  padding: 20px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+.notes-list {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(47, 72, 88, 0.05);
+  border: 1px solid rgba(196, 247, 239, 0.4);
+}
+
+.notes-header {
+  margin-bottom: 20px;
+
+  h3 {
+    margin: 0;
+    color: #2F4858;
+    font-size: 1.25rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    mat-icon {
+      color: #34C5AA;
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+  }
+}
+
+.notes-timeline {
+  position: relative;
+}
+
+.note-item {
+  position: relative;
+  margin-bottom: 20px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.note-connector {
+  position: absolute;
+  left: 20px;
+  top: 60px;
+  width: 2px;
+  height: calc(100% + 20px);
+  background: linear-gradient(180deg, #34C5AA 0%, rgba(52, 197, 170, 0.3) 100%);
+}
+
+.note-card {
+  background: #F9FAFB;
+  border-radius: 10px;
+  border: 1px solid rgba(229, 231, 235, 0.8);
+  padding: 16px;
+  margin-left: 40px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(196, 247, 239, 0.2);
+    border-color: rgba(52, 197, 170, 0.3);
+  }
+}
+
+.note-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.note-author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.author-icon {
+  color: #34C5AA;
+  font-size: 40px;
+  width: 40px;
+  height: 40px;
+}
+
+.author-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.author-name {
+  font-weight: 600;
+  color: #2F4858;
+  font-size: 0.95rem;
+}
+
+.note-time {
+  color: #6B7280;
+  font-size: 0.8rem;
+}
+
+.note-content {
+  margin-bottom: 12px;
+
+  p {
+    margin: 0;
+    color: #374151;
+    line-height: 1.6;
+    white-space: pre-wrap;
+
+    &.editing {
+      margin: 0;
+    }
+  }
+}
+
+.note-actions {
+  display: flex;
+  gap: 8px;
+
+  button {
+    color: #34C5AA;
+    font-size: 0.85rem;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      margin-right: 4px;
+    }
+  }
+}
+
+.reply-form {
+  margin-top: 16px;
+  padding-top: 16px;
+
+  mat-divider {
+    margin-bottom: 16px;
+  }
+}
+
+.reply-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.empty-state,
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #6B7280;
+
+  mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: #D1D5DB;
+    margin-bottom: 16px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 1rem;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .notes-container {
+    padding: 16px;
+    max-height: 500px;
+  }
+
+  .note-card {
+    margin-left: 30px;
+    padding: 12px;
+  }
+
+  .author-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .note-connector {
+    left: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .notes-container {
+    padding: 12px;
+    max-height: 400px;
+  }
+
+  .add-note-card,
+  .notes-list {
+    padding: 16px;
+  }
+
+  .note-card {
+    margin-left: 20px;
+  }
+
+  .note-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .note-actions {
+    flex-wrap: wrap;
+  }
+}

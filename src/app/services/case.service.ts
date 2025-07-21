@@ -26,11 +26,17 @@ export class CaseService {
   }
 
   /**
-   * Perform an action on a case
+   * Perform an action on a case with optional notes
    * @param caseId - The ID of the case
    * @param actionId - The ID of the action to perform
+   * @param notes - Optional notes content
    */
-  performCaseAction(caseId: number, actionId: number): Observable<any> {
-    return this.apiService.executeApiCall(`case/cases/${caseId}/action/?action_id=${actionId}`, 'POST');
+  performCaseAction(caseId: number, actionId: number, notes?: string): Observable<any> {
+    const body = notes ? { notes_content: notes } : {};
+    return this.apiService.executeApiCall(
+      `case/cases/${caseId}/action/?action_id=${actionId}`,
+      'POST',
+      body
+    );
   }
 }

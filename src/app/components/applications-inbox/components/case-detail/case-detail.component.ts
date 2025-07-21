@@ -11,6 +11,7 @@ import { MatMenuModule } from '@angular/material/menu';
 
 import { CaseData } from '../../applications-inbox.component';
 import { LookupService } from '../../../../services/lookup.service';
+import { NotesListComponent } from '../notes-list/notes-list.component';
 
 @Component({
   selector: 'app-case-detail',
@@ -23,7 +24,8 @@ import { LookupService } from '../../../../services/lookup.service';
     MatChipsModule,
     MatDividerModule,
     MatCardModule,
-    MatMenuModule
+    MatMenuModule,
+    NotesListComponent
   ],
   template: `
     <div class="case-detail-overlay" (click)="onOverlayClick($event)">
@@ -334,6 +336,24 @@ import { LookupService } from '../../../../services/lookup.service';
               </mat-card-content>
             </mat-card>
 
+            <!-- Notes Card -->
+            <mat-card class="info-card" style="grid-column: 1 / -1;">
+              <mat-card-header>
+                <div class="card-header">
+                  <mat-icon class="card-icon">comment</mat-icon>
+                  <h3>Case Notes & Comments</h3>
+                </div>
+              </mat-card-header>
+              <mat-card-content>
+                <app-notes-list
+                  *ngIf="caseData && caseData.id"
+                  [caseId]="caseData.id"
+                  (noteAdded)="onNoteAdded($event)"
+                  (noteUpdated)="onNoteUpdated($event)"
+                  (noteDeleted)="onNoteDeleted($event)">
+                </app-notes-list>
+              </mat-card-content>
+            </mat-card>
           </div>
         </div>
 
@@ -594,5 +614,18 @@ export class CaseDetailComponent implements OnInit {
       'Pending': 'pending'
     };
     return classMap[action] || 'default';
+  }
+
+  onNoteAdded(note: any): void {
+    console.log('Note added:', note);
+    // You can emit an event or refresh data if needed
+  }
+
+  onNoteUpdated(note: any): void {
+    console.log('Note updated:', note);
+  }
+
+  onNoteDeleted(noteId: number): void {
+    console.log('Note deleted:', noteId);
   }
 }
