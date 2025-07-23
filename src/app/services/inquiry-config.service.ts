@@ -23,7 +23,7 @@ import {
   providedIn: 'root'
 })
 export class InquiryConfigService {
-  private apiUrl = '/inquiry/configurations';
+  private apiUrl = '/inquiry/configurations/';
   private loadingSubject = new BehaviorSubject<boolean>(false);
   private errorSubject = new BehaviorSubject<string>('');
 
@@ -59,7 +59,7 @@ export class InquiryConfigService {
 
   getConfiguration(code: string): Observable<InquiryConfiguration> {
     return this.http.get<InquiryConfiguration>(
-      this.getFullUrl(`${this.apiUrl}/${code}/`)
+      this.getFullUrl(`${this.apiUrl}${code}/`)
     ).pipe(
       catchError(error => {
         this.handleError('Error loading configuration', error);
@@ -88,7 +88,7 @@ export class InquiryConfigService {
     this.loadingSubject.next(true);
 
     return this.http.put<InquiryConfiguration>(
-      this.getFullUrl(`${this.apiUrl}/${code}/`),
+      this.getFullUrl(`${this.apiUrl}${code}/`),
       config
     ).pipe(
       tap(() => this.loadingSubject.next(false)),
@@ -102,7 +102,7 @@ export class InquiryConfigService {
 
   deleteConfiguration(code: string): Observable<void> {
     return this.http.delete<void>(
-      this.getFullUrl(`${this.apiUrl}/${code}/`)
+      this.getFullUrl(`${this.apiUrl}${code}/`)
     ).pipe(
       catchError(error => {
         this.handleError('Error deleting configuration', error);
@@ -114,7 +114,7 @@ export class InquiryConfigService {
   // Helper endpoints
   getAvailableModels(): Observable<ContentType[]> {
     return this.http.get<ContentType[]>(
-      this.getFullUrl(`${this.apiUrl}/available_models/`)
+      this.getFullUrl(`${this.apiUrl}available_models/`)
     ).pipe(
       catchError(error => {
         this.handleError('Error loading available models', error);
@@ -125,7 +125,7 @@ export class InquiryConfigService {
 
   previewConfiguration(code: string): Observable<any> {
     return this.http.get<any>(
-      this.getFullUrl(`${this.apiUrl}/${code}/preview/`)
+      this.getFullUrl(`${this.apiUrl}${code}/preview/`)
     ).pipe(
       catchError(error => {
         this.handleError('Error loading preview', error);
@@ -170,9 +170,12 @@ export class InquiryConfigService {
   }
 
   addField(field: InquiryField): Observable<InquiryField> {
+    // Don't send id for new fields
+    const { id, ...fieldData } = field;
+
     return this.http.post<InquiryField>(
       this.getFullUrl('/inquiry/fields/'),
-      field
+      fieldData
     ).pipe(
       catchError(error => {
         this.handleError('Error adding field', error);
@@ -216,6 +219,85 @@ export class InquiryConfigService {
     );
   }
 
+
+  // Relation operations
+  getRelations(inquiryId: number): Observable<InquiryRelation[]> {
+    return this.http.get<InquiryRelation[]>(
+      this.getFullUrl(`/inquiry/relations/?inquiry=${inquiryId}`)
+    ).pipe(
+      catchError(error => {
+        this.handleError('Error loading relations', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  // Validation helpers
+  validateFieldPath(contentTypeId: number, fieldPath: string): Observable<{ valid: boolean; field_type?: string }> {
+    return this.http.post<{ valid: boolean; field_type?: string }>(
+      this.getFullUrl(`${this.apiUrl}validate_field_path/`),
+      { content_type: contentTypeId, field_path: fieldPath }
+    ).pipe(
+      catchError(error => {
+        this.handleError('Error validating field path', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  // Error handling
+  private handleError(message: string, error: any): void {
+    console.error(message, error);
+
+    let errorMessage = message;
+
+    if (error.error) {
+      if (typeof error.error === 'string') {
+        errorMessage = error.error;
+      } else if (error.error.detail) {
+        errorMessage = error.error.detail;
+      } else if (error.error.message) {
+        errorMessage = error.error.message;
+      } else if (error.error.non_field_errors) {
+        errorMessage = error.error.non_field_errors.join(', ');
+      }
+    }
+
+    this.errorSubject.next(errorMessage);
+  }
+
+  clearError(): void {
+    this.errorSubject.next('');
+  }
+  // Export/Import Configuration Methods
+  exportConfiguration(code: string): Observable<Blob> {
+    return this.http.get(
+      this.getFullUrl(`${this.apiUrl}${code}/export/`),
+      { responseType: 'blob' }
+    ).pipe(
+      catchError(error => {
+        this.handleError('Error exporting configuration', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  importConfiguration(file: File): Observable<InquiryConfiguration> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return this.http.post<InquiryConfiguration>(
+      this.getFullUrl(`${this.apiUrl}import/`),
+      formData
+    ).pipe(
+      catchError(error => {
+        this.handleError('Error importing configuration', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  // Additional Filter Methods
   addFilter(filter: InquiryFilter): Observable<InquiryFilter> {
     return this.http.post<InquiryFilter>(
       this.getFullUrl('/inquiry/filters/'),
@@ -251,18 +333,7 @@ export class InquiryConfigService {
     );
   }
 
-  // Relation operations
-  getRelations(inquiryId: number): Observable<InquiryRelation[]> {
-    return this.http.get<InquiryRelation[]>(
-      this.getFullUrl(`/inquiry/relations/?inquiry=${inquiryId}`)
-    ).pipe(
-      catchError(error => {
-        this.handleError('Error loading relations', error);
-        return throwError(() => error);
-      })
-    );
-  }
-
+  // Additional Relation Methods
   addRelation(relation: InquiryRelation): Observable<InquiryRelation> {
     return this.http.post<InquiryRelation>(
       this.getFullUrl('/inquiry/relations/'),
@@ -298,7 +369,7 @@ export class InquiryConfigService {
     );
   }
 
-  // Sort operations
+  // Additional Sort Methods
   getSorts(inquiryId: number): Observable<InquirySort[]> {
     return this.http.get<InquirySort[]>(
       this.getFullUrl(`/inquiry/sorts/?inquiry=${inquiryId}`)
@@ -322,7 +393,7 @@ export class InquiryConfigService {
     );
   }
 
-  // Permission operations
+  // Additional Permission Methods
   getPermissions(inquiryId: number): Observable<InquiryPermission[]> {
     return this.http.get<InquiryPermission[]>(
       this.getFullUrl(`/inquiry/permissions/?inquiry=${inquiryId}`)
@@ -346,69 +417,4 @@ export class InquiryConfigService {
     );
   }
 
-  // Import/Export operations
-  exportConfiguration(code: string): Observable<Blob> {
-    return this.http.get(
-      this.getFullUrl(`${this.apiUrl}/${code}/export/`),
-      { responseType: 'blob' }
-    ).pipe(
-      catchError(error => {
-        this.handleError('Error exporting configuration', error);
-        return throwError(() => error);
-      })
-    );
-  }
-
-  importConfiguration(file: File): Observable<InquiryConfiguration> {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    return this.http.post<InquiryConfiguration>(
-      this.getFullUrl(`${this.apiUrl}/import/`),
-      formData
-    ).pipe(
-      catchError(error => {
-        this.handleError('Error importing configuration', error);
-        return throwError(() => error);
-      })
-    );
-  }
-
-  // Validation helpers
-  validateFieldPath(contentTypeId: number, fieldPath: string): Observable<{ valid: boolean; field_type?: string }> {
-    return this.http.post<{ valid: boolean; field_type?: string }>(
-      this.getFullUrl(`${this.apiUrl}/validate_field_path/`),
-      { content_type: contentTypeId, field_path: fieldPath }
-    ).pipe(
-      catchError(error => {
-        this.handleError('Error validating field path', error);
-        return throwError(() => error);
-      })
-    );
-  }
-
-  // Error handling
-  private handleError(message: string, error: any): void {
-    console.error(message, error);
-
-    let errorMessage = message;
-
-    if (error.error) {
-      if (typeof error.error === 'string') {
-        errorMessage = error.error;
-      } else if (error.error.detail) {
-        errorMessage = error.error.detail;
-      } else if (error.error.message) {
-        errorMessage = error.error.message;
-      } else if (error.error.non_field_errors) {
-        errorMessage = error.error.non_field_errors.join(', ');
-      }
-    }
-
-    this.errorSubject.next(errorMessage);
-  }
-
-  clearError(): void {
-    this.errorSubject.next('');
-  }
 }

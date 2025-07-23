@@ -160,6 +160,7 @@ export interface InquiryFieldSchema {
   is_searchable: boolean;
   is_filterable: boolean;
   is_primary: boolean;
+  is_visible?: boolean;
   width?: string;
   alignment?: string;
   format_template?: string;

@@ -1,0 +1,285 @@
+// inquiry-list.component.scss
+
+@import '../../../../../styles/theme-variables';
+.inquiries-table {
+  width: 100%;
+  background: white;
+
+  &.enhanced-table {
+    ::ng-deep {
+      .mat-mdc-header-row {
+        background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
+        border-bottom: 2px solid #E5E7EB;
+        height: 56px;
+      }
+
+      .mat-mdc-header-cell {
+        font-weight: 600;
+        color: #2F4858;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 16px;
+      }
+
+      .mat-mdc-row {
+        height: 72px;
+        border-bottom: 1px solid #F3F4F6;
+        transition: all 0.2s ease;
+        cursor: pointer;
+
+        &:hover {
+          background: linear-gradient(to right, rgba(102, 126, 234, 0.05) 0%, rgba(102, 126, 234, 0.02) 100%);
+        }
+      }
+
+      .mat-mdc-cell {
+        font-size: 0.875rem;
+        padding: 16px;
+      }
+    }
+  }
+}
+
+// Table cells
+.select-header,
+.select-cell {
+  width: 48px;
+  text-align: center;
+}
+
+.name-cell {
+  padding: 12px 16px;
+}
+
+.inquiry-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.inquiry-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.inquiry-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.inquiry-name {
+  font-weight: 600;
+  color: #2F4858;
+  font-size: 0.875rem;
+}
+
+.inquiry-code {
+  color: #6B7280;
+  font-size: 0.75rem;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+// Chips
+.model-chip,
+.visibility-chip {
+  height: 24px;
+  font-size: 0.7rem;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 12px;
+  font-weight: 600;
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.model-chip {
+  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+  color: white;
+}
+
+.visibility-chip {
+  &.public {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
+  }
+
+  &.private {
+    background: linear-gradient(135deg, #64748B 0%, #475569 100%);
+    color: white;
+  }
+}
+
+// Status indicator
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &.active {
+    background: rgba(34, 197, 94, 0.08);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+
+    .status-dot {
+      background: #22C55E;
+    }
+
+    .status-text {
+      color: #16A34A;
+    }
+  }
+
+  &.inactive {
+    background: rgba(107, 114, 128, 0.08);
+    border: 1px solid rgba(107, 114, 128, 0.15);
+
+    .status-dot {
+      background: #94A3B8;
+    }
+
+    .status-text {
+      color: #64748B;
+    }
+  }
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+// Field stats
+.field-stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #6B7280;
+  font-size: 0.875rem;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+// Date cell
+.date-cell {
+  color: #6B7280;
+  font-size: 0.875rem;
+}
+
+// Actions cell
+.actions-cell {
+  text-align: center;
+}
+
+.action-btn {
+  color: #6B7280;
+
+  &:hover {
+    color: $ocean-mint-primary;
+  }
+}
+
+// Enhanced menu
+.enhanced-menu {
+  border-radius: 12px;
+  overflow: hidden;
+  min-width: 220px;
+
+  mat-icon {
+    margin-right: 12px;
+    color: #6B7280;
+  }
+
+  .delete-item {
+    color: #ef4444;
+
+    mat-icon {
+      color: #ef4444;
+    }
+  }
+}
+
+// Row animations
+.inquiry-row {
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  animation: fadeInUp 0.3s ease-out;
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+  .inquiries-table {
+    background: #1E293B;
+
+    &.enhanced-table ::ng-deep {
+      .mat-mdc-header-row {
+        background: #0F172A;
+        border-color: #334155;
+      }
+
+      .mat-mdc-header-cell {
+        color: #F1F5F9;
+      }
+
+      .mat-mdc-row {
+        border-color: #334155;
+
+        &:hover {
+          background: rgba(102, 126, 234, 0.1);
+        }
+      }
+
+      .mat-mdc-cell {
+        color: #E2E8F0;
+      }
+    }
+  }
+
+  .inquiry-name {
+    color: #F1F5F9;
+  }
+
+  .inquiry-code,
+  .field-stats,
+  .date-cell {
+    color: #94A3B8;
+  }
+}

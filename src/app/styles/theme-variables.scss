@@ -61,4 +61,171 @@ $ocean-mint-font-family-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', mono
 // Font Sizes
 $ocean-mint-text-xs: 0.75rem;    // 12px
 $ocean-mint-text-sm: 0.875rem;   // 14px
-$ocean-mint-text
+$ocean-mint-text-base: 1rem;     // 16px
+$ocean-mint-text-lg: 1.125rem;   // 18px
+$ocean-mint-text-xl: 1.25rem;    // 20px
+$ocean-mint-text-2xl: 1.5rem;    // 24px
+$ocean-mint-text-3xl: 1.875rem;  // 30px
+$ocean-mint-text-4xl: 2.25rem;   // 36px
+$ocean-mint-text-5xl: 3rem;      // 48px
+
+// Font Weights
+$ocean-mint-font-thin: 100;
+$ocean-mint-font-light: 300;
+$ocean-mint-font-normal: 400;
+$ocean-mint-font-medium: 500;
+$ocean-mint-font-semibold: 600;
+$ocean-mint-font-bold: 700;
+$ocean-mint-font-extrabold: 800;
+$ocean-mint-font-black: 900;
+
+// Line Heights
+$ocean-mint-leading-none: 1;
+$ocean-mint-leading-tight: 1.25;
+$ocean-mint-leading-snug: 1.375;
+$ocean-mint-leading-normal: 1.5;
+$ocean-mint-leading-relaxed: 1.625;
+$ocean-mint-leading-loose: 2;
+
+// Z-Index
+$ocean-mint-z-auto: auto;
+$ocean-mint-z-0: 0;
+$ocean-mint-z-10: 10;
+$ocean-mint-z-20: 20;
+$ocean-mint-z-30: 30;
+$ocean-mint-z-40: 40;
+$ocean-mint-z-50: 50;
+$ocean-mint-z-100: 100;
+$ocean-mint-z-modal: 1000;
+$ocean-mint-z-popover: 1100;
+$ocean-mint-z-tooltip: 1200;
+
+// Transitions
+$ocean-mint-transition-fast: 150ms ease-in-out;
+$ocean-mint-transition-base: 300ms ease-in-out;
+$ocean-mint-transition-slow: 500ms ease-in-out;
+
+// Breakpoints
+$ocean-mint-screen-xs: 480px;
+$ocean-mint-screen-sm: 640px;
+$ocean-mint-screen-md: 768px;
+$ocean-mint-screen-lg: 1024px;
+$ocean-mint-screen-xl: 1280px;
+$ocean-mint-screen-2xl: 1536px;
+
+// Container widths
+$ocean-mint-container-sm: 640px;
+$ocean-mint-container-md: 768px;
+$ocean-mint-container-lg: 1024px;
+$ocean-mint-container-xl: 1280px;
+$ocean-mint-container-2xl: 1536px;
+
+// Common component variables
+$ocean-mint-card-bg: white;
+$ocean-mint-card-border: #E5E7EB;
+$ocean-mint-input-bg: #F9FAFB;
+$ocean-mint-input-border: #E5E7EB;
+$ocean-mint-input-focus-border: $ocean-mint-primary;
+
+// Dark mode variables (optional)
+$ocean-mint-dark-bg: #0F172A;
+$ocean-mint-dark-card: #1E293B;
+$ocean-mint-dark-border: #334155;
+$ocean-mint-dark-text: #F1F5F9;
+$ocean-mint-dark-text-secondary: #94A3B8;
+
+// Mixin for ocean mint button
+@mixin ocean-mint-button {
+  background: $ocean-mint-gradient;
+  color: white;
+  border: none;
+  border-radius: $ocean-mint-radius-sm;
+  padding: $ocean-mint-spacing-sm $ocean-mint-spacing-lg;
+  font-weight: $ocean-mint-font-medium;
+  transition: all $ocean-mint-transition-base;
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: $ocean-mint-shadow-primary;
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+// Mixin for ocean mint card
+@mixin ocean-mint-card {
+  background: $ocean-mint-card-bg;
+  border-radius: $ocean-mint-radius-lg;
+  box-shadow: $ocean-mint-shadow-sm;
+  border: 1px solid rgba(196, 247, 239, 0.5);
+  padding: $ocean-mint-spacing-lg;
+  transition: all $ocean-mint-transition-base;
+
+  &:hover {
+    box-shadow: $ocean-mint-shadow-md;
+  }
+}
+
+// Mixin for ocean mint input
+@mixin ocean-mint-input {
+  background: $ocean-mint-input-bg;
+  border: 2px solid $ocean-mint-input-border;
+  border-radius: $ocean-mint-radius-sm;
+  padding: $ocean-mint-spacing-sm $ocean-mint-spacing-md;
+  transition: all $ocean-mint-transition-base;
+
+  &:focus {
+    background: white;
+    border-color: $ocean-mint-input-focus-border;
+    box-shadow: 0 0 0 3px rgba(52, 197, 170, 0.1);
+    outline: none;
+  }
+}
+
+// Mixin for responsive
+@mixin ocean-mint-breakpoint($breakpoint) {
+  @if $breakpoint == 'xs' {
+    @media (max-width: #{$ocean-mint-screen-xs}) {
+      @content;
+    }
+  } @else if $breakpoint == 'sm' {
+    @media (max-width: #{$ocean-mint-screen-sm}) {
+      @content;
+    }
+  } @else if $breakpoint == 'md' {
+    @media (max-width: #{$ocean-mint-screen-md}) {
+      @content;
+    }
+  } @else if $breakpoint == 'lg' {
+    @media (max-width: #{$ocean-mint-screen-lg}) {
+      @content;
+    }
+  } @else if $breakpoint == 'xl' {
+    @media (max-width: #{$ocean-mint-screen-xl}) {
+      @content;
+    }
+  } @else if $breakpoint == '2xl' {
+    @media (max-width: #{$ocean-mint-screen-2xl}) {
+      @content;
+    }
+  }
+}
+
+// Export variables for JavaScript access (optional)
+:root {
+  --ocean-mint-primary: #{$ocean-mint-primary};
+  --ocean-mint-secondary: #{$ocean-mint-secondary};
+  --ocean-mint-accent: #{$ocean-mint-accent};
+  --ocean-mint-dark: #{$ocean-mint-dark};
+  --ocean-mint-light: #{$ocean-mint-light};
+  --ocean-mint-gray: #{$ocean-mint-gray};
+}

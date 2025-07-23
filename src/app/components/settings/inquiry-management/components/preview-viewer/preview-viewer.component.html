@@ -2,38 +2,44 @@
 <div class="preview-viewer">
   <!-- Header -->
   <div class="preview-header">
-    <div class="header-content">
-      <button mat-icon-button class="back-button" (click)="goBack()">
-        <mat-icon>arrow_back</mat-icon>
-      </button>
-      <div class="header-info" *ngIf="inquirySchema">
-        <div class="inquiry-icon">
-          <mat-icon>{{ inquirySchema.inquiry.icon || 'query_stats' }}</mat-icon>
-        </div>
-        <div class="header-text">
-          <h1>{{ inquirySchema.inquiry.display_name }}</h1>
-          <p>{{ inquirySchema.inquiry.description }}</p>
-          <div class="header-meta">
-            <mat-chip class="meta-chip">
-              <mat-icon>code</mat-icon>
-              {{ inquirySchema.inquiry.code }}
-            </mat-chip>
-            <mat-chip class="meta-chip" *ngIf="inquirySchema.inquiry.active">
-              <mat-icon>check_circle</mat-icon>
-              Active
-            </mat-chip>
-            <mat-chip class="meta-chip" *ngIf="inquirySchema.inquiry.is_public">
-              <mat-icon>public</mat-icon>
-              Public
-            </mat-chip>
+    <div class="header-container">
+      <div class="header-content">
+        <button mat-icon-button class="back-button" (click)="goBack()">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+
+        <div class="header-info" *ngIf="inquirySchema">
+          <div class="inquiry-icon">
+            <mat-icon>{{ inquirySchema.inquiry.icon || 'query_stats' }}</mat-icon>
+          </div>
+
+          <div class="header-text">
+            <h1>{{ inquirySchema.inquiry.display_name }}</h1>
+            <p>{{ inquirySchema.inquiry.description }}</p>
+
+            <div class="header-meta">
+              <mat-chip class="meta-chip">
+                <mat-icon>code</mat-icon>
+                {{ inquirySchema.inquiry.code }}
+              </mat-chip>
+              <mat-chip class="meta-chip active" *ngIf="inquirySchema.inquiry.active">
+                <mat-icon>check_circle</mat-icon>
+                Active
+              </mat-chip>
+              <mat-chip class="meta-chip public" *ngIf="inquirySchema.inquiry.is_public">
+                <mat-icon>public</mat-icon>
+                Public
+              </mat-chip>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="header-actions">
-        <button mat-button (click)="editInquiry()" class="edit-btn">
-          <mat-icon>edit</mat-icon>
-          Edit Configuration
-        </button>
+
+        <div class="header-actions">
+          <button mat-button (click)="editInquiry()" class="edit-btn">
+            <mat-icon>edit</mat-icon>
+            Edit Configuration
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -45,33 +51,36 @@
   </div>
 
   <!-- Main Content -->
-  <div class="preview-content" *ngIf="!isLoading && inquirySchema">
+  <div class="preview-container" *ngIf="!isLoading && inquirySchema">
     <!-- Filters Section -->
     <mat-card class="filters-card">
       <mat-card-header>
-        <mat-card-title>
-          <mat-icon>filter_list</mat-icon>
-          Filters
-          <mat-chip class="filter-count" *ngIf="getActiveFilterCount() > 0">
-            {{ getActiveFilterCount() }} active
-          </mat-chip>
-        </mat-card-title>
-        <div class="filter-actions">
-          <button mat-button (click)="resetFilters()" [disabled]="getActiveFilterCount() === 0">
-            <mat-icon>clear</mat-icon>
-            Reset
-          </button>
-          <button mat-button
-                  (click)="toggleAdvancedFilters()"
-                  *ngIf="hasAdvancedFilters()"
-                  class="toggle-advanced-btn">
-            <mat-icon>{{ showAdvancedFilters ? 'expand_less' : 'expand_more' }}</mat-icon>
-            {{ showAdvancedFilters ? 'Hide' : 'Show' }} Advanced
-          </button>
-          <button mat-raised-button color="primary" (click)="applyFilters()">
-            <mat-icon>search</mat-icon>
-            Apply Filters
-          </button>
+        <div class="card-header-content">
+          <mat-card-title>
+            <mat-icon>filter_list</mat-icon>
+            <span>Filters</span>
+            <mat-chip class="filter-count" *ngIf="getActiveFilterCount() > 0">
+              {{ getActiveFilterCount() }} active
+            </mat-chip>
+          </mat-card-title>
+
+          <div class="filter-actions">
+            <button mat-button (click)="resetFilters()" [disabled]="getActiveFilterCount() === 0">
+              <mat-icon>clear</mat-icon>
+              Reset
+            </button>
+            <button mat-button
+                    (click)="toggleAdvancedFilters()"
+                    *ngIf="hasAdvancedFilters()"
+                    class="toggle-advanced-btn">
+              <mat-icon>{{ showAdvancedFilters ? 'expand_less' : 'expand_more' }}</mat-icon>
+              {{ showAdvancedFilters ? 'Hide' : 'Show' }} Advanced
+            </button>
+            <button mat-raised-button color="primary" (click)="applyFilters()">
+              <mat-icon>search</mat-icon>
+              Apply Filters
+            </button>
+          </div>
         </div>
       </mat-card-header>
 
@@ -102,7 +111,7 @@
                 <mat-label>{{ filter.name }}</mat-label>
                 <input matInput
                        [formControlName]="filter.code"
-                       [placeholder]="filter.placeholder">
+                       [placeholder]="filter.placeholder || ''">
                 <mat-hint *ngIf="filter.help_text">{{ filter.help_text }}</mat-hint>
                 <mat-error *ngIf="isFilterRequired(filter.code)">
                   This field is required
@@ -117,7 +126,7 @@
                 <input matInput
                        type="number"
                        [formControlName]="filter.code"
-                       [placeholder]="filter.placeholder">
+                       [placeholder]="filter.placeholder || ''">
                 <mat-hint *ngIf="filter.help_text">{{ filter.help_text }}</mat-hint>
               </mat-form-field>
 
@@ -129,7 +138,7 @@
                 <input matInput
                        [matDatepicker]="picker"
                        [formControlName]="filter.code"
-                       [placeholder]="filter.placeholder">
+                       [placeholder]="filter.placeholder || ''">
                 <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
                 <mat-datepicker #picker></mat-datepicker>
                 <mat-hint *ngIf="filter.help_text">{{ filter.help_text }}</mat-hint>
@@ -180,39 +189,43 @@
     <!-- Results Section -->
     <mat-card class="results-card">
       <mat-card-header>
-        <mat-card-title>
-          <mat-icon>table_chart</mat-icon>
-          Results
-          <span class="result-count" *ngIf="!isLoadingData">
-            ({{ totalRecords }} {{ totalRecords === 1 ? 'record' : 'records' }})
-          </span>
-          <mat-chip class="execution-time" *ngIf="executionTime > 0">
-            <mat-icon>timer</mat-icon>
-            {{ executionTime }}ms
-          </mat-chip>
-        </mat-card-title>
-        <div class="result-actions">
-          <button mat-button
-                  [matMenuTriggerFor]="exportMenu"
-                  [disabled]="isExporting || !inquirySchema.permissions.can_export"
-                  class="export-btn">
-            <mat-icon>download</mat-icon>
-            Export
-            <mat-icon>arrow_drop_down</mat-icon>
-          </button>
-          <mat-menu #exportMenu="matMenu">
-            <button mat-menu-item
-                    *ngFor="let format of availableExportFormats"
-                    (click)="exportData(format.value)"
-                    [disabled]="isExporting">
-              <mat-icon>{{ format.icon }}</mat-icon>
-              Export as {{ format.label }}
+        <div class="card-header-content">
+          <mat-card-title>
+            <mat-icon>table_chart</mat-icon>
+            <span>Results</span>
+            <span class="result-count" *ngIf="!isLoadingData">
+              ({{ totalRecords }} {{ totalRecords === 1 ? 'record' : 'records' }})
+            </span>
+            <mat-chip class="execution-time" *ngIf="executionTime > 0">
+              <mat-icon>timer</mat-icon>
+              {{ executionTime }}ms
+            </mat-chip>
+          </mat-card-title>
+
+          <div class="result-actions">
+            <button mat-button
+                    [matMenuTriggerFor]="exportMenu"
+                    [disabled]="isExporting || !inquirySchema.permissions.can_export"
+                    class="export-btn">
+              <mat-icon>download</mat-icon>
+              Export
+              <mat-icon>arrow_drop_down</mat-icon>
             </button>
-          </mat-menu>
+
+            <mat-menu #exportMenu="matMenu" class="export-menu">
+              <button mat-menu-item
+                      *ngFor="let format of availableExportFormats"
+                      (click)="exportData(format.value)"
+                      [disabled]="isExporting">
+                <mat-icon>{{ format.icon }}</mat-icon>
+                Export as {{ format.label }}
+              </button>
+            </mat-menu>
+          </div>
         </div>
       </mat-card-header>
 
-      <mat-card-content>
+      <mat-card-content class="results-content">
         <!-- Loading Overlay -->
         <div class="loading-overlay" *ngIf="isLoadingData">
           <mat-spinner diameter="40"></mat-spinner>
@@ -220,45 +233,47 @@
         </div>
 
         <!-- Data Table -->
-        <div class="table-container" *ngIf="!isLoadingData">
-          <table mat-table
-                 [dataSource]="dataSource"
-                 matSort
-                 (matSortChange)="onSortChange($event)"
-                 class="results-table">
+        <div class="table-wrapper" *ngIf="!isLoadingData">
+          <div class="table-container">
+            <table mat-table
+                   [dataSource]="dataSource"
+                   matSort
+                   (matSortChange)="onSortChange($event)"
+                   class="results-table">
 
-            <!-- Dynamic Columns -->
-            <ng-container *ngFor="let column of columns" [matColumnDef]="column.field">
-              <th mat-header-cell
-                  *matHeaderCellDef
-                  [mat-sort-header]="column.field"
-                  [disabled]="!column.sortable"
-                  [style.width]="column.width"
-                  [style.text-align]="column.alignment">
-                {{ column.header }}
-              </th>
-              <td mat-cell
-                  *matCellDef="let row"
-                  [style.text-align]="column.alignment"
-                  [class]="'cell-type-' + column.type">
-                <span [innerHTML]="getCellValue(row, column)"></span>
-              </td>
-            </ng-container>
+              <!-- Dynamic Columns -->
+              <ng-container *ngFor="let column of columns" [matColumnDef]="column.field">
+                <th mat-header-cell
+                    *matHeaderCellDef
+                    [mat-sort-header]="column.field"
+                    [disabled]="!column.sortable"
+                    [style.width]="column.width"
+                    [style.text-align]="column.alignment || 'left'">
+                  {{ column.header }}
+                </th>
+                <td mat-cell
+                    *matCellDef="let row"
+                    [style.text-align]="column.alignment || 'left'"
+                    [class]="'cell-type-' + column.type">
+                  <span [innerHTML]="getCellValue(row, column)"></span>
+                </td>
+              </ng-container>
 
-            <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+              <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
 
-            <!-- No Data Row -->
-            <tr class="no-data-row" *matNoDataRow>
-              <td [attr.colspan]="displayedColumns.length" class="no-data-cell">
-                <div class="no-data-content">
-                  <mat-icon>search_off</mat-icon>
-                  <p>No data found</p>
-                  <p class="hint">Try adjusting your filters or search criteria</p>
-                </div>
-              </td>
-            </tr>
-          </table>
+              <!-- No Data Row -->
+              <tr class="no-data-row" *matNoDataRow>
+                <td [attr.colspan]="displayedColumns.length" class="no-data-cell">
+                  <div class="no-data-content">
+                    <mat-icon>search_off</mat-icon>
+                    <p>No data found</p>
+                    <p class="hint">Try adjusting your filters or search criteria</p>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </div>
 
           <!-- Paginator -->
           <mat-paginator [length]="totalRecords"
@@ -279,7 +294,7 @@
           <div class="aggregations-grid">
             <div class="aggregation-card" *ngFor="let agg of aggregations | keyvalue">
               <div class="aggregation-label">{{ agg.key }}</div>
-              <div class="aggregation-value">{{ agg.value | number }}</div>
+              <div class="aggregation-value">{{ formatAggregationValue(agg.value) }}</div>
             </div>
           </div>
         </div>

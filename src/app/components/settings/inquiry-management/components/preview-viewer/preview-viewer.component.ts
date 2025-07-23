@@ -467,4 +467,24 @@ export class PreviewViewerComponent implements OnInit, OnDestroy {
     const filters = this.getActiveFilters();
     return Object.keys(filters).length + (this.searchQuery ? 1 : 0);
   }
+
+  protected readonly Object = Object;
+
+  formatAggregationValue(value: any): string {
+    if (value === null || value === undefined) return '0';
+
+    // Check if it's a number
+    if (typeof value === 'number') {
+      return value.toLocaleString();
+    }
+
+    // Try to parse as number
+    const numValue = Number(value);
+    if (!isNaN(numValue)) {
+      return numValue.toLocaleString();
+    }
+
+    // Return as string if not a number
+    return String(value);
+  }
 }

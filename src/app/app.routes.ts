@@ -161,6 +161,12 @@ export const routes: Routes = [
         data: { title: 'CRUD Permissions', icon: 'security' }
       },
       {
+        path: 'inquiry-management',
+        loadChildren: () => import('./components/settings/inquiry-management/inquiry-management.routes')
+          .then(m => m.inquiryManagementRoutes),
+        data: { title: 'Inquiry Management', icon: 'query_stats' }
+      },
+      {
         path: 'users',
         loadComponent: () => import('./components/settings/user-management/user-management.component').then(m => m.UserManagementComponent),
         data: { title: 'User Management', icon: 'people' }

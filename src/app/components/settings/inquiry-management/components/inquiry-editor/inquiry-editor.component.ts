@@ -3,7 +3,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormArray } from '@angular/forms';
+import {FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormArray, FormsModule} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialogModule } from '@angular/material/dialog';
@@ -20,7 +20,7 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { Subject, takeUntil, forkJoin, Observable, of } from 'rxjs';
+import { Subject, takeUntil, forkJoin, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map, startWith } from 'rxjs/operators';
 import { InquiryConfigService } from '../../../../../services/inquiry-config.service';
 import { UserService } from '../../../../../services/user.service';
@@ -32,7 +32,8 @@ import {
   InquiryFilter,
   InquiryRelation,
   InquirySort,
-  InquiryPermission
+  InquiryPermission,
+  FieldType
 } from '../../../../../models/inquiry-config.models';
 import { Group } from '../../../../../services/user.service';
 import { TranslatePipe } from '../../../../../pipes/translate.pipe';
@@ -43,6 +44,7 @@ import { TranslatePipe } from '../../../../../pipes/translate.pipe';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     MatButtonModule,
     MatIconModule,
     MatDialogModule,
@@ -59,7 +61,8 @@ import { TranslatePipe } from '../../../../../pipes/translate.pipe';
     MatAutocompleteModule,
     MatDividerModule,
     MatSlideToggleModule,
-    TranslatePipe
+    TranslatePipe,
+    FormsModule
   ],
   templateUrl: './inquiry-editor.component.html',
   styleUrls: ['./inquiry-editor.component.scss']
@@ -104,6 +107,8 @@ export class InquiryEditorComponent implements OnInit, OnDestroy {
     'table_chart', 'view_list', 'storage', 'folder',
     'description', 'assignment', 'receipt', 'article'
   ];
+  fieldSearchQuery = '';
+  filteredAvailableFields: ModelField[] = [];
 
   private destroy$ = new Subject<void>();
 
@@ -140,7 +145,23 @@ export class InquiryEditorComponent implements OnInit, OnDestroy {
         }
       });
   }
+  private filterAvailableFields(): void {
+    if (!this.fieldSearchQuery.trim()) {
+      this.filteredAvailableFields = [...this.availableFields];
+    } else {
+      const query = this.fieldSearchQuery.toLowerCase();
+      this.filteredAvailableFields = this.availableFields.filter(field =>
+        field.name.toLowerCase().includes(query) ||
+        field.verbose_name.toLowerCase().includes(query) ||
+        field.type.toLowerCase().includes(query)
+      );
+    }
+  }
 
+// Add this method
+  onFieldSearchChange(): void {
+    this.filterAvailableFields();
+  }
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
@@ -294,7 +315,7 @@ export class InquiryEditorComponent implements OnInit, OnDestroy {
     // Load model fields
     const selectedModel = this.availableModels.find(m => m.id === inquiry.content_type);
     if (selectedModel) {
-      this.onModelSelect(selectedModel);
+      this.onModelSelect(selectedModel.id);  // Pass the ID here
     }
 
     // Permissions
@@ -305,7 +326,6 @@ export class InquiryEditorComponent implements OnInit, OnDestroy {
       search_fields: inquiry.search_fields
     });
   }
-
   private populateFieldsFormArray(fields: InquiryField[]): void {
     const fieldsArray = this.fieldsForm.get('fields') as FormArray;
     fieldsArray.clear();
@@ -334,9 +354,21 @@ export class InquiryEditorComponent implements OnInit, OnDestroy {
   }
 
   // Model selection
-  onModelSelect(model: ContentType): void {
+  onModelSelect(modelId: number): void {
+    // Find the model from availableModels by ID
+    const model = this.availableModels.find(m => m.id === modelId);
+
+    if (!model) {
+      console.error('Model not found for ID:', modelId);
+      return;
+    }
+
     this.selectedModel = model;
     this.availableFields = model.fields || [];
+    this.filteredAvailableFields = [...this.availableFields]; // Add this line
+
+    console.log('Selected model:', model);
+    console.log('Available fields:', this.availableFields);
 
     // Reset fields when model changes
     if (!this.isEditMode) {
@@ -345,7 +377,6 @@ export class InquiryEditorComponent implements OnInit, OnDestroy {
       fieldsArray.clear();
     }
   }
-
   // Field management
   get fieldsFormArray(): FormArray {
     return this.fieldsForm.get('fields') as FormArray;
@@ -354,6 +385,7 @@ export class InquiryEditorComponent implements OnInit, OnDestroy {
   createFieldFormGroup(field?: Partial<InquiryField>): FormGroup {
     return this.fb.group({
       id: [field?.id || null],
+      inquiry: [field?.inquiry || null],
       field_path: [field?.field_path || '', Validators.required],
       display_name: [field?.display_name || '', Validators.required],
       field_type: [field?.field_type || 'string', Validators.required],
@@ -366,7 +398,7 @@ export class InquiryEditorComponent implements OnInit, OnDestroy {
       alignment: [field?.alignment || 'left'],
       format_template: [field?.format_template || ''],
       transform_function: [field?.transform_function || ''],
-      aggregation: [field?.aggregation || null],
+      aggregation: [field?.aggregation || ''],
       json_extract_path: [field?.json_extract_path || ''],
       order: [field?.order || 0]
     });
@@ -499,35 +531,187 @@ export class InquiryEditorComponent implements OnInit, OnDestroy {
   }
 
   private saveRelatedData(inquiryId: number): void {
-    const saveOperations = [];
+    const saveOperations: Observable<any>[] = [];
+
+    // Define interface for field data
+    interface FieldData {
+      id?: number;
+      inquiry: number;
+      field_path: string;
+      display_name: string;
+      field_type: string;
+      is_visible: boolean;
+      is_searchable: boolean;
+      is_sortable: boolean;
+      is_filterable: boolean;
+      is_primary: boolean;
+      width: string | null;
+      alignment: string;
+      format_template: string | null;
+      transform_function: string | null;
+      aggregation: string | null;
+      json_extract_path: string | null;
+      order: number;
+    }
+
+    // Prepare fields data
+    const fields: FieldData[] = this.fieldsFormArray.value.map((field: any, index: number) => {
+      const fieldData: FieldData = {
+        inquiry: inquiryId,
+        field_path: field.field_path,
+        display_name: field.display_name,
+        field_type: field.field_type,
+        is_visible: field.is_visible,
+        is_searchable: field.is_searchable,
+        is_sortable: field.is_sortable,
+        is_filterable: field.is_filterable,
+        is_primary: field.is_primary,
+        width: field.width || null,
+        alignment: field.alignment || 'left',
+        format_template: field.format_template || null,
+        transform_function: field.transform_function || null,
+        aggregation: field.aggregation || null,
+        json_extract_path: field.json_extract_path || null,
+        order: index
+      };
+
+      // Only include id if it exists and is not null
+      if (field.id) {
+        fieldData.id = field.id;
+      }
+
+      return fieldData;
+    });
+
+    console.log('Fields to save:', fields);
+
+    // For new inquiries, delete all existing fields first (if any)
+    if (this.isEditMode && this.currentInquiry?.id) {
+      // Get existing field IDs that are not in the current form
+      const currentFieldIds = fields
+        .filter((f: FieldData) => f.id !== undefined)
+        .map((f: FieldData) => f.id as number);
+
+      const fieldsToDelete = this.selectedFields
+        .filter(f => f.id && !currentFieldIds.includes(f.id))
+        .map(f => f.id as number);
+
+      // Delete removed fields
+      fieldsToDelete.forEach(fieldId => {
+        if (fieldId) {
+          saveOperations.push(this.inquiryService.deleteField(fieldId));
+        }
+      });
+    }
 
     // Save fields
-    const fields = this.fieldsFormArray.value.map((field: any, index: number) => ({
-      ...field,
-      inquiry: inquiryId,
-      order: index
-    }));
-
-    fields.forEach((field: InquiryField) => {
+    fields.forEach((field: FieldData) => {
       if (field.id) {
-        saveOperations.push(this.inquiryService.updateField(field.id, field));
+        saveOperations.push(this.inquiryService.updateField(field.id, field as InquiryField));
       } else {
-        saveOperations.push(this.inquiryService.addField(field));
+        // Remove id property for new fields
+        const { id, ...fieldWithoutId } = field;
+        saveOperations.push(this.inquiryService.addField(fieldWithoutId as InquiryField));
       }
     });
 
-    // Save filters
-    const filters = this.filtersFormArray.value.map((filter: any, index: number) => ({
-      ...filter,
-      inquiry: inquiryId,
-      order: index
-    }));
+    // Define interface for filter data
+    interface FilterData {
+      id?: number;
+      inquiry: number;
+      name: string;
+      code: string;
+      field_path: string;
+      operator: string;
+      filter_type: string;
+      default_value: any;
+      is_required: boolean;
+      is_visible: boolean;
+      is_advanced: boolean;
+      placeholder: string | null;
+      help_text: string | null;
+      order: number;
+    }
 
-    filters.forEach((filter: InquiryFilter) => {
+    // Save filters
+    const filters: FilterData[] = this.filtersFormArray.value.map((filter: any, index: number) => {
+      const filterData: FilterData = {
+        inquiry: inquiryId,
+        name: filter.name,
+        code: filter.code,
+        field_path: filter.field_path,
+        operator: filter.operator,
+        filter_type: filter.filter_type,
+        default_value: filter.default_value || null,
+        is_required: filter.is_required,
+        is_visible: filter.is_visible,
+        is_advanced: filter.is_advanced,
+        placeholder: filter.placeholder || null,
+        help_text: filter.help_text || null,
+        order: index
+      };
+
       if (filter.id) {
-        saveOperations.push(this.inquiryService.updateFilter(filter.id, filter));
+        filterData.id = filter.id;
+      }
+
+      return filterData;
+    });
+
+    filters.forEach((filter: FilterData) => {
+      if (filter.id) {
+        saveOperations.push(this.inquiryService.updateFilter(filter.id, filter as InquiryFilter));
       } else {
-        saveOperations.push(this.inquiryService.addFilter(filter));
+        const { id, ...filterWithoutId } = filter;
+        saveOperations.push(this.inquiryService.addFilter(filterWithoutId as InquiryFilter));
+      }
+    });
+
+    // Define interface for relation data
+    interface RelationData {
+      id?: number;
+      inquiry: number;
+      relation_path: string;
+      display_name: string;
+      relation_type: string;
+      include_fields: string[] | null;
+      exclude_fields: string[] | null;
+      use_select_related: boolean;
+      use_prefetch_related: boolean;
+      max_depth: number;
+      include_count: boolean;
+      order: number;
+    }
+
+    // Save relations
+    const relations: RelationData[] = this.relationsFormArray.value.map((relation: any, index: number) => {
+      const relationData: RelationData = {
+        inquiry: inquiryId,
+        relation_path: relation.relation_path,
+        display_name: relation.display_name,
+        relation_type: relation.relation_type,
+        include_fields: relation.include_fields || null,
+        exclude_fields: relation.exclude_fields || null,
+        use_select_related: relation.use_select_related,
+        use_prefetch_related: relation.use_prefetch_related,
+        max_depth: relation.max_depth,
+        include_count: relation.include_count,
+        order: index
+      };
+
+      if (relation.id) {
+        relationData.id = relation.id;
+      }
+
+      return relationData;
+    });
+
+    relations.forEach((relation: RelationData) => {
+      if (relation.id) {
+        saveOperations.push(this.inquiryService.updateRelation(relation.id, relation as InquiryRelation));
+      } else {
+        const { id, ...relationWithoutId } = relation;
+        saveOperations.push(this.inquiryService.addRelation(relationWithoutId as InquiryRelation));
       }
     });
 
@@ -545,6 +729,7 @@ export class InquiryEditorComponent implements OnInit, OnDestroy {
             this.navigateToList();
           },
           error: (error) => {
+            console.error('Error saving inquiry details:', error);
             this.snackBar.open('Error saving inquiry details', 'Close', {
               duration: 3000,
               panelClass: 'error-snackbar'
@@ -557,7 +742,6 @@ export class InquiryEditorComponent implements OnInit, OnDestroy {
       this.navigateToList();
     }
   }
-
   private validateAllForms(): boolean {
     const forms = [
       this.basicInfoForm,
@@ -600,8 +784,8 @@ export class InquiryEditorComponent implements OnInit, OnDestroy {
       .replace(/^_+|_+$/g, '');
   }
 
-  private mapFieldType(djangoType: string): string {
-    const typeMap: { [key: string]: string } = {
+  private mapFieldType(djangoType: string): FieldType {
+    const typeMap: { [key: string]: FieldType } = {
       'CharField': 'string',
       'TextField': 'string',
       'IntegerField': 'number',
@@ -622,3 +806,4 @@ export class InquiryEditorComponent implements OnInit, OnDestroy {
     return this.selectedFields.some(f => f.field_path === field.name);
   }
 }
+

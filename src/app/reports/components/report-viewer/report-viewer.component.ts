@@ -61,6 +61,7 @@ export class ReportViewerComponent implements OnInit {
 
   report: Report | null = null;
   executionResult: ExecutionResult | null = null;
+
   executions: ReportExecution[] = [];
 
   isLoading = false;

@@ -249,10 +249,10 @@
     <!-- Step 3: Fields Configuration -->
     <mat-step [stepControl]="fieldsForm">
       <ng-template matStepLabel>
-        <span class="step-label">
-          <mat-icon>view_column</mat-icon>
-          Fields Configuration
-        </span>
+    <span class="step-label">
+      <mat-icon>view_column</mat-icon>
+      Fields Configuration
+    </span>
       </ng-template>
 
       <div class="step-content">
@@ -262,12 +262,18 @@
 
             <mat-form-field appearance="outline" class="search-field">
               <mat-label>Search fields</mat-label>
-              <input matInput placeholder="Filter by field name">
+              <input matInput
+                     [(ngModel)]="fieldSearchQuery"
+                     (ngModelChange)="onFieldSearchChange()"
+                     placeholder="Filter by field name, type, or label">
               <mat-icon matPrefix>search</mat-icon>
+              <button mat-icon-button matSuffix *ngIf="fieldSearchQuery" (click)="fieldSearchQuery = ''; onFieldSearchChange()">
+                <mat-icon>clear</mat-icon>
+              </button>
             </mat-form-field>
 
             <div class="fields-list">
-              <div *ngFor="let field of availableFields"
+              <div *ngFor="let field of filteredAvailableFields"
                    class="field-item"
                    [class.selected]="isFieldSelected(field)">
                 <div class="field-info">
@@ -282,62 +288,72 @@
                   <mat-icon>add_circle</mat-icon>
                 </button>
               </div>
+
+              <!-- Empty state when no fields match search -->
+              <div class="empty-search" *ngIf="filteredAvailableFields.length === 0 && fieldSearchQuery">
+                <mat-icon>search_off</mat-icon>
+                <p>No fields match "{{ fieldSearchQuery }}"</p>
+              </div>
             </div>
           </div>
 
           <div class="selected-fields-section">
             <h3 class="section-title">Selected Fields ({{ fieldsFormArray.length }})</h3>
 
-            <div class="selected-fields-list" formArrayName="fields">
-              <div *ngFor="let fieldGroup of fieldsFormArray.controls; let i = index"
-                   [formGroupName]="i"
-                   class="selected-field-item">
-                <div class="field-header">
-                  <mat-icon class="drag-handle">drag_indicator</mat-icon>
-                  <div class="field-title">
-                    {{ fieldGroup.get('display_name')?.value }}
-                    <span class="field-path">({{ fieldGroup.get('field_path')?.value }})</span>
+            <div class="selected-fields-list">
+              <form [formGroup]="fieldsForm">
+                <div formArrayName="fields">
+                  <div *ngFor="let fieldGroup of fieldsFormArray.controls; let i = index"
+                       [formGroupName]="i"
+                       class="selected-field-item">
+                    <div class="field-header">
+                      <mat-icon class="drag-handle">drag_indicator</mat-icon>
+                      <div class="field-title">
+                        {{ fieldGroup.get('display_name')?.value }}
+                        <span class="field-path">({{ fieldGroup.get('field_path')?.value }})</span>
+                      </div>
+                      <button mat-icon-button (click)="removeField(i)" matTooltip="Remove field">
+                        <mat-icon>remove_circle</mat-icon>
+                      </button>
+                    </div>
+
+                    <div class="field-settings">
+                      <mat-form-field appearance="outline" class="mini-field">
+                        <mat-label>Display Name</mat-label>
+                        <input matInput formControlName="display_name">
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline" class="mini-field">
+                        <mat-label>Width</mat-label>
+                        <input matInput formControlName="width" placeholder="e.g., 150px">
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline" class="mini-field">
+                        <mat-label>Alignment</mat-label>
+                        <mat-select formControlName="alignment">
+                          <mat-option value="left">Left</mat-option>
+                          <mat-option value="center">Center</mat-option>
+                          <mat-option value="right">Right</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+
+                      <div class="field-toggles">
+                        <mat-checkbox formControlName="is_visible">Visible</mat-checkbox>
+                        <mat-checkbox formControlName="is_searchable">Searchable</mat-checkbox>
+                        <mat-checkbox formControlName="is_sortable">Sortable</mat-checkbox>
+                        <mat-checkbox formControlName="is_filterable">Filterable</mat-checkbox>
+                        <mat-checkbox formControlName="is_primary">Primary</mat-checkbox>
+                      </div>
+                    </div>
                   </div>
-                  <button mat-icon-button (click)="removeField(i)" matTooltip="Remove field">
-                    <mat-icon>remove_circle</mat-icon>
-                  </button>
-                </div>
 
-                <div class="field-settings">
-                  <mat-form-field appearance="outline" class="mini-field">
-                    <mat-label>Display Name</mat-label>
-                    <input matInput formControlName="display_name">
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline" class="mini-field">
-                    <mat-label>Width</mat-label>
-                    <input matInput formControlName="width" placeholder="e.g., 150px">
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline" class="mini-field">
-                    <mat-label>Alignment</mat-label>
-                    <mat-select formControlName="alignment">
-                      <mat-option value="left">Left</mat-option>
-                      <mat-option value="center">Center</mat-option>
-                      <mat-option value="right">Right</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-
-                  <div class="field-toggles">
-                    <mat-checkbox formControlName="is_visible">Visible</mat-checkbox>
-                    <mat-checkbox formControlName="is_searchable">Searchable</mat-checkbox>
-                    <mat-checkbox formControlName="is_sortable">Sortable</mat-checkbox>
-                    <mat-checkbox formControlName="is_filterable">Filterable</mat-checkbox>
-                    <mat-checkbox formControlName="is_primary">Primary</mat-checkbox>
+                  <div class="empty-fields" *ngIf="fieldsFormArray.length === 0">
+                    <mat-icon>view_column</mat-icon>
+                    <p>No fields selected</p>
+                    <p class="hint">Add fields from the available fields list</p>
                   </div>
                 </div>
-              </div>
-
-              <div class="empty-fields" *ngIf="fieldsFormArray.length === 0">
-                <mat-icon>view_column</mat-icon>
-                <p>No fields selected</p>
-                <p class="hint">Add fields from the available fields list</p>
-              </div>
+              </form>
             </div>
           </div>
         </div>
@@ -355,17 +371,42 @@
       </div>
     </mat-step>
 
+    <!-- Update the fields list to use filteredAvailableFields -->
+    <div class="fields-list">
+      <div *ngFor="let field of filteredAvailableFields"
+           class="field-item"
+           [class.selected]="isFieldSelected(field)">
+        <div class="field-info">
+          <div class="field-name">{{ field.name }}</div>
+          <div class="field-type">{{ field.type }}</div>
+          <div class="field-label">{{ field.verbose_name }}</div>
+        </div>
+        <button mat-icon-button
+                (click)="addField(field)"
+                [disabled]="isFieldSelected(field)"
+                matTooltip="Add field">
+          <mat-icon>add_circle</mat-icon>
+        </button>
+      </div>
+
+      <!-- Empty state when no fields match search -->
+      <div class="empty-search" *ngIf="filteredAvailableFields.length === 0 && fieldSearchQuery">
+        <mat-icon>search_off</mat-icon>
+        <p>No fields match "{{ fieldSearchQuery }}"</p>
+      </div>
+    </div>
+
     <!-- Step 4: Filters Configuration -->
     <mat-step [stepControl]="filtersForm">
       <ng-template matStepLabel>
-        <span class="step-label">
-          <mat-icon>filter_list</mat-icon>
-          Filters Configuration
-        </span>
+    <span class="step-label">
+      <mat-icon>filter_list</mat-icon>
+      Filters Configuration
+    </span>
       </ng-template>
 
       <div class="step-content">
-        <form [formGroup]="filtersForm">
+        <form [formGroup]="filtersForm">  <!-- ADD THIS FORM WRAPPER -->
           <div class="filters-section">
             <div class="section-header">
               <h3 class="section-title">Query Filters</h3>
@@ -375,7 +416,7 @@
               </button>
             </div>
 
-            <div formArrayName="filters" class="filters-list">
+            <div formArrayName="filters" class="filters-list">  <!-- THIS NOW HAS PARENT FORM -->
               <mat-card *ngFor="let filterGroup of filtersFormArray.controls; let i = index"
                         [formGroupName]="i"
                         class="filter-card">
@@ -477,7 +518,7 @@
               </div>
             </div>
           </div>
-        </form>
+        </form>  <!-- CLOSE THE FORM -->
 
         <div class="step-actions">
           <button mat-button matStepperPrevious class="prev-btn">
@@ -495,14 +536,14 @@
     <!-- Step 5: Relations Configuration -->
     <mat-step [stepControl]="relationsForm">
       <ng-template matStepLabel>
-        <span class="step-label">
-          <mat-icon>device_hub</mat-icon>
-          Relations Configuration
-        </span>
+    <span class="step-label">
+      <mat-icon>device_hub</mat-icon>
+      Relations Configuration
+    </span>
       </ng-template>
 
       <div class="step-content">
-        <form [formGroup]="relationsForm">
+        <form [formGroup]="relationsForm">  <!-- ADD THIS FORM WRAPPER -->
           <div class="relations-section">
             <div class="section-header">
               <h3 class="section-title">Related Data</h3>
@@ -512,7 +553,7 @@
               </button>
             </div>
 
-            <div formArrayName="relations" class="relations-list">
+            <div formArrayName="relations" class="relations-list">  <!-- THIS NOW HAS PARENT FORM -->
               <mat-card *ngFor="let relationGroup of relationsFormArray.controls; let i = index"
                         [formGroupName]="i"
                         class="relation-card">
@@ -577,7 +618,7 @@
               </div>
             </div>
           </div>
-        </form>
+        </form>  <!-- CLOSE THE FORM -->
 
         <div class="step-actions">
           <button mat-button matStepperPrevious class="prev-btn">
