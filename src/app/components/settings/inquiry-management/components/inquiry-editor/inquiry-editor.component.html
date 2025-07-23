@@ -1,0 +1,750 @@
+<!-- inquiry-editor.component.html -->
+<div class="inquiry-editor">
+  <!-- Header -->
+  <div class="editor-header">
+    <div class="header-content">
+      <button mat-icon-button class="back-button" (click)="cancel()">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="header-text">
+        <h1>{{ isEditMode ? 'Edit Inquiry' : 'Create New Inquiry' }}</h1>
+        <p>{{ isEditMode ? 'Update inquiry configuration' : 'Configure a new data inquiry' }}</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button mat-button (click)="cancel()" class="cancel-btn">
+        <mat-icon>close</mat-icon>
+        {{ 'cancel' | translate }}
+      </button>
+      <button mat-raised-button
+              color="primary"
+              (click)="saveInquiry()"
+              [disabled]="isSaving"
+              class="save-btn">
+        <mat-spinner diameter="20" *ngIf="isSaving"></mat-spinner>
+        <mat-icon *ngIf="!isSaving">save</mat-icon>
+        {{ isEditMode ? 'Update' : 'Create' }} Inquiry
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <mat-spinner diameter="48"></mat-spinner>
+    <p>Loading inquiry configuration...</p>
+  </div>
+
+  <!-- Stepper -->
+  <mat-stepper #stepper *ngIf="!isLoading" class="inquiry-stepper">
+    <!-- Step 1: Basic Information -->
+    <mat-step [stepControl]="basicInfoForm">
+      <ng-template matStepLabel>
+        <span class="step-label">
+          <mat-icon>info</mat-icon>
+          Basic Information
+        </span>
+      </ng-template>
+
+      <div class="step-content">
+        <form [formGroup]="basicInfoForm">
+          <div class="form-section">
+            <h3 class="section-title">General Information</h3>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Inquiry Name</mat-label>
+                <input matInput formControlName="name" placeholder="e.g., Customer Orders">
+                <mat-icon matPrefix>label</mat-icon>
+                <mat-error *ngIf="basicInfoForm.get('name')?.hasError('required')">
+                  Name is required
+                </mat-error>
+                <mat-error *ngIf="basicInfoForm.get('name')?.hasError('minlength')">
+                  Name must be at least 3 characters
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Code (URL-friendly)</mat-label>
+                <input matInput formControlName="code" placeholder="e.g., customer_orders" [readonly]="isEditMode">
+                <mat-icon matPrefix>code</mat-icon>
+                <mat-hint>Used in API endpoints and URLs</mat-hint>
+                <mat-error *ngIf="basicInfoForm.get('code')?.hasError('required')">
+                  Code is required
+                </mat-error>
+                <mat-error *ngIf="basicInfoForm.get('code')?.hasError('pattern')">
+                  Only lowercase letters, numbers, and underscores allowed
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="form-field full-width">
+              <mat-label>Display Name</mat-label>
+              <input matInput formControlName="display_name" placeholder="e.g., Customer Order Management">
+              <mat-icon matPrefix>visibility</mat-icon>
+              <mat-error *ngIf="basicInfoForm.get('display_name')?.hasError('required')">
+                Display name is required
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field full-width">
+              <mat-label>Description</mat-label>
+              <textarea matInput formControlName="description" rows="3"
+                        placeholder="Describe the purpose of this inquiry"></textarea>
+              <mat-icon matPrefix>description</mat-icon>
+            </mat-form-field>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Icon</mat-label>
+                <mat-select formControlName="icon">
+                  <mat-option *ngFor="let icon of availableIcons" [value]="icon">
+                    <mat-icon>{{ icon }}</mat-icon>
+                    <span>{{ icon }}</span>
+                  </mat-option>
+                </mat-select>
+                <mat-icon matPrefix>{{ basicInfoForm.get('icon')?.value }}</mat-icon>
+              </mat-form-field>
+
+              <div class="toggle-group">
+                <mat-slide-toggle formControlName="is_public" class="styled-toggle">
+                  <span class="toggle-label">
+                    <mat-icon>public</mat-icon>
+                    Public Inquiry
+                  </span>
+                </mat-slide-toggle>
+
+                <mat-slide-toggle formControlName="active" class="styled-toggle">
+                  <span class="toggle-label">
+                    <mat-icon>power_settings_new</mat-icon>
+                    Active
+                  </span>
+                </mat-slide-toggle>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <div class="step-actions">
+          <button mat-button matStepperNext class="next-btn">
+            Next
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+      </div>
+    </mat-step>
+
+    <!-- Step 2: Model Selection -->
+    <mat-step [stepControl]="modelSelectionForm">
+      <ng-template matStepLabel>
+        <span class="step-label">
+          <mat-icon>storage</mat-icon>
+          Model Selection
+        </span>
+      </ng-template>
+
+      <div class="step-content">
+        <form [formGroup]="modelSelectionForm">
+          <div class="form-section">
+            <h3 class="section-title">Target Model</h3>
+
+            <mat-form-field appearance="outline" class="form-field full-width">
+              <mat-label>Select Model</mat-label>
+              <mat-select formControlName="content_type" (selectionChange)="onModelSelect($event.value)">
+                <mat-option *ngFor="let model of availableModels" [value]="model.id">
+                  <strong>{{ model.verbose_name }}</strong>
+                  <span class="model-info">({{ model.app_label }}.{{ model.model }})</span>
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>storage</mat-icon>
+              <mat-error *ngIf="modelSelectionForm.get('content_type')?.hasError('required')">
+                Please select a model
+              </mat-error>
+            </mat-form-field>
+
+            <div class="model-details" *ngIf="selectedModel">
+              <mat-card class="info-card">
+                <mat-card-content>
+                  <h4>Model Information</h4>
+                  <div class="info-grid">
+                    <div class="info-item">
+                      <span class="info-label">Model Name:</span>
+                      <span class="info-value">{{ selectedModel.verbose_name }}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">App Label:</span>
+                      <span class="info-value">{{ selectedModel.app_label }}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">Total Fields:</span>
+                      <span class="info-value">{{ selectedModel.fields?.length || 0 }}</span>
+                    </div>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            </div>
+
+            <h3 class="section-title">Query Configuration</h3>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Default Page Size</mat-label>
+                <input matInput type="number" formControlName="default_page_size">
+                <mat-icon matPrefix>view_list</mat-icon>
+                <mat-hint>Number of records per page</mat-hint>
+                <mat-error *ngIf="modelSelectionForm.get('default_page_size')?.hasError('required')">
+                  Page size is required
+                </mat-error>
+                <mat-error *ngIf="modelSelectionForm.get('default_page_size')?.hasError('min')">
+                  Minimum value is 1
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Maximum Page Size</mat-label>
+                <input matInput type="number" formControlName="max_page_size">
+                <mat-icon matPrefix>expand_less</mat-icon>
+                <mat-hint>Maximum allowed records per page</mat-hint>
+                <mat-error *ngIf="modelSelectionForm.get('max_page_size')?.hasError('required')">
+                  Max page size is required
+                </mat-error>
+                <mat-error *ngIf="modelSelectionForm.get('max_page_size')?.hasError('max')">
+                  Maximum value is 1000
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="toggle-group">
+              <mat-slide-toggle formControlName="enable_search" class="styled-toggle">
+                <span class="toggle-label">
+                  <mat-icon>search</mat-icon>
+                  Enable Search
+                </span>
+                <span class="toggle-description">Allow searching across searchable fields</span>
+              </mat-slide-toggle>
+
+              <mat-slide-toggle formControlName="distinct" class="styled-toggle">
+                <span class="toggle-label">
+                  <mat-icon>filter_alt</mat-icon>
+                  Distinct Results
+                </span>
+                <span class="toggle-description">Return only unique records</span>
+              </mat-slide-toggle>
+            </div>
+          </div>
+        </form>
+
+        <div class="step-actions">
+          <button mat-button matStepperPrevious class="prev-btn">
+            <mat-icon>arrow_back</mat-icon>
+            Previous
+          </button>
+          <button mat-button matStepperNext class="next-btn" [disabled]="!selectedModel">
+            Next
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+      </div>
+    </mat-step>
+
+    <!-- Step 3: Fields Configuration -->
+    <mat-step [stepControl]="fieldsForm">
+      <ng-template matStepLabel>
+        <span class="step-label">
+          <mat-icon>view_column</mat-icon>
+          Fields Configuration
+        </span>
+      </ng-template>
+
+      <div class="step-content">
+        <div class="fields-configuration">
+          <div class="available-fields-section">
+            <h3 class="section-title">Available Fields</h3>
+
+            <mat-form-field appearance="outline" class="search-field">
+              <mat-label>Search fields</mat-label>
+              <input matInput placeholder="Filter by field name">
+              <mat-icon matPrefix>search</mat-icon>
+            </mat-form-field>
+
+            <div class="fields-list">
+              <div *ngFor="let field of availableFields"
+                   class="field-item"
+                   [class.selected]="isFieldSelected(field)">
+                <div class="field-info">
+                  <div class="field-name">{{ field.name }}</div>
+                  <div class="field-type">{{ field.type }}</div>
+                  <div class="field-label">{{ field.verbose_name }}</div>
+                </div>
+                <button mat-icon-button
+                        (click)="addField(field)"
+                        [disabled]="isFieldSelected(field)"
+                        matTooltip="Add field">
+                  <mat-icon>add_circle</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="selected-fields-section">
+            <h3 class="section-title">Selected Fields ({{ fieldsFormArray.length }})</h3>
+
+            <div class="selected-fields-list" formArrayName="fields">
+              <div *ngFor="let fieldGroup of fieldsFormArray.controls; let i = index"
+                   [formGroupName]="i"
+                   class="selected-field-item">
+                <div class="field-header">
+                  <mat-icon class="drag-handle">drag_indicator</mat-icon>
+                  <div class="field-title">
+                    {{ fieldGroup.get('display_name')?.value }}
+                    <span class="field-path">({{ fieldGroup.get('field_path')?.value }})</span>
+                  </div>
+                  <button mat-icon-button (click)="removeField(i)" matTooltip="Remove field">
+                    <mat-icon>remove_circle</mat-icon>
+                  </button>
+                </div>
+
+                <div class="field-settings">
+                  <mat-form-field appearance="outline" class="mini-field">
+                    <mat-label>Display Name</mat-label>
+                    <input matInput formControlName="display_name">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="mini-field">
+                    <mat-label>Width</mat-label>
+                    <input matInput formControlName="width" placeholder="e.g., 150px">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="mini-field">
+                    <mat-label>Alignment</mat-label>
+                    <mat-select formControlName="alignment">
+                      <mat-option value="left">Left</mat-option>
+                      <mat-option value="center">Center</mat-option>
+                      <mat-option value="right">Right</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <div class="field-toggles">
+                    <mat-checkbox formControlName="is_visible">Visible</mat-checkbox>
+                    <mat-checkbox formControlName="is_searchable">Searchable</mat-checkbox>
+                    <mat-checkbox formControlName="is_sortable">Sortable</mat-checkbox>
+                    <mat-checkbox formControlName="is_filterable">Filterable</mat-checkbox>
+                    <mat-checkbox formControlName="is_primary">Primary</mat-checkbox>
+                  </div>
+                </div>
+              </div>
+
+              <div class="empty-fields" *ngIf="fieldsFormArray.length === 0">
+                <mat-icon>view_column</mat-icon>
+                <p>No fields selected</p>
+                <p class="hint">Add fields from the available fields list</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-actions">
+          <button mat-button matStepperPrevious class="prev-btn">
+            <mat-icon>arrow_back</mat-icon>
+            Previous
+          </button>
+          <button mat-button matStepperNext class="next-btn">
+            Next
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+      </div>
+    </mat-step>
+
+    <!-- Step 4: Filters Configuration -->
+    <mat-step [stepControl]="filtersForm">
+      <ng-template matStepLabel>
+        <span class="step-label">
+          <mat-icon>filter_list</mat-icon>
+          Filters Configuration
+        </span>
+      </ng-template>
+
+      <div class="step-content">
+        <form [formGroup]="filtersForm">
+          <div class="filters-section">
+            <div class="section-header">
+              <h3 class="section-title">Query Filters</h3>
+              <button mat-button (click)="addFilter()" class="add-btn">
+                <mat-icon>add</mat-icon>
+                Add Filter
+              </button>
+            </div>
+
+            <div formArrayName="filters" class="filters-list">
+              <mat-card *ngFor="let filterGroup of filtersFormArray.controls; let i = index"
+                        [formGroupName]="i"
+                        class="filter-card">
+                <mat-card-header>
+                  <mat-card-title>
+                    <mat-icon>filter_alt</mat-icon>
+                    {{ filterGroup.get('name')?.value || 'New Filter' }}
+                  </mat-card-title>
+                  <button mat-icon-button (click)="removeFilter(i)" class="remove-btn">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </mat-card-header>
+
+                <mat-card-content>
+                  <div class="form-row">
+                    <mat-form-field appearance="outline" class="form-field">
+                      <mat-label>Filter Name</mat-label>
+                      <input matInput formControlName="name" placeholder="e.g., Status Filter">
+                      <mat-error *ngIf="filterGroup.get('name')?.hasError('required')">
+                        Name is required
+                      </mat-error>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="form-field">
+                      <mat-label>Filter Code</mat-label>
+                      <input matInput formControlName="code" placeholder="e.g., status">
+                      <mat-error *ngIf="filterGroup.get('code')?.hasError('required')">
+                        Code is required
+                      </mat-error>
+                    </mat-form-field>
+                  </div>
+
+                  <div class="form-row">
+                    <mat-form-field appearance="outline" class="form-field">
+                      <mat-label>Field Path</mat-label>
+                      <input matInput formControlName="field_path" placeholder="e.g., status">
+                      <mat-error *ngIf="filterGroup.get('field_path')?.hasError('required')">
+                        Field path is required
+                      </mat-error>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="form-field">
+                      <mat-label>Operator</mat-label>
+                      <mat-select formControlName="operator">
+                        <mat-option value="exact">Exact</mat-option>
+                        <mat-option value="iexact">Exact (case-insensitive)</mat-option>
+                        <mat-option value="contains">Contains</mat-option>
+                        <mat-option value="icontains">Contains (case-insensitive)</mat-option>
+                        <mat-option value="gt">Greater than</mat-option>
+                        <mat-option value="gte">Greater than or equal</mat-option>
+                        <mat-option value="lt">Less than</mat-option>
+                        <mat-option value="lte">Less than or equal</mat-option>
+                        <mat-option value="in">In list</mat-option>
+                        <mat-option value="range">Range</mat-option>
+                        <mat-option value="isnull">Is null</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+
+                  <div class="form-row">
+                    <mat-form-field appearance="outline" class="form-field">
+                      <mat-label>Filter Type</mat-label>
+                      <mat-select formControlName="filter_type">
+                        <mat-option value="text">Text Input</mat-option>
+                        <mat-option value="number">Number Input</mat-option>
+                        <mat-option value="date">Date Picker</mat-option>
+                        <mat-option value="datetime">DateTime Picker</mat-option>
+                        <mat-option value="select">Select Dropdown</mat-option>
+                        <mat-option value="multiselect">Multi-Select</mat-option>
+                        <mat-option value="checkbox">Checkbox</mat-option>
+                        <mat-option value="radio">Radio Buttons</mat-option>
+                        <mat-option value="daterange">Date Range</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="form-field">
+                      <mat-label>Placeholder</mat-label>
+                      <input matInput formControlName="placeholder">
+                    </mat-form-field>
+                  </div>
+
+                  <mat-form-field appearance="outline" class="form-field full-width">
+                    <mat-label>Help Text</mat-label>
+                    <input matInput formControlName="help_text">
+                  </mat-form-field>
+
+                  <div class="filter-options">
+                    <mat-checkbox formControlName="is_required">Required</mat-checkbox>
+                    <mat-checkbox formControlName="is_visible">Visible</mat-checkbox>
+                    <mat-checkbox formControlName="is_advanced">Advanced Filter</mat-checkbox>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+
+              <div class="empty-filters" *ngIf="filtersFormArray.length === 0">
+                <mat-icon>filter_list_off</mat-icon>
+                <p>No filters configured</p>
+                <p class="hint">Add filters to allow users to query data</p>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <div class="step-actions">
+          <button mat-button matStepperPrevious class="prev-btn">
+            <mat-icon>arrow_back</mat-icon>
+            Previous
+          </button>
+          <button mat-button matStepperNext class="next-btn">
+            Next
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+      </div>
+    </mat-step>
+
+    <!-- Step 5: Relations Configuration -->
+    <mat-step [stepControl]="relationsForm">
+      <ng-template matStepLabel>
+        <span class="step-label">
+          <mat-icon>device_hub</mat-icon>
+          Relations Configuration
+        </span>
+      </ng-template>
+
+      <div class="step-content">
+        <form [formGroup]="relationsForm">
+          <div class="relations-section">
+            <div class="section-header">
+              <h3 class="section-title">Related Data</h3>
+              <button mat-button (click)="addRelation()" class="add-btn">
+                <mat-icon>add</mat-icon>
+                Add Relation
+              </button>
+            </div>
+
+            <div formArrayName="relations" class="relations-list">
+              <mat-card *ngFor="let relationGroup of relationsFormArray.controls; let i = index"
+                        [formGroupName]="i"
+                        class="relation-card">
+                <mat-card-header>
+                  <mat-card-title>
+                    <mat-icon>device_hub</mat-icon>
+                    {{ relationGroup.get('display_name')?.value || 'New Relation' }}
+                  </mat-card-title>
+                  <button mat-icon-button (click)="removeRelation(i)" class="remove-btn">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </mat-card-header>
+
+                <mat-card-content>
+                  <div class="form-row">
+                    <mat-form-field appearance="outline" class="form-field">
+                      <mat-label>Relation Path</mat-label>
+                      <input matInput formControlName="relation_path" placeholder="e.g., user__profile">
+                      <mat-error *ngIf="relationGroup.get('relation_path')?.hasError('required')">
+                        Relation path is required
+                      </mat-error>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="form-field">
+                      <mat-label>Display Name</mat-label>
+                      <input matInput formControlName="display_name" placeholder="e.g., User Profile">
+                      <mat-error *ngIf="relationGroup.get('display_name')?.hasError('required')">
+                        Display name is required
+                      </mat-error>
+                    </mat-form-field>
+                  </div>
+
+                  <div class="form-row">
+                    <mat-form-field appearance="outline" class="form-field">
+                      <mat-label>Relation Type</mat-label>
+                      <mat-select formControlName="relation_type">
+                        <mat-option value="one_to_one">One to One</mat-option>
+                        <mat-option value="foreign_key">Foreign Key</mat-option>
+                        <mat-option value="one_to_many">One to Many</mat-option>
+                        <mat-option value="many_to_many">Many to Many</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="form-field">
+                      <mat-label>Max Depth</mat-label>
+                      <input matInput type="number" formControlName="max_depth" min="1" max="5">
+                    </mat-form-field>
+                  </div>
+
+                  <div class="relation-options">
+                    <mat-checkbox formControlName="use_select_related">Use Select Related</mat-checkbox>
+                    <mat-checkbox formControlName="use_prefetch_related">Use Prefetch Related</mat-checkbox>
+                    <mat-checkbox formControlName="include_count">Include Count</mat-checkbox>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+
+              <div class="empty-relations" *ngIf="relationsFormArray.length === 0">
+                <mat-icon>device_hub</mat-icon>
+                <p>No relations configured</p>
+                <p class="hint">Add relations to include related data</p>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <div class="step-actions">
+          <button mat-button matStepperPrevious class="prev-btn">
+            <mat-icon>arrow_back</mat-icon>
+            Previous
+          </button>
+          <button mat-button matStepperNext class="next-btn">
+            Next
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+      </div>
+    </mat-step>
+
+    <!-- Step 6: Permissions Configuration -->
+    <mat-step [stepControl]="permissionsForm">
+      <ng-template matStepLabel>
+        <span class="step-label">
+          <mat-icon>security</mat-icon>
+          Permissions Configuration
+        </span>
+      </ng-template>
+
+      <div class="step-content">
+        <form [formGroup]="permissionsForm">
+          <div class="permissions-section">
+            <h3 class="section-title">Access Control</h3>
+
+            <mat-form-field appearance="outline" class="form-field full-width">
+              <mat-label>Allowed Groups</mat-label>
+              <mat-select formControlName="allowed_groups" multiple>
+                <mat-option *ngFor="let group of availableGroups" [value]="group.id">
+                  {{ group.name }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>group</mat-icon>
+              <mat-hint>Leave empty to allow all authenticated users</mat-hint>
+            </mat-form-field>
+
+            <h3 class="section-title">Export Settings</h3>
+
+            <mat-slide-toggle formControlName="allow_export" class="styled-toggle">
+              <span class="toggle-label">
+                <mat-icon>download</mat-icon>
+                Allow Export
+              </span>
+              <span class="toggle-description">Enable data export functionality</span>
+            </mat-slide-toggle>
+
+            <mat-form-field appearance="outline" class="form-field full-width"
+                            *ngIf="permissionsForm.get('allow_export')?.value">
+              <mat-label>Export Formats</mat-label>
+              <mat-select formControlName="export_formats" multiple>
+                <mat-option *ngFor="let format of exportFormats" [value]="format.value">
+                  {{ format.label }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>file_download</mat-icon>
+            </mat-form-field>
+
+            <h3 class="section-title">Search Configuration</h3>
+
+            <mat-form-field appearance="outline" class="form-field full-width">
+              <mat-label>Searchable Fields</mat-label>
+              <mat-select formControlName="search_fields" multiple>
+                <mat-option *ngFor="let field of selectedFields"
+                            [value]="field.field_path"
+                            [disabled]="!field.is_searchable">
+                  {{ field.display_name }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>search</mat-icon>
+              <mat-hint>Select fields to include in search</mat-hint>
+            </mat-form-field>
+          </div>
+        </form>
+
+        <div class="step-actions">
+          <button mat-button matStepperPrevious class="prev-btn">
+            <mat-icon>arrow_back</mat-icon>
+            Previous
+          </button>
+          <button mat-button matStepperNext class="next-btn">
+            Review & Save
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+      </div>
+    </mat-step>
+
+    <!-- Step 7: Review and Save -->
+    <mat-step>
+      <ng-template matStepLabel>
+        <span class="step-label">
+          <mat-icon>preview</mat-icon>
+          Review & Save
+        </span>
+      </ng-template>
+
+      <div class="step-content">
+        <div class="review-section">
+          <h3 class="section-title">Configuration Summary</h3>
+
+          <mat-card class="summary-card">
+            <mat-card-content>
+              <div class="summary-grid">
+                <div class="summary-item">
+                  <span class="summary-label">Name:</span>
+                  <span class="summary-value">{{ basicInfoForm.get('display_name')?.value }}</span>
+                </div>
+                <div class="summary-item">
+                  <span class="summary-label">Code:</span>
+                  <span class="summary-value code">{{ basicInfoForm.get('code')?.value }}</span>
+                </div>
+                <div class="summary-item">
+                  <span class="summary-label">Model:</span>
+                  <span class="summary-value">{{ selectedModel?.verbose_name }}</span>
+                </div>
+                <div class="summary-item">
+                  <span class="summary-label">Fields:</span>
+                  <span class="summary-value">{{ fieldsFormArray.length }} configured</span>
+                </div>
+                <div class="summary-item">
+                  <span class="summary-label">Filters:</span>
+                  <span class="summary-value">{{ filtersFormArray.length }} configured</span>
+                </div>
+                <div class="summary-item">
+                  <span class="summary-label">Relations:</span>
+                  <span class="summary-value">{{ relationsFormArray.length }} configured</span>
+                </div>
+                <div class="summary-item">
+                  <span class="summary-label">Status:</span>
+                  <span class="summary-value">
+                    <mat-chip class="status-chip" [class]="basicInfoForm.get('active')?.value ? 'active' : 'inactive'">
+                      {{ basicInfoForm.get('active')?.value ? 'Active' : 'Inactive' }}
+                    </mat-chip>
+                  </span>
+                </div>
+                <div class="summary-item">
+                  <span class="summary-label">Visibility:</span>
+                  <span class="summary-value">
+                    <mat-chip class="visibility-chip" [class]="basicInfoForm.get('is_public')?.value ? 'public' : 'private'">
+                      {{ basicInfoForm.get('is_public')?.value ? 'Public' : 'Private' }}
+                    </mat-chip>
+                  </span>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <div class="final-actions">
+            <button mat-button matStepperPrevious class="prev-btn">
+              <mat-icon>arrow_back</mat-icon>
+              Previous
+            </button>
+            <button mat-raised-button
+                    color="primary"
+                    (click)="saveInquiry()"
+                    [disabled]="isSaving"
+                    class="save-final-btn">
+              <mat-spinner diameter="20" *ngIf="isSaving"></mat-spinner>
+              <mat-icon *ngIf="!isSaving">save</mat-icon>
+              {{ isEditMode ? 'Update' : 'Create' }} Inquiry
+            </button>
+          </div>
+        </div>
+      </div>
+    </mat-step>
+  </mat-stepper>
+</div>

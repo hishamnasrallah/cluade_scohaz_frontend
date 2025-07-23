@@ -1,0 +1,311 @@
+<!-- inquiry-management.component.html -->
+<div class="inquiry-management">
+  <!-- Enhanced Header with Ocean Mint Theme -->
+  <div class="page-header">
+    <div class="header-gradient-bg"></div>
+    <div class="header-content">
+      <div class="header-text">
+        <div class="header-icon pulse-animation">
+          <mat-icon>query_stats</mat-icon>
+        </div>
+        <div>
+          <h1 class="page-title">{{ 'inquiry_management' | translate }}</h1>
+          <p class="page-subtitle">{{ 'inquiry_configurations' | translate }}</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button mat-button class="action-button secondary" (click)="refreshData()">
+          <mat-icon>refresh</mat-icon>
+          <span>{{ 'refresh' | translate }}</span>
+        </button>
+        <button mat-button class="action-button secondary" (click)="importInquiry()">
+          <mat-icon>upload_file</mat-icon>
+          <span>{{ 'import_config' | translate }}</span>
+        </button>
+        <button mat-raised-button class="action-button primary" (click)="createInquiry()">
+          <mat-icon>add</mat-icon>
+          <span>{{ 'create_inquiry' | translate }}</span>
+        </button>
+      </div>
+    </div>
+    <mat-progress-bar *ngIf="isLoading" mode="indeterminate" class="header-progress"></mat-progress-bar>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="stats-section" *ngIf="!isLoadingSkeleton" @fadeInUp>
+    <div class="stat-card hover-lift">
+      <div class="stat-icon total-icon">
+        <mat-icon>dashboard</mat-icon>
+      </div>
+      <div class="stat-content">
+        <h3 class="count-animation">{{ statistics.total }}</h3>
+        <p>Total Inquiries</p>
+      </div>
+    </div>
+
+    <div class="stat-card hover-lift">
+      <div class="stat-icon active-icon">
+        <mat-icon>check_circle</mat-icon>
+      </div>
+      <div class="stat-content">
+        <h3 class="count-animation">{{ statistics.active }}</h3>
+        <p>Active</p>
+        <div class="stat-percentage">
+          <div class="percentage-bar">
+            <div class="percentage-fill" [style.width.%]="(statistics.active / statistics.total) * 100"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card hover-lift">
+      <div class="stat-icon public-icon">
+        <mat-icon>public</mat-icon>
+      </div>
+      <div class="stat-content">
+        <h3 class="count-animation">{{ statistics.public }}</h3>
+        <p>Public Inquiries</p>
+      </div>
+    </div>
+
+    <div class="stat-card hover-lift">
+      <div class="stat-icon recent-icon">
+        <mat-icon>update</mat-icon>
+      </div>
+      <div class="stat-content">
+        <h3 class="count-animation">{{ statistics.recentlyUpdated }}</h3>
+        <p>Recently Updated</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skeleton Stats -->
+  <div class="stats-section skeleton-stats" *ngIf="isLoadingSkeleton">
+    <div class="stat-card skeleton" *ngFor="let item of getSkeletonArray(4)">
+      <div class="skeleton-icon loading-shimmer"></div>
+      <div class="stat-content">
+        <div class="skeleton-text loading-shimmer" style="width: 60px; height: 24px;"></div>
+        <div class="skeleton-text loading-shimmer" style="width: 80px; height: 14px; margin-top: 8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Container -->
+  <div class="inquiries-container" *ngIf="!isLoadingSkeleton">
+    <!-- Search and Filters -->
+    <div class="filters-header">
+      <mat-form-field appearance="outline" class="search-field ocean-mint-field">
+        <mat-label>{{ 'search' | translate }}</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()"
+               placeholder="Search by name, code, or description">
+        <button mat-icon-button matSuffix *ngIf="searchQuery" (click)="clearSearch()">
+          <mat-icon>clear</mat-icon>
+        </button>
+      </mat-form-field>
+
+      <!-- Bulk Actions -->
+      <div class="bulk-actions" *ngIf="selectedInquiries.length > 0" @fadeInScale>
+        <span class="selection-count">{{ selectedInquiries.length }} selected</span>
+        <button mat-button (click)="bulkExport()" class="bulk-action-btn">
+          <mat-icon>download</mat-icon>
+          Export
+        </button>
+        <button mat-button (click)="bulkDelete()" class="bulk-action-btn danger">
+          <mat-icon>delete</mat-icon>
+          Delete
+        </button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container">
+      <table mat-table [dataSource]="dataSource" matSort class="inquiries-table enhanced-table">
+        <!-- Selection Column -->
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef class="select-header">
+            <mat-checkbox (change)="toggleAllSelection()"
+                          [checked]="isAllSelected()"
+                          [indeterminate]="isSomeSelected()">
+            </mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let inquiry" class="select-cell">
+            <mat-checkbox (change)="toggleSelection(inquiry)"
+                          [checked]="isSelected(inquiry)"
+                          (click)="$event.stopPropagation()">
+            </mat-checkbox>
+          </td>
+        </ng-container>
+
+        <!-- Name Column -->
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="name">Name</th>
+          <td mat-cell *matCellDef="let inquiry" class="name-cell">
+            <div class="inquiry-info">
+              <div class="inquiry-icon" [style.background]="'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'">
+                <mat-icon>{{ inquiry.icon || 'dashboard' }}</mat-icon>
+              </div>
+              <div class="inquiry-details">
+                <div class="inquiry-name">{{ inquiry.display_name }}</div>
+                <div class="inquiry-code">{{ inquiry.code }}</div>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Model Column -->
+        <ng-container matColumnDef="model">
+          <th mat-header-cell *matHeaderCellDef>Target Model</th>
+          <td mat-cell *matCellDef="let inquiry" class="model-cell">
+            <mat-chip class="model-chip">
+              <mat-icon>storage</mat-icon>
+              {{ getModelDisplay(inquiry) }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="active">Status</th>
+          <td mat-cell *matCellDef="let inquiry">
+            <div class="status-indicator" [class]="inquiry.active ? 'active' : 'inactive'">
+              <span class="status-dot"></span>
+              <span class="status-text">{{ inquiry.active ? 'Active' : 'Inactive' }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Visibility Column -->
+        <ng-container matColumnDef="visibility">
+          <th mat-header-cell *matHeaderCellDef>Visibility</th>
+          <td mat-cell *matCellDef="let inquiry">
+            <mat-chip class="visibility-chip" [class]="inquiry.is_public ? 'public' : 'private'">
+              <mat-icon>{{ inquiry.is_public ? 'public' : 'lock' }}</mat-icon>
+              {{ inquiry.is_public ? 'Public' : 'Private' }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Fields Column -->
+        <ng-container matColumnDef="fields">
+          <th mat-header-cell *matHeaderCellDef>Fields</th>
+          <td mat-cell *matCellDef="let inquiry">
+            <div class="field-stats">
+              <mat-icon>view_column</mat-icon>
+              <span>{{ inquiry.fields?.length || 0 }} fields</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Last Updated Column -->
+        <ng-container matColumnDef="lastUpdated">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="updated_at">Last Updated</th>
+          <td mat-cell *matCellDef="let inquiry" class="date-cell">
+            {{ formatDate(inquiry.updated_at) }}
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let inquiry" class="actions-cell" (click)="$event.stopPropagation()">
+            <button mat-icon-button
+                    [matMenuTriggerFor]="actionMenu"
+                    class="action-btn"
+                    matTooltip="More Actions">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+
+            <mat-menu #actionMenu="matMenu" class="enhanced-menu">
+              <button mat-menu-item (click)="viewInquiry(inquiry)">
+                <mat-icon>visibility</mat-icon>
+                <span>{{ 'preview' | translate }}</span>
+              </button>
+              <button mat-menu-item (click)="editInquiry(inquiry)">
+                <mat-icon>edit</mat-icon>
+                <span>{{ 'edit' | translate }}</span>
+              </button>
+              <button mat-menu-item (click)="duplicateInquiry(inquiry)">
+                <mat-icon>content_copy</mat-icon>
+                <span>{{ 'duplicate' | translate }}</span>
+              </button>
+
+              <mat-divider></mat-divider>
+
+              <button mat-menu-item (click)="toggleInquiryStatus(inquiry)">
+                <mat-icon>{{ inquiry.active ? 'visibility_off' : 'visibility' }}</mat-icon>
+                <span>{{ inquiry.active ? 'Deactivate' : 'Activate' }}</span>
+              </button>
+              <button mat-menu-item (click)="exportInquiry(inquiry)">
+                <mat-icon>download</mat-icon>
+                <span>{{ 'export_config' | translate }}</span>
+              </button>
+
+              <mat-divider></mat-divider>
+
+              <button mat-menu-item (click)="deleteInquiry(inquiry)" class="delete-item">
+                <mat-icon>delete</mat-icon>
+                <span>{{ 'delete' | translate }}</span>
+              </button>
+            </mat-menu>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+            class="inquiry-row"
+            (click)="viewInquiry(row)"
+            @fadeInUp></tr>
+      </table>
+
+      <!-- Paginator -->
+      <mat-paginator [length]="totalItems"
+                     [pageSize]="pageSize"
+                     [pageSizeOptions]="pageSizeOptions"
+                     [pageIndex]="currentPage"
+                     (page)="onPageChange($event)"
+                     showFirstLastButtons
+                     class="table-paginator enhanced">
+      </mat-paginator>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state enhanced" *ngIf="inquiries.length === 0 && !isLoading" @fadeInScale>
+      <div class="empty-illustration">
+        <mat-icon>query_stats</mat-icon>
+      </div>
+      <h3>{{ searchQuery ? 'No inquiries found' : 'no_configurations' | translate }}</h3>
+      <p>
+        {{ searchQuery ? 'Try adjusting your search criteria' : 'create_first_inquiry' | translate }}
+      </p>
+      <div class="empty-actions">
+        <button mat-raised-button
+                class="action-button primary"
+                (click)="searchQuery ? clearSearch() : createInquiry()">
+          <mat-icon>{{ searchQuery ? 'clear' : 'add' }}</mat-icon>
+          {{ searchQuery ? 'Clear Search' : 'create_inquiry' | translate }}
+        </button>
+        <button mat-button (click)="importInquiry()" class="import-btn">
+          <mat-icon>upload_file</mat-icon>
+          {{ 'import_config' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Skeleton for Table -->
+  <div class="skeleton-container" *ngIf="isLoadingSkeleton">
+    <div class="skeleton-filters">
+      <div class="skeleton-field loading-shimmer"></div>
+    </div>
+
+    <div class="skeleton-table">
+      <div class="skeleton-header">
+        <div class="skeleton-cell loading-shimmer" *ngFor="let col of [1,2,3,4,5,6,7,8]"></div>
+      </div>
+      <div class="skeleton-row" *ngFor="let row of getSkeletonArray(5)">
+        <div class="skeleton-cell loading-shimmer" *ngFor="let col of [1,2,3,4,5,6,7,8]"></div>
+      </div>
+    </div>
+  </div>
+</div>
