@@ -1870,3 +1870,90 @@ body.rtl {
     transform: scale(1);
   }
 }
+
+//.inquiries-dropdown {
+//  &.ocean-mint-menu {
+//    .menu-header {
+//      background: linear-gradient(135deg, #C4F7EF 0%, #B3F0E5 100%);
+//      padding: 16px;
+//      border-bottom: 1px solid rgba(196, 247, 239, 0.5);
+//
+//      .header-icon-wrapper {
+//        width: 48px;
+//        height: 48px;
+//        background: white;
+//        border-radius: 12px;
+//        display: flex;
+//        align-items: center;
+//        justify-content: center;
+//        box-shadow: 0 2px 8px rgba(52, 197, 170, 0.15);
+//        margin-bottom: 8px;
+//
+//        mat-icon {
+//          color: $ocean-mint-primary;
+//          font-size: 24px;
+//        }
+//      }
+//
+//      .header-content {
+//        .header-title {
+//          font-size: 16px;
+//          font-weight: 600;
+//          color: $ocean-mint-dark;
+//          margin: 0 0 4px 0;
+//        }
+//
+//        .header-subtitle {
+//          font-size: 12px;
+//          color: $ocean-mint-gray;
+//        }
+//      }
+//    }
+//
+//    .menu-body {
+//      padding: 8px 0;
+//
+//      .menu-section {
+//        padding: 8px 16px;
+//
+//        .section-title {
+//          display: block;
+//          font-size: 12px;
+//          font-weight: 600;
+//          color: $ocean-mint-gray;
+//          text-transform: uppercase;
+//          margin-bottom: 8px;
+//        }
+//      }
+//
+//      .inquiry-menu-item {
+//        display: flex;
+//        align-items: center;
+//        gap: 12px;
+//        padding: 8px 16px;
+//
+//        mat-icon {
+//          color: $ocean-mint-primary;
+//        }
+//
+//        .inquiry-badge {
+//          margin-left: auto;
+//          background: $ocean-mint-primary;
+//          color: white;
+//          padding: 2px 8px;
+//          border-radius: 12px;
+//          font-size: 11px;
+//          font-weight: 600;
+//        }
+//      }
+//
+//      .browse-all-item {
+//        margin-top: 8px;
+//
+//        mat-icon {
+//          color: $ocean-mint-primary;
+//        }
+//      }
+//    }
+//  }
+//}

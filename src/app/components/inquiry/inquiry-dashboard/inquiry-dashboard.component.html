@@ -1,0 +1,192 @@
+<!-- src/app/components/inquiry/inquiry-dashboard/inquiry-dashboard.component.html -->
+
+<div class="inquiry-dashboard">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <h1>{{ 'inquiry_dashboard' | translate }}</h1>
+      <p>{{ 'browse_all_inquiries' | translate }}</p>
+    </div>
+
+    <div class="header-actions">
+      <button mat-icon-button
+              [matTooltip]="viewMode === 'grid' ? ('list_view' | translate) : ('grid_view' | translate)"
+              (click)="toggleViewMode()">
+        <mat-icon>{{ viewMode === 'grid' ? 'view_list' : 'grid_view' }}</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="statistics-row" *ngIf="!isLoading">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon">
+          <mat-icon>dashboard</mat-icon>
+        </div>
+        <div class="stat-info">
+          <h3>{{ statistics.totalInquiries }}</h3>
+          <p>{{ 'total_inquiries' | translate }}</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon">
+          <mat-icon>play_circle</mat-icon>
+        </div>
+        <div class="stat-info">
+          <h3>{{ statistics.totalExecutions }}</h3>
+          <p>{{ 'total_executions' | translate }}</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon">
+          <mat-icon>timer</mat-icon>
+        </div>
+        <div class="stat-info">
+          <h3>{{ formatExecutionTime(statistics.averageExecutionTime) }}</h3>
+          <p>{{ 'avg_execution_time' | translate }}</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card" *ngIf="statistics.mostUsedInquiry">
+      <mat-card-content>
+        <div class="stat-icon">
+          <mat-icon>trending_up</mat-icon>
+        </div>
+        <div class="stat-info">
+          <h3>{{ statistics.mostUsedInquiry.display_name }}</h3>
+          <p>{{ 'most_used_inquiry' | translate }}</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>{{ 'search_inquiries' | translate }}</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput
+             [(ngModel)]="searchQuery"
+             (ngModelChange)="onSearchChange()"
+             [placeholder]="'search_placeholder' | translate">
+      <button mat-icon-button matSuffix *ngIf="searchQuery" (click)="searchQuery = ''; onSearchChange()">
+        <mat-icon>clear</mat-icon>
+      </button>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="category-field">
+      <mat-label>{{ 'category' | translate }}</mat-label>
+      <mat-select [(ngModel)]="selectedCategory" (selectionChange)="onCategoryChange()">
+        <mat-option value="all">{{ 'all_categories' | translate }}</mat-option>
+        <mat-option *ngFor="let category of categories" [value]="category">
+          {{ category }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <mat-spinner></mat-spinner>
+    <p>{{ 'loading_inquiries' | translate }}</p>
+  </div>
+
+  <!-- Grid View -->
+  <div class="inquiries-grid" *ngIf="!isLoading && viewMode === 'grid'">
+    <mat-card class="inquiry-card"
+              *ngFor="let inquiry of filteredInquiries"
+              (click)="executeInquiry(inquiry)">
+      <mat-card-header>
+        <div mat-card-avatar class="inquiry-icon">
+          <mat-icon>{{ getInquiryIcon(inquiry) }}</mat-icon>
+        </div>
+        <mat-card-title>{{ inquiry.display_name }}</mat-card-title>
+        <mat-card-subtitle>{{ inquiry.code }}</mat-card-subtitle>
+        <button mat-icon-button
+                class="favorite-btn"
+                (click)="toggleFavorite(inquiry, $event)"
+                [class.is-favorite]="inquiry.is_favorite">
+          <mat-icon>{{ inquiry.is_favorite ? 'star' : 'star_border' }}</mat-icon>
+        </button>
+      </mat-card-header>
+
+      <mat-card-content>
+        <p class="description">{{ inquiry.description || ('no_description' | translate) }}</p>
+
+        <div class="inquiry-meta">
+          <mat-chip *ngIf="inquiry.category">
+            <mat-icon>category</mat-icon>
+            {{ inquiry.category }}
+          </mat-chip>
+          <mat-chip *ngIf="inquiry.execution_count">
+            <mat-icon>play_arrow</mat-icon>
+            {{ inquiry.execution_count }} {{ 'executions' | translate }}
+          </mat-chip>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- List View -->
+  <div class="inquiries-list" *ngIf="!isLoading && viewMode === 'list'">
+    <mat-card>
+      <mat-card-content>
+        <table class="inquiry-table">
+          <thead>
+          <tr>
+            <th>{{ 'name' | translate }}</th>
+            <th>{{ 'code' | translate }}</th>
+            <th>{{ 'category' | translate }}</th>
+            <th>{{ 'executions' | translate }}</th>
+            <th>{{ 'actions' | translate }}</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let inquiry of filteredInquiries"
+              class="inquiry-row"
+              (click)="executeInquiry(inquiry)">
+            <td>
+              <div class="name-cell">
+                <mat-icon>{{ getInquiryIcon(inquiry) }}</mat-icon>
+                <span>{{ inquiry.display_name }}</span>
+              </div>
+            </td>
+            <td>{{ inquiry.code }}</td>
+            <td>{{ inquiry.category || '-' }}</td>
+            <td>{{ inquiry.execution_count || 0 }}</td>
+            <td class="actions-cell" (click)="$event.stopPropagation()">
+              <button mat-icon-button
+                      (click)="toggleFavorite(inquiry, $event)"
+                      [class.is-favorite]="inquiry.is_favorite">
+                <mat-icon>{{ inquiry.is_favorite ? 'star' : 'star_border' }}</mat-icon>
+              </button>
+              <button mat-icon-button (click)="executeInquiry(inquiry)">
+                <mat-icon>play_arrow</mat-icon>
+              </button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!isLoading && filteredInquiries.length === 0">
+    <mat-icon>search_off</mat-icon>
+    <h3>{{ 'no_inquiries_found' | translate }}</h3>
+    <p>{{ searchQuery || selectedCategory !== 'all' ? ('try_different_search' | translate) : ('no_inquiries_available' | translate) }}</p>
+    <button mat-button *ngIf="searchQuery || selectedCategory !== 'all'"
+            (click)="searchQuery = ''; selectedCategory = 'all'; filterInquiries()">
+      {{ 'clear_filters' | translate }}
+    </button>
+  </div>
+</div>

@@ -1,0 +1,147 @@
+<!-- src/app/components/inquiry/inquiry-executor/inquiry-executor.component.html -->
+
+<div class="inquiry-executor">
+  <!-- Header -->
+  <div class="executor-header">
+    <div class="header-info">
+      <h1>{{ inquirySchema?.inquiry?.display_name }}</h1>
+      <p>{{ inquirySchema?.inquiry?.description }}</p>
+    </div>
+    <div class="header-actions">
+      <button mat-button (click)="toggleVisualization()">
+        <mat-icon>{{ showVisualization ? 'table_chart' : 'bar_chart' }}</mat-icon>
+        {{ showVisualization ? ('show_table' | translate) : ('show_charts' | translate) }}
+      </button>
+      <button mat-button [matMenuTriggerFor]="savedQueriesMenu">
+        <mat-icon>save</mat-icon>
+        {{ 'saved_queries' | translate }}
+      </button>
+      <button mat-raised-button color="primary" [matMenuTriggerFor]="exportMenu">
+        <mat-icon>download</mat-icon>
+        {{ 'export' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading Bar -->
+  <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar" *ngIf="showFilters && filters.length > 0">
+    <app-dynamic-filters
+      [filters]="filters"
+      [currentValues]="currentFilterValues"
+      (filterChange)="onFilterChange($event)"
+      (clearFilters)="onClearFilters()">
+    </app-dynamic-filters>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="search-actions">
+    <app-search-bar
+      [searchFields]="searchableFields"
+      [placeholder]="'Search ' + (inquirySchema?.inquiry?.display_name || '')"
+      (searchChange)="onSearchChange($event)">
+    </app-search-bar>
+    <button mat-icon-button (click)="toggleFilters()" *ngIf="filters.length > 0">
+      <mat-icon>filter_list</mat-icon>
+      <span matBadge="{{ activeFilterCount }}"
+            matBadgeOverlap="false"
+            matBadgeSize="small"
+            matBadgeColor="accent"
+            *ngIf="activeFilterCount > 0"></span>
+    </button>
+    <button mat-icon-button (click)="openColumnSelector()">
+      <mat-icon>view_column</mat-icon>
+    </button>
+  </div>
+
+  <!-- Statistics Bar -->
+  <div class="statistics-bar" *ngIf="statistics">
+    <div class="stat-item">
+      <span class="stat-label">{{ 'total_records' | translate }}</span>
+      <span class="stat-value">{{ statistics.totalRecords | number }}</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">{{ 'filtered' | translate }}</span>
+      <span class="stat-value">{{ statistics.filteredRecords | number }}</span>
+    </div>
+    <div class="stat-item" *ngFor="let agg of aggregationResults">
+      <span class="stat-label">{{ agg.label }}</span>
+      <span class="stat-value">{{ formatAggregation(agg) }}</span>
+    </div>
+    <div class="stat-item" *ngIf="executionTime > 0">
+      <span class="stat-label">{{ 'execution_time' | translate }}</span>
+      <span class="stat-value">{{ executionTime }}ms</span>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="content-area">
+    <!-- Table View -->
+    <app-dynamic-table
+      *ngIf="!showVisualization"
+      [columns]="visibleColumns"
+      [data]="tableData"
+      [loading]="isLoading"
+      [sortable]="true"
+      [selectable]="true"
+      [rowActions]="rowActions"
+      (sortChange)="onSortChange($event)"
+      (rowClick)="onRowClick($event)"
+      (selectionChange)="onSelectionChange($event)">
+    </app-dynamic-table>
+
+    <!-- Visualization View -->
+    <app-data-visualizer
+      *ngIf="showVisualization"
+      [data]="tableData"
+      [columns]="columns"
+      [visualizations]="availableVisualizations"
+      (configChange)="onVisualizationConfigChange($event)">
+    </app-data-visualizer>
+  </div>
+
+  <!-- Pagination -->
+  <mat-paginator
+    [length]="totalRecords"
+    [pageSize]="pageSize"
+    [pageIndex]="pageIndex"
+    [pageSizeOptions]="[10, 25, 50, 100]"
+    (page)="onPageChange($event)"
+    showFirstLastButtons>
+  </mat-paginator>
+</div>
+
+<!-- Saved Queries Menu -->
+<mat-menu #savedQueriesMenu="matMenu">
+  <button mat-menu-item>
+    <mat-icon>save</mat-icon>
+    <span>{{ 'save_current_query' | translate }}</span>
+  </button>
+  <mat-divider></mat-divider>
+  <button mat-menu-item>
+    <mat-icon>history</mat-icon>
+    <span>{{ 'load_saved_query' | translate }}</span>
+  </button>
+</mat-menu>
+
+<!-- Export Menu -->
+<mat-menu #exportMenu="matMenu">
+  <button mat-menu-item (click)="exportData('csv')">
+    <mat-icon>table_chart</mat-icon>
+    <span>{{ 'export_csv' | translate }}</span>
+  </button>
+  <button mat-menu-item (click)="exportData('xlsx')">
+    <mat-icon>description</mat-icon>
+    <span>{{ 'export_excel' | translate }}</span>
+  </button>
+  <button mat-menu-item (click)="exportData('pdf')">
+    <mat-icon>picture_as_pdf</mat-icon>
+    <span>{{ 'export_pdf' | translate }}</span>
+  </button>
+  <button mat-menu-item (click)="exportData('json')">
+    <mat-icon>code</mat-icon>
+    <span>{{ 'export_json' | translate }}</span>
+  </button>
+</mat-menu>

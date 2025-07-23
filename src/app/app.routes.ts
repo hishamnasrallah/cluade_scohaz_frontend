@@ -83,6 +83,21 @@ export const routes: Routes = [
     redirectTo: '/applications',
     pathMatch: 'full'
   },
+  {
+    path: 'inquiry',
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./components/inquiry/inquiry-dashboard/inquiry-dashboard.component')
+          .then(m => m.InquiryDashboardComponent)
+      },
+      {
+        path: ':code',
+        loadComponent: () => import('./components/inquiry/inquiry-executor/inquiry-executor.component')
+          .then(m => m.InquiryExecutorComponent)
+      }
+    ]
+  },
 
   // Settings Module Routes
   {

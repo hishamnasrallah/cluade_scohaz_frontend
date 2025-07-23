@@ -100,6 +100,65 @@
           </div>
         </mat-menu>
 
+        <button mat-button
+                [matMenuTriggerFor]="inquiriesMenuRef"
+                class="nav-menu-item"
+                matTooltip="Data Inquiries"
+                matTooltipPosition="below"
+                *ngIf="isAuthenticated">
+          <mat-icon>query_stats</mat-icon>
+          <span>{{ 'inquiries' | translate }}</span>
+          <mat-icon class="dropdown-icon">keyboard_arrow_down</mat-icon>
+        </button>
+
+        <mat-menu #inquiriesMenuRef="matMenu" class="inquiries-dropdown ocean-mint-menu">
+          <div class="menu-header gradient-header">
+            <div class="header-icon-wrapper">
+              <mat-icon>query_stats</mat-icon>
+            </div>
+            <div class="header-content">
+              <h3 class="header-title">{{ 'data_inquiries' | translate }}</h3>
+              <span class="header-subtitle">{{ availableInquiries.length }} {{ 'available' | translate }}</span>
+            </div>
+          </div>
+
+          <div class="menu-body">
+            <!-- Recent Inquiries -->
+            <div class="menu-section" *ngIf="recentInquiries.length > 0">
+              <span class="section-title">{{ 'recent_inquiries' | translate }}</span>
+              <button mat-menu-item
+                      *ngFor="let inquiry of recentInquiries"
+                      (click)="executeInquiry(inquiry.code)"
+                      class="inquiry-menu-item">
+                <mat-icon>{{ inquiry.icon || 'table_chart' }}</mat-icon>
+                <span>{{ inquiry.display_name }}</span>
+                <span class="inquiry-badge" *ngIf="inquiry.execution_count && inquiry.execution_count > 0">
+          {{ inquiry.execution_count }}
+        </span>
+              </button>
+            </div>
+
+            <!-- Favorite Inquiries -->
+            <div class="menu-section" *ngIf="favoriteInquiries.length > 0">
+              <span class="section-title">{{ 'favorite_inquiries' | translate }}</span>
+              <button mat-menu-item
+                      *ngFor="let inquiry of favoriteInquiries"
+                      (click)="executeInquiry(inquiry.code)"
+                      class="inquiry-menu-item">
+                <mat-icon>star</mat-icon>
+                <span>{{ inquiry.display_name }}</span>
+              </button>
+            </div>
+
+            <mat-divider></mat-divider>
+
+            <!-- Browse All -->
+            <button mat-menu-item (click)="goToInquiryDashboard()" class="browse-all-item">
+              <mat-icon>dashboard</mat-icon>
+              <span>{{ 'browse_all_inquiries' | translate }}</span>
+            </button>
+          </div>
+        </mat-menu>
         <!-- Configurations Menu -->
         <button mat-button
                 (click)="goToConfig()"

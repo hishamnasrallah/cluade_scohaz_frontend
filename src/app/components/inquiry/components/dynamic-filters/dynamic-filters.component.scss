@@ -1,0 +1,62 @@
+// src/app/components/inquiry/components/dynamic-filters/dynamic-filters.component.scss
+
+@import '../../../../styles/theme-variables';
+
+.filters-container {
+  .filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 16px;
+
+    .filter-item {
+      flex: 0 1 250px;
+
+      &.wide {
+        flex: 0 1 400px;
+      }
+
+      &.narrow {
+        flex: 0 1 150px;
+      }
+
+      mat-form-field {
+        width: 100%;
+      }
+    }
+  }
+
+  .advanced-filters {
+    margin-top: 16px;
+  }
+
+  .advanced-toggle {
+    color: $ocean-mint-primary;
+    margin-bottom: 16px;
+  }
+
+  .filter-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding-top: 16px;
+    border-top: 1px solid #e0e0e0;
+  }
+
+  .option-count {
+    margin-left: 8px;
+    color: $ocean-mint-gray;
+    font-size: 12px;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .filters-container {
+    .filter-row {
+      .filter-item {
+        flex: 1 1 100%;
+      }
+    }
+  }
+}

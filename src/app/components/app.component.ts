@@ -15,8 +15,15 @@ import { filter } from 'rxjs/operators';
 import {MatDivider} from '@angular/material/divider';
 import { HttpClient } from '@angular/common/http';
 import {TranslatePipe} from '../pipes/translate.pipe';
+import {InquiryMetadata} from '../models/inquiry-execution.models';
 
-// ... (keep all your existing interfaces - ApiResponse, ApplicationSummary, etc.)
+import { ViewChild, TemplateRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+
+import { InquiryExecutorService } from '../services/inquiry-executor.service';
+import {UserService} from '../services/user.service';
+
 interface ApiResponse {
   applications: {
     api_version: string;
@@ -156,6 +163,11 @@ export class AppComponent implements OnInit {
   // Applications data for dynamic menu
   applications: ApplicationSummary[] = [];
   isLoadingApplications = false;
+
+  availableInquiries: InquiryMetadata[] = [];
+  recentInquiries: InquiryMetadata[] = [];
+  favoriteInquiries: InquiryMetadata[] = [];
+
   private appIcons = ['apps', 'api', 'cloud', 'storage', 'analytics', 'security'];
   private appColors = [
     'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -172,7 +184,12 @@ export class AppComponent implements OnInit {
     private configService: ConfigService,
     private router: Router,
     private http: HttpClient,
-    private translationService: TranslationService
+    private translationService: TranslationService,
+
+    // private applicationService: ApplicationService,
+    private userService: UserService,
+    // private notificationService: NotificationService,
+    private inquiryExecutorService: InquiryExecutorService
   ) {}
 
   ngOnInit(): void {
@@ -184,7 +201,9 @@ export class AppComponent implements OnInit {
       this.router.navigate(['/config']);
       return;
     }
-
+    if (this.isAuthenticated) {
+      this.loadInquiries();
+    }
     // Initialize translations with user's preferred language or default
     this.initializeTranslations();
 
@@ -442,5 +461,21 @@ export class AppComponent implements OnInit {
   // Utility methods
   trackByApp(index: number, app: ApplicationSummary): string {
     return app.name;
+  }
+
+  private loadInquiries(): void {
+    this.inquiryExecutorService.getAvailableInquiries().subscribe((inquiries: InquiryMetadata[]) => {
+      this.availableInquiries = inquiries;
+      this.recentInquiries = this.inquiryExecutorService.getRecentInquiries();
+      this.favoriteInquiries = inquiries.filter((i: InquiryMetadata) => i.is_favorite || false);
+    });
+  }
+
+  executeInquiry(code: string): void {
+    this.router.navigate(['/inquiry', code]);
+  }
+
+  goToInquiryDashboard(): void {
+    this.router.navigate(['/inquiry']);
   }
 }

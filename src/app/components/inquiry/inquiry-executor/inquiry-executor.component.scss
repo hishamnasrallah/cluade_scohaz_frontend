@@ -1,0 +1,137 @@
+// src/app/components/inquiry/inquiry-executor/inquiry-executor.component.scss
+
+@import '../../../styles/theme-variables';
+
+.inquiry-executor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #f5f5f5;
+
+  .executor-header {
+    background: white;
+    padding: 24px;
+    box-shadow: $ocean-mint-shadow-sm;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .header-info {
+      h1 {
+        margin: 0;
+        color: $ocean-mint-dark;
+        font-size: 24px;
+        font-weight: 500;
+      }
+
+      p {
+        margin: 4px 0 0;
+        color: $ocean-mint-gray;
+        font-size: 14px;
+      }
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+  }
+
+  .filter-bar {
+    background: white;
+    padding: 16px 24px;
+    border-bottom: 1px solid #e0e0e0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+
+    &.collapsed {
+      max-height: 0;
+      padding: 0 24px;
+    }
+  }
+
+  .search-section {
+    background: white;
+    padding: 16px 24px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    border-bottom: 1px solid #e0e0e0;
+
+    app-search-bar {
+      flex: 1;
+    }
+
+    .search-actions {
+      display: flex;
+      gap: 8px;
+    }
+  }
+
+  .statistics-bar {
+    background: $ocean-mint-gradient;
+    color: white;
+    padding: 16px 24px;
+    display: flex;
+    gap: 32px;
+    box-shadow: $ocean-mint-shadow-sm;
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      .stat-label {
+        font-size: 12px;
+        opacity: 0.9;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .stat-value {
+        font-size: 20px;
+        font-weight: 500;
+      }
+    }
+  }
+
+  .content-area {
+    flex: 1;
+    background: white;
+    margin: 16px;
+    border-radius: $ocean-mint-radius-md;
+    box-shadow: $ocean-mint-shadow-md;
+    overflow: hidden;
+  }
+
+  mat-paginator {
+    background: white;
+    border-top: 1px solid #e0e0e0;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .inquiry-executor {
+    .executor-header {
+      flex-direction: column;
+      gap: 16px;
+      align-items: flex-start;
+
+      .header-actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
+    }
+
+    .statistics-bar {
+      flex-wrap: wrap;
+      gap: 16px;
+
+      .stat-item {
+        flex: 1 1 calc(50% - 8px);
+        min-width: 120px;
+      }
+    }
+  }
+}

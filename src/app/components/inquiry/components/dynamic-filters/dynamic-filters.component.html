@@ -1,0 +1,129 @@
+<!-- src/app/components/inquiry/components/dynamic-filters/dynamic-filters.component.html -->
+
+<div class="filters-container">
+  <div class="filter-row">
+    <div *ngFor="let filter of visibleFilters"
+         [ngClass]="getFilterClass(filter)">
+      <ng-container [ngSwitch]="filter.type">
+
+        <!-- Text Filter -->
+        <mat-form-field *ngSwitchCase="'text'" appearance="outline">
+          <mat-label>{{ filter.label }}</mat-label>
+          <input matInput
+                 [(ngModel)]="filterValues[filter.field]"
+                 [placeholder]="filter.placeholder || ''"
+                 (ngModelChange)="onFilterChange(filter)">
+          <mat-hint *ngIf="filter.helpText">{{ filter.helpText }}</mat-hint>
+        </mat-form-field>
+
+        <!-- Number Filter -->
+        <mat-form-field *ngSwitchCase="'number'" appearance="outline">
+          <mat-label>{{ filter.label }}</mat-label>
+          <input matInput
+                 type="number"
+                 [(ngModel)]="filterValues[filter.field]"
+                 [placeholder]="filter.placeholder || ''"
+                 (ngModelChange)="onFilterChange(filter)">
+        </mat-form-field>
+
+        <!-- Date Filter -->
+        <mat-form-field *ngSwitchCase="'date'" appearance="outline">
+          <mat-label>{{ filter.label }}</mat-label>
+          <input matInput
+                 [matDatepicker]="picker"
+                 [(ngModel)]="filterValues[filter.field]"
+                 (ngModelChange)="onFilterChange(filter)">
+          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+
+        <!-- Select Filter -->
+        <mat-form-field *ngSwitchCase="'select'" appearance="outline">
+          <mat-label>{{ filter.label }}</mat-label>
+          <mat-select [(ngModel)]="filterValues[filter.field]"
+                      (ngModelChange)="onFilterChange(filter)">
+            <mat-option [value]="null">{{ 'all' | translate }}</mat-option>
+            <mat-option *ngFor="let option of filter.options"
+                        [value]="option.value"
+                        [disabled]="option.disabled">
+              {{ option.label }}
+              <span class="option-count" *ngIf="option.count">
+                ({{ option.count }})
+              </span>
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Multi-Select Filter -->
+        <mat-form-field *ngSwitchCase="'multiselect'" appearance="outline">
+          <mat-label>{{ filter.label }}</mat-label>
+          <mat-select [(ngModel)]="filterValues[filter.field]"
+                      (ngModelChange)="onFilterChange(filter)"
+                      multiple>
+            <mat-select-trigger>
+              {{ getMultiSelectText(filter) }}
+            </mat-select-trigger>
+            <mat-option *ngFor="let option of filter.options"
+                        [value]="option.value">
+              {{ option.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Checkbox Filter -->
+        <mat-checkbox *ngSwitchCase="'checkbox'"
+                      [(ngModel)]="filterValues[filter.field]"
+                      (ngModelChange)="onFilterChange(filter)">
+          {{ filter.label }}
+        </mat-checkbox>
+
+        <!-- Date Range Filter -->
+        <mat-form-field *ngSwitchCase="'daterange'" appearance="outline">
+          <mat-label>{{ filter.label }}</mat-label>
+          <mat-date-range-input [rangePicker]="rangePicker">
+            <input matStartDate
+                   [(ngModel)]="filterValues[filter.field + '_start']"
+                   placeholder="Start date">
+            <input matEndDate
+                   [(ngModel)]="filterValues[filter.field + '_end']"
+                   placeholder="End date"
+                   (ngModelChange)="onFilterChange(filter)">
+          </mat-date-range-input>
+          <mat-datepicker-toggle matSuffix [for]="rangePicker"></mat-datepicker-toggle>
+          <mat-date-range-picker #rangePicker></mat-date-range-picker>
+        </mat-form-field>
+
+      </ng-container>
+    </div>
+  </div>
+
+  <!-- Advanced Filters -->
+  <div class="advanced-filters" *ngIf="hasAdvancedFilters">
+    <button mat-button
+            (click)="toggleAdvancedFilters()"
+            class="advanced-toggle">
+      <mat-icon>{{ showAdvanced ? 'expand_less' : 'expand_more' }}</mat-icon>
+      {{ showAdvanced ? ('hide_advanced_filters' | translate) : ('show_advanced_filters' | translate) }}
+    </button>
+
+    <div class="filter-row" *ngIf="showAdvanced">
+      <div *ngFor="let filter of advancedFilters"
+           [ngClass]="getFilterClass(filter)">
+        <!-- Same filter templates as above -->
+        <ng-container [ngSwitch]="filter.type">
+          <!-- ... same filter templates ... -->
+        </ng-container>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Actions -->
+  <div class="filter-actions">
+    <button mat-button
+            (click)="clearAllFilters()"
+            [disabled]="!hasActiveFilters">
+      <mat-icon>clear</mat-icon>
+      {{ 'clear_all_filters' | translate }}
+    </button>
+  </div>
+</div>

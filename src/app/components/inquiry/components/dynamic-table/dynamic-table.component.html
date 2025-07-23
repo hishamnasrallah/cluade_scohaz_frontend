@@ -1,0 +1,131 @@
+<!-- src/app/components/inquiry/components/dynamic-table/dynamic-table.component.html (updated) -->
+
+<div class="dynamic-table-container">
+  <!-- Table Toolbar -->
+  <div class="table-toolbar" *ngIf="selection.hasValue() && selectable">
+    <span class="selection-count">
+      {{ selection.selected.length }} {{ 'items_selected' | translate }}
+    </span>
+    <div class="bulk-actions">
+      <button mat-button (click)="exportSelected()">
+        <mat-icon>download</mat-icon>
+        {{ 'export_selected' | translate }}
+      </button>
+      <button mat-button (click)="clearSelection()">
+        <mat-icon>clear</mat-icon>
+        {{ 'clear_selection' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Progress Bar -->
+  <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+
+  <!-- Table -->
+  <div class="table-viewport">
+    <table mat-table
+           [dataSource]="dataSource"
+           matSort
+           class="dynamic-table">
+
+      <!-- Selection Column -->
+      <ng-container matColumnDef="select" *ngIf="selectable">
+        <th mat-header-cell *matHeaderCellDef>
+          <mat-checkbox (change)="masterToggle()"
+                        [checked]="isAllSelected()"
+                        [indeterminate]="selection.hasValue() && !isAllSelected()">
+          </mat-checkbox>
+        </th>
+        <td mat-cell *matCellDef="let row">
+          <mat-checkbox (click)="$event.stopPropagation()"
+                        (change)="toggleRow(row)"
+                        [checked]="selection.isSelected(row)">
+          </mat-checkbox>
+        </td>
+      </ng-container>
+
+      <!-- Dynamic Columns -->
+      <ng-container *ngFor="let column of columns" [matColumnDef]="column.field">
+        <th mat-header-cell
+            *matHeaderCellDef
+            [mat-sort-header]="column.field"
+            [disabled]="!column.sortable || !sortable"
+            [style.width]="column.width"
+            [style.text-align]="column.align">
+          {{ column.header }}
+        </th>
+
+        <td mat-cell
+            *matCellDef="let row"
+            [ngClass]="getCellClass(column, row)">
+
+          <!-- Cell Content Based on Type -->
+          <ng-container [ngSwitch]="column.type">
+
+            <!-- Boolean -->
+            <mat-icon *ngSwitchCase="'boolean'"
+                      [class.true-value]="getCellValue(row, column) === 'Yes'">
+              {{ getCellValue(row, column) === 'Yes' ? 'check_circle' : 'cancel' }}
+            </mat-icon>
+
+            <!-- JSON -->
+            <button *ngSwitchCase="'json'"
+                    mat-icon-button
+                    matTooltip="View JSON">
+              <mat-icon>code</mat-icon>
+            </button>
+
+            <!-- Relation -->
+            <a *ngSwitchCase="'relation'"
+               class="relation-link">
+              {{ getCellValue(row, column) }}
+            </a>
+
+            <!-- Default -->
+            <span *ngSwitchDefault>
+              {{ getCellValue(row, column) }}
+            </span>
+
+          </ng-container>
+        </td>
+      </ng-container>
+
+      <!-- Actions Column -->
+      <ng-container matColumnDef="actions" *ngIf="rowActions.length > 0">
+        <th mat-header-cell *matHeaderCellDef>{{ 'actions' | translate }}</th>
+        <td mat-cell *matCellDef="let row">
+          <button mat-icon-button
+                  [matMenuTriggerFor]="actionsMenu"
+                  (click)="$event.stopPropagation()">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #actionsMenu="matMenu">
+            <button mat-menu-item
+                    *ngFor="let action of getRowActions(row)"
+                    (click)="executeAction(action, row)">
+              <mat-icon [style.color]="action.color">{{ action.icon }}</mat-icon>
+              <span>{{ action.label }}</span>
+            </button>
+          </mat-menu>
+        </td>
+      </ng-container>
+
+      <!-- Header Row -->
+      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+
+      <!-- Data Rows -->
+      <tr mat-row
+          *matRowDef="let row; columns: displayedColumns;"
+          (click)="onRowClick(row)"
+          [class.selected-row]="selection.isSelected(row)">
+      </tr>
+
+    </table>
+
+    <!-- No Data Message -->
+    <div class="no-data-container" *ngIf="!loading && dataSource.data.length === 0">
+      <mat-icon>search_off</mat-icon>
+      <p>{{ 'no_data_found' | translate }}</p>
+    </div>
+  </div>
+</div>
