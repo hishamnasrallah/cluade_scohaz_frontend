@@ -1,0 +1,86 @@
+<!-- src/app/components/inquiry/components/data-visualizer/data-visualizer.component.html -->
+
+<!-- src/app/components/inquiry/components/data-visualizer/data-visualizer.component.html (updated) -->
+
+<div class="data-visualizer">
+  <!-- Configuration Panel -->
+  <mat-card class="config-panel">
+    <mat-card-header>
+      <mat-card-title>Chart Configuration</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Chart Type Selection -->
+      <div class="chart-type-selector">
+        <label class="config-label">{{ 'chart_type' | translate }}</label>
+        <mat-chip-set>
+          <mat-chip *ngFor="let type of chartTypes"
+                    [class.selected]="selectedVisualization.type === type.value"
+                    (click)="selectedVisualization.type = type.value; onChartTypeChange()">
+            <mat-icon>{{ type.icon }}</mat-icon>
+            {{ type.label }}
+          </mat-chip>
+        </mat-chip-set>
+      </div>
+
+      <!-- Axis Configuration -->
+      <div class="axis-config">
+        <mat-form-field appearance="outline" class="config-field">
+          <mat-label>{{ 'x_axis' | translate }}</mat-label>
+          <mat-select [(ngModel)]="selectedVisualization.xAxis"
+                      (selectionChange)="onAxisChange()">
+            <mat-option *ngFor="let col of categoricalColumns" [value]="col.field">
+              {{ col.header }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="config-field"
+                        *ngIf="selectedVisualization.type !== 'pie' && selectedVisualization.type !== 'donut'">
+          <mat-label>{{ 'y_axis' | translate }}</mat-label>
+          <mat-select [(ngModel)]="selectedVisualization.yAxis"
+                      (selectionChange)="onAxisChange()">
+            <mat-option value="">Count</mat-option>
+            <mat-option *ngFor="let col of numericColumns" [value]="col.field">
+              {{ col.header }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="config-field"
+                        *ngIf="selectedVisualization.yAxis">
+          <mat-label>{{ 'aggregation' | translate }}</mat-label>
+          <mat-select [(ngModel)]="selectedVisualization.aggregation"
+                      (selectionChange)="onAxisChange()">
+            <mat-option *ngFor="let agg of aggregations" [value]="agg.value">
+              {{ agg.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- Actions -->
+      <div class="config-actions">
+        <button mat-button (click)="exportChart()">
+          <mat-icon>download</mat-icon>
+          {{ 'export_chart' | translate }}
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Chart Display -->
+  <mat-card class="chart-container">
+    <mat-card-content>
+      <div class="chart-wrapper">
+        <canvas #chartCanvas></canvas>
+      </div>
+
+      <!-- No Data State -->
+      <div class="no-data" *ngIf="data.length === 0">
+        <mat-icon>bar_chart</mat-icon>
+        <p>{{ 'no_data_for_visualization' | translate }}</p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

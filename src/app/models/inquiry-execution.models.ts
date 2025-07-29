@@ -16,7 +16,7 @@ export interface InquiryMetadata {
 export interface DynamicColumn {
   field: string;
   header: string;
-  type: 'string' | 'number' | 'date' | 'boolean' | 'json' | 'relation';
+  type: 'string' | 'number' | 'decimal' | 'date' | 'boolean' | 'json' | 'relation'; // Added 'decimal'
   sortable: boolean;
   searchable: boolean;
   width?: string;
